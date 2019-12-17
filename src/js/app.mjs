@@ -94,7 +94,7 @@ class App
 	 * @param	{string}		componentName		Component name.
 	 * @param	{array}			options				Options for the component.
 	 *
-	 * @return  {object}		Initaiated object.
+	 * @return  {Object}		Initaiated object.
 	 */
 	__createObject(componentName, options)
 	{
