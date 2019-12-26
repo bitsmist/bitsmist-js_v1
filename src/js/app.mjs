@@ -72,14 +72,18 @@ class App
 		this.container["loader"].loadSpec().then((spec) => {
 			this.container["appInfo"]["spec"] = spec;
 
-			// init resources
-			this.container["loader"].loadResources(spec["resources"]);
+			let promises = [];
 
-			// load components
-			this.container["loader"].loadComponents(spec["components"]);
+			// init resources
+			promises.push(this.container["loader"].loadResources(spec["resources"]));
 
 			// load masters
-			this.container["loader"].loadMasters(spec["masters"]);
+			promises.push(this.container["loader"].loadMasters(spec["masters"]));
+
+			// load components
+			Promise.all(promises).then(() => {
+				this.container["loader"].loadComponents(spec["components"]);
+			});
 		});
 
 	}
