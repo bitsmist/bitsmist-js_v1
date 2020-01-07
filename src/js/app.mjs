@@ -27,6 +27,10 @@ class App
 	constructor(settings)
 	{
 
+		// Init error handling
+		this.__initError();
+
+		// Init a container
 		this.container = {};
 		this.container["app"] = this;
 		this.container["settings"] = settings;
@@ -37,7 +41,7 @@ class App
 		this.container["masters"] = {};
 
 		// Init a loader
-		this.container["loader"] = this.__createObject(settings["loader"]["class"], this.container);
+		this.__initLoader(this.container);
 
 	/*
 		// Load route info
@@ -107,6 +111,80 @@ class App
 		ret  = new c(options);
 
 		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init loader.
+	 */
+	__initLoader()
+	{
+
+		let options = {"container": this.container};
+		this.container["loader"] = this.__createObject(this.container["settings"]["loader"]["class"], options);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init error handling.
+	 */
+	__initError()
+	{
+
+		window.addEventListener("unhandledrejection", (event) => {
+			let e = {};
+			if (event.reason instanceof XMLHttpRequest)
+			{
+				e.message = event.reason.statusText;
+				e.status = event.reason.status;
+			}
+			else
+			{
+				e.message = event.reason;
+			}
+			/*
+			e.detail = event.reason;
+			this.__handleException(event.reason);
+			*/
+			this.__handleException(e);
+
+			return false;
+		});
+
+		window.addEventListener("error", (error, file, line, col) => {
+			let e = {};
+			e.messsage = error;
+			e.file = file;
+			e.line = line;
+			e.col = col;
+			this.__handleException(e);
+
+			return false;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Instantiate the component.
+	 *
+	 * @param	{object}		e					Error object.
+	 */
+	__handleException(e)
+	{
+
+		if (this.container["exceptions"].length == 0)
+		{
+			// No error handler available
+			throw e;
+		}
+
+		this.container["exceptions"].handle(e);
 
 	}
 
