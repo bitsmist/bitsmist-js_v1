@@ -178,13 +178,13 @@ class App
 	__handleException(e)
 	{
 
-		if (this.container["exceptions"].length == 0)
+		if (this.container["exceptionManager"].length == 0)
 		{
 			// No error handler available
 			throw e;
 		}
 
-		this.container["exceptions"].handle(e);
+		this.container["exceptionManager"].handle(e);
 
 	}
 
