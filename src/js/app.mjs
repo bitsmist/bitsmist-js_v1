@@ -78,6 +78,9 @@ class App
 
 			// load services
 			this.container["loader"].loadServices();
+			this.container["exceptionManager"].events.addEventHandler("error", (sender, e) => {
+				this.__handleException(e);
+			});
 
 			// load resources, masters then components
 			let promises = [];
@@ -141,15 +144,12 @@ class App
 			{
 				e.message = event.reason.statusText;
 				e.status = event.reason.status;
+				e.object = event.reason;
 			}
 			else
 			{
 				e.message = event.reason;
 			}
-			/*
-			e.detail = event.reason;
-			this.__handleException(event.reason);
-			*/
 			this.__handleException(e);
 
 			return false;
