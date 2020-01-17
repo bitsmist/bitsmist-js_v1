@@ -82,12 +82,22 @@ class App
 				this.__handleException(e);
 			});
 
-			// load resources, masters then components
 			let promises = [];
+
+			// load resources
 			promises.push(this.container["loader"].loadResources(this.container["appInfo"]["spec"]["resources"]));
+
+			// load masters
 			promises.push(this.container["loader"].loadMasters(this.container["appInfo"]["spec"]["masters"]));
+
+			// load components
+			promises.push(this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]));
+
+			// Open startup pad
 			Promise.all(promises).then(() => {
-				this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]);
+				let commandName = this.container["loader"].loadRoute()["commandName"];
+				let padName = this.container["appInfo"]["spec"]["commands"][commandName]["startup"];
+				this.container["components"][padName].object.open();
 			});
 		});
 
