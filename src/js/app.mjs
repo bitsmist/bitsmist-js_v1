@@ -97,9 +97,7 @@ class App
 			Promise.all(promises).then(() => {
 				let commandName = this.container["loader"].loadRoute()["commandName"];
 				let padName = this.container["appInfo"]["spec"]["commands"][commandName]["startup"];
-				this.container["components"][padName].object.open().then(() => {
-					this.container["components"][padName].object.events.trigger("refresh", this);
-				});
+				this.container["components"][padName].object.open();
 			});
 
 			if (window.history && window.history.pushState){
