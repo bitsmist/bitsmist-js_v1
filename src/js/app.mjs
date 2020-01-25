@@ -97,8 +97,18 @@ class App
 			Promise.all(promises).then(() => {
 				let commandName = this.container["loader"].loadRoute()["commandName"];
 				let padName = this.container["appInfo"]["spec"]["commands"][commandName]["startup"];
-				this.container["components"][padName].object.open();
+				this.container["components"][padName].object.open().then(() => {
+					this.container["components"][padName].object.events.trigger("refresh", this);
+				});
 			});
+
+			if (window.history && window.history.pushState){
+				window.addEventListener("popstate", (event) => {
+					let routeInfo = this.container["loader"].loadRoute();
+					let option = this.container["loader"].getUrlVars();
+					this.container["loader"].openRoute(routeInfo, option, false, true);
+				});
+			}
 		});
 
 	}
