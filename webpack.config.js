@@ -20,7 +20,14 @@ module.exports = (env, argv) => ({
 				loader: 'babel-loader',
 				options: {
 					presets: [
-						'@babel/preset-env'
+						['@babel/preset-env',
+						{
+							"targets": {
+								"ie": 11
+							},
+							"corejs": 3,
+							"useBuiltIns": "usage"
+						}]
 					]
 				}
 			}
