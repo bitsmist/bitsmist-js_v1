@@ -10,5 +10,22 @@ module.exports = (env, argv) => ({
 		path: path.resolve(__dirname, "./public/js/"),
 		filename: "[name].bundle.js"
 	},
-	devtool: argv.mode === 'development' ? 'source-map' : 'none'
+	devtool: argv.mode === 'development' ? 'source-map' : 'none',
+	module: {
+		rules: [
+		{
+			test: /\.js$/,
+			use: [
+			{
+				loader: 'babel-loader',
+				options: {
+					presets: [
+						'@babel/preset-env'
+					]
+				}
+			}
+			]
+		}
+		]
+	}
 });

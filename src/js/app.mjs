@@ -11,8 +11,8 @@
 /**
  * App class.
  */
-//export default class App
-class App
+export default class App
+//class App
 {
 
 	// -------------------------------------------------------------------------
