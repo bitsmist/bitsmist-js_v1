@@ -196,7 +196,7 @@ export default class App
 	__handleException(e)
 	{
 
-		if (this.container["exceptionManager"].length == 0)
+		if (!this.container["exceptionManager"] || this.container["exceptionManager"].length == 0)
 		{
 			// No error handler available
 			throw e;
