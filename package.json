@@ -8,6 +8,7 @@
     "webpack-cli": "^3.3.10"
   },
   "scripts": {
+    "watch": "npx webpack --mode development --watch",
     "dev": "npx webpack --mode development",
     "build": "npx webpack --mode production"
   },
