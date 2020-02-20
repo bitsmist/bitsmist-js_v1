@@ -78,9 +78,6 @@ export default class App
 
 			// load services
 			this.container["loader"].loadServices();
-			this.container["exceptionManager"].events.addEventHandler("error", (sender, e) => {
-				this.__handleException(e);
-			});
 
 			let promises = [];
 
@@ -93,20 +90,17 @@ export default class App
 			// load components
 			promises.push(this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]));
 
-			// Open startup pad
 			Promise.all(promises).then(() => {
+				// todo:common startup script comes here
+
+				// Open startup pad
 				let commandName = this.container["loader"].loadRoute()["commandName"];
 				let padName = this.container["appInfo"]["spec"]["commands"][commandName]["startup"];
 				this.container["components"][padName].object.open();
 			});
 
-			if (window.history && window.history.pushState){
-				window.addEventListener("popstate", (event) => {
-					let routeInfo = this.container["loader"].loadRoute();
-					let option = this.container["loader"].getUrlVars();
-					this.container["loader"].openRoute(routeInfo, option, false, true);
-				});
-			}
+			// Init pop state handling
+			this.__initPopState();
 		});
 
 	}
@@ -146,6 +140,11 @@ export default class App
 		let options = {"container": this.container};
 		this.container["loader"] = this.__createObject(this.container["settings"]["loader"]["class"], options);
 
+		this.container["exceptionManager"].events.addEventHandler("error", (sender, e) => {
+			let error = {"type":"error", "message":e.detail.message, "filename":e.detail.filename, "object":e.detail.object};
+			this.__handleException(error);
+		});
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -156,32 +155,49 @@ export default class App
 	__initError()
 	{
 
-		window.addEventListener("unhandledrejection", (event) => {
+		window.addEventListener("unhandledrejection", (error) => {
 			let e = {};
-			if (event.reason instanceof XMLHttpRequest)
+
+			if (error.reason instanceof XMLHttpRequest)
 			{
-				e.message = event.reason.statusText;
-				e.status = event.reason.status;
-				e.object = event.reason;
+				e.message = error.reason.statusText;
+				e.status = error.reason.status;
+			}
+			else if (error["reason"])
+			{
+				e.message = error.reason.message;
+				e.type = error.type;
 			}
 			else
 			{
-				e.message = event.reason;
+				e.message = error;
 			}
+			e.type = "unhandledrejection";
+			e.filename = "";
+			e.lineno = "";
+			e.colno = "";
+			e.object = error;
+
 			this.__handleException(e);
 
-			return false;
+			//return false;
+			return true;
 		});
 
 		window.addEventListener("error", (error, file, line, col) => {
 			let e = {};
-			e.messsage = error;
-			e.file = file;
-			e.line = line;
-			e.col = col;
+
+			e.type = "error";
+			e.message = error.message;
+			e.file = error.filename;
+			e.line = error.lineno;
+			e.col = error.colno;
+			e.object = error;
+
 			this.__handleException(e);
 
-			return false;
+			//return false;
+			return true;
 		});
 
 	}
@@ -189,20 +205,48 @@ export default class App
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Instantiate the component.
+	 * Handle an exeption.
 	 *
 	 * @param	{object}		e					Error object.
 	 */
 	__handleException(e)
 	{
 
-		if (!this.container["exceptionManager"] || this.container["exceptionManager"].length == 0)
+		try
 		{
-			// No error handler available
-			throw e;
+			/*
+			console.error("[" + e.type + "] " + e.message);
+			console.error("Error details below:");
+			console.error((e.object ? e.object : e));
+			*/
+
+			if (this.container["exceptionManager"])
+			{
+				this.container["exceptionManager"].handle(e);
+			}
+		}
+		catch(e)
+		{
+			console.error(`App.__handleException(): An exception in error handler. e='${e.toString()}'`);
 		}
 
-		this.container["exceptionManager"].handle(e);
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init pop state handling.
+	 */
+	__initPopState()
+	{
+
+		if (window.history && window.history.pushState){
+			window.addEventListener("popstate", (event) => {
+				let routeInfo = this.container["loader"].loadRoute();
+				let option = this.container["loader"].getUrlVars();
+				this.container["loader"].openRoute(routeInfo, option, false, true);
+			});
+		}
 
 	}
 
