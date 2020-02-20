@@ -214,15 +214,15 @@ export default class App
 
 		try
 		{
-			/*
-			console.error("[" + e.type + "] " + e.message);
-			console.error("Error details below:");
-			console.error((e.object ? e.object : e));
-			*/
-
-			if (this.container["exceptionManager"])
+			if (this.container["exceptionManager"] && this.container["exceptionManager"].plugins.length > 0)
 			{
 				this.container["exceptionManager"].handle(e);
+			}
+			else
+			{
+				console.error("[" + e.type + "] " + e.message);
+				console.error("Error details below:");
+				console.error((e.object ? e.object : e));
 			}
 		}
 		catch(e)
