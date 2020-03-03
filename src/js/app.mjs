@@ -105,6 +105,19 @@ export default class App
 
 	}
 
+	broadcast(eventName)
+	{
+
+		this.container["components"].forEach((component) => {
+			component.events.trigger(eventName, this);
+
+			component.forEach((subComponent) => {
+				subComponent.events.trigger(eventName, this);
+			});
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 	//  Privates
 	// -------------------------------------------------------------------------
@@ -140,8 +153,9 @@ export default class App
 		let options = {"container": this.container};
 		this.container["loader"] = this.__createObject(this.container["settings"]["loader"]["class"], options);
 
+		// Init exception manager
 		this.container["exceptionManager"].events.addEventHandler("error", (sender, e) => {
-			let error = {"type":"error", "message":e.detail.message, "filename":e.detail.filename, "object":e.detail.object};
+			let error = {"type":"error", "message":e.detail.message, "filename":e.detail.filename, "funcname":e.detail.funcname, "stack":e.detail.object.stack, "object":e.detail.object};
 			this.__handleException(error);
 		});
 
@@ -174,8 +188,10 @@ export default class App
 			}
 			e.type = "unhandledrejection";
 			e.filename = "";
+			e.funcname = ""
 			e.lineno = "";
 			e.colno = "";
+			e.stack = error.reason.stack;
 			e.object = error;
 
 			this.__handleException(e);
@@ -192,6 +208,7 @@ export default class App
 			e.file = error.filename;
 			e.line = error.lineno;
 			e.col = error.colno;
+			e.stack = error.stack;
 			e.object = error;
 
 			this.__handleException(e);
@@ -220,8 +237,10 @@ export default class App
 			}
 			else
 			{
+				/*
 				console.error("[" + e.type + "] " + e.message);
 				console.error("Error details below:");
+				*/
 				console.error((e.object ? e.object : e));
 			}
 		}
