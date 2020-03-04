@@ -155,7 +155,14 @@ export default class App
 
 		// Init exception manager
 		this.container["exceptionManager"].events.addEventHandler("error", (sender, e) => {
-			let error = {"type":"error", "message":e.detail.message, "filename":e.detail.filename, "funcname":e.detail.funcname, "stack":e.detail.object.stack, "object":e.detail.object};
+			let error = {
+				"type":		"error",
+				"message":	e.detail.message,
+				"filename":	e.detail.filename,
+				"funcname":	e.detail.funcname,
+				"stack":	(e.detail.object && e.detail.object.stack ? e.detail.object.stack : undefined),
+				"object":	e.detail.object
+			};
 			this.__handleException(error);
 		});
 
