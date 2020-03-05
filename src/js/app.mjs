@@ -269,7 +269,7 @@ export default class App
 		if (window.history && window.history.pushState){
 			window.addEventListener("popstate", (event) => {
 				let routeInfo = this.container["loader"].loadRoute();
-				let option = this.container["loader"].getUrlVars();
+				let option = this.container["loader"].loadParameters();
 				this.container["loader"].openRoute(routeInfo, option, false, true);
 			});
 		}
