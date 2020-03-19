@@ -54,7 +54,7 @@ export default class App
 		// load services
 		this.container["loader"].loadServices();
 
-	};
+	}
 
 	// -------------------------------------------------------------------------
 	//  Methods
@@ -96,6 +96,8 @@ export default class App
 
 	}
 
+	// -------------------------------------------------------------------------
+
 	/**
 	 * Instantiate the component.
 	 *
@@ -104,19 +106,32 @@ export default class App
 	 *
 	 * @return  {Object}		Initaiated object.
 	 */
-	/*
 	createObject(componentName, options)
 	{
 
 		let ret = null;
 
-		let c = Function("return (" + componentName + ")")();
-		ret  = new c(options);
+		try
+		{
+			let c = Function("return (" + componentName + ")")();
+			ret  = new c(componentName, options);
+		}
+		catch(e)
+		{
+			if (e instanceof TypeError)
+			{
+				let message = `Class not found. componentName=${componentName}`;
+				throw new NoClassError(message);
+			}
+			else
+			{
+				throw e;
+			}
+		}
 
 		return ret;
 
 	}
-	*/
 
 	/*
 	broadcast(eventName)
@@ -138,35 +153,13 @@ export default class App
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Instantiate the component.
-	 *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{array}			options				Options for the component.
-	 *
-	 * @return  {Object}		Initaiated object.
-	 */
-	__createObject(componentName, options)
-	{
-
-		let ret = null;
-
-		let c = Function("return (" + componentName + ")")();
-		ret  = new c(options);
-
-		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Init loader.
 	 */
 	__initLoader()
 	{
 
 		let options = {"container": this.container};
-		this.container["loader"] = this.__createObject(this.container["settings"]["loader"]["class"], options);
+		this.container["loader"] = this.createObject(this.container["settings"]["services"]["loader"]["class"], options);
 
 		// Init exception manager
 		this.container["errorManager"].events.addEventHandler("error", (sender, e, ex) => {
@@ -271,10 +264,12 @@ export default class App
 		{
 			name = "EvalError";
 		}
+		/*
 		else if (e instanceof InternalError)
 		{
 			name = "InternalError";
 		}
+		*/
 		else if (e instanceof RangeError)
 		{
 			name = "RangeError";
@@ -312,7 +307,7 @@ export default class App
 		}
 		else
 		{
-			console.error(e);
+//			console.error(e);
 		}
 
 	}
