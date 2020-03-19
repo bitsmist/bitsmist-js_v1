@@ -43,15 +43,6 @@ export default class App
 		// Init a loader
 		this.__initLoader(this.container);
 
-	/*
-		// Load route info
-		this.container["loader"].loadRoute();
-
-		// Load request & response
-		this.container["request"];
-		this.container["response"];
-	*/
-
 		// Init system information
 		this.container["sysInfo"]["version"] = settings["options"]["apiVersion"];
 		this.container["sysInfo"]["baseUrl"] = settings["options"]["apiBaseUrl"];
@@ -59,6 +50,9 @@ export default class App
 		// Init application information
 		this.container["appInfo"]["version"] = settings["options"]["appVersion"];
 		this.container["appInfo"]["baseUrl"] = settings["options"]["appBaseUrl"];
+
+		// load services
+		this.container["loader"].loadServices();
 
 	};
 
@@ -77,7 +71,7 @@ export default class App
 			this.container["appInfo"]["spec"] = spec;
 
 			// load services
-			this.container["loader"].loadServices();
+			//this.container["loader"].loadServices();
 
 			let promises = [];
 
@@ -91,12 +85,9 @@ export default class App
 			promises.push(this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]));
 
 			Promise.all(promises).then(() => {
-				// todo:common startup script comes here
-
 				// Open startup pad
-				let commandName = this.container["loader"].loadRoute()["commandName"];
-				let padName = this.container["appInfo"]["spec"]["commands"][commandName]["startup"];
-				this.container["components"][padName].object.open();
+				let routeInfo = this.container["loader"].loadRoute();
+				this.container["loader"].openRoute(routeInfo, {"autoOpen":true});
 			});
 
 			// Init pop state handling
@@ -105,6 +96,29 @@ export default class App
 
 	}
 
+	/**
+	 * Instantiate the component.
+	 *
+	 * @param	{string}		componentName		Component name.
+	 * @param	{array}			options				Options for the component.
+	 *
+	 * @return  {Object}		Initaiated object.
+	 */
+	/*
+	createObject(componentName, options)
+	{
+
+		let ret = null;
+
+		let c = Function("return (" + componentName + ")")();
+		ret  = new c(options);
+
+		return ret;
+
+	}
+	*/
+
+	/*
 	broadcast(eventName)
 	{
 
@@ -117,6 +131,7 @@ export default class App
 		});
 
 	}
+	*/
 
 	// -------------------------------------------------------------------------
 	//  Privates
@@ -154,14 +169,14 @@ export default class App
 		this.container["loader"] = this.__createObject(this.container["settings"]["loader"]["class"], options);
 
 		// Init exception manager
-		this.container["exceptionManager"].events.addEventHandler("error", (sender, e) => {
+		this.container["exceptionManager"].events.addEventHandler("error", (sender, e, ex) => {
 			let error = {
 				"type":		"error",
-				"message":	e.detail.message,
-				"filename":	e.detail.filename,
-				"funcname":	e.detail.funcname,
-				"stack":	(e.detail.object && e.detail.object.stack ? e.detail.object.stack : undefined),
-				"object":	e.detail.object
+				"message":	ex.message,
+				"filename":	ex.filename,
+				"funcname":	ex.funcname,
+				"stack":	(ex.object && ex.object.stack ? ex.object.stack : undefined),
+				"object":	ex.object
 			};
 			this.__handleException(error);
 		});
@@ -179,27 +194,29 @@ export default class App
 		window.addEventListener("unhandledrejection", (error) => {
 			let e = {};
 
-			if (error.reason instanceof XMLHttpRequest)
+			if (error["reason"])
 			{
-				e.message = error.reason.statusText;
-				e.status = error.reason.status;
-			}
-			else if (error["reason"])
-			{
-				e.message = error.reason.message;
-				e.type = error.type;
+				if (error.reason instanceof XMLHttpRequest)
+				{
+					e.message = error.reason.statusText;
+					error.reason.name = "XMLHttpRequest";
+				}
+				else
+				{
+					e.message = error.reason.message;
+				}
 			}
 			else
 			{
 				e.message = error;
 			}
-			e.type = "unhandledrejection";
+			e.type = error.type;
 			e.filename = "";
 			e.funcname = ""
 			e.lineno = "";
 			e.colno = "";
 			e.stack = error.reason.stack;
-			e.object = error;
+			e.object = error.reason;
 
 			this.__handleException(e);
 
@@ -244,10 +261,8 @@ export default class App
 			}
 			else
 			{
-				/*
 				console.error("[" + e.type + "] " + e.message);
 				console.error("Error details below:");
-				*/
 				console.error((e.object ? e.object : e));
 			}
 		}
@@ -269,8 +284,7 @@ export default class App
 		if (window.history && window.history.pushState){
 			window.addEventListener("popstate", (event) => {
 				let routeInfo = this.container["loader"].loadRoute();
-				let option = this.container["loader"].loadParameters();
-				this.container["loader"].openRoute(routeInfo, option, false, true);
+				this.container["loader"].openRoute(routeInfo, {"autoRefresh":true});
 			});
 		}
 
