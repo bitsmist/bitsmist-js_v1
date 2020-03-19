@@ -159,7 +159,7 @@ export default class App
 	{
 
 		let options = {"container": this.container};
-		this.container["loader"] = this.createObject(this.container["settings"]["services"]["loader"]["class"], options);
+		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], options);
 
 		// Init exception manager
 		this.container["errorManager"].events.addEventHandler("error", (sender, e, ex) => {
