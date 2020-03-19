@@ -40,8 +40,8 @@ export default class App
 		this.container["resources"] = {};
 		this.container["masters"] = {};
 
-		// Init a loader
-		this.__initLoader(this.container);
+		// Init loader and router;
+		this.__initLoaderAndRouter();
 
 		// Init system information
 		this.container["sysInfo"]["version"] = settings["options"]["apiVersion"];
@@ -70,9 +70,6 @@ export default class App
 		this.container["loader"].loadSpec().then((spec) => {
 			this.container["appInfo"]["spec"] = spec;
 
-			// load services
-			//this.container["loader"].loadServices();
-
 			let promises = [];
 
 			// load resources
@@ -86,8 +83,8 @@ export default class App
 
 			Promise.all(promises).then(() => {
 				// Open startup pad
-				let routeInfo = this.container["loader"].loadRoute();
-				this.container["loader"].openRoute(routeInfo, {"autoOpen":true});
+				let routeInfo = this.container["router"].loadRoute();
+				this.container["router"].openRoute(routeInfo, {"autoOpen":true});
 			});
 
 			// Init pop state handling
@@ -153,13 +150,16 @@ export default class App
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init loader.
+	 * Init loader and router.
 	 */
-	__initLoader()
+	__initLoaderAndRouter()
 	{
 
-		let options = {"container": this.container};
-		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], options);
+		let loaderOptions = {"container": this.container};
+		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], loaderOptions);
+
+		let routerOptions = {"container": this.container};
+		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], routerOptions);
 
 		// Init exception manager
 		this.container["errorManager"].events.addEventHandler("error", (sender, e, ex) => {
@@ -252,7 +252,11 @@ export default class App
 
 		let name;
 
-		if (e instanceof TypeError)
+		if (e.name)
+		{
+			name = e.name;
+		}
+		else if (e instanceof TypeError)
 		{
 			name = "TypeError";
 		}
@@ -322,8 +326,8 @@ export default class App
 
 		if (window.history && window.history.pushState){
 			window.addEventListener("popstate", (event) => {
-				let routeInfo = this.container["loader"].loadRoute();
-				this.container["loader"].openRoute(routeInfo, {"autoRefresh":true});
+				let routeInfo = this.container["router"].loadRoute();
+				this.container["router"].openRoute(routeInfo, {"autoRefresh":true});
 			});
 		}
 
