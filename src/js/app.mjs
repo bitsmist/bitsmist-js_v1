@@ -169,7 +169,7 @@ export default class App
 		this.container["loader"] = this.__createObject(this.container["settings"]["loader"]["class"], options);
 
 		// Init exception manager
-		this.container["exceptionManager"].events.addEventHandler("error", (sender, e, ex) => {
+		this.container["errorManager"].events.addEventHandler("error", (sender, e, ex) => {
 			let error = {
 				"type":		"error",
 				"message":	ex.message,
@@ -199,12 +199,12 @@ export default class App
 				if (error.reason instanceof XMLHttpRequest)
 				{
 					e.message = error.reason.statusText;
-					error.reason.name = "XMLHttpRequest";
 				}
 				else
 				{
 					e.message = error.reason.message;
 				}
+				error.reason.name = this.__getErrorName(error.reason);
 			}
 			else
 			{
@@ -227,6 +227,8 @@ export default class App
 		window.addEventListener("error", (error, file, line, col) => {
 			let e = {};
 
+			error.name = this.__getErrorName(error);
+
 			e.type = "error";
 			e.message = error.message;
 			e.file = error.filename;
@@ -246,29 +248,71 @@ export default class App
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Get an error name for the given error object.
+	 *
+	 * @param	{Object}		e					Error object.
+	 *
+	 * @return  {String}		Error name.
+	 */
+	__getErrorName(e)
+	{
+
+		let name;
+
+		if (e instanceof TypeError)
+		{
+			name = "TypeError";
+		}
+		else if (e instanceof XMLHttpRequest)
+		{
+			name = "AjaxError";
+		}
+		else if (e instanceof EvalError)
+		{
+			name = "EvalError";
+		}
+		else if (e instanceof InternalError)
+		{
+			name = "InternalError";
+		}
+		else if (e instanceof RangeError)
+		{
+			name = "RangeError";
+		}
+		else if (e instanceof ReferenceError)
+		{
+			name = "ReferenceError";
+		}
+		else if (e instanceof SyntaxError)
+		{
+			name = "SyntaxError";
+		}
+		else if (e instanceof URIError)
+		{
+			name = "URIError";
+		}
+
+		return name;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Handle an exeption.
 	 *
-	 * @param	{object}		e					Error object.
+	 * @param	{Object}		e					Error object.
 	 */
 	__handleException(e)
 	{
 
-		try
+		if (this.container["errorManager"] && this.container["errorManager"].plugins.length > 0)
 		{
-			if (this.container["exceptionManager"] && this.container["exceptionManager"].plugins.length > 0)
-			{
-				this.container["exceptionManager"].handle(e);
-			}
-			else
-			{
-				console.error("[" + e.type + "] " + e.message);
-				console.error("Error details below:");
-				console.error((e.object ? e.object : e));
-			}
+			this.container["errorManager"].handle(e);
 		}
-		catch(e)
+		else
 		{
-			console.error(`App.__handleException(): An exception in error handler. e='${e.toString()}'`);
+			console.error(e);
 		}
 
 	}
