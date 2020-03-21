@@ -8,11 +8,13 @@
  */
 // =============================================================================
 
-/**
- * App class.
- */
+import {NoClassError} from './error/errors';
+
+// =============================================================================
+//	App class
+// =============================================================================
+
 export default class App
-//class App
 {
 
 	// -------------------------------------------------------------------------
@@ -131,7 +133,7 @@ export default class App
 	}
 
 	/*
-	broadcast(eventName)
+	broadcastEvent(eventName)
 	{
 
 		this.container["components"].forEach((component) => {
