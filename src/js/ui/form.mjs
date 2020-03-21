@@ -1,0 +1,520 @@
+// =============================================================================
+/**
+ * Bitsmist WebView - Javascript Web Client Framework
+ *
+ * @copyright		Masaki Yasutake
+ * @link			https://bitsmist.com/
+ * @license			https://github.com/bitsmist/bitsmist/blob/master/LICENSE
+ */
+// =============================================================================
+
+import FormUtil from '../util/form-util';
+import Pad from './pad';
+
+// =============================================================================
+//	Form class
+// =============================================================================
+
+export default class Form extends Pad
+{
+
+	// -------------------------------------------------------------------------
+	//  Constructor
+	// -------------------------------------------------------------------------
+
+	/**
+     * Constructor.
+     *
+	 * @param	{string}		componentName		Component name.
+	 * @param	{array}			options				Options for the component.
+     */
+	constructor(componentName, options)
+	{
+
+		super(componentName, options);
+		this.target;
+		this.item = {};
+
+		// Init system event handlers
+		this.events.addEventHandler("_clone", this.__initFormOnClone);
+
+	};
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	/*
+	refresh(id)
+	{
+
+		this.fill(id);
+		return super.refresh(id);
+
+	}
+	*/
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Build form.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	build(items)
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].build(items);
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Fill form with data.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	fill()
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].fill();
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clear form.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	clear()
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].clear();
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Validate form.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	validate()
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].validate();
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Submit form.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	submit()
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].submit();
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get fields value.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	getFields()
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].getFields();
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Privates (Bind to clone)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init after clone completed.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+ 	 * @param	{Object}		ex					Extra info.
+	 */
+	__initFormOnClone(sender, e, ex)
+	{
+
+		// extend clone
+		ex.clone.cancelSubmit = false;
+		ex.clone.build= this.__build.bind(ex.clone);
+		ex.clone.fill = this.__fill.bind(ex.clone);
+		ex.clone.clear= this.__clear.bind(ex.clone);
+		ex.clone.validate = this.__validate.bind(ex.clone);
+		ex.clone.submit= this.__submit.bind(ex.clone);
+		ex.clone.getFields= this.__getFields.bind(ex.clone);
+		ex.clone.__autoLoadData = this.__autoLoadData.bind(ex.clone);
+
+		// default buttons
+		let buttonOptions;
+
+		// submit
+		buttonOptions = this.getOption("defaultSubmit");
+		if (buttonOptions)
+		{
+			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
+			elements.forEach((element) => {
+				this.events.addHtmlEventHandler(element, "click", this, this.__defaultSubmit, {"clone":ex.clone, "options":buttonOptions});
+			});
+		}
+
+		// cancel
+		buttonOptions = this.getOption("defaultCancel");
+		if (buttonOptions)
+		{
+			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
+			elements.forEach((element) => {
+				this.events.addHtmlEventHandler(element, "click", this, this.__defaultCancel, {"clone":ex.clone, "options":buttonOptions});
+			});
+		}
+
+		// clear
+		buttonOptions = this.getOption("defaultClear");
+		if (buttonOptions)
+		{
+			let target = (buttonOptions["target"] ? buttonOptions["target"] : "");
+			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
+			elements.forEach((element) => {
+				this.events.addHtmlEventHandler(element, "click", this, this.__defaultClear, {"clone":ex.clone, "target": target, "options":buttonOptions});
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Privates (Bind to elemnt)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Default submit.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+ 	 * @param	{Object}		ex					Extra info.
+	 */
+	__defaultSubmit(sender, e, ex)
+	{
+
+		let clone = ex.clone;
+		ex.clone.submit().then(() => {
+			if (ex["options"]["autoClose"])
+			{
+				if (clone.isModal)
+				{
+					clone.modalResult["result"] = true;
+				}
+				clone.close();
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Default cancel.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+ 	 * @param	{Object}		ex					Extra info.
+	 */
+	__defaultCancel(sender, e, ex)
+	{
+
+		let clone = ex["clone"];
+		clone.modalResult["result"] = false;
+		clone.close();
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Default clear.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+ 	 * @param	{Object}		ex					Extra info.
+	 */
+	__defaultClear(sender, e, ex)
+	{
+
+		let clone = ex.clone;
+		let target;
+
+		if (ex.target)
+		{
+			target = sender.getAttribute(ex.target);
+		}
+
+		clone.clear(target);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Privates (Bind to clone)
+	// -------------------------------------------------------------------------
+
+	/**
+     * Build the form.
+	 *
+	 * @param	{Object}			items				Form values.
+     */
+	__build(items)
+	{
+
+		Object.keys(items).forEach((key) => {
+			FormUtil.buildFields(this.element, key, items[key]);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Fill the form.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	__fill()
+	{
+
+		return new Promise((resolve, reject) => {
+
+			// Clear fields
+			if (this.parent.getOption("autoClear"))
+			{
+				this.clear();
+			}
+
+			this.parent.events.trigger("target", this, {"clone":this}).then(() => {
+				let promise;
+
+				// Auto load data
+				if (this.parent.getOption("autoLoad"))
+				{
+					promise = this.__autoLoadData();
+				}
+				else
+				{
+					promise = this.parent.events.trigger("fetch", this, {"clone":this});
+				}
+
+				// Call events & Fill
+				Promise.all([promise]).then(() => {
+					return this.parent.events.trigger("format", this, {"clone":this});
+				}).then(() => {
+					return this.parent.events.trigger("beforeFill", this, {"clone":this});
+				}).then(() => {
+					FormUtil.setFields(this.element, this.parent.item, this.parent.container["masters"]);
+					return this.parent.events.trigger("fill", this, {"clone":this});
+				}).then(() => {
+					resolve();
+				});
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Clear the form.
+	 *
+	 * @param	{string}		target				Target.
+     */
+	__clear(target)
+	{
+
+		return FormUtil.clearFields(this.element, target);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Validate.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	__validate()
+	{
+
+		return new Promise((resolve, reject) => {
+			this.parent.events.trigger("beforeValidate", this, {"clone":this}).then(() => {
+				let ret = true;
+				let form = this.element.querySelector("form");
+
+				if (form)
+				{
+					ret = form.reportValidity();
+				}
+
+				if (!ret)
+				{
+					this.cancelSubmit = true;
+				}
+				return this.parent.events.trigger("validate", this, {"clone":this});
+			}).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Submit the form.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	__submit()
+	{
+
+		return new Promise((resolve, reject) => {
+			this.cancelSubmit = false;
+			this.parent.item = this.getFields();
+
+			this.validate().then(() => {
+				if (!this.cancelSubmit)
+				{
+					this.parent.events.trigger("formatSubmit", this, {"clone":this}).then(() => {
+						return this.parent.events.trigger("beforeSubmit", this, {"clone":this});
+					}).then(() => {
+						if (!this.cancelSubmit)
+						{
+							return this.parent.events.trigger("submit", this, {"clone":this});
+						}
+					}).then(() => {
+						resolve();
+					});
+				}
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Get the form values.
+	 *
+	 * @return  {array}			Form values.
+     */
+	__getFields()
+	{
+
+		return FormUtil.getFields(this.element);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Load data via API.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	__autoLoadData()
+	{
+
+		return new Promise((resolve, reject) => {
+			this.parent.resource.getItem(this.parent.target).then((data) => {
+				this.parent.item = data["data"][0];
+				resolve();
+			});
+		});
+
+	}
+
+}
