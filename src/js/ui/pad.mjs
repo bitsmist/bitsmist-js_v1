@@ -40,6 +40,7 @@ export default class Pad extends Component
 		let extraOptions = this._getOptions();
 		Object.assign(this.options, extraOptions);
 
+
 		// Load pad specific components info
 		this.components = this._getComponents();
 
@@ -105,7 +106,7 @@ export default class Pad extends Component
 				this.__addBitsmistEventHandlers(component, this.components[componentName]["events"]);
 
 				// Auto open
-				if ("autoOpen" in options && options["autoOpen"])
+				if ("autoOpen" in component.options && component.options["autoOpen"])
 				{
 					promise = component.open();
 				}
