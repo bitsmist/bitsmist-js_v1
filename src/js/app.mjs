@@ -205,7 +205,7 @@ export default class App
 				e.message = error;
 			}
 			e.type = error.type;
-			e.name = this.__getErrorName(error.reason);
+			e.name = this.__getErrorName(error);
 			e.filename = "";
 			e.funcname = ""
 			e.lineno = "";
@@ -215,28 +215,31 @@ export default class App
 
 			this.__handleException(e);
 
-			//return false;
-			return true;
+			return false;
+			//return true;
 		});
 
 		window.addEventListener("error", (error, file, line, col) => {
 			let e = {};
 
-			error.name = this.__getErrorName(error);
-
 			e.type = "error";
-			e.name = error.error.name;
+			e.name = this.__getErrorName(error);
 			e.message = error.message;
 			e.file = error.filename;
 			e.line = error.lineno;
 			e.col = error.colno;
-			e.stack = error.error.stack;
-			e.object = error.error;
+			if (error.error)
+			{
+				e.stack = error.error.stack;
+				e.object = error.error;
+			}
+
+			console.log(e);
 
 			this.__handleException(e);
 
-			//return false;
-			return true;
+			return false;
+			//return true;
 		});
 
 	}
@@ -246,14 +249,28 @@ export default class App
 	/**
 	 * Get an error name for the given error object.
 	 *
-	 * @param	{Object}		e					Error object.
+	 * @param	{Object}		error				Error object.
 	 *
 	 * @return  {String}		Error name.
 	 */
-	__getErrorName(e)
+	__getErrorName(error)
 	{
 
 		let name;
+		let e;
+
+		if (error.reason)
+		{
+			e = error.reason;
+		}
+		else if (error.error)
+		{
+			e = error.error;
+		}
+		else
+		{
+			e = error.message;
+		}
 
 		if (e.name)
 		{
@@ -292,6 +309,14 @@ export default class App
 		else if (e instanceof URIError)
 		{
 			name = "URIError";
+		}
+		else
+		{
+			let pos = e.indexOf(":");
+			if (pos > -1)
+			{
+				name = e.substring(0, pos);
+			}
 		}
 
 		return name;
