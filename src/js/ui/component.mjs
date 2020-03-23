@@ -40,7 +40,7 @@ export default class Component
 		this.shadows = {};
 
 		// Options
-		let defaults = { "autoRefresh":true, "templateName":componentName };
+		let defaults = { "templateName":componentName };
 		this.options = Object.assign( {}, defaults, (options ? options : {}) );
 
 	}
