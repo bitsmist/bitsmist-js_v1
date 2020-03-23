@@ -196,7 +196,7 @@ export default class EventHandler
 		catch(error)
 		{
 			e  = document.createEvent('CustomEvent');
-			e.initCustomEvent(eventName, false, false);
+			e.initCustomEvent(eventName, false, false, null);
 		}
 
 		return this.__callEventHandler(eventName, e, options);

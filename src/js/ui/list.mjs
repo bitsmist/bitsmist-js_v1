@@ -247,6 +247,11 @@ export default class List extends Pad
 			let templateName = this.row.options["templateName"];
 			rootNode.appendChild(this.row.clone("", templateName));
 			let element = rootNode.lastElementChild;
+			if (!element)
+			{
+				let elements = rootNode.querySelectorAll("li");
+				element = elements[elements.length - 1];
+			}
 			let chain = Promise.resolve();
 
 			this.rows.push(element);
