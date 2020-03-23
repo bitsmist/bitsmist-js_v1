@@ -36,10 +36,8 @@ export default class Pad extends Component
 		this.parent;
 		this.plugins = {};
 
-		// Load pad specific options
-		let extraOptions = this._getOptions();
-		Object.assign(this.options, extraOptions);
-
+		// Load pad specific options and merge
+		this.options = Object.assign(this._getOptions(), this.options);
 
 		// Load pad specific components info
 		this.components = this._getComponents();
@@ -98,12 +96,6 @@ export default class Pad extends Component
 					this.components[componentName] = {};
 				}
 				this.components[componentName].object = component;
-
-				// Merge options
-				//Object.assign(component.options, this.components[componentName]);
-
-				// Merge event handlers
-				this.__addBitsmistEventHandlers(component, this.components[componentName]["events"]);
 
 				// Auto open
 				if ("autoOpen" in component.options && component.options["autoOpen"])
