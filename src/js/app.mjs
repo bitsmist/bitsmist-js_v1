@@ -234,8 +234,6 @@ export default class App
 				e.object = error.error;
 			}
 
-			console.log(e);
-
 			this.__handleException(e);
 
 			return false;
