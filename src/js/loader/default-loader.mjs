@@ -82,6 +82,12 @@ export default class DefaultLoader
 		let specCommon;
 		let spec;
 
+		if (!routeInfo["resourceName"])
+		{
+			// No route
+			throw new NoRouteError(`No route. url=${url}`);
+		}
+
 		return new Promise((resolve, reject) => {
 			let promises = [];
 			let responseCommon;

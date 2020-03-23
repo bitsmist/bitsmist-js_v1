@@ -199,13 +199,13 @@ export default class App
 				{
 					e.message = error.reason.message;
 				}
-				error.reason.name = this.__getErrorName(error.reason);
 			}
 			else
 			{
 				e.message = error;
 			}
 			e.type = error.type;
+			e.name = this.__getErrorName(error.reason);
 			e.filename = "";
 			e.funcname = ""
 			e.lineno = "";
@@ -225,12 +225,13 @@ export default class App
 			error.name = this.__getErrorName(error);
 
 			e.type = "error";
+			e.name = error.error.name;
 			e.message = error.message;
 			e.file = error.filename;
 			e.line = error.lineno;
 			e.col = error.colno;
-			e.stack = error.stack;
-			e.object = error;
+			e.stack = error.error.stack;
+			e.object = error.error;
 
 			this.__handleException(e);
 

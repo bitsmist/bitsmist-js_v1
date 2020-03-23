@@ -35,17 +35,6 @@ export class BaseError extends Error
 		if (Error.captureStackTrace) {
 			Error.captureStackTrace(this, constructorOpt);
 		}
-		else
-		{
-			try
-			{
-				throw new Error();
-			}
-			catch(e)
-			{
-				this.stack = e.stack;
-			}
-		}
 
 		this.name = errorName;
 

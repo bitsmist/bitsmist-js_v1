@@ -52,7 +52,7 @@ export default class ErrorManager extends ServiceManager
 
 		for (let i = 0; i < this.plugins.length; i++)
 		{
-			if (this.plugins[i].target == "*" || this.plugins[i].target.indexOf(e.object.name) > -1)
+			if (this.plugins[i].target == "*" || this.plugins[i].target.indexOf(e.name) > -1)
 			{
 				this.plugins[i].handle.call(this.plugins[i], e);
 			}
