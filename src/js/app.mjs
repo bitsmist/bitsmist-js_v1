@@ -119,8 +119,7 @@ export default class App
 		{
 			if (e instanceof TypeError)
 			{
-				let message = `Class not found. componentName=${componentName}`;
-				throw new NoClassError(message);
+				throw new NoClassError(`Class not found. componentName=${componentName}`);
 			}
 			else
 			{

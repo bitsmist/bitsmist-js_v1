@@ -31,8 +31,7 @@ export default class EventHandler
 
 		this.component = component;
 		this.container = this.component.container;
-	//	this.events = new EventTarget();
-		this.callbacks = {};
+		this.listeners = {};
 
 	}
 
@@ -47,35 +46,19 @@ export default class EventHandler
 	 * @param	{string}		events				Events.
 	 * @param	{function}		callback			Function called when the event triggered.
 	 */
-	/*
-	addEventHandler(event, callback)
+	addEventHandler(events, handler)
 	{
 
-		if (typeof callback === "function")
-		{
-			this.addEventListener("event", callback);
-		}
-		else
-		{
-			throw new NotValidFunctionError(`Event handler is not a function. name=${this.component.name}, events=${events}`);
-		}
-
-	}
-	*/
-
-	addEventHandler(events, callback)
-	{
-
-		if (typeof callback === "function")
+		if (typeof handler === "function")
 		{
 			let e = events.split(" ");
 			for (let i = 0;  i < e.length; i++)
 			{
-				if (!this.callbacks[e[i]])
+				if (!this.listeners[e[i]])
 				{
-					this.callbacks[e[i]] = [];
+					this.listeners[e[i]] = [];
 				}
-				this.callbacks[e[i]].push(callback);
+				this.listeners[e[i]].push(handler);
 			}
 		}
 		else
@@ -90,19 +73,18 @@ export default class EventHandler
 	/**
      * Add an Html event handler.
 	 *
-	 * @param	{Object}		element					HTML element.
-	 * @param	{string}		eventName				Event name.
-	 * @param	{Object}		origin					Object which set this event.
-	 * @param	{function}		handler					Event handler.
+	 * @param	{HTMLElement}	element					HTML element.
+	 * @param	{String}		eventName				Event name.
+	 * @param	{Function}		handler					Event handler.
 	 * @param	{Object}		options					Options passed to elements.
      */
-	addHtmlEventHandler(element, eventName, origin, handler, options)
+	addHtmlEventHandler(element, eventName, handler, options)
 	{
 
 		if (typeof handler === "function")
 		{
-			element.addEventListener(eventName, this.__callNativeEventHandler);
-			element.detail = { "origin": origin, "handler": handler, "options":options };
+			element.addEventListener(eventName, this.__callHtmlEventHandler);
+			element.detail = { "origin": this.component, "handler": handler, "options":options };
 		}
 		else
 		{
@@ -114,37 +96,25 @@ export default class EventHandler
     // -------------------------------------------------------------------------
 
 	/**
-	 * Clear event handlers for the event.
+	 * Remove an event handlers for the event.
 	 *
-	 * @param	{string}		eventName				Event name.
+	 * @param	{String}		eventName				Event name.
+	 * @param	{Function}		handler					Handler to remove.
 	 */
-	clearEventHandler(eventName)
+	removeEventHandler(eventName, handler)
 	{
 
-		this.callbacks[eventName] = null;
-
-	}
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Get event handlers count for the event.
-	 *
-	 * @param	{string}		eventName				Event name.
-	 *
-	 * @return  {integer}		Event handlers count.
-	 */
-	getCount(eventName)
-	{
-
-		let ret = 0;
-
-		if (eventName in this.callbacks)
+		if (type in this.listeners)
 		{
-			ret = this.callbacks[eventName].length
+			for (let i = 0; i < this.listeners[type].length; i++)
+			{
+				if (this.listeners[type][i] === listener)
+				{
+					this.listeners[type].splice(i, 1);
+					return;
+				}
+			}
 		}
-
-		return ret;
 
 	}
 
@@ -153,34 +123,10 @@ export default class EventHandler
 	/**
 	 * Trigger the event.
 	 *
-	 * @param	{string}		eventName				Event name to trigger.
-	 * @param	{object}		sender					Object which triggered the event.
-	 * @param	{array}			options					Event parameter options.
+	 * @param	{String}		eventName				Event name to trigger.
+	 * @param	{Object}		sender					Object which triggered the event.
+	 * @param	{Object}		options					Event parameter options.
 	 */
-	/*
-	trigger(eventName, sender, options)
-	{
-
-		options = options || {};
-		options["component"] = sender;
-		options["eventName"] = eventName;
-		let e = null;
-
-		try
-		{
-			e = new CustomEvent(eventName);
-		}
-		catch(error)
-		{
-			e  = document.createEvent('CustomEvent');
-			e.initCustomEvent(eventName, false, false);
-		}
-
-		return this.__callEventHandler(eventName, e, options);
-
-	}
-	*/
-
 	trigger(eventName, sender, options)
 	{
 
@@ -210,8 +156,8 @@ export default class EventHandler
 	/**
 	 * Call event handlers for the event.
 	 *
-	 * @param	{string}		eventName				Event name.
-	 * @param	{object}		e						Event parameter.
+	 * @param	{String}		eventName				Event name.
+	 * @param	{Object}		e						Event parameter.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
@@ -221,14 +167,14 @@ export default class EventHandler
 		return new Promise((resolve, reject) => {
 			let chain = Promise.resolve();
 
-			if (this.callbacks[eventName])
+			if (this.listeners[eventName])
 			{
-				for (let i = 0; i < this.callbacks[eventName].length; i++)
+				for (let i = 0; i < this.listeners[eventName].length; i++)
 				{
 					console.debug(`EventHandler.__callEventHandler(): Calling event handler. name=${this.component.name}, eventName=${eventName}, index=${i}`);
 
 					chain = chain.then(() => {
-						return (this.callbacks[eventName][i]).call(this.component, this.component, e, options);
+						return (this.listeners[eventName][i]).call(this.component, this.component, e, options);
 					});
 				}
 			}
@@ -246,9 +192,9 @@ export default class EventHandler
 	 * Call event handlers for the HTML element.
 	 * This function is called by native javascript, so "this" is bind to a caller element.
 	 *
-	 * @param	{object}		e						Event parameter.
+	 * @param	{Object}		e						Event parameter.
 	 */
-	__callNativeEventHandler(e)
+	__callHtmlEventHandler(e)
 	{
 
 		this.detail["handler"].call(this.detail["origin"], this, e, this.detail.options);
@@ -259,6 +205,5 @@ export default class EventHandler
 		}
 
 	}
-
 
 }
