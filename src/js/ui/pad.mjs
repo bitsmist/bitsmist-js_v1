@@ -321,7 +321,7 @@ export default class Pad extends Component
 		if (events)
 		{
 			Object.keys(events).forEach((eventName) => {
-				this.events.addHtmlEventHandler(element, eventName, this, events[eventName], options);
+				this.events.addHtmlEventHandler(element, eventName, events[eventName], options);
 			});
 		}
 
