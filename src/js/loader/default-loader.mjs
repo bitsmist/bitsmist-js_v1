@@ -10,8 +10,6 @@
 
 import AjaxUtil from '../util/ajax-util';
 import {NoRouteError, NoClassError, NotValidFunctionError} from '../error/errors';
-import ServiceManager from '../manager/service-manager';
-import ErrorManager from '../manager/error-manager';
 import MasterUtil from '../util/master-util';
 import ResourceUtil from '../util/resource-util';
 
