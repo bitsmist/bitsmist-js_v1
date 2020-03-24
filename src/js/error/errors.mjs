@@ -86,7 +86,7 @@ export class NoNodeError extends BaseError
 	constructor(message)
 	{
 
-		super("NoNodeError", {"message":message, "constructorOpt": NoRouteError});
+		super("NoNodeError", {"message":message, "constructorOpt": NoNodeError});
 
 	}
 
@@ -96,7 +96,7 @@ export class NoNodeError extends BaseError
 //	No class error class
 // =============================================================================
 
-export class NoClassError extends Error
+export class NoClassError extends BaseError
 {
 
 	// -------------------------------------------------------------------------
@@ -111,7 +111,7 @@ export class NoClassError extends Error
 	constructor(message)
 	{
 
-		super("NoClassError", {"message":message, "constructorOpt": NoRouteError});
+		super("NoClassError", {"message":message, "constructorOpt": NoClassError});
 
 	}
 
@@ -121,7 +121,7 @@ export class NoClassError extends Error
 //	No method error class
 // =============================================================================
 
-export class NoMethodError extends Error
+export class NoMethodError extends BaseError
 {
 
 	// -------------------------------------------------------------------------
@@ -136,7 +136,7 @@ export class NoMethodError extends Error
 	constructor(message)
 	{
 
-		super("NoMethodError", {"message":message, "constructorOpt": NoRouteError});
+		super("NoMethodError", {"message":message, "constructorOpt": NoMethodError});
 
 	}
 
@@ -146,7 +146,7 @@ export class NoMethodError extends Error
 //	No resourc error class
 // =============================================================================
 
-export class NoResourceError extends Error
+export class NoResourceError extends BaseError
 {
 
 	// -------------------------------------------------------------------------
@@ -161,7 +161,7 @@ export class NoResourceError extends Error
 	constructor(message)
 	{
 
-		super("NoResourceError", {"message":message, "constructorOpt": NoRouteError});
+		super("NoResourceError", {"message":message, "constructorOpt": NoResourceError});
 
 	}
 
@@ -171,7 +171,7 @@ export class NoResourceError extends Error
 //	Not valid function error class
 // =============================================================================
 
-export class NotValidFunctionError extends Error
+export class NotValidFunctionError extends BaseError
 {
 
 	// -------------------------------------------------------------------------
@@ -186,7 +186,7 @@ export class NotValidFunctionError extends Error
 	constructor(message)
 	{
 
-		super("NotValidFunctionError", {"message":message, "constructorOpt": NoRouteError});
+		super("NotValidFunctionError", {"message":message, "constructorOpt": NotValidFunctionError});
 
 	}
 
