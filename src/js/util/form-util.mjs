@@ -401,6 +401,7 @@ export default class FormUtil
 					console.error(element.validity);
 					if ((element.validity && element.validity.valid == false) || isNaN(element.value))
 					{
+						element.style.border = "solid 3px red";
 						ret = false;
 					}
 					break;
