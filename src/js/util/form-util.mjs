@@ -379,4 +379,36 @@ export default class FormUtil
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+     * Report validity of the form.
+     *
+	 * @param	{HTMLElement}	rootNode			Root node to check.
+	 *
+	 * @return  {Boolean}		True:OK, False:NG.
+     */
+	static reportValidity(rootNode)
+	{
+
+		let ret = true;
+
+		rootNode.querySelectorAll("input").forEach((element) => {
+			let type = element.getAttribute("type");
+			switch (type)
+			{
+				case "number":
+					console.error(element.validity);
+					if ((element.validity && element.validity.valid == false) || isNaN(element.value))
+					{
+						ret = false;
+					}
+					break;
+			}
+		});
+
+		return ret;
+
+	}
+
 }

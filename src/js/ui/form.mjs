@@ -243,7 +243,7 @@ export default class Form extends Pad
 		{
 			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
 			elements.forEach((element) => {
-				this.events.addHtmlEventHandler(element, "click", this, this.__defaultSubmit, {"clone":ex.clone, "options":buttonOptions});
+				this.events.addHtmlEventHandler(element, "click", this.__defaultSubmit, {"clone":ex.clone, "options":buttonOptions});
 			});
 		}
 
@@ -253,7 +253,7 @@ export default class Form extends Pad
 		{
 			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
 			elements.forEach((element) => {
-				this.events.addHtmlEventHandler(element, "click", this, this.__defaultCancel, {"clone":ex.clone, "options":buttonOptions});
+				this.events.addHtmlEventHandler(element, "click", this.__defaultCancel, {"clone":ex.clone, "options":buttonOptions});
 			});
 		}
 
@@ -264,7 +264,7 @@ export default class Form extends Pad
 			let target = (buttonOptions["target"] ? buttonOptions["target"] : "");
 			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
 			elements.forEach((element) => {
-				this.events.addHtmlEventHandler(element, "click", this, this.__defaultClear, {"clone":ex.clone, "target": target, "options":buttonOptions});
+				this.events.addHtmlEventHandler(element, "click", this.__defaultClear, {"clone":ex.clone, "target": target, "options":buttonOptions});
 			});
 		}
 
@@ -434,9 +434,16 @@ export default class Form extends Pad
 				let ret = true;
 				let form = this.element.querySelector("form");
 
-				if (form)
+				if (this.parent.getOption("autoValidate"))
 				{
-					ret = form.reportValidity();
+					if (form && form.reportValidity)
+					{
+						ret = form.reportValidity();
+					}
+					else
+					{
+						ret = FormUtil.reportValidity(this.element);
+					}
 				}
 
 				if (!ret)
