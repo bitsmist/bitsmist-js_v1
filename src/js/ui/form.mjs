@@ -236,36 +236,40 @@ export default class Form extends Pad
 
 		// default buttons
 		let buttonOptions;
+		let defaultButtons = this.getOption("defaultButtons");
 
-		// submit
-		buttonOptions = this.getOption("defaultSubmit");
-		if (buttonOptions)
+		if (defaultButtons)
 		{
-			let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
-			elements.forEach((element) => {
-				this.events.addHtmlEventHandler(element, "click", this.__defaultSubmit, {"clone":ex.clone, "options":buttonOptions});
-			});
-		}
+			// submit
+			buttonOptions = defaultButtons["submit"];
+			if (buttonOptions)
+			{
+				let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
+				elements.forEach((element) => {
+					this.events.addHtmlEventHandler(element, "click", this.__defaultSubmit, {"clone":ex.clone, "options":buttonOptions});
+				});
+			}
 
-		// cancel
-		buttonOptions = this.getOption("defaultCancel");
-		if (buttonOptions)
-		{
-			let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
-			elements.forEach((element) => {
-				this.events.addHtmlEventHandler(element, "click", this.__defaultCancel, {"clone":ex.clone, "options":buttonOptions});
-			});
-		}
+			// cancel
+			buttonOptions = defaultButtons["cancel"];
+			if (buttonOptions)
+			{
+				let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
+				elements.forEach((element) => {
+					this.events.addHtmlEventHandler(element, "click", this.__defaultCancel, {"clone":ex.clone, "options":buttonOptions});
+				});
+			}
 
-		// clear
-		buttonOptions = this.getOption("defaultClear");
-		if (buttonOptions)
-		{
-			let target = (buttonOptions["target"] ? buttonOptions["target"] : "");
-			let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
-			elements.forEach((element) => {
-				this.events.addHtmlEventHandler(element, "click", this.__defaultClear, {"clone":ex.clone, "target": target, "options":buttonOptions});
-			});
+			// clear
+			buttonOptions = defaultButtons["clear"];
+			if (buttonOptions)
+			{
+				let target = (buttonOptions["target"] ? buttonOptions["target"] : "");
+				let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
+				elements.forEach((element) => {
+					this.events.addHtmlEventHandler(element, "click", this.__defaultClear, {"clone":ex.clone, "target": target, "options":buttonOptions});
+				});
+			}
 		}
 
 	}
