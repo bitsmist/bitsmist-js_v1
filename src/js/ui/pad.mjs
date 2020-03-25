@@ -164,10 +164,6 @@ export default class Pad extends Component
 		{
 			elements = rootElement.querySelectorAll(this.components[componentName]["rootNode"]);
 		}
-		else if ("group" in this.components[componentName])
-		{
-			elements = rootElement.querySelectorAll("[data-bm-group='" + this.components[componentName]["group"] + "']");
-		}
 		else
 		{
 			elements = rootElement.querySelectorAll("#" + componentName);

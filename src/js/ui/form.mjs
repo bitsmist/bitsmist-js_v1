@@ -241,7 +241,7 @@ export default class Form extends Pad
 		buttonOptions = this.getOption("defaultSubmit");
 		if (buttonOptions)
 		{
-			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
+			let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
 			elements.forEach((element) => {
 				this.events.addHtmlEventHandler(element, "click", this.__defaultSubmit, {"clone":ex.clone, "options":buttonOptions});
 			});
@@ -251,7 +251,7 @@ export default class Form extends Pad
 		buttonOptions = this.getOption("defaultCancel");
 		if (buttonOptions)
 		{
-			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
+			let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
 			elements.forEach((element) => {
 				this.events.addHtmlEventHandler(element, "click", this.__defaultCancel, {"clone":ex.clone, "options":buttonOptions});
 			});
@@ -262,7 +262,7 @@ export default class Form extends Pad
 		if (buttonOptions)
 		{
 			let target = (buttonOptions["target"] ? buttonOptions["target"] : "");
-			let elements = ex.clone.element.querySelectorAll(buttonOptions["buttons"]);
+			let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
 			elements.forEach((element) => {
 				this.events.addHtmlEventHandler(element, "click", this.__defaultClear, {"clone":ex.clone, "target": target, "options":buttonOptions});
 			});
