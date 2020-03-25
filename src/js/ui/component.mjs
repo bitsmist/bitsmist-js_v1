@@ -401,7 +401,7 @@ export default class Component
 				this.shadows[templateName].id = element.children[0].id;
 				this.shadows[templateName].element = element.children[0];
 				// }
-				console.debug(`Component.__appendTemplate(): Appended template. templateName=${templateName}, rootNode=${element}`);
+				console.debug(`Component.__appendTemplate(): Appended template. templateName=${templateName}, rootNode=${rootNode}`);
 
 				this.events.trigger("_append", this).then(() => {
 					return this.events.trigger("append", this);
