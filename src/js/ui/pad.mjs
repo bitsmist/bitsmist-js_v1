@@ -33,8 +33,8 @@ export default class Pad extends Component
 		super(componentName, options);
 
 		this.components;
-		this.parent;
 		this.plugins = {};
+		this.parent;
 
 		// Load pad specific options and merge
 		this.options = Object.assign(this._getOptions(), this.options);
@@ -43,17 +43,17 @@ export default class Pad extends Component
 		this.components = this._getComponents();
 
 		// Init system event handlers
+		this.events.addEventHandler("_initComponent", this.__initPadOnInitComponent);
 		this.events.addEventHandler("_append", this.__initPadOnAppend);
 		this.events.addEventHandler("_clone", this.__initPadOnClone);
 
-		// Init plugins
-		if (this.options.plugins)
-		{
-			this.events.addEventHandler("_initComponent", this.__initPlugins);
-		}
-
 		// Init user event handlers
-		this.__addBitsmistEventHandlers(this, this.options["events"]);
+		if (this.options["events"])
+		{
+			Object.keys(this.options["events"]).forEach((eventName) => {
+				this.events.addEventHandler(eventName, this.options["events"][eventName]);
+			});
+		}
 
 		// Init resource
 		if ("resource" in this.options && this.options["resource"])
@@ -91,14 +91,11 @@ export default class Pad extends Component
 
 			this.container["loader"].createComponent(componentName, options).then((component) => {
 				component.parent = this;
-				if (!this.components[componentName])
-				{
-					this.components[componentName] = {};
-				}
+				this.components[componentName] = (this.components[componentName] ? this.components[componentName] : {});
 				this.components[componentName].object = component;
 
 				// Auto open
-				if ("autoOpen" in component.options && component.options["autoOpen"])
+				if (component.getOption("autoOpen"))
 				{
 					promise = component.open();
 				}
@@ -107,6 +104,44 @@ export default class Pad extends Component
 					resolve();
 				});
 			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Add a plugin to the pad.
+     *
+	 * @param	{string}		componentName		Component name.
+	 * @param	{array}			options				Options for the component.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	addPlugin(pluginName, options)
+	{
+
+		return new Promise((resolve, reject) => {
+			options = ( options ? options : {} );
+			let className = ( "class" in options ? options["class"] : pluginName );
+			let plugin = null;
+
+			options["container"] = this.container;
+			options["component"] = this;
+			plugin = this.container["app"].createObject(className, options);
+			this.plugins[pluginName] = this.options["plugins"][pluginName];
+			this.plugins[pluginName].object = plugin;
+
+			Object.keys(plugin["features"]).forEach((featureName) => {
+				if (plugin.features[featureName].events)
+				{
+					plugin.features[featureName].events.forEach((eventName) => {
+						this.events.addEventHandler("_" + eventName, this.__callPluginEvent);
+					});
+				}
+			});
+
+			resolve(plugin);
 		});
 
 	}
@@ -125,7 +160,11 @@ export default class Pad extends Component
 
 		let elements;
 
-		if ("group" in this.components[componentName])
+		if ("rootNode" in this.components[componentName])
+		{
+			elements = rootElement.querySelectorAll(this.components[componentName]["rootNode"]);
+		}
+		else if ("group" in this.components[componentName])
 		{
 			elements = rootElement.querySelectorAll("[data-bm-group='" + this.components[componentName]["group"] + "']");
 		}
@@ -136,7 +175,12 @@ export default class Pad extends Component
 
 		for (let i = 0; i < elements.length; i++)
 		{
-			this.__addHtmlEventHandlers(elements[i], this.components[componentName]["events"], options);
+			if (this.components[componentName]["events"])
+			{
+				Object.keys(this.components[componentName]["events"]).forEach((eventName) => {
+					this.events.addHtmlEventHandler(elements[i], eventName, this.components[componentName]["events"][eventName], options);
+				});
+			}
 		}
 
 	}
@@ -175,7 +219,7 @@ export default class Pad extends Component
 	// -------------------------------------------------------------------------
 
 	/**
-     * Init sub components.  Called when the pad appended to a node.
+     * Init on append.
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
@@ -187,13 +231,12 @@ export default class Pad extends Component
 	{
 
 		return new Promise((resolve, reject) => {
+			// Add Bitsmist component
 			let chain = Promise.resolve();
-
 			Object.keys(this.components).forEach((componentName) => {
 				if ("class" in this.components[componentName])
 				{
 					chain = chain.then(() => {
-						// Add Bitsmist component
 						return this.addComponent(componentName, this.components[componentName]);
 					});
 				}
@@ -209,7 +252,7 @@ export default class Pad extends Component
 	// -------------------------------------------------------------------------
 
 	/**
-     * Init sub components.  Called when the pad cloned to a node.
+     * Init on clone.
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
@@ -220,12 +263,11 @@ export default class Pad extends Component
 	__initPadOnClone(sender, e, ex)
 	{
 
+		// Init HTML elments' event handlers
 		let options = {"clone":ex.clone};
-
 		Object.keys(this.components).forEach((componentName) => {
 			if (!("class" in this.components[componentName]))
 			{
-				// Init HTML elments' event handlers
 				this.initHtmlEvents(componentName, ex.clone.element, options);
 			}
 		});
@@ -235,7 +277,7 @@ export default class Pad extends Component
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init plugins.
+	 * Init on initComponent.
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
@@ -243,33 +285,16 @@ export default class Pad extends Component
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	__initPlugins(sender, e, ex)
+	__initPadOnInitComponent(sender, e, ex)
 	{
 
 		// Init plugins
-
-		let events = {};
-		let pluginOptions = {};
-		pluginOptions["container"] = this.container;
-		pluginOptions["component"] = this;
-
-		Object.keys(this.options["plugins"]).forEach((pluginName) => {
-			pluginOptions["options"] = this.options["plugins"][pluginName];
-			let className = this.options["plugins"][pluginName]["class"];
-			this.plugins[className] = this.container["app"].createObject(className, pluginOptions);
-			Object.keys(this.options["plugins"][pluginName]).forEach((featureName) => {
-				if (this.plugins[className].features[featureName])
-				{
-					this.plugins[className].features[featureName].events.forEach((eventName) => {
-						events[eventName] = true;
-					});
-				}
+		if (this.options["plugins"])
+		{
+			Object.keys(this.options["plugins"]).forEach((pluginName) => {
+				this.addPlugin(pluginName, this.options["plugins"][pluginName]);
 			});
-		});
-
-		Object.keys(events).forEach((eventName) => {
-			this.events.addEventHandler("_" + eventName, this.__callPluginEvent);
-		});
+		}
 
 	}
 
@@ -292,10 +317,10 @@ export default class Pad extends Component
 			let eventName = ex.eventName.substr(1);
 
 			Object.keys(this.plugins).forEach((pluginName) => {
-				if (this.plugins[pluginName].options["enabled"])
+				if (this.plugins[pluginName]["enabled"])
 				{
-					this.plugins[pluginName]["element"] = ex.clone.element;
-					promises.push(this.plugins[pluginName][eventName](sender, e, ex));
+					//this.plugins[pluginName].object["element"] = ex.clone.element;
+					promises.push(this.plugins[pluginName].object[eventName](sender, e, ex));
 				}
 			});
 
@@ -303,47 +328,6 @@ export default class Pad extends Component
 				resolve();
 			});
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Init HTML elements' event handler.
-	 *
-	 * @param	{HTMLElement}	element				HTMLElement.
-	 * @param	{Object}		events				Events info array.
-	 * @param	{Object}		options				Options to pass to html event.
-     */
-	__addHtmlEventHandlers(element, events, options)
-	{
-
-		if (events)
-		{
-			Object.keys(events).forEach((eventName) => {
-				this.events.addHtmlEventHandler(element, eventName, events[eventName], options);
-			});
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Init BitsMist components' event handler.
-	 *
-	 * @param	{Object}		component			Component.
-	 * @param	{Object}		events				Events info array.
-     */
-	__addBitsmistEventHandlers(component, events)
-	{
-
-		if (events)
-		{
-			Object.keys(events).forEach((eventName) => {
-				component.events.addEventHandler(eventName, events[eventName]);
-			});
-		}
 
 	}
 
