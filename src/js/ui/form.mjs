@@ -235,41 +235,22 @@ export default class Form extends Pad
 		ex.clone.__autoLoadData = this.__autoLoadData.bind(ex.clone);
 
 		// default buttons
-		let buttonOptions;
 		let defaultButtons = this.getOption("defaultButtons");
-
 		if (defaultButtons)
 		{
-			// submit
-			buttonOptions = defaultButtons["submit"];
-			if (buttonOptions)
-			{
-				let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
-				elements.forEach((element) => {
-					this.events.addHtmlEventHandler(element, "click", this.__defaultSubmit, {"clone":ex.clone, "options":buttonOptions});
-				});
-			}
+			let initElements = (options, handler) => {
+				if (options)
+				{
+					let elements = ex.clone.element.querySelectorAll(options["rootNode"]);
+					elements.forEach((element) => {
+						this.events.addHtmlEventHandler(element, "click", handler, {"clone":ex.clone, "options":options});
+					});
+				}
+			};
 
-			// cancel
-			buttonOptions = defaultButtons["cancel"];
-			if (buttonOptions)
-			{
-				let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
-				elements.forEach((element) => {
-					this.events.addHtmlEventHandler(element, "click", this.__defaultCancel, {"clone":ex.clone, "options":buttonOptions});
-				});
-			}
-
-			// clear
-			buttonOptions = defaultButtons["clear"];
-			if (buttonOptions)
-			{
-				let target = (buttonOptions["target"] ? buttonOptions["target"] : "");
-				let elements = ex.clone.element.querySelectorAll(buttonOptions["rootNode"]);
-				elements.forEach((element) => {
-					this.events.addHtmlEventHandler(element, "click", this.__defaultClear, {"clone":ex.clone, "target": target, "options":buttonOptions});
-				});
-			}
+			initElements(defaultButtons["submit"], this.__defaultSubmit);
+			initElements(defaultButtons["cancel"], this.__defaultCancel);
+			initElements(defaultButtons["clear"], this.__defaultClear);
 		}
 
 	}
@@ -335,9 +316,9 @@ export default class Form extends Pad
 		let clone = ex.clone;
 		let target;
 
-		if (ex.target)
+		if (ex.options.target)
 		{
-			target = sender.getAttribute(ex.target);
+			target = sender.getAttribute(ex.options.target);
 		}
 
 		clone.clear(target);
