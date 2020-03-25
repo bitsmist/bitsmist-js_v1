@@ -25,8 +25,8 @@ export default class Form extends Pad
 	/**
      * Constructor.
      *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{array}			options				Options for the component.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
      */
 	constructor(componentName, options)
 	{
@@ -48,8 +48,19 @@ export default class Form extends Pad
 	refresh(id)
 	{
 
-		this.fill(id);
-		return super.refresh(id);
+		return new Promise((resolve, reject) => {
+			let promise = Promise.resolve();
+			if (this.getOption("autoFillOnRefresh"))
+			{
+				promise = this.fill(id);
+			}
+
+			promise.then(() => {
+				return super.refresh(id);
+			}).then(() => {
+				resolve();
+			});
+		});
 
 	}
 	*/
@@ -58,6 +69,8 @@ export default class Form extends Pad
 
 	/**
 	 * Build form.
+	 *
+	 * @param	{Object}		items				Items to fill elements.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
