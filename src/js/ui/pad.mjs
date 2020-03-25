@@ -319,7 +319,6 @@ export default class Pad extends Component
 			Object.keys(this.plugins).forEach((pluginName) => {
 				if (this.plugins[pluginName]["enabled"])
 				{
-					//this.plugins[pluginName].object["element"] = ex.clone.element;
 					promises.push(this.plugins[pluginName].object[eventName](sender, e, ex));
 				}
 			});
