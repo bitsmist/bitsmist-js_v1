@@ -24,8 +24,8 @@ export default class Pad extends Component
 	/**
      * Constructor.
      *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{array}			options				Options for the component.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
      */
 	constructor(componentName, options)
 	{
@@ -75,8 +75,8 @@ export default class Pad extends Component
 	/**
      * Add a component to the pad.
      *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{array}			options				Options for the component.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
 	 *
 	 * @return  {Promise}		Promise.
      */
@@ -111,8 +111,8 @@ export default class Pad extends Component
 	/**
      * Add a plugin to the pad.
      *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{array}			options				Options for the component.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
 	 *
 	 * @return  {Promise}		Promise.
      */
@@ -186,7 +186,7 @@ export default class Pad extends Component
 	/**
      * Get Pad options.  Need to override.
 	 *
-	 * @return  {array}			Options.
+	 * @return  {Object}		Options.
      */
 	_getOptions()
 	{
