@@ -149,32 +149,32 @@ export default class Pad extends Component
 	// -------------------------------------------------------------------------
 
 	/**
-     * Init HTMLElement's event handler.
+     * Init sub component's html element's event handler.
 	 *
-	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		subComponentName	Sub component name.
 	 * @param	{HTMLElement}	rootElement			Component top node.
 	 * @param	{Options}		options				Options.
      */
-	initHtmlEvents(componentName, rootElement, options)
+	initHtmlEvents(subComponentName, rootElement, options)
 	{
 
 		let elements;
 
-		if ("rootNode" in this.components[componentName])
+		if ("rootNode" in this.components[subComponentName])
 		{
-			elements = rootElement.querySelectorAll(this.components[componentName]["rootNode"]);
+			elements = rootElement.querySelectorAll(this.components[subComponentName]["rootNode"]);
 		}
 		else
 		{
-			elements = rootElement.querySelectorAll("#" + componentName);
+			elements = rootElement.querySelectorAll("#" + subComponentName);
 		}
 
 		for (let i = 0; i < elements.length; i++)
 		{
-			if (this.components[componentName]["events"])
+			if (this.components[subComponentName]["events"])
 			{
-				Object.keys(this.components[componentName]["events"]).forEach((eventName) => {
-					this.events.addHtmlEventHandler(elements[i], eventName, this.components[componentName]["events"][eventName], options);
+				Object.keys(this.components[subComponentName]["events"]).forEach((eventName) => {
+					this.events.addHtmlEventHandler(elements[i], eventName, this.components[subComponentName]["events"][eventName], options);
 				});
 			}
 		}
