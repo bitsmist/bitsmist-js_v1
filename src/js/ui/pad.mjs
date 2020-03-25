@@ -32,15 +32,16 @@ export default class Pad extends Component
 
 		super(componentName, options);
 
-		this.components;
-		this.plugins = {};
 		this.parent;
 
 		// Load pad specific options and merge
 		this.options = Object.assign(this._getOptions(), this.options);
 
+		this.components = ( this.options["components"] ? this.options["components"] : {} );
+		this.plugins = ( this.options["plugins"] ? this.options["plugins"] : {} );
+
 		// Load pad specific components info
-		this.components = this._getComponents();
+//		this.components = this._getComponents();
 
 		// Init system event handlers
 		this.events.addEventHandler("_initComponent", this.__initPadOnInitComponent);
@@ -91,7 +92,7 @@ export default class Pad extends Component
 
 			this.container["loader"].createComponent(componentName, options).then((component) => {
 				component.parent = this;
-				this.components[componentName] = (this.components[componentName] ? this.components[componentName] : {});
+				this.components[componentName] = ( this.options["components"][componentName] ? this.options["components"][componentName] : {} );
 				this.components[componentName].object = component;
 
 				// Auto open
@@ -129,7 +130,7 @@ export default class Pad extends Component
 			options["container"] = this.container;
 			options["component"] = this;
 			plugin = this.container["app"].createObject(className, options);
-			this.plugins[pluginName] = this.options["plugins"][pluginName];
+			this.plugins[pluginName] = ( this.options["plugins"][pluginName] ? this.options["plugins"][pluginName] : {} );
 			this.plugins[pluginName].object = plugin;
 
 			Object.keys(plugin["features"]).forEach((featureName) => {
@@ -192,19 +193,6 @@ export default class Pad extends Component
      */
 	_getOptions()
 	{
-
-		return {};
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Get Pad subcomponent information.  Need to override.
-	 *
-	 * @return  {array}			Sub components information.
-     */
-	_getComponents(){
 
 		return {};
 
