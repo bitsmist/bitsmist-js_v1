@@ -40,9 +40,6 @@ export default class Pad extends Component
 		this.components = ( this.options["components"] ? this.options["components"] : {} );
 		this.plugins = ( this.options["plugins"] ? this.options["plugins"] : {} );
 
-		// Load pad specific components info
-//		this.components = this._getComponents();
-
 		// Init system event handlers
 		this.events.addEventHandler("_initComponent", this.__initPadOnInitComponent);
 		this.events.addEventHandler("_append", this.__initPadOnAppend);
