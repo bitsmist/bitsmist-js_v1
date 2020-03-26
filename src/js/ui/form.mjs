@@ -284,12 +284,15 @@ export default class Form extends Pad
 
 		let clone = ex.clone;
 		ex.clone.submit().then(() => {
+			// Modal result
+			if (clone.isModal)
+			{
+				clone.modalResult["result"] = true;
+			}
+
+			// Auto close
 			if (ex["options"]["autoClose"])
 			{
-				if (clone.isModal)
-				{
-					clone.modalResult["result"] = true;
-				}
 				clone.close();
 			}
 		});
@@ -309,7 +312,6 @@ export default class Form extends Pad
 	{
 
 		let clone = ex["clone"];
-		clone.modalResult["result"] = false;
 		clone.close();
 
 	}
