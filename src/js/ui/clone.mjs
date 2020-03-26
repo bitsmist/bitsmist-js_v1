@@ -110,7 +110,7 @@ export default class Clone
 				this.parent.options = Object.assign(this.parent.options, options);
 			}
 			this.isModal = true;
-			this.modalResult = {};
+			this.modalResult = {"result":false};
 			this.modalOptions = options;
 			this.modalPromise = { "resolve": resolve, "reject": reject };
 			this.open();
