@@ -130,13 +130,8 @@ export default class Pad extends Component
 			this.plugins[pluginName] = ( this.options["plugins"][pluginName] ? this.options["plugins"][pluginName] : {} );
 			this.plugins[pluginName].object = plugin;
 
-			Object.keys(plugin["features"]).forEach((featureName) => {
-				if (plugin.features[featureName].events)
-				{
-					plugin.features[featureName].events.forEach((eventName) => {
-						this.events.addEventHandler("_" + eventName, this.__callPluginEvent);
-					});
-				}
+			plugin["events"].forEach((eventName) => {
+				this.events.addEventHandler("_" + eventName, this.__callPluginEvent);
 			});
 
 			resolve(plugin);
