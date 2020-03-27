@@ -251,8 +251,7 @@ export default class Form extends Pad
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			let element = ex.clone.element;
-			this.events.addHtmlEventHandler(element, "keyup", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
+			this.events.addHtmlEventHandler(ex.clone.element, "keyup", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
 		}
 
 		// default buttons
@@ -293,18 +292,15 @@ export default class Form extends Pad
 		let key = e.key.toLowerCase()
 		if (ex.options.submit && key == ex.options.submit.key)
 		{
-			ex.options =  ex.options.submit;
-			this.__defaultSubmit(sender, e, ex);
+			this.__defaultSubmit(sender, e, {"clone":ex.clone, "options":ex.options.submit});
 		}
 		else if (ex.options.cancel && key == ex.options.cancel.key)
 		{
-			ex.options =  ex.options.cancel;
-			this.__defaultCancel(sender, e, ex);
+			this.__defaultCancel(sender, e, {"clone":ex.clone, "options":ex.options.cancel});
 		}
 		else if (ex.options.clear && key == ex.options.clear.key)
 		{
-			ex.options =  ex.options.clear;
-			this.__defaultClear(sender, e, ex);
+			this.__defaultClear(sender, e, {"clone":ex.clone, "options":ex.options.clear});
 		}
 
 	}
