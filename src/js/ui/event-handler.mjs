@@ -83,8 +83,25 @@ export default class EventHandler
 
 		if (typeof handler === "function")
 		{
-			element.addEventListener(eventName, this.__callHtmlEventHandler);
-			element.detail = { "origin": this.component, "handler": handler, "options":options };
+			let listeners;
+
+			if (!element.detail || !element.detail.listeners)
+			{
+				listeners = {};
+				element.detail = { "origin": this.component, "listeners": listeners };
+			}
+			else
+			{
+				listeners = element.detail.listeners;
+			}
+
+			if (!listeners[eventName])
+			{
+				listeners[eventName] = [];
+				element.addEventListener(eventName, this.__callHtmlEventHandler);
+			}
+
+			listeners[eventName].push({"handler":handler, "options":options});
 		}
 		else
 		{
@@ -197,12 +214,22 @@ export default class EventHandler
 	__callHtmlEventHandler(e)
 	{
 
-		this.detail["handler"].call(this.detail["origin"], this, e, this.detail.options);
+		let component = this.detail["origin"];
+		let listeners = this.detail["listeners"][e.type];
+		if (listeners)
+		{
+			for (let i = 0; i < listeners.length; i++)
+			{
+				listeners[i]["handler"].call(component, this, e, listeners[i]["options"]);
+			}
+		}
 
+		/*
 		if (!this.detail["propagate"])
 		{
 			e.stopPropagation();
 		}
+		*/
 
 	}
 
