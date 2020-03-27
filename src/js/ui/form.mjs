@@ -293,14 +293,17 @@ export default class Form extends Pad
 		let key = e.key.toLowerCase()
 		if (ex.options.submit && key == ex.options.submit.key)
 		{
+			ex.options =  ex.options.submit;
 			this.__defaultSubmit(sender, e, ex);
 		}
 		else if (ex.options.cancel && key == ex.options.cancel.key)
 		{
+			ex.options =  ex.options.cancel;
 			this.__defaultCancel(sender, e, ex);
 		}
 		else if (ex.options.clear && key == ex.options.clear.key)
 		{
+			ex.options =  ex.options.clear;
 			this.__defaultClear(sender, e, ex);
 		}
 
