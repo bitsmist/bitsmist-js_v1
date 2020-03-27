@@ -38,6 +38,7 @@ export default class Pad extends Component
 		this.options = Object.assign(this._getOptions(), this.options);
 
 		this.components = ( this.options["components"] ? this.options["components"] : {} );
+		this.elements = ( this.options["elements"] ? this.options["elements"] : {} );
 		this.plugins = ( this.options["plugins"] ? this.options["plugins"] : {} );
 
 		// Init system event handlers
@@ -89,7 +90,7 @@ export default class Pad extends Component
 
 			this.container["loader"].createComponent(componentName, options).then((component) => {
 				component.parent = this;
-				this.components[componentName] = ( this.options["components"][componentName] ? this.options["components"][componentName] : {} );
+				this.components[componentName] = ( this.components[componentName] ? this.components[componentName] : {} );
 				this.components[componentName].object = component;
 
 				// Auto open
@@ -142,36 +143,36 @@ export default class Pad extends Component
 	// -------------------------------------------------------------------------
 
 	/**
-     * Init sub component's html element's event handler.
+     * Init component's html element's event handler.
 	 *
-	 * @param	{String}		subComponentName	Sub component name.
+	 * @param	{String}		elementName			Element name.
 	 * @param	{HTMLElement}	rootElement			Component top node.
 	 * @param	{Options}		options				Options.
      */
-	initHtmlEvents(subComponentName, rootElement, options)
+	initHtmlEvents(elementName, rootElement, options)
 	{
 
 		let elements;
 
-		if (subComponentName == "_self")
+		if (elementName == "_self")
 		{
 			elements = [rootElement];
 		}
-		else if ("rootNode" in this.components[subComponentName])
+		else if ("rootNode" in this.elements[elementName])
 		{
-			elements = rootElement.querySelectorAll(this.components[subComponentName]["rootNode"]);
+			elements = rootElement.querySelectorAll(this.elements[elementName]["rootNode"]);
 		}
 		else
 		{
-			elements = rootElement.querySelectorAll("#" + subComponentName);
+			elements = rootElement.querySelectorAll("#" + elementName);
 		}
 
 		for (let i = 0; i < elements.length; i++)
 		{
-			if (this.components[subComponentName]["events"])
+			if (this.elements[elementName]["events"])
 			{
-				Object.keys(this.components[subComponentName]["events"]).forEach((eventName) => {
-					this.events.addHtmlEventHandler(elements[i], eventName, this.components[subComponentName]["events"][eventName], options);
+				Object.keys(this.elements[elementName]["events"]).forEach((eventName) => {
+					this.events.addHtmlEventHandler(elements[i], eventName, this.elements[elementName]["events"][eventName], options);
 				});
 			}
 		}
@@ -243,13 +244,11 @@ export default class Pad extends Component
 	__initPadOnClone(sender, e, ex)
 	{
 
-		// Init HTML elments' event handlers
 		let options = {"clone":ex.clone};
-		Object.keys(this.components).forEach((componentName) => {
-			if (!("class" in this.components[componentName]))
-			{
-				this.initHtmlEvents(componentName, ex.clone.element, options);
-			}
+
+		// Init HTML elments' event handlers
+		Object.keys(this.elements).forEach((elementName) => {
+				this.initHtmlEvents(elementName, ex.clone.element, options);
 		});
 
 	}

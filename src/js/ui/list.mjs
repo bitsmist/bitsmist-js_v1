@@ -141,11 +141,8 @@ export default class List extends Pad
 		let row = this.components[this.getOption("row")].object;
 
 		// Set HTML elements' event handlers after filling completed
-		Object.keys(row.components).forEach((componentName) => {
-			if (!("class" in row.components[componentName]))
-			{
-				row.initHtmlEvents(componentName, ex.clone.listRootNode);
-			}
+		Object.keys(row.elements).forEach((elementName) => {
+			row.initHtmlEvents(elementName, ex.clone.listRootNode);
 		});
 
 	}
