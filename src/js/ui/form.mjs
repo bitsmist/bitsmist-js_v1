@@ -247,6 +247,14 @@ export default class Form extends Pad
 		ex.clone.getFields= this.__getFields.bind(ex.clone);
 		ex.clone.__autoLoadData = this.__autoLoadData.bind(ex.clone);
 
+		// default keys
+		let defaultKeys = this.getOption("defaultKeys");
+		if (defaultKeys)
+		{
+			let element = ex.clone.element;
+			this.events.addHtmlEventHandler(element, "keyup", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
+		}
+
 		// default buttons
 		let defaultButtons = this.getOption("defaultButtons");
 		if (defaultButtons)
@@ -270,6 +278,34 @@ export default class Form extends Pad
 
 	// -------------------------------------------------------------------------
 	//  Privates (Bind to elemnt)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Default key event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+ 	 * @param	{Object}		ex					Extra info.
+	 */
+	__defaultKey(sender, e, ex)
+	{
+
+		let key = e.key.toLowerCase()
+		if (ex.options.submit && key == ex.options.submit.key)
+		{
+			this.__defaultSubmit(sender, e, ex);
+		}
+		else if (ex.options.cancel && key == ex.options.cancel.key)
+		{
+			this.__defaultCancel(sender, e, ex);
+		}
+		else if (ex.options.clear && key == ex.options.clear.key)
+		{
+			this.__defaultClear(sender, e, ex);
+		}
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
