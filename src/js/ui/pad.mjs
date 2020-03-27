@@ -153,7 +153,11 @@ export default class Pad extends Component
 
 		let elements;
 
-		if ("rootNode" in this.components[subComponentName])
+		if (subComponentName == "_self")
+		{
+			elements = [rootElement];
+		}
+		else if ("rootNode" in this.components[subComponentName])
 		{
 			elements = rootElement.querySelectorAll(this.components[subComponentName]["rootNode"]);
 		}
