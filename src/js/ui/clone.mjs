@@ -73,13 +73,13 @@ export default class Clone
 					return this.refresh();
 				}
 			}).then(() => {
-				return this.parent.events.trigger("_beforeOpen", this, {"clone":this});
+				return this.parent.listener.trigger("_beforeOpen", this, {"clone":this});
 			}).then(() => {
-				return this.parent.events.trigger("beforeOpen", this, {"clone":this});
+				return this.parent.listener.trigger("beforeOpen", this, {"clone":this});
 			}).then(() => {
-				return this.parent.events.trigger("open", this, {"clone":this});
+				return this.parent.listener.trigger("open", this, {"clone":this});
 			}).then(() => {
-				return this.parent.events.trigger("_open", this, {"clone":this});
+				return this.parent.listener.trigger("_open", this, {"clone":this});
 			}).then(() => {
 				this.__initOnOpen();
 				console.debug(`Component.open(): Opened clone. id=${this.id}`);
@@ -146,13 +146,13 @@ export default class Clone
 			}
 
 			Promise.resolve().then(() => {
-				return this.parent.events.trigger("_beforeClose", this, {"clone":this});
+				return this.parent.listener.trigger("_beforeClose", this, {"clone":this});
 			}).then(() => {
-				return this.parent.events.trigger("beforeClose", this, {"clone":this});
+				return this.parent.listener.trigger("beforeClose", this, {"clone":this});
 			}).then(() => {
-				return this.parent.events.trigger("close", this, {"clone":this});
+				return this.parent.listener.trigger("close", this, {"clone":this});
 			}).then(() => {
-				return this.parent.events.trigger("_close", this, {"clone":this});
+				return this.parent.listener.trigger("_close", this, {"clone":this});
 			}).then(() => {
 				console.debug(`Component.close(): Closed clone. id=${this.id}`);
 				if (this.isModal)
@@ -180,12 +180,12 @@ export default class Clone
 		console.debug(`Clone.refresh(): Refreshing clone. id=${this.id}`);
 
 		return new Promise((resolve, reject) => {
-			this.parent.events.trigger("_beforeRefresh", this, {"clone":this}).then(() => {
-				return this.parent.events.trigger("beforeRefresh", this, {"clone":this});
+			this.parent.listener.trigger("_beforeRefresh", this, {"clone":this}).then(() => {
+				return this.parent.listener.trigger("beforeRefresh", this, {"clone":this});
 			}).then(() => {
-				return this.parent.events.trigger("refresh", this, {"clone":this});
+				return this.parent.listener.trigger("refresh", this, {"clone":this});
 			}).then(() => {
-				return this.parent.events.trigger("_refresh", this, {"clone":this});
+				return this.parent.listener.trigger("_refresh", this, {"clone":this});
 			}).then(() => {
 				resolve();
 			});
@@ -228,7 +228,7 @@ export default class Clone
 					// Merge options
 					options = Object.assign({}, this.parent.elements[elementName]["events"][eventName], options);
 
-					this.parent.events.addHtmlEventHandler(elements[i], eventName, this.parent.elements[elementName]["events"][eventName]["handler"], options);
+					this.parent.listener.addHtmlEventHandler(elements[i], eventName, this.parent.elements[elementName]["events"][eventName]["handler"], options);
 				});
 			}
 		}

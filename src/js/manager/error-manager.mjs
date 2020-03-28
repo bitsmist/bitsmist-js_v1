@@ -33,13 +33,13 @@ export default class ErrorManager extends ServiceManager
 
 		/*
 		let proxy = super(componentName, options);
-		this.events = new EventHandler(proxy);
+		this.listeners = new EventHandler(proxy);
 
 		return proxy;
 		*/
 
 		super(componentName, options);
-		this.events = new EventHandler(this);
+		this.listener = new EventHandler(this);
 
 	}
 

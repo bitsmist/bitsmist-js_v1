@@ -136,10 +136,10 @@ export default class App
 	{
 
 		this.container["components"].forEach((component) => {
-			component.events.trigger(eventName, this);
+			component.listener.trigger(eventName, this);
 
 			component.forEach((subComponent) => {
-				subComponent.events.trigger(eventName, this);
+				subComponent.listener.trigger(eventName, this);
 			});
 		});
 
@@ -163,7 +163,7 @@ export default class App
 		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], routerOptions);
 
 		// Init exception manager
-		this.container["errorManager"].events.addEventHandler("error", (sender, e, ex) => {
+		this.container["errorManager"].listener.addEventHandler("error", (sender, e, ex) => {
 			let error = {
 				"type":		"error",
 				"message":	ex.message,

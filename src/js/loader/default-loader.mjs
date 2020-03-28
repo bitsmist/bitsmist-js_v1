@@ -280,8 +280,8 @@ export default class DefaultLoader
 				this.container["components"][componentName] = {};
 				this.container["components"][componentName].object = component;
 
-				promise = component.events.trigger("_initComponent", this).then(() => {
-					return component.events.trigger("initComponent", this);
+				promise = component.listener.trigger("_initComponent", this).then(() => {
+					return component.listener.trigger("initComponent", this);
 				});
 
 				Promise.all([promise]).then(() => {

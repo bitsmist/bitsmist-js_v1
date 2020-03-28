@@ -41,8 +41,8 @@ export default class List extends Pad
 		this.parameters = {};
 
 		// Init system event handlers
-		this.events.addEventHandler("_fill", this.__initListOnFill);
-		this.events.addEventHandler("_clone", this.__initListOnClone);
+		this.listener.addEventHandler("_fill", this.__initListOnFill);
+		this.listener.addEventHandler("_clone", this.__initListOnClone);
 
 	}
 
@@ -162,7 +162,7 @@ export default class List extends Pad
 		return new Promise((resolve, reject) => {
 			this.rows = [];
 
-			this.parent.events.trigger("target", this, {"clone":this}).then(() => {;
+			this.parent.listener.trigger("target", this, {"clone":this}).then(() => {;
 				let promise;
 
 				// Auto load data
@@ -172,11 +172,11 @@ export default class List extends Pad
 				}
 				else
 				{
-					promise = this.parent.events.trigger("fetch", this, {"clone":this});
+					promise = this.parent.listener.trigger("fetch", this, {"clone":this});
 				}
 
 				Promise.all([promise]).then(() => {
-					return this.parent.events.trigger("beforeFill", this);
+					return this.parent.listener.trigger("beforeFill", this);
 				}).then(() => {
 					let chain = Promise.resolve();
 					if (this.parent.items)
@@ -204,9 +204,9 @@ export default class List extends Pad
 					}
 
 					chain.then(() => {
-						return this.parent.events.trigger("_fill", this, {"clone":this});
+						return this.parent.listener.trigger("_fill", this, {"clone":this});
 					}).then(() => {
-						return this.parent.events.trigger("fill", this, {"clone":this});
+						return this.parent.listener.trigger("fill", this, {"clone":this});
 					}).then(() => {
 						resolve();
 					});
@@ -256,19 +256,19 @@ export default class List extends Pad
 			// click event handler
 			if (this.list.parent.options.events && "click" in this.list.parent.options.events)
 			{
-				this.list.parent.events.addHtmlEventHandler(element, "click", this.list.parent.options.events["click"]["handler"], {"clone":this, "element":element});
+				this.list.parent.listener.addHtmlEventHandler(element, "click", this.list.parent.options.events["click"]["handler"], {"clone":this, "element":element});
 			}
 
 			let i = this.rows.length - 1;
 			// call event handlers
 			chain = chain.then(() => {
-				return this.list.parent.events.trigger("formatRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
+				return this.list.parent.listener.trigger("formatRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
 			}).then(() => {
-				return this.list.parent.events.trigger("beforeFillRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
+				return this.list.parent.listener.trigger("beforeFillRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
 			}).then(() => {
 				// fill fields
 				FormUtil.setFields(element, this.parent.items[i], this.parent.container["masters"]);
-				return this.list.parent.events.trigger("fillRow", this, {"item": this.parent.items[i], "no": i, "element": element});
+				return this.list.parent.listener.trigger("fillRow", this, {"item": this.parent.items[i], "no": i, "element": element});
 			}).then(() => {
 				resolve();
 			});

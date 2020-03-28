@@ -35,7 +35,7 @@ export default class Component
 
 		this.container = options["container"];
 		this.name = componentName;
-		this.events = new EventHandler(this);
+		this.listener = new EventHandler(this);
 		this.clones = {};
 		this.shadows = {};
 
@@ -181,7 +181,7 @@ export default class Component
 		return new Promise((resolve, reject) => {
 			this._autoLoadTemplate(templateName).then(() => {
 				this.options["templateName"] = templateName;
-				return this.events.trigger("templateChange", this);
+				return this.listener.trigger("templateChange", this);
 			}).then(() => {
 				resolve();
 			});
@@ -403,8 +403,8 @@ export default class Component
 				// }
 				console.debug(`Component.__appendTemplate(): Appended template. templateName=${templateName}, rootNode=${rootNode}`);
 
-				this.events.trigger("_append", this).then(() => {
-					return this.events.trigger("append", this);
+				this.listener.trigger("_append", this).then(() => {
+					return this.listener.trigger("append", this);
 				}).then(() => {
 					if (this.options["rootNode"] && this.options["templateNode"])
 					{
@@ -446,10 +446,10 @@ export default class Component
 			let clone = new Clone(id, element, rootNode, this);
 			this.clones[id] = clone;
 
-			this.events.trigger("_clone", this, {"clone":clone}).then(() => {
-				return this.events.trigger("clone", this, {"clone":clone});
+			this.listener.trigger("_clone", this, {"clone":clone}).then(() => {
+				return this.listener.trigger("clone", this, {"clone":clone});
 			}).then(() => {
-				return this.events.trigger("init", this, {"clone":clone});
+				return this.listener.trigger("init", this, {"clone":clone});
 			}).then(() => {
 				resolve();
 			});

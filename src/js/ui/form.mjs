@@ -36,7 +36,7 @@ export default class Form extends Pad
 		this.item = {};
 
 		// Init system event handlers
-		this.events.addEventHandler("_clone", this.__initFormOnClone);
+		this.listener.addEventHandler("_clone", this.__initFormOnClone);
 
 	};
 
@@ -251,7 +251,7 @@ export default class Form extends Pad
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this.events.addHtmlEventHandler(ex.clone.element, "keyup", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "keyup", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
 		}
 
 		// default buttons
@@ -263,7 +263,7 @@ export default class Form extends Pad
 				{
 					let elements = ex.clone.element.querySelectorAll(options["rootNode"]);
 					elements.forEach((element) => {
-						this.events.addHtmlEventHandler(element, "click", handler, {"clone":ex.clone, "options":options});
+						this.listener.addHtmlEventHandler(element, "click", handler, {"clone":ex.clone, "options":options});
 					});
 				}
 			};
@@ -411,7 +411,7 @@ export default class Form extends Pad
 				this.clear();
 			}
 
-			this.parent.events.trigger("target", this, {"clone":this}).then(() => {
+			this.parent.listener.trigger("target", this, {"clone":this}).then(() => {
 				let promise;
 
 				// Auto load data
@@ -421,17 +421,17 @@ export default class Form extends Pad
 				}
 				else
 				{
-					promise = this.parent.events.trigger("fetch", this, {"clone":this});
+					promise = this.parent.listener.trigger("fetch", this, {"clone":this});
 				}
 
 				// Call events & Fill
 				Promise.all([promise]).then(() => {
-					return this.parent.events.trigger("format", this, {"clone":this});
+					return this.parent.listener.trigger("format", this, {"clone":this});
 				}).then(() => {
-					return this.parent.events.trigger("beforeFill", this, {"clone":this});
+					return this.parent.listener.trigger("beforeFill", this, {"clone":this});
 				}).then(() => {
 					FormUtil.setFields(this.element, this.parent.item, this.parent.container["masters"]);
-					return this.parent.events.trigger("fill", this, {"clone":this});
+					return this.parent.listener.trigger("fill", this, {"clone":this});
 				}).then(() => {
 					resolve();
 				});
@@ -465,7 +465,7 @@ export default class Form extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			this.parent.events.trigger("beforeValidate", this, {"clone":this}).then(() => {
+			this.parent.listener.trigger("beforeValidate", this, {"clone":this}).then(() => {
 				let ret = true;
 				let form = this.element.querySelector("form");
 
@@ -485,7 +485,7 @@ export default class Form extends Pad
 				{
 					this.cancelSubmit = true;
 				}
-				return this.parent.events.trigger("validate", this, {"clone":this});
+				return this.parent.listener.trigger("validate", this, {"clone":this});
 			}).then(() => {
 				resolve();
 			});
@@ -510,12 +510,12 @@ export default class Form extends Pad
 			this.validate().then(() => {
 				if (!this.cancelSubmit)
 				{
-					this.parent.events.trigger("formatSubmit", this, {"clone":this}).then(() => {
-						return this.parent.events.trigger("beforeSubmit", this, {"clone":this});
+					this.parent.listener.trigger("formatSubmit", this, {"clone":this}).then(() => {
+						return this.parent.listener.trigger("beforeSubmit", this, {"clone":this});
 					}).then(() => {
 						if (!this.cancelSubmit)
 						{
-							return this.parent.events.trigger("submit", this, {"clone":this});
+							return this.parent.listener.trigger("submit", this, {"clone":this});
 						}
 					}).then(() => {
 						resolve();

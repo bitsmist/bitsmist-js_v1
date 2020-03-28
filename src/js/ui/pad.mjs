@@ -42,8 +42,8 @@ export default class Pad extends Component
 		this.plugins = ( this.options["plugins"] ? this.options["plugins"] : {} );
 
 		// Init system event handlers
-		this.events.addEventHandler("_initComponent", this.__initPadOnInitComponent);
-		this.events.addEventHandler("_append", this.__initPadOnAppend);
+		this.listener.addEventHandler("_initComponent", this.__initPadOnInitComponent);
+		this.listener.addEventHandler("_append", this.__initPadOnAppend);
 
 		// Init user event handlers
 		if (this.options["events"])
@@ -51,7 +51,7 @@ export default class Pad extends Component
 			Object.keys(this.options["events"]).forEach((eventName) => {
 				if (this.options["events"][eventName]["handler"])
 				{
-					this.options["events"].addEventHandler(eventName, this.options.events[eventName]["handler"]);
+					this.listener.addEventHandler(eventName, this.options.events[eventName]["handler"]);
 				}
 			});
 		}
@@ -134,7 +134,7 @@ export default class Pad extends Component
 			this.plugins[pluginName].object = plugin;
 
 			plugin["events"].forEach((eventName) => {
-				this.events.addEventHandler("_" + eventName, this.__callPluginEvent);
+				this.listener.addEventHandler("_" + eventName, this.__callPluginEvent);
 			});
 
 			resolve(plugin);
