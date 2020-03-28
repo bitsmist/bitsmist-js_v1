@@ -142,45 +142,6 @@ export default class Pad extends Component
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-     * Init component's html element's event handler.
-	 *
-	 * @param	{String}		elementName			Element name.
-	 * @param	{HTMLElement}	rootElement			Component top node.
-	 * @param	{Options}		options				Options.
-     */
-	initHtmlEvents(elementName, rootElement, options)
-	{
-
-		let elements;
-
-		if (elementName == "_self")
-		{
-			elements = [rootElement];
-		}
-		else if ("rootNode" in this.elements[elementName])
-		{
-			elements = rootElement.querySelectorAll(this.elements[elementName]["rootNode"]);
-		}
-		else
-		{
-			elements = rootElement.querySelectorAll("#" + elementName);
-		}
-
-		for (let i = 0; i < elements.length; i++)
-		{
-			if (this.elements[elementName]["events"])
-			{
-				Object.keys(this.elements[elementName]["events"]).forEach((eventName) => {
-					this.events.addHtmlEventHandler(elements[i], eventName, this.elements[elementName]["events"][eventName], options);
-				});
-			}
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
 
@@ -249,7 +210,7 @@ export default class Pad extends Component
 
 		// Init HTML elments' event handlers
 		Object.keys(this.elements).forEach((elementName) => {
-				this.initHtmlEvents(elementName, ex.clone.element, options);
+				ex.clone.initHtmlEvents(elementName, options);
 		});
 
 	}

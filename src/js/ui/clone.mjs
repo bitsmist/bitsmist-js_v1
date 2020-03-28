@@ -186,4 +186,43 @@ export default class Clone
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+     * Init component's html element's event handler.
+	 *
+	 * @param	{String}		elementName			Element name.
+	 * @param	{Options}		options				Options.
+     */
+	initHtmlEvents(elementName, options)
+	{
+
+		let elements;
+		let rootElement = this.element;
+
+		if (elementName == "_self")
+		{
+			elements = [rootElement];
+		}
+		else if (this.parent.elements && this.parent.elements[elementName] && "rootNode" in this.parent.elements[elementName])
+		{
+			elements = rootElement.querySelectorAll(this.parent.elements[elementName]["rootNode"]);
+		}
+		else
+		{
+			elements = rootElement.querySelectorAll("#" + elementName);
+		}
+
+		for (let i = 0; i < elements.length; i++)
+		{
+			if (this.parent.elements[elementName]["events"])
+			{
+				Object.keys(this.parent.elements[elementName]["events"]).forEach((eventName) => {
+					this.parent.events.addHtmlEventHandler(elements[i], eventName, this.parent.elements[elementName]["events"][eventName], options);
+				});
+			}
+		}
+
+	}
+
 }
