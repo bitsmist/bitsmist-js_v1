@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import Clone from './clone';
 import FormUtil from '../util/form-util';
 import Pad from './pad';
 
@@ -115,14 +116,13 @@ export default class List extends Pad
 
 		// extend clone
 		ex.clone.fill = this.__fill.bind(ex.clone);
-		ex.clone.clear= this.__clear.bind(ex.clone);;
+		ex.clone.clear= this.__clear.bind(ex.clone);
 		ex.clone.__appendRow = this.__appendRow.bind(ex.clone);
 		ex.clone.__autoLoadData = this.__autoLoadData.bind(ex.clone);
-		ex.clone.row = this.components[this.getOption("row")].object;
-		if (ex.clone.row.getOption("listRootNode"))
-		{
-			ex.clone.listRootNode = document.querySelector(ex.clone.row.getOption("listRootNode"));
-		}
+
+		let row = this.components[this.getOption("row")].object;
+		let listRoot = ex.clone.element.querySelector(row.getOption("listRootNode"));
+		ex.clone.list = new Clone((listRoot.id ? listRoot.id : this.name + "-list"), listRoot, listRoot, row);
 
 	}
 
@@ -142,7 +142,7 @@ export default class List extends Pad
 
 		// Set HTML elements' event handlers after filling completed
 		Object.keys(row.elements).forEach((elementName) => {
-			row.initHtmlEvents(elementName, ex.clone.listRootNode);
+			ex.clone.list.initHtmlEvents(elementName, ex.clone.listRootNode);
 		});
 
 	}
@@ -191,10 +191,10 @@ export default class List extends Pad
 						chain.then(() => {
 							if (this.parent.getOption("autoClear"))
 							{
-								let newNode = this.listRootNode.cloneNode();
+								let newNode = this.list.element.cloneNode();
 								newNode.appendChild(fragment);
-								this.listRootNode.parentNode.replaceChild(newNode, this.listRootNode);
-								this.listRootNode = newNode;
+								this.list.element.parentNode.replaceChild(newNode, this.list.element);
+								this.list.element = newNode;
 							}
 							else
 							{
@@ -224,7 +224,7 @@ export default class List extends Pad
 	__clear()
 	{
 
-		this.listRootNode.innerHTML = "";
+		this.list.element.innerHTML = "";
 
 	}
 
@@ -241,8 +241,8 @@ export default class List extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			let templateName = this.row.options["templateName"];
-			rootNode.appendChild(this.row.clone("", templateName));
+			let templateName = this.list.parent.options["templateName"];
+			rootNode.appendChild(this.list.parent.clone("", templateName));
 			let element = rootNode.lastElementChild;
 			if (!element)
 			{
@@ -254,21 +254,21 @@ export default class List extends Pad
 			this.rows.push(element);
 
 			// click event handler
-			if (this.row.options.events && "click" in this.row.options.events)
+			if (this.list.parent.options.events && "click" in this.list.parent.options.events)
 			{
-				this.row.events.addHtmlEventHandler(element, "click", this.row.options.events["click"], {"clone":this, "element":element});
+				this.list.parent.events.addHtmlEventHandler(element, "click", this.list.parent.options.events["click"], {"clone":this, "element":element});
 			}
 
 			let i = this.rows.length - 1;
 			// call event handlers
 			chain = chain.then(() => {
-				return this.row.events.trigger("formatRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
+				return this.list.parent.events.trigger("formatRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
 			}).then(() => {
-				return this.row.events.trigger("beforeFillRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
+				return this.list.parent.events.trigger("beforeFillRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
 			}).then(() => {
 				// fill fields
 				FormUtil.setFields(element, this.parent.items[i], this.parent.container["masters"]);
-				return this.row.events.trigger("fillRow", this, {"item": this.parent.items[i], "no": i, "element": element});
+				return this.list.parent.events.trigger("fillRow", this, {"item": this.parent.items[i], "no": i, "element": element});
 			}).then(() => {
 				resolve();
 			});
