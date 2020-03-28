@@ -49,7 +49,10 @@ export default class Pad extends Component
 		if (this.options["events"])
 		{
 			Object.keys(this.options["events"]).forEach((eventName) => {
-				this.events.addEventHandler(eventName, this.options["events"][eventName]["handler"]);
+				if (this.options["events"][eventName]["handler"])
+				{
+					this.options["events"].addEventHandler(eventName, this.options.events[eventName]["handler"]);
+				}
 			});
 		}
 

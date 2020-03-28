@@ -81,15 +81,7 @@ export default class Clone
 			}).then(() => {
 				return this.parent.events.trigger("_open", this, {"clone":this});
 			}).then(() => {
-				if (this.parent.getOption("autoFocus"))
-				{
-					// Auto focus
-					let element = this.element.querySelector(this.parent.getOption("autoFocus"));
-					if (element)
-					{
-						element.focus();
-					}
-				}
+				this.__initOnOpen();
 				console.debug(`Component.open(): Opened clone. id=${this.id}`);
 				this.isOpen = true;
 				resolve();
@@ -167,6 +159,7 @@ export default class Clone
 				{
 					this.modalPromise.resolve(this.modalResult);
 				}
+				this.__initOnClose();
 				this.isOpen = false;
 				resolve();
 			});
@@ -238,6 +231,53 @@ export default class Clone
 					this.parent.events.addHtmlEventHandler(elements[i], eventName, this.parent.elements[elementName]["events"][eventName]["handler"], options);
 				});
 			}
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Privates
+	// ------------------------------------------------------------------------
+
+	/**
+     * Initialization of clone on open().
+     */
+	__initOnOpen()
+	{
+
+		// Auto focus
+		if (this.parent.getOption("autoFocus"))
+		{
+			let element = this.element.querySelector(this.parent.getOption("autoFocus"));
+			if (element)
+			{
+				element.focus();
+			}
+
+		}
+
+		// Css
+		let css = (this.parent.options.events && this.parent.options.events["open"] && this.parent.options.events["open"]["css"] ? this.parent.options.events["open"]["css"] : undefined );
+		if (css)
+		{
+			Object.assign(this.element.style, css);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Initialization of clone on close().
+     */
+	__initOnClose()
+	{
+
+		// Css
+		let css = (this.parent.options.events && this.parent.options.events["close"] && this.parent.options.events["close"]["css"] ? this.parent.options.events["close"]["css"] : undefined );
+		if (css)
+		{
+			Object.assign(this.element.style, css);
 		}
 
 	}
