@@ -198,7 +198,7 @@ export default class List extends Pad
 							}
 							else
 							{
-								this.listRootNode.appendChild(fragment);
+								this.list.element.appendChild(fragment);
 							}
 						});
 					}
@@ -256,7 +256,7 @@ export default class List extends Pad
 			// click event handler
 			if (this.list.parent.options.events && "click" in this.list.parent.options.events)
 			{
-				this.list.parent.events.addHtmlEventHandler(element, "click", this.list.parent.options.events["click"], {"clone":this, "element":element});
+				this.list.parent.events.addHtmlEventHandler(element, "click", this.list.parent.options.events["click"]["handler"], {"clone":this, "element":element});
 			}
 
 			let i = this.rows.length - 1;
