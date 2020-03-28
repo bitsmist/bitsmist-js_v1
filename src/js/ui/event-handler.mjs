@@ -216,20 +216,23 @@ export default class EventHandler
 
 		let component = this.detail["origin"];
 		let listeners = this.detail["listeners"][e.type];
+		let stopPropagation = false;
 		if (listeners)
 		{
 			for (let i = 0; i < listeners.length; i++)
 			{
 				listeners[i]["handler"].call(component, this, e, listeners[i]["options"]);
+				if (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"])
+				{
+					stopPropagation = true;
+				}
 			}
 		}
 
-		/*
-		if (!this.detail["propagate"])
+		if (stopPropagation)
 		{
 			e.stopPropagation();
 		}
-		*/
 
 	}
 

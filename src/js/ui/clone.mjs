@@ -218,7 +218,10 @@ export default class Clone
 			if (this.parent.elements[elementName]["events"])
 			{
 				Object.keys(this.parent.elements[elementName]["events"]).forEach((eventName) => {
-					this.parent.events.addHtmlEventHandler(elements[i], eventName, this.parent.elements[elementName]["events"][eventName], options);
+					// Merge options
+					options = Object.assign({}, this.parent.elements[elementName]["events"][eventName], options);
+
+					this.parent.events.addHtmlEventHandler(elements[i], eventName, this.parent.elements[elementName]["events"][eventName]["handler"], options);
 				});
 			}
 		}
