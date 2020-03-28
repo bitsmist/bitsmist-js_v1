@@ -44,8 +44,6 @@ export default class Pad extends Component
 		// Init system event handlers
 		this.events.addEventHandler("_initComponent", this.__initPadOnInitComponent);
 		this.events.addEventHandler("_append", this.__initPadOnAppend);
-		this.events.addEventHandler("_clone", this.__initPadOnClone);
-		this.events.addEventHandler("_open", this.__initPadOnOpen);
 
 		// Init user event handlers
 		if (this.options["events"])
@@ -189,57 +187,6 @@ export default class Pad extends Component
 				resolve();
 			});
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Init on clone.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
-	 *
-	 * @return  {Promise}		Promise.
-     */
-	__initPadOnClone(sender, e, ex)
-	{
-
-		let options = {"clone":ex.clone};
-
-		// Init HTML elments' event handlers
-		Object.keys(this.elements).forEach((elementName) => {
-				ex.clone.initHtmlEvents(elementName, options);
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Init on open.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
-	 *
-	 * @return  {Promise}		Promise.
-     */
-	__initPadOnOpen(sender, e, ex)
-	{
-
-		let options = {"clone":ex.clone};
-
-		// Auto focus
-		if (this.getOption("autoFocus"))
-		{
-			let element = ex.clone.element.querySelector(this.getOption("autoFocus"));
-			if (element)
-			{
-				element.focus();
-			}
-		}
 
 	}
 

@@ -39,6 +39,11 @@ export default class Clone
 		this.isModal = false;
 		this.isOpen = false;
 
+		// Init HTML elments' event handlers
+		Object.keys(this.parent.elements).forEach((elementName) => {
+				this.initHtmlEvents(elementName, {"clone":this});
+		});
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -76,6 +81,15 @@ export default class Clone
 			}).then(() => {
 				return this.parent.events.trigger("_open", this, {"clone":this});
 			}).then(() => {
+				if (this.parent.getOption("autoFocus"))
+				{
+					// Auto focus
+					let element = this.element.querySelector(this.parent.getOption("autoFocus"));
+					if (element)
+					{
+						element.focus();
+					}
+				}
 				console.debug(`Component.open(): Opened clone. id=${this.id}`);
 				this.isOpen = true;
 				resolve();
