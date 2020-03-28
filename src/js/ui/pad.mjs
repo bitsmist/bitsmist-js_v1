@@ -40,21 +40,19 @@ export default class Pad extends Component
 		this.components = ( this.options["components"] ? this.options["components"] : {} );
 		this.elements = ( this.options["elements"] ? this.options["elements"] : {} );
 		this.plugins = ( this.options["plugins"] ? this.options["plugins"] : {} );
+		this.events = ( this.options["events"] ? this.options["events"] : {} );
 
 		// Init system event handlers
 		this.listener.addEventHandler("_initComponent", this.__initPadOnInitComponent);
 		this.listener.addEventHandler("_append", this.__initPadOnAppend);
 
 		// Init user event handlers
-		if (this.options["events"])
-		{
-			Object.keys(this.options["events"]).forEach((eventName) => {
-				if (this.options["events"][eventName]["handler"])
-				{
-					this.listener.addEventHandler(eventName, this.options.events[eventName]["handler"]);
-				}
-			});
-		}
+		Object.keys(this.events).forEach((eventName) => {
+			if (this.events[eventName]["handler"])
+			{
+				this.listener.addEventHandler(eventName, this.events[eventName]["handler"]);
+			}
+		});
 
 		// Init resource
 		if ("resource" in this.options && this.options["resource"])

@@ -257,7 +257,7 @@ export default class Clone
 		}
 
 		// Css
-		let css = (this.parent.options.events && this.parent.options.events["open"] && this.parent.options.events["open"]["css"] ? this.parent.options.events["open"]["css"] : undefined );
+		let css = (this.parent.events["open"] && this.parent.events["open"]["css"] ? this.parent.events["open"]["css"] : undefined );
 		if (css)
 		{
 			Object.assign(this.element.style, css);
@@ -274,7 +274,7 @@ export default class Clone
 	{
 
 		// Css
-		let css = (this.parent.options.events && this.parent.options.events["close"] && this.parent.options.events["close"]["css"] ? this.parent.options.events["close"]["css"] : undefined );
+		let css = (this.parent.events && this.parent.events["close"] && this.parent.events["close"]["css"] ? this.parent.events["close"]["css"] : undefined );
 		if (css)
 		{
 			Object.assign(this.element.style, css);

@@ -254,9 +254,9 @@ export default class List extends Pad
 			this.rows.push(element);
 
 			// click event handler
-			if (this.list.parent.options.events && "click" in this.list.parent.options.events)
+			if (this.list.parent.events["click"])
 			{
-				this.list.parent.listener.addHtmlEventHandler(element, "click", this.list.parent.options.events["click"]["handler"], {"clone":this, "element":element});
+				this.list.parent.listener.addHtmlEventHandler(element, "click", this.list.parent.events["click"]["handler"], {"clone":this, "element":element});
 			}
 
 			let i = this.rows.length - 1;
