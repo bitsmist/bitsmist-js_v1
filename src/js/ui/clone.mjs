@@ -183,6 +183,11 @@ export default class Clone
 			this.parent.listener.trigger("_beforeRefresh", this, {"clone":this}).then(() => {
 				return this.parent.listener.trigger("beforeRefresh", this, {"clone":this});
 			}).then(() => {
+				if (this.parent.getOption("autoFill"))
+				{
+					return this.fill();
+				}
+			}).then(() => {
 				return this.parent.listener.trigger("refresh", this, {"clone":this});
 			}).then(() => {
 				return this.parent.listener.trigger("_refresh", this, {"clone":this});

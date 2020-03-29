@@ -44,29 +44,6 @@ export default class Form extends Pad
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/*
-	refresh(id)
-	{
-
-		return new Promise((resolve, reject) => {
-			let promise = Promise.resolve();
-			if (this.getOption("autoFillOnRefresh"))
-			{
-				promise = this.fill(id);
-			}
-
-			promise.then(() => {
-				return super.refresh(id);
-			}).then(() => {
-				resolve();
-			});
-		});
-
-	}
-	*/
-
-	// -------------------------------------------------------------------------
-
 	/**
 	 * Build form.
 	 *
@@ -83,58 +60,6 @@ export default class Form extends Pad
 			Object.keys(this.clones).forEach((key) => {
 				chain = chain.then(() => {
 					return this.clones[key].build(items);
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Fill form with data.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	fill()
-	{
-
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].fill();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear form.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	clear()
-	{
-
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].clear();
 				});
 			});
 

@@ -169,6 +169,59 @@ export default class Component
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Fill form with data.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	fill()
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].fill();
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clear form.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	clear()
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].clear();
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Change template html.
 	 *
 	 * @param	{String}		templateName		Template name to clone.

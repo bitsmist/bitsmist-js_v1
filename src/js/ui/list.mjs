@@ -47,60 +47,6 @@ export default class List extends Pad
 	}
 
 	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Fill list with data.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	fill()
-	{
-
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].fill();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear list.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	clear()
-	{
-
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].clear();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Privates
 	// -------------------------------------------------------------------------
 
