@@ -74,6 +74,14 @@ export default class App
 
 			let promises = [];
 
+			// load settings
+			promises.push(new Promise((resolve, reject) => {
+				this.container["settingManager"].load().then((results) => {
+					Object.assign(this.container["settings"]["options"], results[0]);
+					resolve();
+				});
+			}));
+
 			// load resources
 			promises.push(this.container["loader"].loadResources(this.container["appInfo"]["spec"]["resources"]));
 
@@ -130,21 +138,6 @@ export default class App
 		return ret;
 
 	}
-
-	/*
-	broadcastEvent(eventName)
-	{
-
-		this.container["components"].forEach((component) => {
-			component.listener.trigger(eventName, this);
-
-			component.forEach((subComponent) => {
-				subComponent.listener.trigger(eventName, this);
-			});
-		});
-
-	}
-	*/
 
 	// -------------------------------------------------------------------------
 	//  Privates

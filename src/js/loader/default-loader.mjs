@@ -38,6 +38,7 @@ export default class DefaultLoader
 		this.container = options["container"];
 
 		this.container["errorManager"] = this.container["app"].createObject("BITSMIST.v1.ErrorManager", {"container":this.container});
+		this.container["settingManager"] = this.container["app"].createObject("BITSMIST.v1.SettingManager", {"container":this.container});
 
 	}
 
@@ -59,6 +60,15 @@ export default class DefaultLoader
 				options["events"] = this.container["errorManager"].events;
 				options["parent"] = this.container["errorManager"];
 				this.container["errorManager"].add(pluginName, options);
+			});
+		}
+
+		// Setupper
+		if (this.container["settings"]["setuppers"])
+		{
+			Object.keys(this.container["settings"]["setuppers"]).forEach((pluginName) => {
+				let options = this.container["settings"]["setuppers"][pluginName];
+				this.container["settingManager"].add(pluginName, options);
 			});
 		}
 

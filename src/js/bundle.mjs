@@ -27,15 +27,26 @@ window.BITSMIST.v1.DefaultLoader = DefaultLoader;
 
 // Manager
 import ErrorManager from './manager/error-manager';
+import SettingManager from './manager/setting-manager';
 import ServiceManager from './manager/service-manager';
 
 window.BITSMIST.v1.ErrorManager = ErrorManager;
+window.BITSMIST.v1.SettingManager = SettingManager;
 window.BITSMIST.v1.ServiceManager = ServiceManager;
 
 // Router
 import DefaultRouter from './router/default-router';
 
 window.BITSMIST.v1.DefaultRouter = DefaultRouter;
+
+// Setting
+import BroadcastSetupper from './setting/broadcast-setupper';
+import CookieLoader from './setting/cookie-loader';
+import CookieSaver from './setting/cookie-saver';
+
+window.BITSMIST.v1.BroadcastSetupper = BroadcastSetupper;
+window.BITSMIST.v1.CookieSaver = CookieSaver;
+window.BITSMIST.v1.CookieLoader = CookieLoader;
 
 // UI
 import Component from './ui/component';
