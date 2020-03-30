@@ -427,20 +427,17 @@ export default class Form extends Pad
 			this.cancelSubmit = false;
 			this.parent.item = this.getFields();
 
-			this.validate().then(() => {
+			this.parent.listener.trigger("formatSubmit", this, {"clone":this}).then(() => {
+				return this.validate();
+			}).then(() => {
+				return this.parent.listener.trigger("beforeSubmit", this, {"clone":this});
+			}).then(() => {
 				if (!this.cancelSubmit)
 				{
-					this.parent.listener.trigger("formatSubmit", this, {"clone":this}).then(() => {
-						return this.parent.listener.trigger("beforeSubmit", this, {"clone":this});
-					}).then(() => {
-						if (!this.cancelSubmit)
-						{
-							return this.parent.listener.trigger("submit", this, {"clone":this});
-						}
-					}).then(() => {
-						resolve();
-					});
+					return this.parent.listener.trigger("submit", this, {"clone":this});
 				}
+			}).then(() => {
+				resolve();
 			});
 		});
 
