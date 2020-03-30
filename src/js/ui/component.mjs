@@ -218,6 +218,33 @@ export default class Component
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Apply settings
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	setup(settings)
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
+			Object.keys(this.clones).forEach((key) => {
+				chain = chain.then(() => {
+					return this.clones[key].setup(settings);
+				});
+			});
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
 
 	// -------------------------------------------------------------------------
 
@@ -501,6 +528,8 @@ export default class Component
 
 			this.listener.trigger("_clone", this, {"clone":clone}).then(() => {
 				return this.listener.trigger("clone", this, {"clone":clone});
+			}).then(() => {
+				return clone.setup({"currentSettings":APP.settings["options"], "newSettings":APP.settings["options"]});
 			}).then(() => {
 				return this.listener.trigger("init", this, {"clone":clone});
 			}).then(() => {

@@ -201,6 +201,33 @@ export default class Clone
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Apply settings
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	setup(settings)
+	{
+
+		return new Promise((resolve, reject) => {
+			let options = {"clone":this, "currentSettings":settings["currentSettings"], "newSettings":settings["newSettings"]};
+			this.parent.listener.trigger("formatSettings", this, {"clone":this}).then(() => {
+				return this.parent.listener.trigger("validateSettings", this, options);
+			}).then(() => {
+				return this.parent.listener.trigger("beforeSetup", this, options);
+			}).then(() => {
+				return this.parent.listener.trigger("setup", this, options);
+			}).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
      * Init component's html element's event handler.
 	 *
 	 * @param	{String}		elementName			Element name.
