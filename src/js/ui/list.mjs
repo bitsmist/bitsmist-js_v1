@@ -109,54 +109,49 @@ export default class List extends Pad
 			this.rows = [];
 
 			this.parent.listener.trigger("target", this, {"clone":this}).then(() => {;
-				let promise;
-
+				return this.parent.listener.trigger("beforeFetch", this, {"clone":this});
+			}).then(() => {
 				// Auto load data
 				if (this.parent.getOption("autoLoad"))
 				{
-					promise = this.__autoLoadData();
+					return this.__autoLoadData();
 				}
-				else
+			}).then(() => {
+				return this.parent.listener.trigger("fetch", this, {"clone":this});
+			}).then(() => {
+				return this.parent.listener.trigger("beforeFill", this);
+			}).then(() => {
+				let chain = Promise.resolve();
+				if (this.parent.items)
 				{
-					promise = this.parent.listener.trigger("fetch", this, {"clone":this});
-				}
-
-				Promise.all([promise]).then(() => {
-					return this.parent.listener.trigger("beforeFill", this);
-				}).then(() => {
-					let chain = Promise.resolve();
-					if (this.parent.items)
+					let fragment = document.createDocumentFragment();
+					for (let i = 0; i < this.parent.items.length; i++)
 					{
-						let fragment = document.createDocumentFragment();
-						for (let i = 0; i < this.parent.items.length; i++)
-						{
-							chain = chain.then(() => {
-								return this.__appendRow(fragment);
-							});
-						}
-						chain.then(() => {
-							if (this.parent.getOption("autoClear"))
-							{
-								let newNode = this.list.element.cloneNode();
-								newNode.appendChild(fragment);
-								this.list.element.parentNode.replaceChild(newNode, this.list.element);
-								this.list.element = newNode;
-							}
-							else
-							{
-								this.list.element.appendChild(fragment);
-							}
+						chain = chain.then(() => {
+							return this.__appendRow(fragment);
 						});
 					}
-
 					chain.then(() => {
-						return this.parent.listener.trigger("_fill", this, {"clone":this});
-					}).then(() => {
-						return this.parent.listener.trigger("fill", this, {"clone":this});
-					}).then(() => {
-						resolve();
+						if (this.parent.getOption("autoClear"))
+						{
+							let newNode = this.list.element.cloneNode();
+							newNode.appendChild(fragment);
+							this.list.element.parentNode.replaceChild(newNode, this.list.element);
+							this.list.element = newNode;
+						}
+						else
+						{
+							this.list.element.appendChild(fragment);
+						}
 					});
-				});
+				}
+				return chain;
+			}).then(() => {
+				return this.parent.listener.trigger("_fill", this, {"clone":this});
+			}).then(() => {
+				return this.parent.listener.trigger("fill", this, {"clone":this});
+			}).then(() => {
+				resolve();
 			});
 		});
 

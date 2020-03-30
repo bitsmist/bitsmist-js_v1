@@ -337,29 +337,24 @@ export default class Form extends Pad
 			}
 
 			this.parent.listener.trigger("target", this, {"clone":this}).then(() => {
-				let promise;
-
+				return this.parent.listener.trigger("beforeFetch", this, {"clone":this});
+			}).then(() => {
 				// Auto load data
 				if (this.parent.getOption("autoLoad"))
 				{
-					promise = this.__autoLoadData();
+					return this.__autoLoadData();
 				}
-				else
-				{
-					promise = this.parent.listener.trigger("fetch", this, {"clone":this});
-				}
-
-				// Call events & Fill
-				Promise.all([promise]).then(() => {
-					return this.parent.listener.trigger("format", this, {"clone":this});
-				}).then(() => {
-					return this.parent.listener.trigger("beforeFill", this, {"clone":this});
-				}).then(() => {
-					FormUtil.setFields(this.element, this.parent.item, this.parent.container["masters"]);
-					return this.parent.listener.trigger("fill", this, {"clone":this});
-				}).then(() => {
-					resolve();
-				});
+			}).then(() => {
+				return this.parent.listener.trigger("fetch", this, {"clone":this});
+			}).then(() => {
+				return this.parent.listener.trigger("format", this, {"clone":this});
+			}).then(() => {
+				return this.parent.listener.trigger("beforeFill", this, {"clone":this});
+			}).then(() => {
+				FormUtil.setFields(this.element, this.parent.item, this.parent.container["masters"]);
+				return this.parent.listener.trigger("fill", this, {"clone":this});
+			}).then(() => {
+				resolve();
 			});
 		});
 
