@@ -63,11 +63,11 @@ export default class DefaultLoader
 			});
 		}
 
-		// Setupper
-		if (this.container["settings"]["setuppers"])
+		// Setting handlers
+		if (this.container["settings"]["settingHandlers"])
 		{
-			Object.keys(this.container["settings"]["setuppers"]).forEach((pluginName) => {
-				let options = this.container["settings"]["setuppers"][pluginName];
+			Object.keys(this.container["settings"]["settingHandlers"]).forEach((pluginName) => {
+				let options = this.container["settings"]["settingHandlers"][pluginName];
 				this.container["settingManager"].add(pluginName, options);
 			});
 		}

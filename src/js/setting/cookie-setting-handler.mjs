@@ -14,7 +14,7 @@ import CookieUtil from '../util/cookie-util';
 //	Cookie handler class
 // =============================================================================
 
-export default class CookieHandler
+export default class CookieSettingHandler
 {
 
 	// -------------------------------------------------------------------------
