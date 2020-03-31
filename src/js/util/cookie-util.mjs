@@ -55,15 +55,16 @@ export default class CookieUtil
 
 		let cookie;
 
-		cookie = key + "=" + encodeURIComponent(JSON.stringify(value));
+		cookie = key + "=" + encodeURIComponent(JSON.stringify(value)) + "; ";
 
 		if (options)
 		{
-			Object.key(options).reduce((result, current) => {
-				cookie += current + "=" + options[current] + "; ";
-			});
+			cookie += Object.keys(options).reduce((result, current) => {
+				result += current + "=" + options[current] + "; ";
+
+				return result;
+			}, "");
 		}
-		console.log("@@@", cookie);
 
 		document.cookie = cookie;
 
