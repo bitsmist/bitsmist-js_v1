@@ -40,11 +40,11 @@ import DefaultRouter from './router/default-router';
 window.BITSMIST.v1.DefaultRouter = DefaultRouter;
 
 // Setting
-import BroadcastSetupper from './setting/broadcast-setupper';
-import CookieHandler from './setting/cookie-handler';
+import BroadcastSettingHandler from './setting/broadcast-setting-handler';
+import CookieSettingHandler from './setting/cookie-setting-handler';
 
-window.BITSMIST.v1.BroadcastSetupper = BroadcastSetupper;
-window.BITSMIST.v1.CookieHandler = CookieHandler;
+window.BITSMIST.v1.BroadcastSettingHandler = BroadcastSettingHandler;
+window.BITSMIST.v1.CookieSettingHandler = CookieSettingHandler;
 
 // UI
 import Component from './ui/component';
