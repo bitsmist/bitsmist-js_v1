@@ -72,9 +72,11 @@ export default class SettingManager extends ServiceManager
 	/**
 	 * Load settings
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	load()
+	load(options)
 	{
 
 		return new Promise((resolve, reject) => {
@@ -84,7 +86,7 @@ export default class SettingManager extends ServiceManager
 			{
 				if (typeof this.plugins[i].load == "function")
 				{
-					promises.push(this.plugins[i].load.call(this.plugins[i]));
+					promises.push(this.plugins[i].load.call(this.plugins[i], options));
 				}
 			}
 
@@ -100,9 +102,12 @@ export default class SettingManager extends ServiceManager
 	/**
 	 * Save settings
 	 *
+	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	save(settings)
+	save(settings, options)
 	{
 
 		return new Promise((resolve, reject) => {
@@ -112,7 +117,7 @@ export default class SettingManager extends ServiceManager
 			{
 				if (typeof this.plugins[i].save == "function")
 				{
-					promises.push(this.plugins[i].save.call(this.plugins[i], settings));
+					promises.push(this.plugins[i].save.call(this.plugins[i], settings, options));
 				}
 			}
 

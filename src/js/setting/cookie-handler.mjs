@@ -43,9 +43,11 @@ export default class CookieHandler
 	/**
 	 * Load settings
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	load()
+	load(options)
 	{
 
 		return new Promise((resolve, reject) => {
@@ -62,13 +64,14 @@ export default class CookieHandler
 	 * Save settings
 	 *
 	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
 	save(settings, options)
 	{
 
-		CookieUtil.set("settings", settings);
+		CookieUtil.set("settings", settings, options);
 
 	}
 
