@@ -8,13 +8,14 @@
  */
 // =============================================================================
 
-import CookieUtil from '../util/cookie-util';
+import EventHandler from '../ui/event-handler';
+import ServiceManager from './service-manager';
 
 // =============================================================================
-//	Cookie handler class
+//	Preference manager class
 // =============================================================================
 
-export default class CookieSettingHandler
+export default class PreferenceManager extends ServiceManager
 {
 
 	// -------------------------------------------------------------------------
@@ -30,14 +31,42 @@ export default class CookieSettingHandler
 	constructor(componentName, options)
 	{
 
-		this.name = componentName;
-		this.options = ( options ? options : {} );
-		this.container = options["container"];
+		super(componentName, options);
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Apply settings
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	setup(settings)
+	{
+
+		return new Promise((resolve, reject) => {
+			let promises = [];
+
+			for (let i = 0; i < this.plugins.length; i++)
+			{
+				if (typeof this.plugins[i].setup == "function")
+				{
+					promises.push(this.plugins[i].setup.call(this.plugins[i], settings));
+				}
+			}
+
+			Promise.all(promises).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -51,9 +80,19 @@ export default class CookieSettingHandler
 	{
 
 		return new Promise((resolve, reject) => {
-			let settings= CookieUtil.get("settings");
+			let promises = [];
 
-			resolve(settings);
+			for (let i = 0; i < this.plugins.length; i++)
+			{
+				if (typeof this.plugins[i].load == "function")
+				{
+					promises.push(this.plugins[i].load.call(this.plugins[i], options));
+				}
+			}
+
+			Promise.all(promises).then((results) => {
+				resolve(results);
+			});
 		});
 
 	}
@@ -71,7 +110,21 @@ export default class CookieSettingHandler
 	save(settings, options)
 	{
 
-		CookieUtil.set("settings", settings, options);
+		return new Promise((resolve, reject) => {
+			let promises = [];
+
+			for (let i = 0; i < this.plugins.length; i++)
+			{
+				if (typeof this.plugins[i].save == "function")
+				{
+					promises.push(this.plugins[i].save.call(this.plugins[i], settings, options));
+				}
+			}
+
+			Promise.all(promises).then(() => {
+				resolve();
+			});
+		});
 
 	}
 

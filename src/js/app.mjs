@@ -77,7 +77,7 @@ export default class App
 
 			// load preferences
 			promises.push(new Promise((resolve, reject) => {
-				this.container["settingManager"].load().then((results) => {
+				this.container["preferenceManager"].load().then((results) => {
 					Object.assign(this.container["preferences"], results[0]);
 					resolve();
 				});

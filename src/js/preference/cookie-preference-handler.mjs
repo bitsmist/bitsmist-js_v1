@@ -8,11 +8,13 @@
  */
 // =============================================================================
 
+import CookieUtil from '../util/cookie-util';
+
 // =============================================================================
-//	Broadcast setting handler class
+//	Cookie preference handler class
 // =============================================================================
 
-export default class BroadcastSettingHandler
+export default class CookiePreferenceHandler
 {
 
 	// -------------------------------------------------------------------------
@@ -39,26 +41,37 @@ export default class BroadcastSettingHandler
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Apply settings
+	 * Load settings
 	 *
-	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	setup(settings)
+	load(options)
 	{
 
 		return new Promise((resolve, reject) => {
-			let promises = [];
+			let settings= CookieUtil.get("settings");
 
-			Object.keys(this.container["components"]).forEach((componentName) => {
-				promises.push(this.container["components"][componentName].object.setup(settings));
-			});
-
-			Promise.all(promises).then(() => {
-				resolve();
-			});
+			resolve(settings);
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Save settings
+	 *
+	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	save(settings, options)
+	{
+
+		CookieUtil.set("settings", settings, options);
 
 	}
 

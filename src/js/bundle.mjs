@@ -27,11 +27,11 @@ window.BITSMIST.v1.DefaultLoader = DefaultLoader;
 
 // Manager
 import ErrorManager from './manager/error-manager';
-import SettingManager from './manager/setting-manager';
+import PreferenceManager from './manager/preference-manager';
 import ServiceManager from './manager/service-manager';
 
 window.BITSMIST.v1.ErrorManager = ErrorManager;
-window.BITSMIST.v1.SettingManager = SettingManager;
+window.BITSMIST.v1.PreferenceManager = PreferenceManager;
 window.BITSMIST.v1.ServiceManager = ServiceManager;
 
 // Router
@@ -39,12 +39,12 @@ import DefaultRouter from './router/default-router';
 
 window.BITSMIST.v1.DefaultRouter = DefaultRouter;
 
-// Setting
-import BroadcastSettingHandler from './setting/broadcast-setting-handler';
-import CookieSettingHandler from './setting/cookie-setting-handler';
+// Preference
+import BroadcastPreferenceHandler from './preference/broadcast-preference-handler';
+import CookiePreferenceHandler from './preference/cookie-preference-handler';
 
-window.BITSMIST.v1.BroadcastSettingHandler = BroadcastSettingHandler;
-window.BITSMIST.v1.CookieSettingHandler = CookieSettingHandler;
+window.BITSMIST.v1.BroadcastPreferenceHandler = BroadcastPreferenceHandler;
+window.BITSMIST.v1.CookiePreferenceHandler = CookiePreferenceHandler;
 
 // UI
 import Component from './ui/component';

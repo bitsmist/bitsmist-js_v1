@@ -38,7 +38,7 @@ export default class DefaultLoader
 		this.container = options["container"];
 
 		this.container["errorManager"] = this.container["app"].createObject("BITSMIST.v1.ErrorManager", {"container":this.container});
-		this.container["settingManager"] = this.container["app"].createObject("BITSMIST.v1.SettingManager", {"container":this.container});
+		this.container["preferenceManager"] = this.container["app"].createObject("BITSMIST.v1.PreferenceManager", {"container":this.container});
 
 	}
 
@@ -63,12 +63,12 @@ export default class DefaultLoader
 			});
 		}
 
-		// Setting handlers
-		if (this.container["settings"]["settingHandlers"])
+		// Preference handlers
+		if (this.container["settings"]["preferenceHandlers"])
 		{
-			Object.keys(this.container["settings"]["settingHandlers"]).forEach((pluginName) => {
-				let options = this.container["settings"]["settingHandlers"][pluginName];
-				this.container["settingManager"].add(pluginName, options);
+			Object.keys(this.container["settings"]["preferenceHandlers"]).forEach((pluginName) => {
+				let options = this.container["settings"]["preferenceHandlers"][pluginName];
+				this.container["preferenceManager"].add(pluginName, options);
 			});
 		}
 
