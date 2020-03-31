@@ -41,17 +41,18 @@ export default class App
 		this.container["components"] = {};
 		this.container["resources"] = {};
 		this.container["masters"] = {};
+		this.container["preferences"] = {};
 
 		// Init loader and router;
 		this.__initLoaderAndRouter();
 
 		// Init system information
-		this.container["sysInfo"]["version"] = settings["options"]["apiVersion"];
-		this.container["sysInfo"]["baseUrl"] = settings["options"]["apiBaseUrl"];
+		this.container["sysInfo"]["version"] = settings["defaults"]["apiVersion"];
+		this.container["sysInfo"]["baseUrl"] = settings["defaults"]["apiBaseUrl"];
 
 		// Init application information
-		this.container["appInfo"]["version"] = settings["options"]["appVersion"];
-		this.container["appInfo"]["baseUrl"] = settings["options"]["appBaseUrl"];
+		this.container["appInfo"]["version"] = settings["defaults"]["appVersion"];
+		this.container["appInfo"]["baseUrl"] = settings["defaults"]["appBaseUrl"];
 
 		// load services
 		this.container["loader"].loadServices();
@@ -74,10 +75,10 @@ export default class App
 
 			let promises = [];
 
-			// load settings
+			// load preferences
 			promises.push(new Promise((resolve, reject) => {
 				this.container["settingManager"].load().then((results) => {
-					Object.assign(this.container["settings"]["options"], results[0]);
+					Object.assign(this.container["preferences"], results[0]);
 					resolve();
 				});
 			}));
