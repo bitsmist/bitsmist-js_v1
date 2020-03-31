@@ -16,6 +16,25 @@ export default class CookieUtil
 {
 
 	// -------------------------------------------------------------------------
+	//  Constructor
+	// -------------------------------------------------------------------------
+
+	/**
+     * Constructor.
+     *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
+     */
+	constructor(componentName, options)
+	{
+
+		this.name = componentName;
+		this.options = ( options ? options : {} );
+		this.container = options["container"];
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -24,7 +43,7 @@ export default class CookieUtil
 	 *
 	 * @param	{String}		key					Key.
 	 */
-	static get(key)
+	get(key)
 	{
 
 		let decoded = document.cookie.split(';').reduce((result, current) => {
@@ -50,21 +69,24 @@ export default class CookieUtil
 	 * @param	{Object}		value				Value.
 	 * @param	{Object}		options				Options.
 	 */
-	static set(key, value, options)
+	set(key, value, options)
 	{
 
-		let cookie;
+		let cookie = key + "=" + encodeURIComponent(JSON.stringify(value)) + "; ";
 
-		cookie = key + "=" + encodeURIComponent(JSON.stringify(value)) + "; ";
-
-		if (options)
+		options = ( options ? options : {} );
+		if (this.container["settings"]["cookieUtil"]["options"])
 		{
-			cookie += Object.keys(options).reduce((result, current) => {
-				result += current + "=" + options[current] + "; ";
-
-				return result;
-			}, "");
+			options = Object.assign(this.container["settings"]["cookieUtil"]["options"], options);
 		}
+
+		cookie += Object.keys(options).reduce((result, current) => {
+			result += current + "=" + options[current] + "; ";
+
+			return result;
+		}, "");
+
+		console.log(cookie);
 
 		document.cookie = cookie;
 

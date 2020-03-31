@@ -33,6 +33,7 @@ export default class CookiePreferenceHandler
 		this.name = componentName;
 		this.options = ( options ? options : {} );
 		this.container = options["container"];
+		this.cookie = new CookieUtil("CookieUtil", {"container": this.container});
 
 	}
 
@@ -51,7 +52,7 @@ export default class CookiePreferenceHandler
 	{
 
 		return new Promise((resolve, reject) => {
-			let settings= CookieUtil.get("settings");
+			let settings= this.cookie.get("settings");
 
 			resolve(settings);
 		});
@@ -71,7 +72,7 @@ export default class CookiePreferenceHandler
 	save(settings, options)
 	{
 
-		CookieUtil.set("settings", settings, options);
+		this.cookie.set("settings", settings, options);
 
 	}
 
