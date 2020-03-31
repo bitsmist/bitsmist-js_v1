@@ -8,11 +8,13 @@
  */
 // =============================================================================
 
+import CookieUtil from '../util/cookie-util';
+
 // =============================================================================
-//	Cookie saver class
+//	Cookie handler class
 // =============================================================================
 
-export default class CookieLoader
+export default class CookieHandler
 {
 
 	// -------------------------------------------------------------------------
@@ -47,20 +49,26 @@ export default class CookieLoader
 	{
 
 		return new Promise((resolve, reject) => {
-
-			let settings = {};
-
-		    $.cookie.json = true;
-			let tmp = $.cookie("settings");
-			if (tmp)
-			{
-				Object.keys(tmp).forEach(function(key){
-					settings[key] = tmp[key];
-				});
-			}
+			let settings= CookieUtil.get("settings");
 
 			resolve(settings);
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Save settings
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	save(settings, options)
+	{
+
+		CookieUtil.set("settings", settings);
 
 	}
 

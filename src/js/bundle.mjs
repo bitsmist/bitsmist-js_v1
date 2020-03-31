@@ -41,12 +41,10 @@ window.BITSMIST.v1.DefaultRouter = DefaultRouter;
 
 // Setting
 import BroadcastSetupper from './setting/broadcast-setupper';
-import CookieLoader from './setting/cookie-loader';
-import CookieSaver from './setting/cookie-saver';
+import CookieHandler from './setting/cookie-handler';
 
 window.BITSMIST.v1.BroadcastSetupper = BroadcastSetupper;
-window.BITSMIST.v1.CookieSaver = CookieSaver;
-window.BITSMIST.v1.CookieLoader = CookieLoader;
+window.BITSMIST.v1.CookieHandler = CookieHandler;
 
 // UI
 import Component from './ui/component';
