@@ -53,10 +53,10 @@ export default class DefaultLoader
 	{
 
 		// Error handlers
-		if (this.container["settings"]["errorHandlers"])
+		if (this.container["settings"]["errorManager"] && this.container["settings"]["errorManager"]["handlers"])
 		{
-			Object.keys(this.container["settings"]["errorHandlers"]).forEach((pluginName) => {
-				let options = this.container["settings"]["errorHandlers"][pluginName];
+			Object.keys(this.container["settings"]["errorManager"]["handlers"]).forEach((pluginName) => {
+				let options = this.container["settings"]["errorManager"]["handlers"][pluginName];
 				options["events"] = this.container["errorManager"].events;
 				options["parent"] = this.container["errorManager"];
 				this.container["errorManager"].add(pluginName, options);
@@ -64,10 +64,10 @@ export default class DefaultLoader
 		}
 
 		// Preference handlers
-		if (this.container["settings"]["preferenceHandlers"])
+		if (this.container["settings"]["preferenceManager"] && this.container["settings"]["preferenceManager"]["handlers"])
 		{
-			Object.keys(this.container["settings"]["preferenceHandlers"]).forEach((pluginName) => {
-				let options = this.container["settings"]["preferenceHandlers"][pluginName];
+			Object.keys(this.container["settings"]["preferenceManager"]["handlers"]).forEach((pluginName) => {
+				let options = this.container["settings"]["preferenceManager"]["handlers"][pluginName];
 				this.container["preferenceManager"].add(pluginName, options);
 			});
 		}
