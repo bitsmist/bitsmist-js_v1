@@ -203,15 +203,18 @@ export default class Clone
 	/**
 	 * Apply settings
 	 *
-	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	setup(settings)
+	setup(options)
 	{
 
 		return new Promise((resolve, reject) => {
-			let options = Object.assign(settings, {"clone":this});
+			options = ( options ? options : {} );
+			options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] :this.parent.container["preferences"] );
+			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] :this.parent.container["preferences"] );
+			options["clone"] = this;
 
 			this.parent.listener.trigger("formatSettings", this, options).then(() => {
 				return this.parent.listener.trigger("validateSettings", this, options);

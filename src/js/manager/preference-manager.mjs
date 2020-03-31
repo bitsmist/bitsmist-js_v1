@@ -40,13 +40,13 @@ export default class PreferenceManager extends ServiceManager
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Apply settings
+	 * Apply preferences.
 	 *
-	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	setup(settings)
+	setup(options)
 	{
 
 		return new Promise((resolve, reject) => {
@@ -56,7 +56,7 @@ export default class PreferenceManager extends ServiceManager
 			{
 				if (typeof this.plugins[i].setup == "function")
 				{
-					promises.push(this.plugins[i].setup.call(this.plugins[i], settings));
+					promises.push(this.plugins[i].setup.call(this.plugins[i], options));
 				}
 			}
 
