@@ -529,7 +529,8 @@ export default class Component
 			this.listener.trigger("_clone", this, {"clone":clone}).then(() => {
 				return this.listener.trigger("clone", this, {"clone":clone});
 			}).then(() => {
-				return clone.setup({"currentSettings":APP.settings["options"], "newSettings":APP.settings["options"]});
+				return clone.setup({"currentPreference":this.container["preferences"], "newPreference":this.container["preferences"]});
+				//return clone.setup();
 			}).then(() => {
 				return this.listener.trigger("init", this, {"clone":clone});
 			}).then(() => {

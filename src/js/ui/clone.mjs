@@ -211,8 +211,9 @@ export default class Clone
 	{
 
 		return new Promise((resolve, reject) => {
-			let options = {"clone":this, "currentSettings":settings["currentSettings"], "newSettings":settings["newSettings"]};
-			this.parent.listener.trigger("formatSettings", this, {"clone":this}).then(() => {
+			let options = Object.assign(settings, {"clone":this});
+
+			this.parent.listener.trigger("formatSettings", this, options).then(() => {
 				return this.parent.listener.trigger("validateSettings", this, options);
 			}).then(() => {
 				return this.parent.listener.trigger("beforeSetup", this, options);
