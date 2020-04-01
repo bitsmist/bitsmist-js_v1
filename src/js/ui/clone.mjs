@@ -211,7 +211,7 @@ export default class Clone
 	{
 
 		return new Promise((resolve, reject) => {
-			options = ( options ? options : {} );
+			options = Object.assign({}, options);
 			options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] :this.parent.container["preferences"] );
 			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] :this.parent.container["preferences"] );
 			options["clone"] = this;
