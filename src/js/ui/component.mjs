@@ -52,12 +52,14 @@ export default class Component
 	/**
 	 * Open the component.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	open()
+	open(options)
 	{
 
-		return this._callClones("open");
+		return this._callClones("open", [options]);
 
 	}
 	// -------------------------------------------------------------------------
@@ -65,7 +67,7 @@ export default class Component
 	/**
      * Open modal.
 	 *
-	 * @param	{array}			options				Options.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
      */
@@ -81,12 +83,14 @@ export default class Component
 	/**
 	 * Close the component.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	close()
+	close(options)
 	{
 
-		return this._callClones("close");
+		return this._callClones("close", [options]);
 
 	}
 
@@ -95,12 +99,14 @@ export default class Component
 	/**
 	 * Refresh the component.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	refresh()
+	refresh(options)
 	{
 
-		return this._callClones("refresh");
+		return this._callClones("refresh", [options]);
 
 	}
 
@@ -109,12 +115,14 @@ export default class Component
 	/**
 	 * Fill form with data.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	fill()
+	fill(options)
 	{
 
-		return this._callClones("fill");
+		return this._callClones("fill", [options]);
 
 	}
 
@@ -123,12 +131,14 @@ export default class Component
 	/**
 	 * Clear form.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	clear()
+	clear(options)
 	{
 
-		return this._callClones("clear");
+		return this._callClones("clear", [options]);
 
 	}
 
@@ -137,14 +147,14 @@ export default class Component
 	/**
 	 * Apply settings
 	 *
-	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	setup(settings)
+	setup(options)
 	{
 
-		return this._callClones("setup", [settings]);
+		return this._callClones("setup", [options]);
 
 	}
 
