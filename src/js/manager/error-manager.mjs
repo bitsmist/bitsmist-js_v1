@@ -47,16 +47,19 @@ export default class ErrorManager extends ServiceManager
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Handle error.
+	 *
+	 * @param	{Error}			e					Error object.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	handle(e)
 	{
 
-		for (let i = 0; i < this.plugins.length; i++)
-		{
-			if (this.plugins[i].target == "*" || this.plugins[i].target.indexOf(e.name) > -1)
-			{
-				this.plugins[i].handle.call(this.plugins[i], e);
-			}
-		}
+		return this._callMethod("handle", [e], (plugin) => {
+			return ( plugin.target == "*" || plugin.target.indexOf(e.name) > -1 ? true : false );
+		});
 
 	}
 
