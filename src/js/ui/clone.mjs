@@ -111,10 +111,8 @@ export default class Clone
 				return;
 			}
 
-			if (options)
-			{
-				this.parent.options = Object.assign(this.parent.options, options);
-			}
+			options = Object.assign({}, options);
+			this.parent.options = Object.assign(this.parent.options, options);
 			this.isModal = true;
 			this.modalResult = {"result":false};
 			this.modalOptions = options;
