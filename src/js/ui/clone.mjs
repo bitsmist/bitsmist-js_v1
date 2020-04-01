@@ -65,6 +65,7 @@ export default class Clone
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this.parent );
+			delete options["sender"];
 
 			if (this.isOpen)
 			{
@@ -146,6 +147,7 @@ export default class Clone
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this.parent );
+			delete options["sender"];
 
 			if (!this.isOpen)
 			{
@@ -190,6 +192,7 @@ export default class Clone
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this.parent );
+			delete options["sender"];
 
 			this.parent.listener.trigger("_beforeRefresh", sender, {"clone":this}).then(() => {
 				return this.parent.listener.trigger("beforeRefresh", sender, {"clone":this});
@@ -227,6 +230,7 @@ export default class Clone
 			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.parent.container["preferences"] );
 			options["clone"] = this;
 			let sender = ( options["sender"] ? options["sender"] : this.parent );
+			delete options["sender"];
 
 			this.parent.listener.trigger("formatSettings", sender, options).then(() => {
 				return this.parent.listener.trigger("validateSettings", sender,  options);
