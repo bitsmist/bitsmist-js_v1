@@ -85,6 +85,8 @@ export default class ServiceManager
      *
 	 * @param	{string}		methodName			Method name.
 	 * @param	{array}			args				Arguments to method.
+	 *
+	 * @return  {Promise}		Promise.
      */
 	_callMethod(methodName, args, filter)
 	{
@@ -95,7 +97,7 @@ export default class ServiceManager
 			{
 				if (typeof this.plugins[i][methodName] == "function")
 				{
-					if (!filter || (typeof filter == "function" && filter()))
+					if (!filter || (typeof filter == "function" && filter(this.plugins[i])))
 					{
 						promises.push(this.plugins[i][methodName].apply(this.plugins[i], args));
 					}
