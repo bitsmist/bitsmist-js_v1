@@ -63,12 +63,14 @@ export default class Form extends Pad
 	/**
 	 * Validate form.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	valiate()
+	valiate(options)
 	{
 
-		return this._callClones("validate");
+		return this._callClones("validate", [options]);
 
 	}
 
@@ -77,12 +79,14 @@ export default class Form extends Pad
 	/**
 	 * Submit form.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	submit()
+	submit(options)
 	{
 
-		return this._callClones("submit");
+		return this._callClones("submit", [options]);
 
 	}
 
@@ -91,12 +95,14 @@ export default class Form extends Pad
 	/**
 	 * Get fields value.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	getFields()
+	getFields(options)
 	{
 
-		return this._callClones("getFields");
+		return this._callClones("getFields", [options]);
 
 	}
 
@@ -275,12 +281,17 @@ export default class Form extends Pad
 	/**
      * Fill the form.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
      */
-	__fill()
+	__fill(options)
 	{
 
 		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this.parent );
+			delete options["sender"];
 
 			// Clear fields
 			if (this.parent.getOption("autoClear"))
@@ -288,8 +299,8 @@ export default class Form extends Pad
 				this.clear();
 			}
 
-			this.parent.listener.trigger("target", this, {"clone":this}).then(() => {
-				return this.parent.listener.trigger("beforeFetch", this, {"clone":this});
+			this.parent.listener.trigger("target", sender, {"clone":this}).then(() => {
+				return this.parent.listener.trigger("beforeFetch", sender, {"clone":this});
 			}).then(() => {
 				// Auto load data
 				if (this.parent.getOption("autoLoad"))
@@ -297,14 +308,14 @@ export default class Form extends Pad
 					return this.__autoLoadData();
 				}
 			}).then(() => {
-				return this.parent.listener.trigger("fetch", this, {"clone":this});
+				return this.parent.listener.trigger("fetch", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("format", this, {"clone":this});
+				return this.parent.listener.trigger("format", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("beforeFill", this, {"clone":this});
+				return this.parent.listener.trigger("beforeFill", sender, {"clone":this});
 			}).then(() => {
 				FormUtil.setFields(this.element, this.parent.item, this.parent.container["masters"]);
-				return this.parent.listener.trigger("fill", this, {"clone":this});
+				return this.parent.listener.trigger("fill", sender, {"clone":this});
 			}).then(() => {
 				resolve();
 			});
@@ -316,6 +327,8 @@ export default class Form extends Pad
 
 	/**
      * Clear the form.
+	 *
+	 * @param	{Object}		options				Options.
 	 *
 	 * @param	{string}		target				Target.
      */
@@ -331,13 +344,19 @@ export default class Form extends Pad
 	/**
      * Validate.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
      */
-	__validate()
+	__validate(options)
 	{
 
 		return new Promise((resolve, reject) => {
-			this.parent.listener.trigger("beforeValidate", this, {"clone":this}).then(() => {
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this.parent );
+			delete options["sender"];
+
+			this.parent.listener.trigger("beforeValidate", sender, {"clone":this}).then(() => {
 				let ret = true;
 				let form = this.element.querySelector("form");
 
@@ -357,7 +376,7 @@ export default class Form extends Pad
 				{
 					this.cancelSubmit = true;
 				}
-				return this.parent.listener.trigger("validate", this, {"clone":this});
+				return this.parent.listener.trigger("validate", sender, {"clone":this});
 			}).then(() => {
 				resolve();
 			});
@@ -372,21 +391,24 @@ export default class Form extends Pad
 	 *
 	 * @return  {Promise}		Promise.
      */
-	__submit()
+	__submit(options)
 	{
 
 		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this.parent );
+			delete options["sender"];
 			this.cancelSubmit = false;
 			this.parent.item = this.getFields();
 
-			this.parent.listener.trigger("formatSubmit", this, {"clone":this}).then(() => {
+			this.parent.listener.trigger("formatSubmit", sender, {"clone":this}).then(() => {
 				return this.validate();
 			}).then(() => {
-				return this.parent.listener.trigger("beforeSubmit", this, {"clone":this});
+				return this.parent.listener.trigger("beforeSubmit", sender, {"clone":this});
 			}).then(() => {
 				if (!this.cancelSubmit)
 				{
-					return this.parent.listener.trigger("submit", this, {"clone":this});
+					return this.parent.listener.trigger("submit", sender, {"clone":this});
 				}
 			}).then(() => {
 				resolve();
