@@ -53,13 +53,18 @@ export default class Clone
 	/**
 	 * Open the clone.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	open()
+	open(options)
 	{
 
+		console.debug(`Clone.open(): Opening clone. id=${this.id}`);
+
 		return new Promise((resolve, reject) => {
-			console.debug(`Clone.open(): Opening clone. id=${this.id}`);
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this.parent );
 
 			if (this.isOpen)
 			{
@@ -73,13 +78,13 @@ export default class Clone
 					return this.refresh();
 				}
 			}).then(() => {
-				return this.parent.listener.trigger("_beforeOpen", this, {"clone":this});
+				return this.parent.listener.trigger("_beforeOpen", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("beforeOpen", this, {"clone":this});
+				return this.parent.listener.trigger("beforeOpen", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("open", this, {"clone":this});
+				return this.parent.listener.trigger("open", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("_open", this, {"clone":this});
+				return this.parent.listener.trigger("_open", sender, {"clone":this});
 			}).then(() => {
 				this.__initOnOpen();
 				console.debug(`Component.open(): Opened clone. id=${this.id}`);
@@ -129,13 +134,18 @@ export default class Clone
 	/**
 	 * Close the clone.
 	 *
+	 * @param	{Object}		options				Options.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	close()
+	close(options)
 	{
 
+		console.debug(`Clone.close(): Closing clone. id=${this.id}`);
+
 		return new Promise((resolve, reject) => {
-			console.debug(`Clone.close(): Closing clone. id=${this.id}`);
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this.parent );
 
 			if (!this.isOpen)
 			{
@@ -144,13 +154,13 @@ export default class Clone
 			}
 
 			Promise.resolve().then(() => {
-				return this.parent.listener.trigger("_beforeClose", this, {"clone":this});
+				return this.parent.listener.trigger("_beforeClose", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("beforeClose", this, {"clone":this});
+				return this.parent.listener.trigger("beforeClose", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("close", this, {"clone":this});
+				return this.parent.listener.trigger("close", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("_close", this, {"clone":this});
+				return this.parent.listener.trigger("_close", sender, {"clone":this});
 			}).then(() => {
 				console.debug(`Component.close(): Closed clone. id=${this.id}`);
 				if (this.isModal)
@@ -172,23 +182,26 @@ export default class Clone
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	refresh()
+	refresh(options)
 	{
 
 		console.debug(`Clone.refresh(): Refreshing clone. id=${this.id}`);
 
 		return new Promise((resolve, reject) => {
-			this.parent.listener.trigger("_beforeRefresh", this, {"clone":this}).then(() => {
-				return this.parent.listener.trigger("beforeRefresh", this, {"clone":this});
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this.parent );
+
+			this.parent.listener.trigger("_beforeRefresh", sender, {"clone":this}).then(() => {
+				return this.parent.listener.trigger("beforeRefresh", sender, {"clone":this});
 			}).then(() => {
 				if (this.parent.getOption("autoFill"))
 				{
 					return this.fill();
 				}
 			}).then(() => {
-				return this.parent.listener.trigger("refresh", this, {"clone":this});
+				return this.parent.listener.trigger("refresh", sender, {"clone":this});
 			}).then(() => {
-				return this.parent.listener.trigger("_refresh", this, {"clone":this});
+				return this.parent.listener.trigger("_refresh", sender, {"clone":this});
 			}).then(() => {
 				resolve();
 			});
@@ -210,16 +223,17 @@ export default class Clone
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
-			options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] :this.parent.container["preferences"] );
-			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] :this.parent.container["preferences"] );
+			options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.parent.container["preferences"] );
+			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.parent.container["preferences"] );
 			options["clone"] = this;
+			let sender = ( options["sender"] ? options["sender"] : this.parent );
 
-			this.parent.listener.trigger("formatSettings", this, options).then(() => {
-				return this.parent.listener.trigger("validateSettings", this, options);
+			this.parent.listener.trigger("formatSettings", sender, options).then(() => {
+				return this.parent.listener.trigger("validateSettings", sender,  options);
 			}).then(() => {
-				return this.parent.listener.trigger("beforeSetup", this, options);
+				return this.parent.listener.trigger("beforeSetup", sender, options);
 			}).then(() => {
-				return this.parent.listener.trigger("setup", this, options);
+				return this.parent.listener.trigger("setup", sender, options);
 			}).then(() => {
 				resolve();
 			});

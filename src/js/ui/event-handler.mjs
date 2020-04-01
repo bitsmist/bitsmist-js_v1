@@ -148,7 +148,7 @@ export default class EventHandler
 	{
 
 		options = options || {};
-		options["component"] = sender;
+		//options["component"] = sender;
 		options["eventName"] = eventName;
 		let e = null;
 
@@ -162,7 +162,7 @@ export default class EventHandler
 			e.initCustomEvent(eventName, false, false, null);
 		}
 
-		return this.__callEventHandler(eventName, e, options);
+		return this.__callEventHandler(eventName, sender, e, options);
 
 	}
 
@@ -174,11 +174,12 @@ export default class EventHandler
 	 * Call event handlers for the event.
 	 *
 	 * @param	{String}		eventName				Event name.
+	 * @param	{Object}		sender					Sender.
 	 * @param	{Object}		e						Event parameter.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	__callEventHandler(eventName, e, options)
+	__callEventHandler(eventName, sender, e, options)
 	{
 
 		return new Promise((resolve, reject) => {
@@ -191,7 +192,7 @@ export default class EventHandler
 					console.debug(`EventHandler.__callEventHandler(): Calling event handler. name=${this.component.name}, eventName=${eventName}, index=${i}`);
 
 					chain = chain.then(() => {
-						return (this.listeners[eventName][i]).call(this.component, this.component, e, options);
+						return (this.listeners[eventName][i]).call(this.component, sender, e, options);
 					});
 				}
 			}
