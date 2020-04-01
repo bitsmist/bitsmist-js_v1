@@ -86,20 +86,26 @@ export default class ServiceManager
 	 * @param	{string}		methodName			Method name.
 	 * @param	{array}			args				Arguments to method.
      */
-	_callMethod(methodName, args)
+	_callMethod(methodName, args, filter)
 	{
 
-		for (let i = 0; i < this.plugins.length; i++)
-		{
-			if (methodName in this.plugins[i])
+		return new Promise((resolve, reject) => {
+			let promises = [];
+			for (let i = 0; i < this.plugins.length; i++)
 			{
-				this.plugins[i][methodName].apply(this.plugins[i], args);
+				if (typeof this.plugins[i][methodName] == "function")
+				{
+					if (!filter || (typeof filter == "function" && filter()))
+					{
+						promises.push(this.plugins[i][methodName].apply(this.plugins[i], args));
+					}
+				}
 			}
-			else
-			{
-				throw new NoMethodError(`Method not found. methodName=${methodName}`);
-			}
-		}
+
+			Promise.all(promises).then((results) => {
+				resolve(results);
+			});
+		});
 
 	}
 
