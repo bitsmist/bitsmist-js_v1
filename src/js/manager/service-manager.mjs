@@ -83,8 +83,9 @@ export default class ServiceManager
 	/**
      * Call plugin method.
      *
-	 * @param	{string}		methodName			Method name.
-	 * @param	{array}			args				Arguments to method.
+	 * @param	{String}		methodName			Method name.
+	 * @param	{Array}			args				Arguments to method.
+	 * @param	{Function}		filter				Filter function.
 	 *
 	 * @return  {Promise}		Promise.
      */
