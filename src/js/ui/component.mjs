@@ -57,28 +57,9 @@ export default class Component
 	open()
 	{
 
-		return new Promise((resolve, reject) => {
-			let templateName = this.getOption("templateName");
-
-			console.debug(`Component.open(): Opening component. templateName=${templateName}`);
-
-			this._autoLoadTemplate(templateName).then(() => {
-				let chain = Promise.resolve();
-
-				Object.keys(this.clones).forEach((key) => {
-					chain = chain.then(() => {
-						return this.clones[key].open();
-					});
-				});
-
-				chain.then(() => {
-					resolve();
-				});
-			});
-		});
+		return this._callClones("open");
 
 	}
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -91,25 +72,7 @@ export default class Component
 	openModal(options)
 	{
 
-		return new Promise((resolve, reject) => {
-			let templateName = this.getOption("templateName");
-
-			console.debug(`Component.open(): Opening component. templateName=${templateName}`);
-
-			this._autoLoadTemplate(templateName).then(() => {
-				let chain = Promise.resolve();
-
-				Object.keys(this.clones).forEach((key) => {
-					chain = chain.then(() => {
-						return this.clones[key].openModal(options);
-					});
-				});
-
-				chain.then((modalResult) => {
-					resolve(modalResult);
-				});
-			});
-		});
+		return this._callClones("openModal", [options]);
 
 	}
 
@@ -123,20 +86,7 @@ export default class Component
 	close()
 	{
 
-		return new Promise((resolve, reject) => {
-
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].close();
-				});
-			});
-
-			Promise.all([chain]).then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("close");
 
 	}
 
@@ -150,19 +100,7 @@ export default class Component
 	refresh()
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].refresh();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("refresh");
 
 	}
 
@@ -176,19 +114,7 @@ export default class Component
 	fill()
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].fill();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("fill");
 
 	}
 
@@ -202,19 +128,7 @@ export default class Component
 	clear()
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].clear();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("clear");
 
 	}
 
@@ -230,19 +144,7 @@ export default class Component
 	setup(settings)
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].setup(settings);
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("setup", [settings]);
 
 	}
 
@@ -418,6 +320,41 @@ export default class Component
 					resolve();
 				});
 			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Call clone method.
+     *
+	 * @param	{string}		methodName			Method name.
+	 * @param	{array}			args				Arguments to method.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	_callClones(methodName, args)
+	{
+
+		return new Promise((resolve, reject) => {
+			let templateName = this.getOption("templateName");
+
+			console.debug(`Component.${methodName}(): templateName=${templateName}`);
+
+			this._autoLoadTemplate(templateName).then(() => {
+				let chain = Promise.resolve();
+
+				Object.keys(this.clones).forEach((key) => {
+					chain = chain.then(() => {
+						return this.clones[key][methodName].apply(this.clones[key], args);
+					});
+				});
+
+				chain.then((result) => {
+					resolve(result);
+				});
+			});
 		});
 
 	}

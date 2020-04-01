@@ -54,19 +54,7 @@ export default class Form extends Pad
 	build(items)
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].build(items);
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("openModal", [items]);
 
 	}
 
@@ -77,22 +65,10 @@ export default class Form extends Pad
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	validate()
+	valiate()
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].validate();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("validate");
 
 	}
 
@@ -106,19 +82,7 @@ export default class Form extends Pad
 	submit()
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].submit();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("submit");
 
 	}
 
@@ -132,19 +96,7 @@ export default class Form extends Pad
 	getFields()
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			Object.keys(this.clones).forEach((key) => {
-				chain = chain.then(() => {
-					return this.clones[key].getFields();
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
+		return this._callClones("getFields");
 
 	}
 
