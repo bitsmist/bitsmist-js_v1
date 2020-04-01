@@ -41,6 +41,7 @@ export default class Pad extends Component
 		this.elements = ( this.options["elements"] ? this.options["elements"] : {} );
 		this.plugins = ( this.options["plugins"] ? this.options["plugins"] : {} );
 		this.events = ( this.options["events"] ? this.options["events"] : {} );
+		this.preferences = ( this.options["preferences"] ? this.options["preferences"] : {} );
 
 		// Init system event handlers
 		this.listener.addEventHandler("_initComponent", this.__initPadOnInitComponent);
@@ -66,6 +67,9 @@ export default class Pad extends Component
 				throw new NoResourceError(`Resource not found. name=${this.name}, resource=${this.options["resource"]}`);
 			}
 		}
+
+		// Register preferences
+		this.container["preferenceManager"].register(this, this.preferences);
 
 	}
 
