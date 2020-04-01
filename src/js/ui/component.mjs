@@ -340,7 +340,7 @@ export default class Component
 		return new Promise((resolve, reject) => {
 			let templateName = this.getOption("templateName");
 
-			console.debug(`Component.${methodName}(): templateName=${templateName}`);
+			console.debug(`Component._callClones(): templateName=${templateName}, methodName=${methodName}`);
 
 			this._autoLoadTemplate(templateName).then(() => {
 				let chain = Promise.resolve();
