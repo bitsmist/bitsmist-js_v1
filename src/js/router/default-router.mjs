@@ -119,13 +119,13 @@ export default class DefaultRouter
 				// Open
 				if (options["autoOpen"])
 				{
-					return this.container["components"][padName].object.open();
+					return this.container["components"][padName].object.open({"sender":this});
 				}
 			}).then(() => {
 				// Refresh
 				if (options["autoRefresh"])
 				{
-					return this.container["components"][padName].object.refresh();
+					return this.container["components"][padName].object.refresh({"sender":this});
 				}
 			}).then(() => {
 				if (url)

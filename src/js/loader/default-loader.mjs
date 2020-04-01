@@ -236,7 +236,7 @@ export default class DefaultLoader
 							if (component.options["autoOpen"])
 							{
 								// Open component
-								promise = component.open();
+								promise = component.open({"sender":this});
 							}
 						});
 
@@ -251,7 +251,7 @@ export default class DefaultLoader
 					if (component.options["autoOpen"])
 					{
 						// Open component
-						return component.open();
+						return component.open({"sender":this});
 					}
 				}));
 			});
