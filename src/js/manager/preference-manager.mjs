@@ -31,12 +31,50 @@ export default class PreferenceManager extends ServiceManager
 	constructor(componentName, options)
 	{
 
+		/*
+		let proxy = super(componentName, options);
+		this.listeners = new EventHandler(proxy);
+
+		return proxy;
+		*/
+
 		super(componentName, options);
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Register target component.
+	 *
+	 * @param	{Component}		component			Component to notify.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	register(component, options)
+	{
+
+		return new Promise((resolve, reject) => {
+			let promises = [];
+
+			for (let i = 0; i < this.plugins.length; i++)
+			{
+				if (typeof this.plugins[i].register == "function")
+				{
+					promises.push(this.plugins[i].register.call(this.plugins[i], component, options));
+				}
+			}
+
+			Promise.all(promises).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -66,6 +104,33 @@ export default class PreferenceManager extends ServiceManager
 		});
 
 	}
+
+	/*
+	setup(options)
+	{
+
+		this._callMethod(setup, options, () => {
+			let result = false;
+
+			if (target == "*")
+			{
+				return true;
+			}
+
+			for (let i = 0; i < target.length; i++)
+			{
+				if (settings["newPreferences"].hasOwnProperty(target[i]))
+				{
+					result = true;
+					break;
+				}
+			}
+
+			return result;
+		});
+
+	}
+	*/
 
 	// -------------------------------------------------------------------------
 

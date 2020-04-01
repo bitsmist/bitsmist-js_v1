@@ -42,9 +42,11 @@ window.BITSMIST.v1.DefaultRouter = DefaultRouter;
 // Preference
 import BroadcastPreferenceHandler from './preference/broadcast-preference-handler';
 import CookiePreferenceHandler from './preference/cookie-preference-handler';
+import ObserverPreferenceHandler from './preference/observer-preference-handler';
 
 window.BITSMIST.v1.BroadcastPreferenceHandler = BroadcastPreferenceHandler;
 window.BITSMIST.v1.CookiePreferenceHandler = CookiePreferenceHandler;
+window.BITSMIST.v1.ObserverPreferenceHandler = ObserverPreferenceHandler;
 
 // UI
 import Component from './ui/component';
