@@ -88,21 +88,29 @@ export default class Pad extends Component
 			let promise;
 			options = Object.assign({}, options);
 
-			this.container["loader"].createComponent(componentName, options).then((component) => {
-				component.parent = this;
-				this.components[componentName] = ( this.components[componentName] ? this.components[componentName] : {} );
-				this.components[componentName].object = component;
+			if (!this.components[componentName] || !this.components[componentName].object)
+			{
+				this.container["loader"].createComponent(componentName, options).then((component) => {
+					component.parent = this;
+					this.components[componentName] = ( this.components[componentName] ? this.components[componentName] : {} );
+					this.components[componentName].object = component;
 
-				// Auto open
-				if (component.getOption("autoOpen"))
-				{
-					promise = component.open();
-				}
+					// Auto open
+					if (component.getOption("autoOpen"))
+					{
+						promise = component.open();
+					}
 
-				Promise.all([promise]).then(() => {
-					resolve();
+					Promise.all([promise]).then(() => {
+						resolve();
+					});
 				});
-			});
+			}
+			else
+			{
+				resolve();
+			}
+
 		});
 
 	}
