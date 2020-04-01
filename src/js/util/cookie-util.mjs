@@ -86,8 +86,6 @@ export default class CookieUtil
 			return result;
 		}, "");
 
-		console.log(cookie);
-
 		document.cookie = cookie;
 
 	}

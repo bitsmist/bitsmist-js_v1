@@ -563,30 +563,6 @@ export default class Component
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component is opened.
-	 *
-	 * @return  {bool}			True if opened.
-	 */
-	/*
-	__isOpened()
-	{
-
-		let isOpened = true;
-		let element = document.getElementById(this.);
-
-		if (!this.__isLoaded() || window.getComputedStyle(element).getPropertyValue("display") == "none")
-		{
-			isOpened = false;
-		}
-
-		return isOpened;
-
-	}
-	*/
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Check if the component is a template.
 	 *
 	 * @return  {bool}			True if template.
