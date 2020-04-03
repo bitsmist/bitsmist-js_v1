@@ -168,7 +168,10 @@ export default class DefaultLoader
 
 		return new Promise((resolve, reject) => {
 			this.container["preferenceManager"].load().then((results) => {
-				Object.assign(this.container["preferences"], results[0]);
+				if (results.length > 0)
+				{
+					Object.assign(this.container["preferences"], results[0]);
+				}
 				resolve();
 			});
 		})
