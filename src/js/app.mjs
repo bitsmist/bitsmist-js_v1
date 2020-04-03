@@ -41,7 +41,7 @@ export default class App
 		this.container["components"] = {};
 		this.container["resources"] = {};
 		this.container["masters"] = {};
-		this.container["preferences"] = {};
+		this.container["preferences"] = settings["preferences"];
 
 		// Init loader and router;
 		this.__initLoaderAndRouter();
@@ -76,12 +76,7 @@ export default class App
 			let promises = [];
 
 			// load preferences
-			promises.push(new Promise((resolve, reject) => {
-				this.container["preferenceManager"].load().then((results) => {
-					Object.assign(this.container["preferences"], results[0]);
-					resolve();
-				});
-			}));
+			promises.push(this.container["loader"].loadPreferences());
 
 			// load resources
 			promises.push(this.container["loader"].loadResources(this.container["appInfo"]["spec"]["resources"]));
@@ -361,8 +356,9 @@ export default class App
 
 		if (window.history && window.history.pushState){
 			window.addEventListener("popstate", (event) => {
-				let routeInfo = this.container["router"].loadRoute();
-				this.container["router"].openRoute(routeInfo, {"autoRefresh":true});
+				Object.keys(this.container["components"]).forEach((componentName) => {
+					this.container["components"][componentName].object.listener.trigger("popState", this);
+				});
 			});
 		}
 
