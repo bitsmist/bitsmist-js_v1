@@ -159,6 +159,25 @@ export default class DefaultLoader
     // -------------------------------------------------------------------------
 
 	/**
+	 * Load preferences.
+	 *
+	 * @param	{array}			spec				Spec for resources.
+	 */
+	loadPreferences()
+	{
+
+		return new Promise((resolve, reject) => {
+			this.container["preferenceManager"].load().then((results) => {
+				Object.assign(this.container["preferences"], results[0]);
+				resolve();
+			});
+		})
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
 	 * Load resources.
 	 *
 	 * @param	{array}			spec				Spec for resources.
