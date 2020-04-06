@@ -242,17 +242,24 @@ export default class FormUtil
 		if (target)
 		{
 			let items = target.split(",");
+			value = FormatterUtil.sanitize(value);
 			for (let i = 0; i < items.length; i++)
 			{
 				let item = items[i].toLowerCase();
 				switch (item)
 				{
 				case "html":
-						element.innerHTML = FormatterUtil.sanitize(value);
+						element.innerHTML = value;
 					break;
+				case "href":
+				case "src":
+				case "rel":
+					if (value.substring(0, 4) == "http")
+					{
+						element.setAttribute(item, value);
+					}
 				default:
 					let attr = element.getAttribute(item);
-					value = FormatterUtil.sanitize(value);
 					attr = ( attr ? attr + " " + value : value );
 					element.setAttribute(item, attr);
 					break;
