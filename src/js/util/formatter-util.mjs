@@ -211,4 +211,26 @@ export default class FormatterUtil
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+     * Sanitize string.
+     *
+	 * @param	{String}		value				Value to sanitize.
+	 *
+	 * @return  {String}		Sanitized string.
+     */
+	static sanitize(value) {
+
+		if (typeof value == "string")
+		{
+		    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+		}
+		else
+		{
+			return value;
+		}
+
+	}
+
 }

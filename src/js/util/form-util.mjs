@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import FormatterUtil from './formatter-util';
+
 // =============================================================================
 //	Form util class
 // =============================================================================
@@ -232,7 +234,7 @@ export default class FormUtil
 		// Format
 		if (element.hasAttribute("data-bm-format"))
 		{
-			value = BITSMIST.v1.FormatterUtil.format("", element.getAttribute("data-bm-format"), value);
+			value = FormatterUtil.format("", element.getAttribute("data-bm-format"), value);
 		}
 
 		// Target
@@ -246,11 +248,12 @@ export default class FormUtil
 				switch (item)
 				{
 				case "html":
-						element.innerHTML = value;
+						element.innerHTML = FormatterUtil.sanitize(value);
 					break;
 				default:
 					let attr = element.getAttribute(item);
-					attr = ( attr ? attr + " " + value : value);
+					value = FormatterUtil.sanitize(value);
+					attr = ( attr ? attr + " " + value : value );
 					element.setAttribute(item, attr);
 					break;
 				}
@@ -283,7 +286,7 @@ export default class FormUtil
 				}
 				else
 				{
-					element.setAttribute("value", value)
+					element.setAttribute("value", FormatterUtil.sanitize(value))
 				}
 			}
 			else if (element.tagName.toLowerCase() == "select")
