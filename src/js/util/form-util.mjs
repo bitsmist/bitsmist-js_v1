@@ -237,12 +237,13 @@ export default class FormUtil
 			value = FormatterUtil.format("", element.getAttribute("data-bm-format"), value);
 		}
 
+		let sanitizedValue = FormatterUtil.sanitize(value);
+
 		// Target
 		let target = element.getAttribute("data-bm-target");
 		if (target)
 		{
 			let items = target.split(",");
-			value = FormatterUtil.sanitize(value);
 			for (let i = 0; i < items.length; i++)
 			{
 				let item = items[i].toLowerCase();
@@ -256,11 +257,11 @@ export default class FormUtil
 				case "rel":
 					if (value.substring(0, 4) == "http")
 					{
-						element.setAttribute(item, value);
+						element.setAttribute(item, sanitizedValue);
 					}
 				default:
 					let attr = element.getAttribute(item);
-					attr = ( attr ? attr + " " + value : value );
+					attr = ( attr ? attr + " " + value : sanitizedValue );
 					element.setAttribute(item, attr);
 					break;
 				}
