@@ -255,10 +255,11 @@ export default class FormUtil
 				case "href":
 				case "src":
 				case "rel":
-					if (value.substring(0, 4) == "http")
+					if (value.substring(0, 4) == "http" || value.substring(0, 1) == "/")
 					{
-						element.setAttribute(item, sanitizedValue);
+						element.setAttribute(item, value);
 					}
+					break;
 				default:
 					let attr = element.getAttribute(item);
 					attr = ( attr ? attr + " " + value : sanitizedValue );
