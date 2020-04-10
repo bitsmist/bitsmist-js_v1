@@ -54,7 +54,7 @@ export default class Form extends Pad
 	build(items)
 	{
 
-		return this._callClones("openModal", [items]);
+		return this._callClones("build", [items]);
 
 	}
 
