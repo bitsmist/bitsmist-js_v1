@@ -49,10 +49,7 @@ export default class Pad extends Component
 
 		// Init user event handlers
 		Object.keys(this.events).forEach((eventName) => {
-			if (this.events[eventName]["handler"])
-			{
-				this.listener.addEventHandler(eventName, this.events[eventName]["handler"]);
-			}
+			this.listener.addEventHandler(eventName, this.events[eventName]["handler"]);
 		});
 
 		// Init resource
