@@ -75,6 +75,29 @@ export default class FormatterUtil
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Format price.
+	 *
+	 * @param	{integer}		price				Price.
+	 *
+	 * @return  {string}		Formatted price.
+	 */
+	static formatNumber(number)
+	{
+
+		if (number)
+		{
+			return String(parseInt(number)).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,');
+		}
+		else
+		{
+			return "";
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Format date.
 	 *
 	 * @param	{string}		str					Date.
