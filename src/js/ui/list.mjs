@@ -102,17 +102,18 @@ export default class List extends Pad
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	__fill()
+	__fill(options)
 	{
 
 		return new Promise((resolve, reject) => {
 			this.rows = [];
+			options = Object.assign({}, this.parent.options, options);
 
 			this.parent.listener.trigger("target", this, {"clone":this}).then(() => {;
 				return this.parent.listener.trigger("beforeFetch", this, {"clone":this});
 			}).then(() => {
 				// Auto load data
-				if (this.parent.getOption("autoLoad"))
+				if (options["autoLoad"])
 				{
 					return this.__autoLoadData();
 				}
@@ -132,7 +133,7 @@ export default class List extends Pad
 						});
 					}
 					chain.then(() => {
-						if (this.parent.getOption("autoClear"))
+						if (options["autoClear"])
 						{
 							let newNode = this.list.element.cloneNode();
 							newNode.appendChild(fragment);

@@ -289,12 +289,11 @@ export default class Form extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			options = Object.assign({}, options);
+			options = Object.assign({}, this.parent.options, options);
 			let sender = ( options["sender"] ? options["sender"] : this.parent );
-			delete options["sender"];
 
 			// Clear fields
-			if (this.parent.getOption("autoClear"))
+			if (options["autoClear"])
 			{
 				this.clear();
 			}
@@ -303,7 +302,7 @@ export default class Form extends Pad
 				return this.parent.listener.trigger("beforeFetch", sender, {"clone":this});
 			}).then(() => {
 				// Auto load data
-				if (this.parent.getOption("autoLoad"))
+				if (options["autoLoad"])
 				{
 					return this.__autoLoadData();
 				}
