@@ -121,6 +121,7 @@ export default class Form extends Pad
 	{
 
 		// extend clone
+		ex.clone.isComposing = false;
 		ex.clone.cancelSubmit = false;
 		ex.clone.build= this.__build.bind(ex.clone);
 		ex.clone.fill = this.__fill.bind(ex.clone);
@@ -134,7 +135,9 @@ export default class Form extends Pad
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this.listener.addHtmlEventHandler(ex.clone.element, "keyup", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "keypress", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "compositionstart", this.__compositionStart, {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "compositionend", this.__compositionEnd, {"clone":ex.clone, "options":defaultKeys});
 		}
 
 		// default buttons
@@ -172,19 +175,60 @@ export default class Form extends Pad
 	__defaultKey(sender, e, ex)
 	{
 
+		// Ignore all key input when composing.
+		if (this.isComposing)
+		{
+			return;
+		}
+
 		let key = e.key.toLowerCase()
 		if (ex.options.submit && key == ex.options.submit.key)
 		{
+			// Submit
 			this.__defaultSubmit(sender, e, {"clone":ex.clone, "options":ex.options.submit});
 		}
 		else if (ex.options.cancel && key == ex.options.cancel.key)
 		{
+			// Cancel
 			this.__defaultCancel(sender, e, {"clone":ex.clone, "options":ex.options.cancel});
 		}
 		else if (ex.options.clear && key == ex.options.clear.key)
 		{
+			// Clear
 			this.__defaultClear(sender, e, {"clone":ex.clone, "options":ex.options.clear});
 		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Composition start event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+ 	 * @param	{Object}		ex					Extra info.
+	 */
+	__compositionStart(sender, e, ex)
+	{
+
+		this.isComposing = true;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Composition end event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+ 	 * @param	{Object}		ex					Extra info.
+	 */
+	__compositionEnd(sender, e, ex)
+	{
+
+		this.isComposing = false;
 
 	}
 
