@@ -236,25 +236,25 @@ export default class Component
 	{
 
 		return new Promise((resolve, reject) => {
-			let elements = document.querySelectorAll(rootNode);
-			if (elements.length == 0)
+			let roots = document.querySelectorAll(rootNode);
+			if (roots.length == 0)
 			{
 				throw new NoNodeError(`rootNode does not exist. id=${newId}, rootNode=${node}, templateName=${templateName}`);
 			}
 
 			let chain = Promise.resolve();
-			elements.forEach((element) => {
+			roots.forEach((root) => {
 				let newElement;
 				if (this.options["todo:decide option name"])
 				{
-					let shadowRoot = element.attachShadow({mode: 'open'});
+					let shadowRoot = root.attachShadow({mode: 'open'});
 					shadowRoot.innerHTML = this.shadows[templateName].html;
 					newElement = shadowRoot.children[0];
 				}
 				else
 				{
-					element.appendChild(this.clone(newId, templateName));
-					newElement = element.children[0];
+					root.appendChild(this.clone(newId, templateName));
+					newElement = root.children[0];
 				}
 
 				chain = chain.then(() => {
@@ -414,19 +414,20 @@ export default class Component
 				throw new NoNodeError(`Root node not specified. name=${this.name}`);
 			}
 
-			let elements = document.querySelectorAll(rootNode);
-			if (elements.length == 0)
+			let roots = document.querySelectorAll(rootNode);
+			if (roots.length == 0)
 			{
 				throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
 			}
 
-			elements.forEach((element) => {
+			roots.forEach((root) => {
 				// todo: do not insert html when using shadow dom.
 				// if ()
 				// {
-				element.insertAdjacentHTML("afterbegin", this.shadows[templateName].html);
-				this.shadows[templateName].id = element.children[0].id;
-				this.shadows[templateName].element = element.children[0];
+					root.insertAdjacentHTML("afterbegin", this.shadows[templateName].html);
+					this.shadows[templateName].id = root.children[0].id;
+//					this.shadows[templateName].element = root.children[0]; // todo: do this only on templates.
+					let newElement = root.children[0];
 				// }
 				console.debug(`Component.__appendTemplate(): Appended template. templateName=${templateName}, rootNode=${rootNode}`);
 
@@ -440,7 +441,7 @@ export default class Component
 					else if (this.options["rootNode"] && !this.options["templateNode"])
 					{
 						let newId = this.shadows[templateName].id.replace("template-", "");
-						return this.__registClone(newId, this.shadows[templateName].element, element);
+						return this.__registClone(newId, newElement, root);
 					}
 				}).then(() => {
 					resolve();
