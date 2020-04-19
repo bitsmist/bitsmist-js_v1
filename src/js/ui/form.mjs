@@ -175,8 +175,6 @@ export default class Form extends Pad
 	__defaultKey(sender, e, ex)
 	{
 
-		console.log(e.key, this.isComposing);
-
 		// Ignore all key input when composing.
 		if (this.isComposing)
 		{
