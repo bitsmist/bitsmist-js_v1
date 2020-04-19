@@ -62,6 +62,7 @@ export default class Component
 		return this._callClones("open", [options]);
 
 	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -186,7 +187,8 @@ export default class Component
 	/**
 	 * Clone the component.
 	 *
-	 * @param	{string}		newId				Id for the cloned component.
+	 * @param	{String}		newId				Id for the cloned component.
+	 * @param	{String}		templateName		Template name.
 	 *
 	 * @return  {Object}		Cloned component.
 	 */
@@ -194,11 +196,19 @@ export default class Component
 	{
 
 		let clone;
-		let element = document.getElementById(this.shadows[templateName].id);
+		let template = this.shadows[templateName].template;
 
-		if ( this.__isTemplate(templateName) )
+		if (!template)
 		{
-			clone = document.importNode(element.content, true);
+			template = document.createElement('template');
+			template.innerHTML = this.shadows[templateName].html;
+
+			this.shadows[templateName].template = template;
+		}
+
+		if ( "content" in template )
+		{
+			clone = document.importNode(template.content, true);
 			if (newId)
 			{
 				clone.firstElementChild.id = newId;
@@ -206,11 +216,7 @@ export default class Component
 		}
 		else
 		{
-			clone = element.cloneNode(true);
-			if (element.tagName.toLowerCase() == "template")
-			{
-				clone = clone.children[0];
-			}
+			clone = template.cloneNode(true).children[0];
 			if (newId)
 			{
 				clone.id = newId;
@@ -218,54 +224,6 @@ export default class Component
 		}
 
 		return clone;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clone the component to nodes.
-	 *
-	 * @param	{String}		newId				New id to set.
-	 * @param	{String}		rootNode			Nodes to append to.
-	 * @param	{String}		templateName		Template name to clone.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	cloneTo(newId, rootNode, templateName)
-	{
-
-		return new Promise((resolve, reject) => {
-			let roots = document.querySelectorAll(rootNode);
-			if (roots.length == 0)
-			{
-				throw new NoNodeError(`rootNode does not exist. id=${newId}, rootNode=${node}, templateName=${templateName}`);
-			}
-
-			let chain = Promise.resolve();
-			roots.forEach((root) => {
-				let newElement;
-				if (this.options["todo:decide option name"])
-				{
-					let shadowRoot = root.attachShadow({mode: 'open'});
-					shadowRoot.innerHTML = this.shadows[templateName].html;
-					newElement = shadowRoot.children[0];
-				}
-				else
-				{
-					root.appendChild(this.clone(newId, templateName));
-					newElement = root.children[0];
-				}
-
-				chain = chain.then(() => {
-					return this.__registClone(newId, newElement, rootNode);
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
 
 	}
 
@@ -311,7 +269,6 @@ export default class Component
 
 		return new Promise((resolve, reject) => {
 			let rootNode;
-			let isTemplate;
 
 			if (this.__isLoaded(templateName))
 			{
@@ -321,11 +278,10 @@ export default class Component
 			{
 				console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
 
-				rootNode = ( this.options["templateNode"] ? this.options["templateNode"] : this.options["rootNode"] );
-				isTemplate = ( this.options["templateNode"] ? true : false );
-
 				this.__loadTemplate(templateName).then(() => {
-					return this.__appendTemplate(rootNode, templateName);
+					return this.listener.trigger("load", this);
+				}).then(() => {
+					return this.__appendTemplate(this.getOption("rootNode"), templateName);
 				}).then(() => {
 					resolve();
 				});
@@ -411,7 +367,8 @@ export default class Component
 		return new Promise((resolve, reject) => {
 			if (!rootNode)
 			{
-				throw new NoNodeError(`Root node not specified. name=${this.name}`);
+				resolve();
+				return;
 			}
 
 			let roots = document.querySelectorAll(rootNode);
@@ -420,32 +377,24 @@ export default class Component
 				throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
 			}
 
-			roots.forEach((root) => {
-				// todo: do not insert html when using shadow dom.
-				// if ()
-				// {
-					root.insertAdjacentHTML("afterbegin", this.shadows[templateName].html);
-					this.shadows[templateName].id = root.children[0].id;
-//					this.shadows[templateName].element = root.children[0]; // todo: do this only on templates.
-					let newElement = root.children[0];
-				// }
-				console.debug(`Component.__appendTemplate(): Appended template. templateName=${templateName}, rootNode=${rootNode}`);
+			console.debug(`Component.__appendTemplate(): Appending template. templateName=${templateName}, rootNode=${rootNode}`);
 
-				this.listener.trigger("_append", this).then(() => {
-					return this.listener.trigger("append", this);
-				}).then(() => {
-					if (this.options["rootNode"] && this.options["templateNode"])
-					{
-						return this.cloneTo("", this.options["rootNode"], templateName);
-					}
-					else if (this.options["rootNode"] && !this.options["templateNode"])
-					{
-						let newId = this.shadows[templateName].id.replace("template-", "");
-						return this.__registClone(newId, newElement, root);
-					}
-				}).then(() => {
-					resolve();
+			let chain = Promise.resolve();
+			roots.forEach((root) => {
+				// Add template to root node
+				root.insertAdjacentHTML("afterbegin", this.shadows[templateName].html);
+				let newElement = root.children[0];
+				console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
+
+				// Regist clone
+				let id = "";
+				chain = chain.then(() => {
+					return this.__registClone(id, newElement, root);
 				});
+			});
+
+			chain.then(() => {
+				resolve();
 			});
 		});
 
@@ -468,14 +417,14 @@ export default class Component
 			if (!id)
 			{
 				let no = Object.keys(this.clones).length + 1
-				id =  "@@@" + no;
+				id =  "clone-" + no;
 			}
 
 			let clone = new Clone(id, element, rootNode, this);
 			this.clones[id] = clone;
 
-			this.listener.trigger("_clone", this, {"clone":clone}).then(() => {
-				return this.listener.trigger("clone", this, {"clone":clone});
+			this.listener.trigger("_append", this, {"clone":clone}).then(() => {
+				return this.listener.trigger("append", this, {"clone":clone});
 			}).then(() => {
 				return clone.setup();
 			}).then(() => {
@@ -505,39 +454,6 @@ export default class Component
 		}
 
 		return isLoaded
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if the component is a template.
-	 *
-	 * @return  {bool}			True if template.
-	 */
-	__isTemplate(templateName)
-	{
-
-		let ret = false;
-		let element = document.getElementById(this.shadows[templateName].id);
-
-		if (element)
-		{
-			if ("content" in document.createElement("template"))
-			{
-				if (element.tagName.toLowerCase() == "template")
-				{
-					ret = true;
-				}
-			}
-		}
-		else
-		{
-			let message = `Template element does not exist. name=${this.name}, templateName=${templateName}`;
-			throw new NoNodeError(`Template element does not exist. name=${this.name}, templateName=${templateName}`);
-		}
-
-		return ret;
 
 	}
 
