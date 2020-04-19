@@ -36,7 +36,7 @@ export default class Form extends Pad
 		this.item = {};
 
 		// Init system event handlers
-		this.listener.addEventHandler("_clone", this.__initFormOnClone);
+		this.listener.addEventHandler("_append", this.__initFormOnAppend);
 
 	};
 
@@ -111,13 +111,13 @@ export default class Form extends Pad
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init after clone completed.
+	 * Init after append completed.
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
  	 * @param	{Object}		ex					Extra info.
 	 */
-	__initFormOnClone(sender, e, ex)
+	__initFormOnAppend(sender, e, ex)
 	{
 
 		// extend clone

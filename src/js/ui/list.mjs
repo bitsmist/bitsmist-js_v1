@@ -42,7 +42,7 @@ export default class List extends Pad
 
 		// Init system event handlers
 		this.listener.addEventHandler("_fill", this.__initListOnFill);
-		this.listener.addEventHandler("_clone", this.__initListOnClone);
+		this.listener.addEventHandler("_append", this.__initListOnAppend);
 
 	}
 
@@ -57,7 +57,7 @@ export default class List extends Pad
 	 * @param	{Object}		e					Event info.
  	 * @param	{Object}		ex					Extra info.
 	 */
-	__initListOnClone(sender, e, ex)
+	__initListOnAppend(sender, e, ex)
 	{
 
 		// extend clone
@@ -185,12 +185,8 @@ export default class List extends Pad
 		return new Promise((resolve, reject) => {
 			let templateName = this.list.parent.options["templateName"];
 			rootNode.appendChild(this.list.parent.clone("", templateName));
-			let element = rootNode.lastElementChild;
-			if (!element)
-			{
-				let elements = rootNode.querySelectorAll("li");
-				element = elements[elements.length - 1];
-			}
+			let elements = rootNode.querySelectorAll("li");
+			let element = elements[elements.length - 1];
 			let chain = Promise.resolve();
 
 			this.rows.push(element);
