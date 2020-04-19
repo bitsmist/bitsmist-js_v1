@@ -135,7 +135,7 @@ export default class Form extends Pad
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this.listener.addHtmlEventHandler(ex.clone.element, "keypress", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "keydown", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
 			this.listener.addHtmlEventHandler(ex.clone.element, "compositionstart", this.__compositionStart, {"clone":ex.clone, "options":defaultKeys});
 			this.listener.addHtmlEventHandler(ex.clone.element, "compositionend", this.__compositionEnd, {"clone":ex.clone, "options":defaultKeys});
 		}
@@ -174,6 +174,8 @@ export default class Form extends Pad
 	 */
 	__defaultKey(sender, e, ex)
 	{
+
+		console.log(e.key, this.isComposing);
 
 		// Ignore all key input when composing.
 		if (this.isComposing)
