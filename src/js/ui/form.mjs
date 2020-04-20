@@ -182,6 +182,8 @@ export default class Form extends Pad
 		}
 
 		let key = e.key.toLowerCase()
+		key = ( key == "esc" ? "escape" : key ); // For IE11
+
 		if (ex.options.submit && key == ex.options.submit.key)
 		{
 			// Submit
