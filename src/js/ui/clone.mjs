@@ -60,7 +60,7 @@ export default class Clone
 	open(options)
 	{
 
-		console.debug(`Clone.open(): Opening clone. id=${this.id}`);
+		console.debug(`Clone.open(): Opening clone. parent=${this.parent.name}, id=${this.id}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
@@ -88,7 +88,7 @@ export default class Clone
 				return this.parent.listener.trigger("_open", sender, {"clone":this});
 			}).then(() => {
 				this.__initOnOpen();
-				console.debug(`Component.open(): Opened clone. id=${this.id}`);
+				console.debug(`Component.open(): Opened clone. parent=${this.parent.name}, id=${this.id}`);
 				this.isOpen = true;
 				resolve();
 			});
@@ -129,7 +129,6 @@ export default class Clone
 
 	}
 
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -142,7 +141,7 @@ export default class Clone
 	close(options)
 	{
 
-		console.debug(`Clone.close(): Closing clone. id=${this.id}`);
+		console.debug(`Clone.close(): Closing clone. parent=${this.parent.name}, id=${this.id}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
@@ -164,7 +163,7 @@ export default class Clone
 			}).then(() => {
 				return this.parent.listener.trigger("_close", sender, {"clone":this});
 			}).then(() => {
-				console.debug(`Component.close(): Closed clone. id=${this.id}`);
+				console.debug(`Component.close(): Closed clone. parent=${this.parent.name}, id=${this.id}`);
 				if (this.isModal)
 				{
 					this.modalPromise.resolve(this.modalResult);
@@ -187,7 +186,7 @@ export default class Clone
 	refresh(options)
 	{
 
-		console.debug(`Clone.refresh(): Refreshing clone. id=${this.id}`);
+		console.debug(`Clone.refresh(): Refreshing clone. parent=${this.parent.name}, id=${this.id}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
@@ -223,6 +222,8 @@ export default class Clone
 	 */
 	setup(options)
 	{
+
+		console.debug(`Clone.setup(): Setting up clone. parent=${this.parent.name}, id=${this.id}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
@@ -306,6 +307,10 @@ export default class Clone
 				element.focus();
 			}
 
+		}
+		else
+		{
+			this.element.focus();
 		}
 
 		// Css
