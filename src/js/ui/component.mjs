@@ -38,6 +38,7 @@ export default class Component
 		this.listener = new EventHandler(this);
 		this.clones = {};
 		this.shadows = {};
+		this.parent;
 
 		// Options
 		let defaults = { "templateName":componentName };
@@ -359,6 +360,9 @@ export default class Component
 	/**
 	 * Append the template html to its root node.
 	 *
+	 * @param	{String}		rootNode			Root node to append.
+	 * @param	{String}		templateName		Template name.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
 	__appendTemplate(rootNode, templateName)
@@ -377,9 +381,88 @@ export default class Component
 				throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
 			}
 
+			this.__appendToRoots(roots, templateName).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Append the template html to its root node. Bound to parent node.
+	 *
+	 * @param	{String}		rootNode			Root node to append.
+	 * @param	{String}		templateName		Template name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	/*
+	__appendTemplate(rootNode, templateName)
+	{
+
+		return new Promise((resolve, reject) => {
+			if (!rootNode)
+			{
+				resolve();
+				return;
+			}
+
 			console.debug(`Component.__appendTemplate(): Appending template. templateName=${templateName}, rootNode=${rootNode}`);
 
 			let chain = Promise.resolve();
+
+			if (this.parent)
+			{
+				// Has a parent.  Root node is parent's each clone.
+				Object.keys(this.parent.clones).forEach((cloneId) => {
+					let roots = this.parent.clones[cloneId].element.querySelectorAll(rootNode);
+					if (roots.length == 0)
+					{
+						throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+					}
+					chain = chain.then(() => {
+						return this.__appendToRoots(roots, templateName);
+					});
+				});
+			}
+			else
+			{
+				// Doesn't have a parent.  Root node is document.
+				let roots = document.querySelectorAll(rootNode);
+				if (roots.length == 0)
+				{
+					throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+				}
+
+				chain = this.__appendToRoots(roots, templateName);
+			}
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+	*/
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Append the template html to its root node.
+	 *
+	 * @param	{HTMLNodes}		roots				Root nodes.
+	 * @param	{String}		templateName		Template name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	__appendToRoots(roots, templateName)
+	{
+
+		return new Promise((resolve, reject) => {
+			let chain = Promise.resolve();
+
 			roots.forEach((root) => {
 				// Add template to root node
 				root.insertAdjacentHTML("afterbegin", this.shadows[templateName].html);
