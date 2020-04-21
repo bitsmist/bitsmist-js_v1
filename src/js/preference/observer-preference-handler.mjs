@@ -50,7 +50,7 @@ export default class ObserverPreferenceHandler
 	register(component, options)
 	{
 
-		this.targets[component.name] = options;
+		this.targets[component.name] = {"object":component, "options":options};
 
 	}
 
@@ -70,9 +70,9 @@ export default class ObserverPreferenceHandler
 			let promises = [];
 
 			Object.keys(this.targets).forEach((componentName) => {
-				if (this.__isTarget(settings, this.targets[componentName]))
+				if (this.__isTarget(settings, this.targets[componentName].options))
 				{
-					promises.push(this.container["components"][componentName].object.setup(settings));
+					promises.push(this.targets[componentName].object.setup(settings));
 				}
 			});
 
