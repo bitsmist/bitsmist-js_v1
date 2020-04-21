@@ -138,9 +138,9 @@ export default class Form extends Pad
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this.listener.addHtmlEventHandler(ex.clone.element, "keydown", this.__defaultKey.bind(ex.clone), {"clone":ex.clone, "options":defaultKeys});
-			this.listener.addHtmlEventHandler(ex.clone.element, "compositionstart", this.__compositionStart.bind(ex.clone), {"clone":ex.clone, "options":defaultKeys});
-			this.listener.addHtmlEventHandler(ex.clone.element, "compositionend", this.__compositionEnd.bind(ex.clone), {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "keydown", this.__defaultKey.bind(ex.clone), {"options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "compositionstart", this.__compositionStart.bind(ex.clone), {"options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "compositionend", this.__compositionEnd.bind(ex.clone), {"options":defaultKeys});
 		}
 
 		// default buttons
@@ -152,7 +152,7 @@ export default class Form extends Pad
 				{
 					let elements = ex.clone.element.querySelectorAll(options["rootNode"]);
 					elements.forEach((element) => {
-						this.listener.addHtmlEventHandler(element, "click", handler, {"clone":ex.clone, "options":options});
+						this.listener.addHtmlEventHandler(element, "click", handler, {"options":options});
 					});
 				}
 			};
@@ -190,17 +190,17 @@ export default class Form extends Pad
 		if (ex.options.submit && key == ex.options.submit.key)
 		{
 			// Submit
-			this.__defaultSubmit(sender, e, {"clone":ex.clone, "options":ex.options.submit});
+			this.__defaultSubmit(sender, e, {"options":ex.options.submit});
 		}
 		else if (ex.options.cancel && key == ex.options.cancel.key)
 		{
 			// Cancel
-			this.__defaultCancel(sender, e, {"clone":ex.clone, "options":ex.options.cancel});
+			this.__defaultCancel(sender, e, {"options":ex.options.cancel});
 		}
 		else if (ex.options.clear && key == ex.options.clear.key)
 		{
 			// Clear
-			this.__defaultClear(sender, e, {"clone":ex.clone, "options":ex.options.clear});
+			this.__defaultClear(sender, e, {"options":ex.options.clear});
 		}
 
 	}
@@ -249,20 +249,19 @@ export default class Form extends Pad
 	__defaultSubmit(sender, e, ex)
 	{
 
-		let clone = ex.clone;
-		ex.clone.submit().then(() => {
-			if (!clone.cancelSubmit)
+		this.submit().then(() => {
+			if (!this.cancelSubmit)
 			{
 				// Modal result
-				if (clone.isModal)
+				if (this.isModal)
 				{
-					clone.modalResult["result"] = true;
+					this.modalResult["result"] = true;
 				}
 
 				// Auto close
 				if (ex["options"]["autoClose"])
 				{
-					clone.close();
+					this.close();
 				}
 			}
 		});
@@ -281,8 +280,7 @@ export default class Form extends Pad
 	__defaultCancel(sender, e, ex)
 	{
 
-		let clone = ex["clone"];
-		clone.close();
+		this.close();
 
 	}
 
@@ -298,7 +296,6 @@ export default class Form extends Pad
 	__defaultClear(sender, e, ex)
 	{
 
-		let clone = ex.clone;
 		let target;
 
 		if (ex.options.target)
@@ -306,7 +303,7 @@ export default class Form extends Pad
 			target = sender.getAttribute(ex.options.target);
 		}
 
-		clone.clear(target);
+		this.clear(target);
 
 	}
 
