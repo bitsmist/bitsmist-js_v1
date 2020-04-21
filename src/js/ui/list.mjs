@@ -8,7 +8,6 @@
  */
 // =============================================================================
 
-import Clone from './clone';
 import FormUtil from '../util/form-util';
 import Pad from './pad';
 
@@ -37,12 +36,90 @@ export default class List extends Pad
 		this.target;
 		this.items;
 		this.data;
+		this.row;
 		this.rows;
 		this.parameters = {};
 
 		// Init system event handlers
-		this.listener.addEventHandler("_fill", this.__initListOnFill);
 		this.listener.addEventHandler("_append", this.__initListOnAppend);
+		this.listener.addEventHandler("_fill", this.__initListOnFill);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clear list.
+	 */
+	clear()
+	{
+
+		this.row.element.innerHTML = "";
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Fill list with data.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	fill(options)
+	{
+
+		return new Promise((resolve, reject) => {
+			this.rows = [];
+			options = Object.assign({}, this.options, options);
+
+			this.listener.trigger("target", this).then(() => {;
+				return this.listener.trigger("beforeFetch", this);
+			}).then(() => {
+				// Auto load data
+				if (options["autoLoad"])
+				{
+					return this.__autoLoadData();
+				}
+			}).then(() => {
+				return this.listener.trigger("fetch", this);
+			}).then(() => {
+				return this.listener.trigger("beforeFill", this);
+			}).then(() => {
+				let chain = Promise.resolve();
+				if (this.items)
+				{
+					let fragment = document.createDocumentFragment();
+					for (let i = 0; i < this.items.length; i++)
+					{
+						chain = chain.then(() => {
+							return this.__appendRow(fragment);
+						});
+					}
+					chain.then(() => {
+						if (options["autoClear"])
+						{
+							let newNode = this.row.element.cloneNode();
+							newNode.appendChild(fragment);
+							this.row.element.parentNode.replaceChild(newNode, this.row.element);
+							this.row.element = newNode;
+						}
+						else
+						{
+							this.row.element.appendChild(fragment);
+						}
+					});
+				}
+				return chain;
+			}).then(() => {
+				return this.listener.trigger("_fill", this);
+			}).then(() => {
+				return this.listener.trigger("fill", this);
+			}).then(() => {
+				resolve();
+			});
+		});
 
 	}
 
@@ -60,15 +137,8 @@ export default class List extends Pad
 	__initListOnAppend(sender, e, ex)
 	{
 
-		// extend clone
-		ex.clone.fill = this.__fill.bind(ex.clone);
-		ex.clone.clear= this.__clear.bind(ex.clone);
-		ex.clone.__appendRow = this.__appendRow.bind(ex.clone);
-		ex.clone.__autoLoadData = this.__autoLoadData.bind(ex.clone);
-
-		let row = this.components[this.getOption("row")].object;
-		let listRoot = ex.clone.element.querySelector(row.getOption("listRootNode"));
-		ex.clone.list = new Clone((listRoot.id ? listRoot.id : this.name + "-list"), listRoot, listRoot, row);
+		this.row = this.components[this.getOption("row")].object;
+		this.row.element = this.element.querySelector(this.row.getOption("listRootNode"));
 
 	}
 
@@ -84,89 +154,10 @@ export default class List extends Pad
 	__initListOnFill(sender, e, ex)
 	{
 
-		let row = this.components[this.getOption("row")].object;
-
 		// Set HTML elements' event handlers after filling completed
-		Object.keys(row.elements).forEach((elementName) => {
-			ex.clone.list.initHtmlEvents(elementName, ex.clone.listRootNode);
+		Object.keys(this.row.elements).forEach((elementName) => {
+			this.row.initHtmlEvents(elementName);
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Privates (Bind to clone)
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Fill list with data.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	__fill(options)
-	{
-
-		return new Promise((resolve, reject) => {
-			this.rows = [];
-			options = Object.assign({}, this.parent.options, options);
-
-			this.parent.listener.trigger("target", this, {"clone":this}).then(() => {;
-				return this.parent.listener.trigger("beforeFetch", this, {"clone":this});
-			}).then(() => {
-				// Auto load data
-				if (options["autoLoad"])
-				{
-					return this.__autoLoadData();
-				}
-			}).then(() => {
-				return this.parent.listener.trigger("fetch", this, {"clone":this});
-			}).then(() => {
-				return this.parent.listener.trigger("beforeFill", this);
-			}).then(() => {
-				let chain = Promise.resolve();
-				if (this.parent.items)
-				{
-					let fragment = document.createDocumentFragment();
-					for (let i = 0; i < this.parent.items.length; i++)
-					{
-						chain = chain.then(() => {
-							return this.__appendRow(fragment);
-						});
-					}
-					chain.then(() => {
-						if (options["autoClear"])
-						{
-							let newNode = this.list.element.cloneNode();
-							newNode.appendChild(fragment);
-							this.list.element.parentNode.replaceChild(newNode, this.list.element);
-							this.list.element = newNode;
-						}
-						else
-						{
-							this.list.element.appendChild(fragment);
-						}
-					});
-				}
-				return chain;
-			}).then(() => {
-				return this.parent.listener.trigger("_fill", this, {"clone":this});
-			}).then(() => {
-				return this.parent.listener.trigger("fill", this, {"clone":this});
-			}).then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear list.
-	 */
-	__clear()
-	{
-
-		this.list.element.innerHTML = "";
 
 	}
 
@@ -183,30 +174,28 @@ export default class List extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			let templateName = this.list.parent.options["templateName"];
-			rootNode.appendChild(this.list.parent.clone("", templateName));
-			let elements = rootNode.querySelectorAll("li");
-			let element = elements[elements.length - 1];
-			let chain = Promise.resolve();
-
+			// Append row
+			rootNode.appendChild(this.row.clone("", this.row.getOption("templateName")));
+			let element = rootNode.lastElementChild;
 			this.rows.push(element);
+			let i = this.rows.length - 1;
 
-			// click event handler
-			if (this.list.parent.events["click"])
+			// Set click event handler
+			if (this.row.events["click"])
 			{
-				this.list.parent.listener.addHtmlEventHandler(element, "click", this.list.parent.events["click"]["handler"], {"clone":this, "element":element});
+				this.row.listener.addHtmlEventHandler(element, "click", this.row.events["click"]["handler"], {"element":element});
 			}
 
-			let i = this.rows.length - 1;
-			// call event handlers
+			// Call event handlers
+			let chain = Promise.resolve();
 			chain = chain.then(() => {
-				return this.list.parent.listener.trigger("formatRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
+				return this.row.listener.trigger("formatRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
-				return this.list.parent.listener.trigger("beforeFillRow", this, {"clone":this, "item": this.parent.items[i], "no": i, "element": element});
+				return this.row.listener.trigger("beforeFillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
-				// fill fields
-				FormUtil.setFields(element, this.parent.items[i], this.parent.container["masters"]);
-				return this.list.parent.listener.trigger("fillRow", this, {"item": this.parent.items[i], "no": i, "element": element});
+				// Fill fields
+				FormUtil.setFields(element, this.items[i], this.container["masters"]);
+				return this.row.listener.trigger("fillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				resolve();
 			});
@@ -225,9 +214,9 @@ export default class List extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			this.parent.resource.getList(this.parent.target).then((data) => {
-				this.parent.data = data;
-				this.parent.items = data["data"];
+			this.resource.getList(this.target).then((data) => {
+				this.data = data;
+				this.items = data["data"];
 				resolve();
 			});
 		});

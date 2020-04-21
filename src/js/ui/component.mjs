@@ -9,7 +9,6 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
-import Clone from './clone';
 import {NoNodeError} from '../error/errors';
 import EventHandler from './event-handler';
 
@@ -36,9 +35,14 @@ export default class Component
 		this.container = options["container"];
 		this.name = componentName;
 		this.listener = new EventHandler(this);
-		this.clones = {};
 		this.shadows = {};
 		this.parent;
+		this.element;
+		this.modalOptions;
+		this.modalResult;
+		this.modalPromise;
+		this.isModal = false;
+		this.isOpen = false;
 
 		// Options
 		let defaults = { "templateName":componentName };
@@ -51,7 +55,7 @@ export default class Component
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Open the component.
+	 * Open component.
 	 *
 	 * @param	{Object}		options				Options.
 	 *
@@ -60,30 +64,79 @@ export default class Component
 	open(options)
 	{
 
-		return this._callClones("open", [options]);
+		console.debug(`Component.open(): Opening component. name=${this.name}`);
+
+		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this );
+			delete options["sender"];
+
+			if (this.isOpen)
+			{
+				resolve();
+				return;
+			}
+
+			this._autoLoadTemplate(this.getOption("templateName")).then(() => {
+				if (this.getOption("autoRefresh"))
+				{
+					return this.refresh();
+				}
+			}).then(() => {
+				return this.listener.trigger("_beforeOpen", sender);
+			}).then(() => {
+				return this.listener.trigger("beforeOpen", sender);
+			}).then(() => {
+				return this.listener.trigger("open", sender);
+			}).then(() => {
+				return this.listener.trigger("_open", sender);
+			}).then(() => {
+				this.__initOnOpen();
+				console.debug(`Component.open(): Opened component. name=${this.name}`);
+				this.isOpen = true;
+				resolve();
+			});
+		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-     * Open modal.
+     * Open component modally.
 	 *
-	 * @param	{Object}		options				Options.
+	 * @param	{array}			options				Options.
 	 *
 	 * @return  {Promise}		Promise.
      */
 	openModal(options)
 	{
 
-		return this._callClones("openModal", [options]);
+		console.debug(`Component.openModal(): Opening component. name=${this.name}`);
+
+		return new Promise((resolve, reject) => {
+			if (this.isOpen)
+			{
+				resolve();
+				return;
+			}
+
+			options = Object.assign({}, options);
+			this.options = Object.assign(this.options, options);
+			this.isModal = true;
+			this.modalResult = {"result":false};
+			this.modalOptions = options;
+			this.modalPromise = { "resolve": resolve, "reject": reject };
+			this.open();
+			this.isOpen = true;
+		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Close the component.
+	 * Close component.
 	 *
 	 * @param	{Object}		options				Options.
 	 *
@@ -92,62 +145,80 @@ export default class Component
 	close(options)
 	{
 
-		return this._callClones("close", [options]);
+		console.debug(`Component.close(): Closing component. name=${this.name}`);
+
+		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this );
+			delete options["sender"];
+
+			if (!this.isOpen)
+			{
+				resolve();
+				return;
+			}
+
+			Promise.resolve().then(() => {
+				return this.listener.trigger("_beforeClose", sender);
+			}).then(() => {
+				return this.listener.trigger("beforeClose", sender);
+			}).then(() => {
+				return this.listener.trigger("close", sender);
+			}).then(() => {
+				return this.listener.trigger("_close", sender);
+			}).then(() => {
+				console.debug(`Component.close(): Closed component. name=${this.name}`);
+				if (this.isModal)
+				{
+					this.modalPromise.resolve(this.modalResult);
+				}
+				this.__initOnClose();
+				this.isOpen = false;
+				resolve();
+			});
+		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Refresh the component.
-	 *
-	 * @param	{Object}		options				Options.
+	 * Refresh component.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
 	refresh(options)
 	{
 
-		return this._callClones("refresh", [options]);
+		console.debug(`Component.refresh(): Refreshing component. name=${this.name}`);
+
+		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this );
+			delete options["sender"];
+
+			this.listener.trigger("_beforeRefresh", sender).then(() => {
+				return this.listener.trigger("beforeRefresh", sender);
+			}).then(() => {
+				if (this.getOption("autoFill"))
+				{
+					return this.fill();
+				}
+			}).then(() => {
+				return this.listener.trigger("refresh", sender);
+			}).then(() => {
+				return this.listener.trigger("_refresh", sender);
+			}).then(() => {
+				resolve();
+			});
+		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Fill form with data.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	fill(options)
-	{
-
-		return this._callClones("fill", [options]);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear form.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	clear(options)
-	{
-
-		return this._callClones("clear", [options]);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Apply settings
+	 * Apply settings.
 	 *
 	 * @param	{Object}		options				Options.
 	 *
@@ -156,8 +227,39 @@ export default class Component
 	setup(options)
 	{
 
-		return this._callClones("setup", [options]);
+		console.debug(`Component.setup(): Setting up component. name=${this.name}`);
 
+		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+			options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.container["preferences"] );
+			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.container["preferences"] );
+			let sender = ( options["sender"] ? options["sender"] : this );
+			delete options["sender"];
+
+			this.listener.trigger("formatSettings", sender, options).then(() => {
+				return this.listener.trigger("validateSettings", sender,  options);
+			}).then(() => {
+				return this.listener.trigger("beforeSetup", sender, options);
+			}).then(() => {
+				return this.listener.trigger("setup", sender, options);
+			}).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Fill.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	fill(options)
+	{
 	}
 
 	// -------------------------------------------------------------------------
@@ -165,7 +267,7 @@ export default class Component
 	/**
 	 * Change template html.
 	 *
-	 * @param	{String}		templateName		Template name to clone.
+	 * @param	{String}		templateName		Template name.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
@@ -292,42 +394,52 @@ export default class Component
 	}
 
 	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
 
 	/**
-     * Call clone method.
-     *
-	 * @param	{string}		methodName			Method name.
-	 * @param	{array}			args				Arguments to method.
-	 *
-	 * @return  {Promise}		Promise.
+     * Initialization of component on open().
      */
-	_callClones(methodName, args)
+	__initOnOpen()
 	{
 
-		return new Promise((resolve, reject) => {
-			let templateName = this.getOption("templateName");
+		// Auto focus
+		if (this.getOption("autoFocus"))
+		{
+			let element = this.element.querySelector(this.getOption("autoFocus"));
+			if (element)
+			{
+				element.focus();
+			}
 
-			console.debug(`Component._callClones(): templateName=${templateName}, methodName=${methodName}`);
+		}
 
-			this._autoLoadTemplate(templateName).then(() => {
-				let chain = Promise.resolve();
-
-				Object.keys(this.clones).forEach((key) => {
-					chain = chain.then(() => {
-						return this.clones[key][methodName].apply(this.clones[key], args);
-					});
-				});
-
-				chain.then((result) => {
-					resolve(result);
-				});
-			});
-		});
+		// Css
+		let css = (this.events["open"] && this.events["open"]["css"] ? this.events["open"]["css"] : undefined );
+		if (css)
+		{
+			Object.assign(this.element.style, css);
+		}
 
 	}
 
 	// -------------------------------------------------------------------------
-	//  Privates
+
+	/**
+     * Initialization of clone on close().
+     */
+	__initOnClose()
+	{
+
+		// Css
+		let css = (this.events && this.events["close"] && this.events["close"]["css"] ? this.events["close"]["css"] : undefined );
+		if (css)
+		{
+			Object.assign(this.element.style, css);
+		}
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -375,143 +487,25 @@ export default class Component
 				return;
 			}
 
-			let roots = document.querySelectorAll(rootNode);
-			if (roots.length == 0)
+			let root = document.querySelector(rootNode);
+			if (!root)
 			{
 				throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
 			}
 
-			this.__appendToRoots(roots, templateName).then(() => {
-				resolve();
-			});
-		});
+			// Add template to root node
+			root.insertAdjacentHTML("afterbegin", this.shadows[templateName].html);
+			this.element = root.children[0];
 
-	}
+			console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
 
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Append the template html to its root node. Bound to parent node.
-	 *
-	 * @param	{String}		rootNode			Root node to append.
-	 * @param	{String}		templateName		Template name.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	/*
-	__appendTemplate(rootNode, templateName)
-	{
-
-		return new Promise((resolve, reject) => {
-			if (!rootNode)
-			{
-				resolve();
-				return;
-			}
-
-			console.debug(`Component.__appendTemplate(): Appending template. templateName=${templateName}, rootNode=${rootNode}`);
-
-			let chain = Promise.resolve();
-
-			if (this.parent)
-			{
-				// Has a parent.  Root node is parent's each clone.
-				Object.keys(this.parent.clones).forEach((cloneId) => {
-					let roots = this.parent.clones[cloneId].element.querySelectorAll(rootNode);
-					if (roots.length == 0)
-					{
-						throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
-					}
-					chain = chain.then(() => {
-						return this.__appendToRoots(roots, templateName);
-					});
-				});
-			}
-			else
-			{
-				// Doesn't have a parent.  Root node is document.
-				let roots = document.querySelectorAll(rootNode);
-				if (roots.length == 0)
-				{
-					throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
-				}
-
-				chain = this.__appendToRoots(roots, templateName);
-			}
-
-			chain.then(() => {
-				resolve();
-			});
-		});
-
-	}
-	*/
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Append the template html to its root node.
-	 *
-	 * @param	{HTMLNodes}		roots				Root nodes.
-	 * @param	{String}		templateName		Template name.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	__appendToRoots(roots, templateName)
-	{
-
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-
-			roots.forEach((root) => {
-				// Add template to root node
-				root.insertAdjacentHTML("afterbegin", this.shadows[templateName].html);
-				let newElement = root.children[0];
-				console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
-
-				// Regist clone
-				let id = "";
-				chain = chain.then(() => {
-					return this.__registClone(id, newElement, root);
-				});
-			});
-
-			chain.then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Regist cloned element.
-	 *
-	 * @param	{String}		id					Element id.
-	 * @param	{HTMLElement}	element				Element to register.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	__registClone(id, element, rootNode)
-	{
-
-		return new Promise((resolve, reject) => {
-			if (!id)
-			{
-				let no = Object.keys(this.clones).length + 1
-				id =  "clone-" + no;
-			}
-
-			let clone = new Clone(id, element, rootNode, this);
-			this.clones[id] = clone;
-
-			this.listener.trigger("_append", this, {"clone":clone}).then(() => {
-				return this.listener.trigger("append", this, {"clone":clone});
+			// Trigger events
+			this.listener.trigger("_append", this).then(() => {
+				return this.listener.trigger("append", this);
 			}).then(() => {
-				return clone.setup();
+				return this.setup();
 			}).then(() => {
-				return this.listener.trigger("init", this, {"clone":clone});
+				return this.listener.trigger("init", this);
 			}).then(() => {
 				resolve();
 			});

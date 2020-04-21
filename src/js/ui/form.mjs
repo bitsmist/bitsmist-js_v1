@@ -34,6 +34,8 @@ export default class Form extends Pad
 		super(componentName, options);
 		this.target;
 		this.item = {};
+		this.isComposing = false;
+		this.cancelSubmit = false;
 
 		// Init system event handlers
 		this.listener.addEventHandler("_append", this.__initFormOnAppend);
@@ -54,60 +56,168 @@ export default class Form extends Pad
 	build(items)
 	{
 
-		return this._callClones("build", [items]);
+		Object.keys(items).forEach((key) => {
+			FormUtil.buildFields(this.element, key, items[key]);
+		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Validate form.
+     * Fill the form.
 	 *
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
-	 */
-	valiate(options)
+     */
+	fill(options)
 	{
 
-		return this._callClones("validate", [options]);
+		return new Promise((resolve, reject) => {
+			options = Object.assign({}, this.options, options);
+			let sender = ( options["sender"] ? options["sender"] : this );
+
+			// Clear fields
+			if (options["autoClear"])
+			{
+				this.clear();
+			}
+
+			this.listener.trigger("target", sender).then(() => {
+				return this.listener.trigger("beforeFetch", sender);
+			}).then(() => {
+				// Auto load data
+				if (options["autoLoad"])
+				{
+					return this.__autoLoadData();
+				}
+			}).then(() => {
+				return this.listener.trigger("fetch", sender);
+			}).then(() => {
+				return this.listener.trigger("format", sender);
+			}).then(() => {
+				return this.listener.trigger("beforeFill", sender);
+			}).then(() => {
+				FormUtil.setFields(this.element, this.item, this.container["masters"]);
+				return this.listener.trigger("fill", sender);
+			}).then(() => {
+				resolve();
+			});
+		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Submit form.
+     * Clear the form.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @param	{string}		target				Target.
+     */
+	clear(target)
+	{
+
+		return FormUtil.clearFields(this.element, target);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Validate.
 	 *
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
-	 */
+     */
+	validate(options)
+	{
+
+		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this );
+			delete options["sender"];
+
+			this.listener.trigger("beforeValidate", sender).then(() => {
+				let ret = true;
+				let form = this.element.querySelector("form");
+
+				if (this.getOption("autoValidate"))
+				{
+					if (form && form.reportValidity)
+					{
+						ret = form.reportValidity();
+					}
+					else
+					{
+						ret = FormUtil.reportValidity(this.element);
+					}
+				}
+
+				if (!ret)
+				{
+					this.cancelSubmit = true;
+				}
+				return this.listener.trigger("validate", sender);
+			}).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Submit the form.
+	 *
+	 * @return  {Promise}		Promise.
+     */
 	submit(options)
 	{
 
-		return this._callClones("submit", [options]);
+		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this );
+			delete options["sender"];
+			this.cancelSubmit = false;
+			this.item = this.getFields();
+
+			this.listener.trigger("formatSubmit", sender).then(() => {
+				return this.validate();
+			}).then(() => {
+				return this.listener.trigger("beforeSubmit", sender);
+			}).then(() => {
+				if (!this.cancelSubmit)
+				{
+					return this.listener.trigger("submit", sender);
+				}
+			}).then(() => {
+				resolve();
+			});
+		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get fields value.
+     * Get the form values.
 	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	getFields(options)
+	 * @return  {array}			Form values.
+     */
+	getFields()
 	{
 
-		return this._callClones("getFields", [options]);
+		return FormUtil.getFields(this.element);
 
 	}
 
 	// -------------------------------------------------------------------------
-	//  Privates (Bind to clone)
+	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
@@ -120,27 +230,13 @@ export default class Form extends Pad
 	__initFormOnAppend(sender, e, ex)
 	{
 
-		// extend clone
-		ex.clone.isComposing = false;
-		ex.clone.cancelSubmit = false;
-		ex.clone.build= this.__build.bind(ex.clone);
-		ex.clone.fill = this.__fill.bind(ex.clone);
-		ex.clone.clear= this.__clear.bind(ex.clone);
-		ex.clone.validate = this.__validate.bind(ex.clone);
-		ex.clone.submit= this.__submit.bind(ex.clone);
-		ex.clone.getFields= this.__getFields.bind(ex.clone);
-		ex.clone.__autoLoadData = this.__autoLoadData.bind(ex.clone);
-		ex.clone.__defaultSubmit = this.__defaultSubmit.bind(ex.clone);
-		ex.clone.__defaultClear = this.__defaultClear.bind(ex.clone);
-		ex.clone.__defaultCancel = this.__defaultCancel.bind(ex.clone);
-
 		// default keys
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this.listener.addHtmlEventHandler(ex.clone.element, "keydown", this.__defaultKey.bind(ex.clone), {"options":defaultKeys});
-			this.listener.addHtmlEventHandler(ex.clone.element, "compositionstart", this.__compositionStart.bind(ex.clone), {"options":defaultKeys});
-			this.listener.addHtmlEventHandler(ex.clone.element, "compositionend", this.__compositionEnd.bind(ex.clone), {"options":defaultKeys});
+			this.listener.addHtmlEventHandler(this.element, "keydown", this.__defaultKey, {"options":defaultKeys});
+			this.listener.addHtmlEventHandler(this.element, "compositionstart", this.__compositionStart, {"options":defaultKeys});
+			this.listener.addHtmlEventHandler(this.element, "compositionend", this.__compositionEnd, {"options":defaultKeys});
 		}
 
 		// default buttons
@@ -150,22 +246,20 @@ export default class Form extends Pad
 			let initElements = (options, handler) => {
 				if (options)
 				{
-					let elements = ex.clone.element.querySelectorAll(options["rootNode"]);
+					let elements = this.element.querySelectorAll(options["rootNode"]);
 					elements.forEach((element) => {
 						this.listener.addHtmlEventHandler(element, "click", handler, {"options":options});
 					});
 				}
 			};
 
-			initElements(defaultButtons["submit"], this.__defaultSubmit.bind(ex.clone));
-			initElements(defaultButtons["cancel"], this.__defaultCancel.bind(ex.clone));
-			initElements(defaultButtons["clear"], this.__defaultClear.bind(ex.clone));
+			initElements(defaultButtons["submit"], this.__defaultSubmit);
+			initElements(defaultButtons["cancel"], this.__defaultCancel);
+			initElements(defaultButtons["clear"], this.__defaultClear);
 		}
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates (Bind to elemnt)
 	// -------------------------------------------------------------------------
 
 	/**
@@ -308,178 +402,6 @@ export default class Form extends Pad
 	}
 
 	// -------------------------------------------------------------------------
-	//  Privates (Bind to clone)
-	// -------------------------------------------------------------------------
-
-	/**
-     * Build the form.
-	 *
-	 * @param	{Object}			items				Form values.
-     */
-	__build(items)
-	{
-
-		Object.keys(items).forEach((key) => {
-			FormUtil.buildFields(this.element, key, items[key]);
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Fill the form.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-     */
-	__fill(options)
-	{
-
-		return new Promise((resolve, reject) => {
-			options = Object.assign({}, this.parent.options, options);
-			let sender = ( options["sender"] ? options["sender"] : this.parent );
-
-			// Clear fields
-			if (options["autoClear"])
-			{
-				this.clear();
-			}
-
-			this.parent.listener.trigger("target", sender, {"clone":this}).then(() => {
-				return this.parent.listener.trigger("beforeFetch", sender, {"clone":this});
-			}).then(() => {
-				// Auto load data
-				if (options["autoLoad"])
-				{
-					return this.__autoLoadData();
-				}
-			}).then(() => {
-				return this.parent.listener.trigger("fetch", sender, {"clone":this});
-			}).then(() => {
-				return this.parent.listener.trigger("format", sender, {"clone":this});
-			}).then(() => {
-				return this.parent.listener.trigger("beforeFill", sender, {"clone":this});
-			}).then(() => {
-				FormUtil.setFields(this.element, this.parent.item, this.parent.container["masters"]);
-				return this.parent.listener.trigger("fill", sender, {"clone":this});
-			}).then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Clear the form.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @param	{string}		target				Target.
-     */
-	__clear(target)
-	{
-
-		return FormUtil.clearFields(this.element, target);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Validate.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-     */
-	__validate(options)
-	{
-
-		return new Promise((resolve, reject) => {
-			options = Object.assign({}, options);
-			let sender = ( options["sender"] ? options["sender"] : this.parent );
-			delete options["sender"];
-
-			this.parent.listener.trigger("beforeValidate", sender, {"clone":this}).then(() => {
-				let ret = true;
-				let form = this.element.querySelector("form");
-
-				if (this.parent.getOption("autoValidate"))
-				{
-					if (form && form.reportValidity)
-					{
-						ret = form.reportValidity();
-					}
-					else
-					{
-						ret = FormUtil.reportValidity(this.element);
-					}
-				}
-
-				if (!ret)
-				{
-					this.cancelSubmit = true;
-				}
-				return this.parent.listener.trigger("validate", sender, {"clone":this});
-			}).then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Submit the form.
-	 *
-	 * @return  {Promise}		Promise.
-     */
-	__submit(options)
-	{
-
-		return new Promise((resolve, reject) => {
-			options = Object.assign({}, options);
-			let sender = ( options["sender"] ? options["sender"] : this.parent );
-			delete options["sender"];
-			this.cancelSubmit = false;
-			this.parent.item = this.getFields();
-
-			this.parent.listener.trigger("formatSubmit", sender, {"clone":this}).then(() => {
-				return this.validate();
-			}).then(() => {
-				return this.parent.listener.trigger("beforeSubmit", sender, {"clone":this});
-			}).then(() => {
-				if (!this.cancelSubmit)
-				{
-					return this.parent.listener.trigger("submit", sender, {"clone":this});
-				}
-			}).then(() => {
-				resolve();
-			});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Get the form values.
-	 *
-	 * @return  {array}			Form values.
-     */
-	__getFields()
-	{
-
-		return FormUtil.getFields(this.element);
-
-	}
-
-	// -------------------------------------------------------------------------
 
 	/**
      * Load data via API.
@@ -490,8 +412,8 @@ export default class Form extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			this.parent.resource.getItem(this.parent.target).then((data) => {
-				this.parent.item = data["data"][0];
+			this.resource.getItem(this.target).then((data) => {
+				this.item = data["data"][0];
 				resolve();
 			});
 		});

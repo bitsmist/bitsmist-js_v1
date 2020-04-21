@@ -89,6 +89,7 @@ export default class Pad extends Component
 			options = Object.assign({}, options);
 
 			Promise.resolve().then(() => {
+				// Create component
 				if (!this.components[componentName] || !this.components[componentName].object)
 				{
 					return new Promise((resolve, reject) => {
@@ -148,6 +149,46 @@ export default class Pad extends Component
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+     * Init component's html element's event handler.
+	 *
+	 * @param	{String}		elementName			Element name.
+	 * @param	{Options}		options				Options.
+     */
+	initHtmlEvents(elementName, options)
+	{
+
+		// Get target elements
+		let elements;
+		if (elementName == "_self")
+		{
+			elements = [this.element];
+		}
+		else if (this.elements && this.elements[elementName] && "rootNode" in this.elements[elementName])
+		{
+			elements = this.element.querySelectorAll(this.elements[elementName]["rootNode"]);
+		}
+		else
+		{
+			elements = this.element.querySelectorAll("#" + elementName);
+		}
+
+		// Set event handlers
+		let events = (this.elements[elementName]["events"] ? this.elements[elementName]["events"] : {});
+		for (let i = 0; i < elements.length; i++)
+		{
+			Object.keys(events).forEach((eventName) => {
+				// Merge options
+				options = Object.assign({}, events[eventName], options);
+
+				this.listener.addHtmlEventHandler(elements[i], eventName, events[eventName]["handler"], options);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
 
@@ -165,6 +206,30 @@ export default class Pad extends Component
 
 	// -------------------------------------------------------------------------
 	//  Privates
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init on initComponent.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+ 	 * @param	{Object}		ex					Extra info.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	__initPadOnInitComponent(sender, e, ex)
+	{
+
+		// Init plugins
+		if (this.options["plugins"])
+		{
+			Object.keys(this.options["plugins"]).forEach((pluginName) => {
+				this.addPlugin(pluginName, this.options["plugins"][pluginName]);
+			});
+		}
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -192,33 +257,14 @@ export default class Pad extends Component
 			});
 
 			chain.then(() => {
+				// Init HTML elments' event handlers
+				Object.keys(this.elements).forEach((elementName) => {
+						this.initHtmlEvents(elementName);
+				});
+
 				resolve();
 			});
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Init on initComponent.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	__initPadOnInitComponent(sender, e, ex)
-	{
-
-		// Init plugins
-		if (this.options["plugins"])
-		{
-			Object.keys(this.options["plugins"]).forEach((pluginName) => {
-				this.addPlugin(pluginName, this.options["plugins"][pluginName]);
-			});
-		}
 
 	}
 
