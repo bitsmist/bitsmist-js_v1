@@ -38,7 +38,7 @@ export default class Form extends Pad
 		// Init system event handlers
 		this.listener.addEventHandler("_append", this.__initFormOnAppend);
 
-	};
+	}
 
 	// -------------------------------------------------------------------------
 	//  Methods
@@ -130,14 +130,17 @@ export default class Form extends Pad
 		ex.clone.submit= this.__submit.bind(ex.clone);
 		ex.clone.getFields= this.__getFields.bind(ex.clone);
 		ex.clone.__autoLoadData = this.__autoLoadData.bind(ex.clone);
+		ex.clone.__defaultSubmit = this.__defaultSubmit.bind(ex.clone);
+		ex.clone.__defaultClear = this.__defaultClear.bind(ex.clone);
+		ex.clone.__defaultCancel = this.__defaultCancel.bind(ex.clone);
 
 		// default keys
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this.listener.addHtmlEventHandler(ex.clone.element, "keydown", this.__defaultKey, {"clone":ex.clone, "options":defaultKeys});
-			this.listener.addHtmlEventHandler(ex.clone.element, "compositionstart", this.__compositionStart, {"clone":ex.clone, "options":defaultKeys});
-			this.listener.addHtmlEventHandler(ex.clone.element, "compositionend", this.__compositionEnd, {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "keydown", this.__defaultKey.bind(ex.clone), {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "compositionstart", this.__compositionStart.bind(ex.clone), {"clone":ex.clone, "options":defaultKeys});
+			this.listener.addHtmlEventHandler(ex.clone.element, "compositionend", this.__compositionEnd.bind(ex.clone), {"clone":ex.clone, "options":defaultKeys});
 		}
 
 		// default buttons
@@ -154,9 +157,9 @@ export default class Form extends Pad
 				}
 			};
 
-			initElements(defaultButtons["submit"], this.__defaultSubmit);
-			initElements(defaultButtons["cancel"], this.__defaultCancel);
-			initElements(defaultButtons["clear"], this.__defaultClear);
+			initElements(defaultButtons["submit"], this.__defaultSubmit.bind(ex.clone));
+			initElements(defaultButtons["cancel"], this.__defaultCancel.bind(ex.clone));
+			initElements(defaultButtons["clear"], this.__defaultClear.bind(ex.clone));
 		}
 
 	}
@@ -248,16 +251,19 @@ export default class Form extends Pad
 
 		let clone = ex.clone;
 		ex.clone.submit().then(() => {
-			// Modal result
-			if (clone.isModal)
+			if (!clone.cancelSubmit)
 			{
-				clone.modalResult["result"] = true;
-			}
+				// Modal result
+				if (clone.isModal)
+				{
+					clone.modalResult["result"] = true;
+				}
 
-			// Auto close
-			if (ex["options"]["autoClose"])
-			{
-				clone.close();
+				// Auto close
+				if (ex["options"]["autoClose"])
+				{
+					clone.close();
+				}
 			}
 		});
 
