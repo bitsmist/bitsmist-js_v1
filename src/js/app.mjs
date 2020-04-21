@@ -104,24 +104,24 @@ export default class App
 	/**
 	 * Instantiate the component.
 	 *
-	 * @param	{string}		componentName		Component name.
+	 * @param	{string}		className			Class name.
 	 * @param	{array}			options				Options for the component.
 	 *
 	 * @return  {Object}		Initaiated object.
 	 */
-	createObject(componentName, options)
+	createObject(className, options)
 	{
 
 		let ret = null;
 
-		if (this.isExistsComponent(componentName))
+		if (this.isExistsClass(className))
 		{
-			let c = Function("return (" + componentName + ")")();
-			ret  = new c(componentName, options);
+			let c = Function("return (" + className + ")")();
+			ret  = new c(className, options);
 		}
 		else
 		{
-			throw new NoClassError(`Class not found. componentName=${componentName}`);
+			throw new NoClassError(`Class not found. className=${className}`);
 		}
 
 		return ret;
@@ -131,17 +131,17 @@ export default class App
     // -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component exists.
+	 * Check if the class exists.
 	 *
-	 * @param	{string}		componentName		Component name.
+	 * @param	{string}		className			Class name.
 	 *
 	 * @return  {bool}			True if exists.
 	 */
-	isExistsComponent(componentName)
+	isExistsClass(className)
 	{
 
 		let ret = false;
-		let isExists = Function('"use strict";return (typeof ' + componentName+ ' === "function")')();
+		let isExists = Function('"use strict";return (typeof ' + className+ ' === "function")')();
 
 	    if(isExists) {
 	        ret = true;
