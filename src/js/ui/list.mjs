@@ -177,6 +177,10 @@ export default class List extends Pad
 			// Append row
 			rootNode.appendChild(this.row.clone("", this.row.getOption("templateName")));
 			let element = rootNode.lastElementChild;
+			if (!element)
+			{
+				element = rootNode.childNodes[rootNode.childNodes.length - 1];
+			}
 			this.rows.push(element);
 			let i = this.rows.length - 1;
 
