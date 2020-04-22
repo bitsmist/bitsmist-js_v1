@@ -495,31 +495,34 @@ export default class DefaultLoader
 	/**
 	 * Load the component if not loaded yet.
 	 *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{Object}		options				Query options.
+	 * @param	{String}		clasName			Component class name.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	__autoloadComponent(componentName, options)
+	__autoloadComponent(className, options)
 	{
 
+		console.debug(`Loader.__autoLoadComponent(): Auto loading component. className=${className}`);
+
 		return new Promise((resolve, reject) => {
-			if (!this.__isExistsComponent(componentName))
+			//if (!this.__isExistsComponent(className))
+			if (!this.container["app"].isExistsClass(className))
 			{
 				let path = "";
 				if (options && "path" in options)
 				{
 					path = options["path"];
 				}
-				console.debug(`Loader.__autoLoadComponent(): Auto loading component. component=${componentName}, path=${path}`);
-				let promise = this.__loadComponentScript(componentName, path).then(() => {
-					console.debug(`Loader.__autoLoadComponent(): Auto loaded component. component=${componentName}, path=${path}`);
+
+				let promise = this.__loadComponentScript(className, path).then(() => {
+					console.debug(`Loader.__autoLoadComponent(): Auto loaded component. className=${className}, path=${path}`);
 					resolve();
 				});
 			}
 			else
 			{
-				console.debug("component Already exists.", componentName);
+				console.debug(`Loader.__autoLoadComponent(): Component Already exists. className=${className}`, );
 				resolve();
 			}
 		});
@@ -547,29 +550,6 @@ export default class DefaultLoader
 				});
 			});
 		});
-
-	}
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Check if the component exists.
-	 *
-	 * @param	{string}		componentName		Component name.
-	 *
-	 * @return  {bool}			True if exists.
-	 */
-	__isExistsComponent(componentName)
-	{
-
-		let ret = false;
-		let isExists = Function('"use strict";return (typeof ' + componentName+ ' === "function")')();
-
-	    if(isExists) {
-	        ret = true;
-	    }
-
-		return ret;
 
 	}
 
