@@ -104,8 +104,8 @@ export default class App
 	/**
 	 * Instantiate the component.
 	 *
-	 * @param	{string}		className			Class name.
-	 * @param	{array}			options				Options for the component.
+	 * @param	{String}		className			Class name.
+	 * @param	{Object}		options				Options for the component.
 	 *
 	 * @return  {Object}		Initaiated object.
 	 */
@@ -113,11 +113,12 @@ export default class App
 	{
 
 		let ret = null;
+		let componentName = ( options["name"] ? options["name"] : className );
 
 		if (this.isExistsClass(className))
 		{
 			let c = Function("return (" + className + ")")();
-			ret  = new c(className, options);
+			ret  = new c(componentName, options);
 		}
 		else
 		{
