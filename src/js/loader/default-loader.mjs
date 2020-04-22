@@ -10,7 +10,9 @@
 
 import AjaxUtil from '../util/ajax-util';
 import {NoRouteError, NoClassError, NotValidFunctionError} from '../error/errors';
+import ErrorManager from '../manager/error-manager';
 import MasterUtil from '../util/master-util';
+import PreferenceManager from '../manager/preference-manager';
 import ResourceUtil from '../util/resource-util';
 
 // =============================================================================
@@ -37,8 +39,8 @@ export default class DefaultLoader
 		this.options = options;
 		this.container = options["container"];
 
-		this.container["errorManager"] = this.container["app"].createObject("BITSMIST.v1.ErrorManager", {"container":this.container});
-		this.container["preferenceManager"] = this.container["app"].createObject("BITSMIST.v1.PreferenceManager", {"container":this.container});
+		this.container["errorManager"] = new ErrorManager("ErrorManager", {"container":this.container});
+		this.container["preferenceManager"] = new PreferenceManager("PreferenceManager", {"container":this.container});
 
 	}
 
