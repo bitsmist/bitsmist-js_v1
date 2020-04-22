@@ -273,7 +273,7 @@ export default class Form extends Pad
 	{
 
 		// Ignore all key input when composing.
-		if (this.isComposing)
+		if (this.isComposing || e.keyCode == 229)
 		{
 			return;
 		}
