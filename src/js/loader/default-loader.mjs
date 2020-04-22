@@ -410,30 +410,25 @@ export default class DefaultLoader
 	buildUrlOption(options)
 	{
 
-		let search = "";
+		let query = "";
+
 		if (options)
 		{
-			for (let key in options)
-			{
-				if (options[key])
+			query = Object.keys(options).reduce((result, current) => {
+				if (Array.isArray(options[current]))
 				{
-					if (Array.isArray(options[key]))
-					{
-						search += encodeURIComponent(key) + "=" + encodeURIComponent(options[key].join()) + "&";
-					}
-					else
-					{
-						search += encodeURIComponent(key) + "=" + encodeURIComponent(options[key]) + "&";
-					}
+					result += encodeURIComponent(current) + "=" + encodeURIComponent(options[current].join()) + "&";
 				}
-			}
-			if (search)
-			{
-				search = "?" + search.substr(0, search.length - 1);
-			}
+				else if (options[current])
+				{
+					result += encodeURIComponent(current) + "=" + encodeURIComponent(options[current]) + "&";
+				}
+
+				return result;
+			}, "");
 		}
 
-		return search;
+		return ( query ? "?" + query.slice(0, -1) : "");
 
 	}
 
@@ -486,7 +481,6 @@ export default class DefaultLoader
 		console.debug(`Loader.__autoLoadComponent(): Auto loading component. className=${className}`);
 
 		return new Promise((resolve, reject) => {
-			//if (!this.__isExistsComponent(className))
 			if (!this.container["app"].isExistsClass(className))
 			{
 				let path = "";
