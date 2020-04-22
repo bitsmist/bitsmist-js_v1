@@ -34,6 +34,7 @@ export default class Component
 
 		this.container = options["container"];
 		this.name = componentName;
+		this.className = (options["class"] ? options["class"] : componentName);
 		this.listener = new EventHandler(this);
 		this.shadows = {};
 		this.parent;
@@ -45,7 +46,7 @@ export default class Component
 		this.isOpen = false;
 
 		// Options
-		let defaults = { "templateName":componentName };
+		let defaults = { "templateName":this.className };
 		this.options = Object.assign( {}, defaults, (options ? options : {}) );
 
 	}

@@ -195,7 +195,7 @@ export default class DefaultLoader
 			options["container"] = this.container;
 			if ("class" in options)
 			{
-				this.container["resources"][resourceName] = this.container["app"].createObject(options["class"], options);
+				this.container["resources"][resourceName] = this.container["app"].createObject(options["class"], resourceName, options);
 			}
 			else
 			{
@@ -290,7 +290,7 @@ export default class DefaultLoader
 				let promise;
 
 				options["container"] = this.container;
-				component = this.container["app"].createObject(className, options);
+				component = this.container["app"].createObject(className, componentName, options);
 				this.container["components"][componentName] = {};
 				this.container["components"][componentName].object = component;
 

@@ -71,7 +71,7 @@ export default class ServiceManager
 			newOptions["container"] = this.container;
 		}
 
-		let component = this.container["app"].createObject(className, newOptions);
+		let component = this.container["app"].createObject(className, pluginName, newOptions);
 		this.plugins.push(component);
 
 	}

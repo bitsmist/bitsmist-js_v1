@@ -105,15 +105,16 @@ export default class App
 	 * Instantiate the component.
 	 *
 	 * @param	{String}		className			Class name.
+	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
 	 *
 	 * @return  {Object}		Initaiated object.
 	 */
-	createObject(className, options)
+	createObject(className, componentName, options)
 	{
 
 		let ret = null;
-		let componentName = ( options["name"] ? options["name"] : className );
+		componentName = ( componentName ? componentName : className );
 
 		if (this.isExistsClass(className))
 		{
@@ -163,10 +164,10 @@ export default class App
 	{
 
 		let loaderOptions = {"container": this.container};
-		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], loaderOptions);
+		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], this.container["settings"]["loader"]["class"], loaderOptions);
 
 		let routerOptions = {"container": this.container};
-		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], routerOptions);
+		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], this.container["settings"]["router"]["class"], routerOptions);
 
 		// Init exception manager
 		this.container["errorManager"].listener.addEventHandler("error", (sender, e, ex) => {

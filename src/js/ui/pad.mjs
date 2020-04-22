@@ -135,7 +135,7 @@ export default class Pad extends Component
 
 			options["container"] = this.container;
 			options["component"] = this;
-			plugin = this.container["app"].createObject(className, options);
+			plugin = this.container["app"].createObject(className, pluginName, options);
 			this.plugins[pluginName] = ( this.options["plugins"][pluginName] ? this.options["plugins"][pluginName] : {} );
 			this.plugins[pluginName].object = plugin;
 
