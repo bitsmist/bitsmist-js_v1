@@ -94,9 +94,6 @@ export default class DefaultLoader
 
 		return new Promise((resolve, reject) => {
 			let promises = [];
-			let responseCommon;
-			let response
-			let promise;
 
 			if (!routeInfo["resourceName"])
 			{
@@ -104,53 +101,27 @@ export default class DefaultLoader
 				throw new NoRouteError(`No route. url=${url}`);
 			}
 
-			// load common spec
-			promise = new Promise((resolve, reject) => {
-				AjaxUtil.ajaxRequest({url:urlCommon, method:"GET"}).then((xhr) => {
-					responseCommon = xhr.responseText;
-					resolve();
-				}).catch((xhr) => {
-					responseCommon = "{}";
-					resolve();
-				});
-			});
-			promises.push(promise);
+			// Load specs
+			promises.push(this.__loadSpecFile(urlCommon, "{}"));
+			promises.push(this.__loadSpecFile(url));
 
-			// load spec
-			promise = new Promise((resolve, reject) => {
-				AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-					response = xhr.responseText;
-					resolve();
-				}).catch((xhr) => {
-					throw new NoRouteError(`No route. url=${url}`);
-				});
-			})
-			promises.push(promise);
-
-			Promise.all(promises).then(() => {
+			Promise.all(promises).then((result) => {
 				// Convert to json
 				try
 				{
-					specCommon = JSON.parse(responseCommon);
-					spec = JSON.parse(response);
+					specCommon = JSON.parse(result[0]);
+					spec = JSON.parse(result[1]);
 				}
 				catch(e)
 				{
 					throw new Error(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
 				}
 
-				// Merge to common spec.
-				let specMerged = this.__mergeSettings(specCommon, spec);
+				// Merge common spec and spec.
+				let specMerged = this.__deepMerge(specCommon, spec);
 
 				// Merge settings to spec
-				Object.keys(specMerged).forEach((key) => {
-					Object.keys(specMerged[key]).forEach((componentName) => {
-						if (key in this.container["settings"] && componentName in this.container["settings"][key])
-						{
-							specMerged[key][componentName] = this.__mergeSettings(this.container["settings"][key][componentName], specMerged[key][componentName]);
-						}
-					});
-				});
+				specMerged = this.__mergeSettings(specMerged, this.container["settings"]);
 
 				resolve(specMerged);
 			});
@@ -162,8 +133,6 @@ export default class DefaultLoader
 
 	/**
 	 * Load preferences.
-	 *
-	 * @param	{array}			spec				Spec for resources.
 	 */
 	loadPreferences()
 	{
@@ -185,7 +154,7 @@ export default class DefaultLoader
 	/**
 	 * Load resources.
 	 *
-	 * @param	{array}			spec				Spec for resources.
+	 * @param	{Object}		spec				Spec for resources.
 	 */
 	loadResources(spec)
 	{
@@ -210,7 +179,7 @@ export default class DefaultLoader
 	/**
 	 * Load masters.
 	 *
-	 * @param	{array}			spec				Spec for masters.
+	 * @param	{Object}		spec				Spec for masters.
 	 */
 	loadMasters(spec)
 	{
@@ -240,7 +209,7 @@ export default class DefaultLoader
 	/**
 	 * Load components.
 	 *
-	 * @param	{array}			spec				Spec for components.
+	 * @param	{Object}		spec				Spec for components.
 	 */
 	loadComponents(spec)
 	{
@@ -273,8 +242,8 @@ export default class DefaultLoader
 	/**
 	 * Create the component.
 	 *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{array}			options				Options for the component.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
@@ -311,9 +280,9 @@ export default class DefaultLoader
 	/**
 	 * Build url for the spec file.
 	 *
-	 * @param	{string}		specName			Spec name.
+	 * @param	{String}		specName			Spec name.
 	 *
-	 * @return  {string}		Url.
+	 * @return  {String}		Url.
 	 */
 	buildSpecUrl(specName)
 	{
@@ -327,10 +296,10 @@ export default class DefaultLoader
 	/**
 	 * Build url for the component script.
 	 *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{string}		path				Path.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		path				Path.
 	 *
-	 * @return  {string}		Url.
+	 * @return  {String}		Url.
 	 */
 	buildComponentScriptUrl(componentName, path)
 	{
@@ -344,10 +313,10 @@ export default class DefaultLoader
 	/**
 	 * Build url for the template html.
 	 *
-	 * @param	{string}		componentName		Component name.
-	 * @param	{string}		path				Path.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		path				Path.
 	 *
-	 * @return  {string}		Url.
+	 * @return  {String}		Url.
 	 */
 	buildTemplateUrl(componentName, path)
 	{
@@ -361,11 +330,11 @@ export default class DefaultLoader
 	/**
 	 * Build url for the api.
 	 *
-	 * @param	{string}		resource			API resource.
-	 * @param	{string}		id					Id for the resource.
+	 * @param	{String}		resource			API resource.
+	 * @param	{String}		id					Id for the resource.
 	 * @param	{Object}		options				Query options.
 	 *
-	 * @return  {string}		Url.
+	 * @return  {String}		Url.
 	 */
 	buildApiUrl(resource, id, options)
 	{
@@ -405,9 +374,9 @@ export default class DefaultLoader
 	/**
 	 * Build query string from the options array.
 	 *
-	 * @param	{array}			options				Query options.
+	 * @param	{Object}		options				Query options.
 	 *
-	 * @return  {string}		Query string.
+	 * @return  {String}		Query string.
 	 */
 	buildUrlOption(options)
 	{
@@ -439,7 +408,6 @@ export default class DefaultLoader
 	/**
 	 * Create options array from the current url.
 	 *
-	 * @return  {Array}			Options.
 	 */
 	loadParameters()
 	{
@@ -510,7 +478,7 @@ export default class DefaultLoader
 	/**
 	 * Load the component js files.
 	 *
-	 * @param	{string}		componentName		Component name.
+	 * @param	{String}		componentName		Component name.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
@@ -532,14 +500,74 @@ export default class DefaultLoader
     // -------------------------------------------------------------------------
 
 	/**
-	 * Merge settings.
+	 * Load spec file.
 	 *
-	 * @param	{array}			arr1					Array1.
-	 * @param	{array}			arr2					Array2.
+	 * @param	{String}		url					Spec file url.
+	 * @param	{String}		defaultResponse		Response when error.
 	 *
-	 * @return  {array}			Merged array.
+	 * @return  {Promise}		Promise.
 	 */
-	__mergeSettings(arr1, arr2)
+	__loadSpecFile(url, defaultResponse)
+	{
+
+		return new Promise((resolve, reject) => {
+			let response;
+
+			AjaxUtil.ajaxRequest({"url":url, "method":"GET"}).then((xhr) => {
+				response = xhr.responseText;
+				resolve(response);
+			}).catch((xhr) => {
+				if (defaultResponse)
+				{
+					response = defaultResponse;
+					resolve(response);
+				}
+				else
+				{
+					throw new NoRouteError(`No route. url=${url}`);
+				}
+			});
+		});
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Merge settings to spec.
+	 *
+	 * @param	{Object}		spec					Spec.
+	 * @param	{Object}		settings				Settings.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
+	__mergeSettings(spec, settings)
+	{
+
+		Object.keys(spec).forEach((key) => {
+			Object.keys(spec[key]).forEach((componentName) => {
+				if (key in settings && componentName in settings[key])
+				{
+					spec[key][componentName] = this.__mergeSettings(settings[key][componentName], spec[key][componentName]);
+				}
+			});
+		});
+
+		return spec;
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Deep merge.
+	 *
+	 * @param	{Object}		arr1					Array1.
+	 * @param	{Object}		arr2					Array2.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
+	__deepMerge(arr1, arr2)
 	{
 
 		Object.keys(arr2).forEach((key) => {
