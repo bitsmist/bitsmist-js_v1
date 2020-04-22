@@ -249,26 +249,7 @@ export default class DefaultLoader
 			Object.keys(spec).forEach((componentName) => {
 				let options = Object.assign({}, spec[componentName]);
 
-				// create component
-				/*
-				chain = chain.then(() => {
-					return new Promise((resolve, reject) => {
-						let promise;
-						this.createComponent(componentName, options).then((component) => {
-							if (component.options["autoOpen"])
-							{
-								// Open component
-								promise = component.open({"sender":this});
-							}
-						});
-
-						Promise.all([promise]).then(() => {
-							resolve();
-						});
-					});
-				});
-				*/
-
+				// Create component
 				promises.push(this.createComponent(componentName, options).then((component) => {
 					if (component.options["autoOpen"])
 					{
@@ -279,7 +260,6 @@ export default class DefaultLoader
 			});
 
 			Promise.all(promises).then(() => {
-			//chain.then(() => {
 				resolve();
 			});
 		});
