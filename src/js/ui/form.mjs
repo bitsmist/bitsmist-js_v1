@@ -32,13 +32,58 @@ export default class Form extends Pad
 	{
 
 		super(componentName, options);
-		this.target;
-		this.item = {};
-		this.isComposing = false;
-		this.cancelSubmit = false;
+
+		this._target;
+		this._item = {};
+		this.__isComposing = false;
+		this.__cancelSubmit = false;
 
 		// Init system event handlers
 		this._listener.addEventHandler("_append", this.__initFormOnAppend);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Data item.
+	 *
+	 * @type	{Object}
+	 */
+	set item(value)
+	{
+
+		this._item = value;
+
+	}
+
+	get item()
+	{
+
+		return this._item;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Target.
+	 *
+	 * @type	{Object}
+	 */
+	set target(value)
+	{
+
+		this._target = value;
+
+	}
+
+	get target()
+	{
+
+		return this._target;
 
 	}
 
@@ -159,7 +204,7 @@ export default class Form extends Pad
 
 				if (!ret)
 				{
-					this.cancelSubmit = true;
+					this.__cancelSubmit = true;
 				}
 				return this._listener.trigger("validate", sender);
 			}).then(() => {
@@ -183,7 +228,7 @@ export default class Form extends Pad
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
 			delete options["sender"];
-			this.cancelSubmit = false;
+			this.__cancelSubmit = false;
 			this.item = this.getFields();
 
 			this._listener.trigger("formatSubmit", sender).then(() => {
@@ -191,7 +236,7 @@ export default class Form extends Pad
 			}).then(() => {
 				return this._listener.trigger("beforeSubmit", sender);
 			}).then(() => {
-				if (!this.cancelSubmit)
+				if (!this.__cancelSubmit)
 				{
 					return this._listener.trigger("submit", sender);
 				}
@@ -273,7 +318,7 @@ export default class Form extends Pad
 	{
 
 		// Ignore all key input when composing.
-		if (this.isComposing || e.keyCode == 229)
+		if (this.__isComposing || e.keyCode == 229)
 		{
 			return;
 		}
@@ -311,7 +356,7 @@ export default class Form extends Pad
 	__compositionStart(sender, e, ex)
 	{
 
-		this.isComposing = true;
+		this.__isComposing = true;
 
 	}
 
@@ -327,7 +372,7 @@ export default class Form extends Pad
 	__compositionEnd(sender, e, ex)
 	{
 
-		this.isComposing = false;
+		this.__isComposing = false;
 
 	}
 
@@ -344,7 +389,7 @@ export default class Form extends Pad
 	{
 
 		this.submit().then(() => {
-			if (!this.cancelSubmit)
+			if (!this.__cancelSubmit)
 			{
 				// Modal result
 				if (this._isModal)
@@ -412,7 +457,7 @@ export default class Form extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			this.resource.getItem(this.target).then((data) => {
+			this._resource.getItem(this._target).then((data) => {
 				this.item = data["data"][0];
 				resolve();
 			});

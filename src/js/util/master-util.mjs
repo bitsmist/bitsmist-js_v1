@@ -32,12 +32,29 @@ export default class MasterUtil extends ResourceUtil
 
 		super(resourceName, options);
 
-		this.items = null;
+		this._items;
+
 		if ("items" in options)
 		{
-			this.items = this.__reshapeItems(options["items"]);
+			this._items = this.__reshapeItems(options["items"]);
 
 		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	/**
+     * Master items.
+     *
+	 * @type	{Object}
+     */
+	get items()
+	{
+
+		return this._items;
 
 	}
 
@@ -47,14 +64,13 @@ export default class MasterUtil extends ResourceUtil
 
 	/**
      * Load master data.
-     *
      */
 	load()
 	{
 
 		return new Promise((resolve, reject) => {
 			this.getList().then((data) => {
-				this.items = this.__reshapeItems(data["data"]);
+				this._items = this.__reshapeItems(data["data"]);
 
 				resolve();
 			});
@@ -75,11 +91,11 @@ export default class MasterUtil extends ResourceUtil
 	{
 
 		let ret = code;
-		let title = this.options["title"];
+		let title = this._options["title"];
 
-		if (this.items && code in this.items)
+		if (this._items && code in this._items)
 		{
-			ret = this.items[code][title];
+			ret = this._items[code][title];
 		}
 
 		return ret;
@@ -100,9 +116,9 @@ export default class MasterUtil extends ResourceUtil
 
 		let ret;
 
-		if (this.items && code in this.items)
+		if (this._items && code in this._items)
 		{
-			ret = this.items[code];
+			ret = this._items[code];
 		}
 
 		return ret;
@@ -122,10 +138,10 @@ export default class MasterUtil extends ResourceUtil
 	filter(predicate)
 	{
 
-		let ret = Object.keys(this.items).reduce((result, key) => {
-			if (predicate(this.items[key]))
+		let ret = Object.keys(this._items).reduce((result, key) => {
+			if (predicate(this._items[key]))
 			{
-				result[key] = this.items[key];
+				result[key] = this._items[key];
 			}
 
 			return result;
@@ -149,8 +165,8 @@ export default class MasterUtil extends ResourceUtil
 	__reshapeItems(target)
 	{
 
-		let key = this.options["id"];
-		let title = this.options["title"];
+		let key = this._options["id"];
+		let title = this._options["title"];
 
 		let items = target.reduce((result, current) => {
 			let id = current[key];

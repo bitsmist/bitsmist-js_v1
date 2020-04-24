@@ -90,9 +90,9 @@ export default class AjaxUtil
 	static loadScript(url) {
 
 		return new Promise((resolve, reject) => {
-			var source = url;
-			var script = document.createElement('script');
-			var prior = document.getElementsByTagName('script')[0];
+			let source = url;
+			let script = document.createElement('script');
+			let prior = document.getElementsByTagName('script')[0];
 			script.async = 1;
 			script.onload = script.onreadystatechange = ( _, isAbort ) => {
 				if(isAbort || !script.readyState || /loaded|complete/.test(script.readyState) ) {

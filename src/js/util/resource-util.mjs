@@ -30,11 +30,11 @@ export default class ResourceUtil
 	constructor(resourceName, options)
 	{
 
-		this.name = resourceName;
-		this.container = options["container"];
-		this.options = options;
-		this.data;
-		this.parameters = {};
+		this._name = resourceName;
+		this._container = options["container"];
+		this._options = options;
+		this._data;
+		this._parameters = {};
 
 	}
 
@@ -52,16 +52,16 @@ export default class ResourceUtil
 	getList(parameters)
 	{
 
-		let url = this.container["loader"].buildApiUrl(this.name, "list", parameters);
+		let url = this._container["loader"].buildApiUrl(this._name, "list", parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "GET");
 			let options = this.__getOptions("options", "GET");
 
 			AjaxUtil.ajaxRequest({url:url, method:"GET", data:null, headers:headers, options:options}).then((xhr) => {
-				this.parameters = (parameters ? parameters : {});
-				this.data = JSON.parse(xhr.responseText);
-				resolve(this.data);
+				this._parameters = (parameters ? parameters : {});
+				this._data = JSON.parse(xhr.responseText);
+				resolve(this._data);
 			});
 		});
 
@@ -80,7 +80,7 @@ export default class ResourceUtil
 	getItem(id, parameters)
 	{
 
-		let url = this.container["loader"].buildApiUrl(this.name, id, parameters);
+		let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "GET");
@@ -106,7 +106,7 @@ export default class ResourceUtil
 	deleteItem(id, parameters)
 	{
 
-		let url = this.container["loader"].buildApiUrl(this.name, id, parameters);
+		let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "DELETE");
@@ -133,7 +133,7 @@ export default class ResourceUtil
 	insertItem(id, items, parameters)
 	{
 
-		let url = this.container["loader"].buildApiUrl(this.name, id, parameters);
+		let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "POST");
@@ -160,7 +160,7 @@ export default class ResourceUtil
 	updateItem(id, items, parameters)
 	{
 
-		let url = this.container["loader"].buildApiUrl(this.name, id, parameters);
+		let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "PUT");
@@ -215,10 +215,10 @@ export default class ResourceUtil
 
 		let result;
 
-		if ("settings" in this.container && "ajaxUtil" in this.container["settings"] && target in this.container["settings"]["ajaxUtil"])
+		if ("settings" in this._container && "ajaxUtil" in this._container["settings"] && target in this._container["settings"]["ajaxUtil"])
 		{
-			let options1 = ("COMMON" in this.container["settings"]["ajaxUtil"][target] ? this.container["settings"]["ajaxUtil"][target]["COMMON"] : {} );
-			let options2 = (method in this.container["settings"]["ajaxUtil"][target] ? this.container["settings"]["ajaxUtil"][target][method] : {} );
+			let options1 = ("COMMON" in this._container["settings"]["ajaxUtil"][target] ? this._container["settings"]["ajaxUtil"][target]["COMMON"] : {} );
+			let options2 = (method in this._container["settings"]["ajaxUtil"][target] ? this._container["settings"]["ajaxUtil"][target][method] : {} );
 
 			result = Object.assign(options1, options2);
 		}

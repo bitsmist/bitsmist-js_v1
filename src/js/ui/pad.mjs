@@ -35,19 +35,20 @@ export default class Pad extends Component
 		// Load pad specific options and merge
 		this._options = Object.assign(this._getOptions(), this._options);
 
-		this.components = ( this._options["components"] ? this._options["components"] : {} );
-		this.elements = ( this._options["elements"] ? this._options["elements"] : {} );
-		this.plugins = ( this._options["plugins"] ? this._options["plugins"] : {} );
-		this.events = ( this._options["events"] ? this._options["events"] : {} );
-		this.preferences = ( this._options["preferences"] ? this._options["preferences"] : {} );
+		this._components = ( this._options["components"] ? this._options["components"] : {} );
+		this._elements = ( this._options["elements"] ? this._options["elements"] : {} );
+		this._plugins = ( this._options["plugins"] ? this._options["plugins"] : {} );
+		this._events = ( this._options["events"] ? this._options["events"] : {} );
+		this._preferences = ( this._options["preferences"] ? this._options["preferences"] : {} );
+		this._resource;
 
 		// Init system event handlers
 		this._listener.addEventHandler("_initComponent", this.__initPadOnInitComponent);
 		this._listener.addEventHandler("_append", this.__initPadOnAppend);
 
 		// Init user event handlers
-		Object.keys(this.events).forEach((eventName) => {
-			this._listener.addEventHandler(eventName, this.events[eventName]["handler"]);
+		Object.keys(this._events).forEach((eventName) => {
+			this._listener.addEventHandler(eventName, this._events[eventName]["handler"]);
 		});
 
 		// Init resource
@@ -55,7 +56,7 @@ export default class Pad extends Component
 		{
 			if (this._options["resource"] in this._container["resources"])
 			{
-				this.resource = this._container["resources"][this._options["resource"]];
+				this._resource = this._container["resources"][this._options["resource"]];
 			}
 			else
 			{
@@ -64,9 +65,13 @@ export default class Pad extends Component
 		}
 
 		// Register preferences
-		this._container["preferenceManager"].register(this, this.preferences);
+		this._container["preferenceManager"].register(this, this._preferences);
 
 	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
 
 	// -------------------------------------------------------------------------
 	//  Methods
@@ -88,20 +93,20 @@ export default class Pad extends Component
 
 			Promise.resolve().then(() => {
 				// Create component
-				if (!this.components[componentName] || !this.components[componentName].object)
+				if (!this._components[componentName] || !this._components[componentName].object)
 				{
 					return new Promise((resolve, reject) => {
 						this._container["loader"].createComponent(componentName, options).then((component) => {
 							component.parent = this;
-							this.components[componentName] = ( this.components[componentName] ? this.components[componentName] : {} );
-							this.components[componentName].object = component;
+							this._components[componentName] = ( this._components[componentName] ? this._components[componentName] : {} );
+							this._components[componentName].object = component;
 							resolve();
 						});
 					});
 				}
 			}).then(() => {
 				// Auto open
-				let component = this.components[componentName].object;
+				let component = this._components[componentName].object;
 				if (component.getOption("autoOpen"))
 				{
 					return component.open();
@@ -134,8 +139,8 @@ export default class Pad extends Component
 			options["container"] = this._container;
 			options["component"] = this;
 			plugin = this._container["app"].createObject(className, pluginName, options);
-			this.plugins[pluginName] = ( this._options["plugins"][pluginName] ? this._options["plugins"][pluginName] : {} );
-			this.plugins[pluginName].object = plugin;
+			this._plugins[pluginName] = ( this._options["plugins"][pluginName] ? this._options["plugins"][pluginName] : {} );
+			this._plugins[pluginName].object = plugin;
 
 			plugin["events"].forEach((eventName) => {
 				this._listener.addEventHandler("_" + eventName, this.__callPluginEvent);
@@ -163,9 +168,9 @@ export default class Pad extends Component
 		{
 			elements = [this._element];
 		}
-		else if (this.elements && this.elements[elementName] && "rootNode" in this.elements[elementName])
+		else if (this._elements && this._elements[elementName] && "rootNode" in this._elements[elementName])
 		{
-			elements = this._element.querySelectorAll(this.elements[elementName]["rootNode"]);
+			elements = this._element.querySelectorAll(this._elements[elementName]["rootNode"]);
 		}
 		else
 		{
@@ -173,7 +178,7 @@ export default class Pad extends Component
 		}
 
 		// Set event handlers
-		let events = (this.elements[elementName]["events"] ? this.elements[elementName]["events"] : {});
+		let events = (this._elements[elementName]["events"] ? this._elements[elementName]["events"] : {});
 		for (let i = 0; i < elements.length; i++)
 		{
 			Object.keys(events).forEach((eventName) => {
@@ -201,6 +206,52 @@ export default class Pad extends Component
 		return {};
 
 	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Initialization of component on open().
+     */
+	_initOnOpen()
+	{
+
+		// Auto focus
+		if (this.getOption("autoFocus"))
+		{
+			let element = this._element.querySelector(this.getOption("autoFocus"));
+			if (element)
+			{
+				element.focus();
+			}
+
+		}
+
+		// Css
+		let css = (this._events["open"] && this._events["open"]["css"] ? this._events["open"]["css"] : undefined );
+		if (css)
+		{
+			Object.assign(this._element.style, css);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Initialization of clone on close().
+     */
+	_initOnClose()
+	{
+
+		// Css
+		let css = (this._events && this._events["close"] && this._events["close"]["css"] ? this._events["close"]["css"] : undefined );
+		if (css)
+		{
+			Object.assign(this._element.style, css);
+		}
+
+	}
+
 
 	// -------------------------------------------------------------------------
 	//  Privates
@@ -245,18 +296,18 @@ export default class Pad extends Component
 		return new Promise((resolve, reject) => {
 			// Add Bitsmist component
 			let chain = Promise.resolve();
-			Object.keys(this.components).forEach((componentName) => {
-				if ("class" in this.components[componentName])
+			Object.keys(this._components).forEach((componentName) => {
+				if ("class" in this._components[componentName])
 				{
 					chain = chain.then(() => {
-						return this.addComponent(componentName, this.components[componentName]);
+						return this.addComponent(componentName, this._components[componentName]);
 					});
 				}
 			});
 
 			chain.then(() => {
 				// Init HTML elments' event handlers
-				Object.keys(this.elements).forEach((elementName) => {
+				Object.keys(this._elements).forEach((elementName) => {
 						this.initHtmlEvents(elementName);
 				});
 
@@ -284,10 +335,10 @@ export default class Pad extends Component
 			let promises = [];
 			let eventName = ex.eventName.substr(1);
 
-			Object.keys(this.plugins).forEach((pluginName) => {
-				if (this.plugins[pluginName]["enabled"])
+			Object.keys(this._plugins).forEach((pluginName) => {
+				if (this._plugins[pluginName]["enabled"])
 				{
-					promises.push(this.plugins[pluginName].object[eventName](sender, e, ex));
+					promises.push(this._plugins[pluginName].object[eventName](sender, e, ex));
 				}
 			});
 

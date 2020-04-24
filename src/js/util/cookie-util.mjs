@@ -28,9 +28,9 @@ export default class CookieUtil
 	constructor(componentName, options)
 	{
 
-		this.name = componentName;
-		this.options = ( options ? options : {} );
-		this.container = options["container"];
+		this._name = componentName;
+		this._options = ( options ? options : {} );
+		this._container = options["container"];
 
 	}
 
@@ -75,9 +75,9 @@ export default class CookieUtil
 		let cookie = key + "=" + encodeURIComponent(JSON.stringify(value)) + "; ";
 
 		options = ( options ? options : {} );
-		if (this.container["settings"]["cookieUtil"]["options"])
+		if (this._container["settings"]["cookieUtil"]["options"])
 		{
-			options = Object.assign(this.container["settings"]["cookieUtil"]["options"], options);
+			options = Object.assign(this._container["settings"]["cookieUtil"]["options"], options);
 		}
 
 		cookie += Object.keys(options).reduce((result, current) => {

@@ -33,16 +33,80 @@ export default class List extends Pad
 
 		super(componentName, options);
 
-		this.target;
-		this.items;
-		this.data;
-		this.row;
-		this.rows;
-		this.parameters = {};
+		this._target;
+		this._items;
+		this._data;
+		this._row;
+		this._rows;
 
 		// Init system event handlers
 		this._listener.addEventHandler("_append", this.__initListOnAppend);
 		this._listener.addEventHandler("_fill", this.__initListOnFill);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Data items.
+	 *
+	 * @type	{Object}
+	 */
+	set items(value)
+	{
+
+		this._items = value;
+
+	}
+
+	get items()
+	{
+
+		return this._items;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Raw data retrieved via api.
+	 *
+	 * @type	{Object}
+	 */
+	set data(value)
+	{
+
+		this._data = value;
+
+	}
+
+	get data()
+	{
+
+		return this._data;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Target.
+	 *
+	 * @type	{Object}
+	 */
+	set target(value)
+	{
+
+		this._target = value;
+
+	}
+
+	get target()
+	{
+
+		return this._target;
 
 	}
 
@@ -137,7 +201,7 @@ export default class List extends Pad
 	__initListOnAppend(sender, e, ex)
 	{
 
-		this.row = this.components[this.getOption("row")].object;
+		this.row = this._components[this.getOption("row")].object;
 		this.row._element = this._element.querySelector(this.row.getOption("listRootNode"));
 
 	}
@@ -155,7 +219,7 @@ export default class List extends Pad
 	{
 
 		// Set HTML elements' event handlers after filling completed
-		Object.keys(this.row.elements).forEach((elementName) => {
+		Object.keys(this.row._elements).forEach((elementName) => {
 			this.row.initHtmlEvents(elementName);
 		});
 
@@ -185,9 +249,9 @@ export default class List extends Pad
 			let i = this.rows.length - 1;
 
 			// Set click event handler
-			if (this.row.events["click"])
+			if (this.row._events["click"])
 			{
-				this.row.listener.addHtmlEventHandler(element, "click", this.row.events["click"]["handler"], {"element":element});
+				this.row.listener.addHtmlEventHandler(element, "click", this.row._events["click"]["handler"], {"element":element});
 			}
 
 			// Call event handlers
@@ -218,7 +282,7 @@ export default class List extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			this.resource.getList(this.target).then((data) => {
+			this._resource.getList(this.target).then((data) => {
 				this.data = data;
 				this.items = data["data"];
 				resolve();
