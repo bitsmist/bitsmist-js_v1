@@ -32,22 +32,80 @@ export default class Component
 	constructor(componentName, options)
 	{
 
-		this.container = options["container"];
-		this.name = componentName;
-		this.className = (options["class"] ? options["class"] : componentName);
-		this.listener = new EventHandler(this);
-		this.shadows = {};
-		this.parent;
-		this.element;
-		this.modalOptions;
-		this.modalResult;
-		this.modalPromise;
-		this.isModal = false;
-		this.isOpen = false;
+		this._container = options["container"];
+		this._name = componentName;
+		this._className = (options["class"] ? options["class"] : componentName);
+		this._listener = new EventHandler(this);
+		this._shadows = {};
+		this._parent;
+		this._element;
+		this._modalOptions;
+		this._modalResult;
+		this._modalPromise;
+		this._isModal = false;
+		this._isOpen = false;
 
 		// Options
-		let defaults = { "templateName":this.className };
-		this.options = Object.assign( {}, defaults, (options ? options : {}) );
+		let defaults = { "templateName":this._className };
+		this._options = Object.assign( {}, defaults, (options ? options : {}) );
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	/**
+     * Component name.
+     *
+	 * @type	{String}
+     */
+	get name()
+	{
+
+		return this._name;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Class name
+     *
+	 * @type	{String}
+     */
+	get className()
+	{
+
+		return this._className;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * HTML element.
+     *
+	 * @type	{HTMLElement}
+     */
+	get element()
+	{
+
+		return this._element;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Event listener.
+     *
+	 * @type	{Object}
+     */
+	get listener()
+	{
+
+		return this._listener;
 
 	}
 
@@ -65,14 +123,14 @@ export default class Component
 	open(options)
 	{
 
-		console.debug(`Component.open(): Opening component. name=${this.name}`);
+		console.debug(`Component.open(): Opening component. name=${this._name}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
 			delete options["sender"];
 
-			if (this.isOpen)
+			if (this._isOpen)
 			{
 				resolve();
 				return;
@@ -84,17 +142,17 @@ export default class Component
 					return this.refresh();
 				}
 			}).then(() => {
-				return this.listener.trigger("_beforeOpen", sender);
+				return this._listener.trigger("_beforeOpen", sender);
 			}).then(() => {
-				return this.listener.trigger("beforeOpen", sender);
+				return this._listener.trigger("beforeOpen", sender);
 			}).then(() => {
-				return this.listener.trigger("open", sender);
+				return this._listener.trigger("open", sender);
 			}).then(() => {
-				return this.listener.trigger("_open", sender);
+				return this._listener.trigger("_open", sender);
 			}).then(() => {
 				this.__initOnOpen();
-				console.debug(`Component.open(): Opened component. name=${this.name}`);
-				this.isOpen = true;
+				console.debug(`Component.open(): Opened component. name=${this._name}`);
+				this._isOpen = true;
 				resolve();
 			});
 		});
@@ -113,23 +171,23 @@ export default class Component
 	openModal(options)
 	{
 
-		console.debug(`Component.openModal(): Opening component. name=${this.name}`);
+		console.debug(`Component.openModal(): Opening component. name=${this._name}`);
 
 		return new Promise((resolve, reject) => {
-			if (this.isOpen)
+			if (this._isOpen)
 			{
 				resolve();
 				return;
 			}
 
 			options = Object.assign({}, options);
-			this.options = Object.assign(this.options, options);
-			this.isModal = true;
-			this.modalResult = {"result":false};
-			this.modalOptions = options;
-			this.modalPromise = { "resolve": resolve, "reject": reject };
+			this._options = Object.assign(this._options, options);
+			this._isModal = true;
+			this._modalResult = {"result":false};
+			this._modalOptions = options;
+			this._modalPromise = { "resolve": resolve, "reject": reject };
 			this.open();
-			this.isOpen = true;
+			this._isOpen = true;
 		});
 
 	}
@@ -146,35 +204,35 @@ export default class Component
 	close(options)
 	{
 
-		console.debug(`Component.close(): Closing component. name=${this.name}`);
+		console.debug(`Component.close(): Closing component. name=${this._name}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
 			delete options["sender"];
 
-			if (!this.isOpen)
+			if (!this._isOpen)
 			{
 				resolve();
 				return;
 			}
 
 			Promise.resolve().then(() => {
-				return this.listener.trigger("_beforeClose", sender);
+				return this._listener.trigger("_beforeClose", sender);
 			}).then(() => {
-				return this.listener.trigger("beforeClose", sender);
+				return this._listener.trigger("beforeClose", sender);
 			}).then(() => {
-				return this.listener.trigger("close", sender);
+				return this._listener.trigger("close", sender);
 			}).then(() => {
-				return this.listener.trigger("_close", sender);
+				return this._listener.trigger("_close", sender);
 			}).then(() => {
-				console.debug(`Component.close(): Closed component. name=${this.name}`);
-				if (this.isModal)
+				console.debug(`Component.close(): Closed component. name=${this._name}`);
+				if (this._isModal)
 				{
-					this.modalPromise.resolve(this.modalResult);
+					this._modalPromise.resolve(this._modalResult);
 				}
 				this.__initOnClose();
-				this.isOpen = false;
+				this._isOpen = false;
 				resolve();
 			});
 		});
@@ -191,24 +249,24 @@ export default class Component
 	refresh(options)
 	{
 
-		console.debug(`Component.refresh(): Refreshing component. name=${this.name}`);
+		console.debug(`Component.refresh(): Refreshing component. name=${this._name}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
 			delete options["sender"];
 
-			this.listener.trigger("_beforeRefresh", sender).then(() => {
-				return this.listener.trigger("beforeRefresh", sender);
+			this._listener.trigger("_beforeRefresh", sender).then(() => {
+				return this._listener.trigger("beforeRefresh", sender);
 			}).then(() => {
 				if (this.getOption("autoFill"))
 				{
 					return this.fill();
 				}
 			}).then(() => {
-				return this.listener.trigger("refresh", sender);
+				return this._listener.trigger("refresh", sender);
 			}).then(() => {
-				return this.listener.trigger("_refresh", sender);
+				return this._listener.trigger("_refresh", sender);
 			}).then(() => {
 				resolve();
 			});
@@ -228,21 +286,21 @@ export default class Component
 	setup(options)
 	{
 
-		console.debug(`Component.setup(): Setting up component. name=${this.name}`);
+		console.debug(`Component.setup(): Setting up component. name=${this._name}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
-			options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.container["preferences"] );
-			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.container["preferences"] );
+			options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this._container["preferences"] );
+			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this._container["preferences"] );
 			let sender = ( options["sender"] ? options["sender"] : this );
 			delete options["sender"];
 
-			this.listener.trigger("formatSettings", sender, options).then(() => {
-				return this.listener.trigger("validateSettings", sender,  options);
+			this._listener.trigger("formatSettings", sender, options).then(() => {
+				return this._listener.trigger("validateSettings", sender,  options);
 			}).then(() => {
-				return this.listener.trigger("beforeSetup", sender, options);
+				return this._listener.trigger("beforeSetup", sender, options);
 			}).then(() => {
-				return this.listener.trigger("setup", sender, options);
+				return this._listener.trigger("setup", sender, options);
 			}).then(() => {
 				resolve();
 			});
@@ -277,8 +335,8 @@ export default class Component
 
 		return new Promise((resolve, reject) => {
 			this._autoLoadTemplate(templateName).then(() => {
-				this.options["templateName"] = templateName;
-				return this.listener.trigger("templateChange", this);
+				this._options["templateName"] = templateName;
+				return this._listener.trigger("templateChange", this);
 			}).then(() => {
 				resolve();
 			});
@@ -300,14 +358,14 @@ export default class Component
 	{
 
 		let clone;
-		let template = this.shadows[templateName].template;
+		let template = this._shadows[templateName].template;
 
 		if (!template)
 		{
 			template = document.createElement('template');
-			template.innerHTML = this.shadows[templateName].html;
+			template.innerHTML = this._shadows[templateName].html;
 
-			this.shadows[templateName].template = template;
+			this._shadows[templateName].template = template;
 		}
 
 		if ( "content" in template )
@@ -334,6 +392,21 @@ export default class Component
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Set option value.
+	 *
+	 * @param	{String}		key					Key to get.
+	 * @param	{Object}		value				Value  to set.
+	 */
+	setOption(key, value)
+	{
+
+		this._options[key] = value;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Get option value. Return default value when specified key is not available.
 	 *
 	 * @param	{String}		key					Key to get.
@@ -346,9 +419,9 @@ export default class Component
 
 		let result = defaultValue;
 
-		if (this.options && (key in this.options))
+		if (this._options && (key in this._options))
 		{
-			result = this.options[key];
+			result = this._options[key];
 		}
 
 		return result;
@@ -383,7 +456,7 @@ export default class Component
 				console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
 
 				this.__loadTemplate(templateName).then(() => {
-					return this.listener.trigger("load", this);
+					return this._listener.trigger("load", this);
 				}).then(() => {
 					return this.__appendTemplate(this.getOption("rootNode"), templateName);
 				}).then(() => {
@@ -407,7 +480,7 @@ export default class Component
 		// Auto focus
 		if (this.getOption("autoFocus"))
 		{
-			let element = this.element.querySelector(this.getOption("autoFocus"));
+			let element = this._element.querySelector(this.getOption("autoFocus"));
 			if (element)
 			{
 				element.focus();
@@ -419,7 +492,7 @@ export default class Component
 		let css = (this.events["open"] && this.events["open"]["css"] ? this.events["open"]["css"] : undefined );
 		if (css)
 		{
-			Object.assign(this.element.style, css);
+			Object.assign(this._element.style, css);
 		}
 
 	}
@@ -436,7 +509,7 @@ export default class Component
 		let css = (this.events && this.events["close"] && this.events["close"]["css"] ? this.events["close"]["css"] : undefined );
 		if (css)
 		{
-			Object.assign(this.element.style, css);
+			Object.assign(this._element.style, css);
 		}
 
 	}
@@ -453,15 +526,15 @@ export default class Component
 	__loadTemplate(templateName)
 	{
 
-		let path = ("path" in this.options ? this.options["path"] : "");
-		let url = this.container["loader"].buildTemplateUrl(templateName, path);
+		let path = ("path" in this._options ? this._options["path"] : "");
+		let url = this._container["loader"].buildTemplateUrl(templateName, path);
 		console.debug(`Component.__loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
 
 		return new Promise((resolve, reject) => {
 			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 				console.debug(`Component.__loadTemplate(): Loaded template. templateName=${templateName}`);
-				this.shadows[templateName] = {};
-				this.shadows[templateName]["html"] = xhr.responseText;
+				this._shadows[templateName] = {};
+				this._shadows[templateName]["html"] = xhr.responseText;
 				resolve(xhr);
 			});
 		});
@@ -491,22 +564,22 @@ export default class Component
 			let root = document.querySelector(rootNode);
 			if (!root)
 			{
-				throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+				throw new NoNodeError(`Root node does not exist. name=${this._name}, rootNode=${rootNode}`);
 			}
 
 			// Add template to root node
-			root.insertAdjacentHTML("afterbegin", this.shadows[templateName].html);
-			this.element = root.children[0];
+			root.insertAdjacentHTML("afterbegin", this._shadows[templateName].html);
+			this._element = root.children[0];
 
 			console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
 
 			// Trigger events
-			this.listener.trigger("_append", this).then(() => {
-				return this.listener.trigger("append", this);
+			this._listener.trigger("_append", this).then(() => {
+				return this._listener.trigger("append", this);
 			}).then(() => {
 				return this.setup();
 			}).then(() => {
-				return this.listener.trigger("init", this);
+				return this._listener.trigger("init", this);
 			}).then(() => {
 				resolve();
 			});
@@ -526,7 +599,7 @@ export default class Component
 
 		let isLoaded = false;
 
-		if (templateName in this.shadows && this.shadows[templateName].html)
+		if (templateName in this._shadows && this._shadows[templateName].html)
 		{
 			isLoaded = true;
 		}

@@ -222,7 +222,7 @@ export default class DefaultLoader
 
 				// Create component
 				promises.push(this.createComponent(componentName, options).then((component) => {
-					if (component.options["autoOpen"])
+					if (component.getOption("autoOpen"))
 					{
 						// Open component
 						return component.open({"sender":this});

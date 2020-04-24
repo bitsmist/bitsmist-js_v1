@@ -38,7 +38,7 @@ export default class Form extends Pad
 		this.cancelSubmit = false;
 
 		// Init system event handlers
-		this.listener.addEventHandler("_append", this.__initFormOnAppend);
+		this._listener.addEventHandler("_append", this.__initFormOnAppend);
 
 	}
 
@@ -57,7 +57,7 @@ export default class Form extends Pad
 	{
 
 		Object.keys(items).forEach((key) => {
-			FormUtil.buildFields(this.element, key, items[key]);
+			FormUtil.buildFields(this._element, key, items[key]);
 		});
 
 	}
@@ -75,7 +75,7 @@ export default class Form extends Pad
 	{
 
 		return new Promise((resolve, reject) => {
-			options = Object.assign({}, this.options, options);
+			options = Object.assign({}, this._options, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
 
 			// Clear fields
@@ -84,8 +84,8 @@ export default class Form extends Pad
 				this.clear();
 			}
 
-			this.listener.trigger("target", sender).then(() => {
-				return this.listener.trigger("beforeFetch", sender);
+			this._listener.trigger("target", sender).then(() => {
+				return this._listener.trigger("beforeFetch", sender);
 			}).then(() => {
 				// Auto load data
 				if (options["autoLoad"])
@@ -93,14 +93,14 @@ export default class Form extends Pad
 					return this.__autoLoadData();
 				}
 			}).then(() => {
-				return this.listener.trigger("fetch", sender);
+				return this._listener.trigger("fetch", sender);
 			}).then(() => {
-				return this.listener.trigger("format", sender);
+				return this._listener.trigger("format", sender);
 			}).then(() => {
-				return this.listener.trigger("beforeFill", sender);
+				return this._listener.trigger("beforeFill", sender);
 			}).then(() => {
-				FormUtil.setFields(this.element, this.item, this.container["masters"]);
-				return this.listener.trigger("fill", sender);
+				FormUtil.setFields(this._element, this.item, this._container["masters"]);
+				return this._listener.trigger("fill", sender);
 			}).then(() => {
 				resolve();
 			});
@@ -120,7 +120,7 @@ export default class Form extends Pad
 	clear(target)
 	{
 
-		return FormUtil.clearFields(this.element, target);
+		return FormUtil.clearFields(this._element, target);
 
 	}
 
@@ -141,9 +141,9 @@ export default class Form extends Pad
 			let sender = ( options["sender"] ? options["sender"] : this );
 			delete options["sender"];
 
-			this.listener.trigger("beforeValidate", sender).then(() => {
+			this._listener.trigger("beforeValidate", sender).then(() => {
 				let ret = true;
-				let form = this.element.querySelector("form");
+				let form = this._element.querySelector("form");
 
 				if (this.getOption("autoValidate"))
 				{
@@ -153,7 +153,7 @@ export default class Form extends Pad
 					}
 					else
 					{
-						ret = FormUtil.reportValidity(this.element);
+						ret = FormUtil.reportValidity(this._element);
 					}
 				}
 
@@ -161,7 +161,7 @@ export default class Form extends Pad
 				{
 					this.cancelSubmit = true;
 				}
-				return this.listener.trigger("validate", sender);
+				return this._listener.trigger("validate", sender);
 			}).then(() => {
 				resolve();
 			});
@@ -186,14 +186,14 @@ export default class Form extends Pad
 			this.cancelSubmit = false;
 			this.item = this.getFields();
 
-			this.listener.trigger("formatSubmit", sender).then(() => {
+			this._listener.trigger("formatSubmit", sender).then(() => {
 				return this.validate();
 			}).then(() => {
-				return this.listener.trigger("beforeSubmit", sender);
+				return this._listener.trigger("beforeSubmit", sender);
 			}).then(() => {
 				if (!this.cancelSubmit)
 				{
-					return this.listener.trigger("submit", sender);
+					return this._listener.trigger("submit", sender);
 				}
 			}).then(() => {
 				resolve();
@@ -212,7 +212,7 @@ export default class Form extends Pad
 	getFields()
 	{
 
-		return FormUtil.getFields(this.element);
+		return FormUtil.getFields(this._element);
 
 	}
 
@@ -234,9 +234,9 @@ export default class Form extends Pad
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this.listener.addHtmlEventHandler(this.element, "keydown", this.__defaultKey, {"options":defaultKeys});
-			this.listener.addHtmlEventHandler(this.element, "compositionstart", this.__compositionStart, {"options":defaultKeys});
-			this.listener.addHtmlEventHandler(this.element, "compositionend", this.__compositionEnd, {"options":defaultKeys});
+			this._listener.addHtmlEventHandler(this._element, "keydown", this.__defaultKey, {"options":defaultKeys});
+			this._listener.addHtmlEventHandler(this._element, "compositionstart", this.__compositionStart, {"options":defaultKeys});
+			this._listener.addHtmlEventHandler(this._element, "compositionend", this.__compositionEnd, {"options":defaultKeys});
 		}
 
 		// default buttons
@@ -246,9 +246,9 @@ export default class Form extends Pad
 			let initElements = (options, handler) => {
 				if (options)
 				{
-					let elements = this.element.querySelectorAll(options["rootNode"]);
+					let elements = this._element.querySelectorAll(options["rootNode"]);
 					elements.forEach((element) => {
-						this.listener.addHtmlEventHandler(element, "click", handler, {"options":options});
+						this._listener.addHtmlEventHandler(element, "click", handler, {"options":options});
 					});
 				}
 			};
@@ -347,9 +347,9 @@ export default class Form extends Pad
 			if (!this.cancelSubmit)
 			{
 				// Modal result
-				if (this.isModal)
+				if (this._isModal)
 				{
-					this.modalResult["result"] = true;
+					this._modalResult["result"] = true;
 				}
 
 				// Auto close

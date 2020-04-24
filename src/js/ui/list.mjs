@@ -41,8 +41,8 @@ export default class List extends Pad
 		this.parameters = {};
 
 		// Init system event handlers
-		this.listener.addEventHandler("_append", this.__initListOnAppend);
-		this.listener.addEventHandler("_fill", this.__initListOnFill);
+		this._listener.addEventHandler("_append", this.__initListOnAppend);
+		this._listener.addEventHandler("_fill", this.__initListOnFill);
 
 	}
 
@@ -56,7 +56,7 @@ export default class List extends Pad
 	clear()
 	{
 
-		this.row.element.innerHTML = "";
+		this.row._element.innerHTML = "";
 
 	}
 
@@ -72,10 +72,10 @@ export default class List extends Pad
 
 		return new Promise((resolve, reject) => {
 			this.rows = [];
-			options = Object.assign({}, this.options, options);
+			options = Object.assign({}, this._options, options);
 
-			this.listener.trigger("target", this).then(() => {;
-				return this.listener.trigger("beforeFetch", this);
+			this._listener.trigger("target", this).then(() => {;
+				return this._listener.trigger("beforeFetch", this);
 			}).then(() => {
 				// Auto load data
 				if (options["autoLoad"])
@@ -83,9 +83,9 @@ export default class List extends Pad
 					return this.__autoLoadData();
 				}
 			}).then(() => {
-				return this.listener.trigger("fetch", this);
+				return this._listener.trigger("fetch", this);
 			}).then(() => {
-				return this.listener.trigger("beforeFill", this);
+				return this._listener.trigger("beforeFill", this);
 			}).then(() => {
 				let chain = Promise.resolve();
 				if (this.items)
@@ -100,22 +100,22 @@ export default class List extends Pad
 					chain.then(() => {
 						if (options["autoClear"])
 						{
-							let newNode = this.row.element.cloneNode();
+							let newNode = this.row._element.cloneNode();
 							newNode.appendChild(fragment);
-							this.row.element.parentNode.replaceChild(newNode, this.row.element);
-							this.row.element = newNode;
+							this.row._element.parentNode.replaceChild(newNode, this.row._element);
+							this.row._element = newNode;
 						}
 						else
 						{
-							this.row.element.appendChild(fragment);
+							this.row._element.appendChild(fragment);
 						}
 					});
 				}
 				return chain;
 			}).then(() => {
-				return this.listener.trigger("_fill", this);
+				return this._listener.trigger("_fill", this);
 			}).then(() => {
-				return this.listener.trigger("fill", this);
+				return this._listener.trigger("fill", this);
 			}).then(() => {
 				resolve();
 			});
@@ -138,7 +138,7 @@ export default class List extends Pad
 	{
 
 		this.row = this.components[this.getOption("row")].object;
-		this.row.element = this.element.querySelector(this.row.getOption("listRootNode"));
+		this.row._element = this._element.querySelector(this.row.getOption("listRootNode"));
 
 	}
 
@@ -198,7 +198,7 @@ export default class List extends Pad
 				return this.row.listener.trigger("beforeFillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				// Fill fields
-				FormUtil.setFields(element, this.items[i], this.container["masters"]);
+				FormUtil.setFields(element, this.items[i], this._container["masters"]);
 				return this.row.listener.trigger("fillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				resolve();
