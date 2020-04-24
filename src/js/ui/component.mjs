@@ -70,7 +70,7 @@ export default class Component
 	// -------------------------------------------------------------------------
 
 	/**
-     * Class name
+     * Class name.
      *
 	 * @type	{String}
      */
@@ -106,6 +106,45 @@ export default class Component
 	{
 
 		return this._listener;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Set option value.
+	 *
+	 * @param	{String}		key					Key to get.
+	 * @param	{Object}		value				Value  to set.
+	 */
+	setOption(key, value)
+	{
+
+		this._options[key] = value;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get option value. Return default value when specified key is not available.
+	 *
+	 * @param	{String}		key					Key to get.
+	 * @param	{Object}		defaultValue		Value returned when key is not found.
+	 *
+	 * @return  {*}				Value.
+	 */
+	getOption(key, defaultValue)
+	{
+
+		let result = defaultValue;
+
+		if (this._options && (key in this._options))
+		{
+			result = this._options[key];
+		}
+
+		return result;
 
 	}
 
@@ -150,7 +189,7 @@ export default class Component
 			}).then(() => {
 				return this._listener.trigger("_open", sender);
 			}).then(() => {
-				this.__initOnOpen();
+				this._initOnOpen();
 				console.debug(`Component.open(): Opened component. name=${this._name}`);
 				this._isOpen = true;
 				resolve();
@@ -231,7 +270,7 @@ export default class Component
 				{
 					this._modalPromise.resolve(this._modalResult);
 				}
-				this.__initOnClose();
+				this._initOnClose();
 				this._isOpen = false;
 				resolve();
 			});
@@ -390,45 +429,6 @@ export default class Component
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Set option value.
-	 *
-	 * @param	{String}		key					Key to get.
-	 * @param	{Object}		value				Value  to set.
-	 */
-	setOption(key, value)
-	{
-
-		this._options[key] = value;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get option value. Return default value when specified key is not available.
-	 *
-	 * @param	{String}		key					Key to get.
-	 * @param	{Object}		defaultValue		Value returned when key is not found.
-	 *
-	 * @return  {*}				Value.
-	 */
-	getOption(key, defaultValue)
-	{
-
-		let result = defaultValue;
-
-		if (this._options && (key in this._options))
-		{
-			result = this._options[key];
-		}
-
-		return result;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
 
@@ -468,52 +468,25 @@ export default class Component
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+     * Initialization of component on open().  Need to override.
+     */
+	_initOnOpen()
+	{
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Initialization of clone on close().  Need to override.
+     */
+	_initOnClose()
+	{
+	}
+
+	// -------------------------------------------------------------------------
 	//  Privates
-	// -------------------------------------------------------------------------
-
-	/**
-     * Initialization of component on open().
-     */
-	__initOnOpen()
-	{
-
-		// Auto focus
-		if (this.getOption("autoFocus"))
-		{
-			let element = this._element.querySelector(this.getOption("autoFocus"));
-			if (element)
-			{
-				element.focus();
-			}
-
-		}
-
-		// Css
-		let css = (this.events["open"] && this.events["open"]["css"] ? this.events["open"]["css"] : undefined );
-		if (css)
-		{
-			Object.assign(this._element.style, css);
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Initialization of clone on close().
-     */
-	__initOnClose()
-	{
-
-		// Css
-		let css = (this.events && this.events["close"] && this.events["close"]["css"] ? this.events["close"]["css"] : undefined );
-		if (css)
-		{
-			Object.assign(this._element.style, css);
-		}
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**
