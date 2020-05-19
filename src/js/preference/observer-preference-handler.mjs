@@ -50,7 +50,7 @@ export default class ObserverPreferenceHandler
 	register(component, options)
 	{
 
-		this.targets[component.name] = {"object":component, "options":options};
+		this.targets[component.hashCode] = {"object":component, "options":options};
 
 	}
 
