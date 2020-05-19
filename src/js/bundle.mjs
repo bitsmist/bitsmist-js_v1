@@ -54,12 +54,14 @@ import EventHandler from './ui/event-handler';
 import Form from './ui/form';
 import List from './ui/list';
 import Pad from './ui/pad';
+import CustomComponent from './ui/custom-component';
 
 window.BITSMIST.v1.Component = Component;
 window.BITSMIST.v1.EventHandler= EventHandler;;
 window.BITSMIST.v1.Form = Form;
 window.BITSMIST.v1.List = List;
 window.BITSMIST.v1.Pad = Pad;
+window.BITSMIST.v1.CustomComponent = CustomComponent;
 
 // Util
 import AjaxUtil from './util/ajax-util';

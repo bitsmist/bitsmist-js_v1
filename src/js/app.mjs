@@ -192,6 +192,10 @@ export default class App
 	__initError()
 	{
 
+		window.addEventListener("_bm_component_init", (e) => {
+			e.detail.sender.container = this.container;
+		});
+
 		window.addEventListener("unhandledrejection", (error) => {
 			let e = {};
 
