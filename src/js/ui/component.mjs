@@ -112,6 +112,20 @@ export default class Component
 	// -------------------------------------------------------------------------
 
 	/**
+     * Instance hash code.
+     *
+	 * @type	{String}
+     */
+	get hashCode()
+	{
+
+		return new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Set option value.
 	 *
 	 * @param	{String}		key					Key to get.
