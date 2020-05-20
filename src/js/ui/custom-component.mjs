@@ -32,6 +32,7 @@ export default class CustomComponent extends HTMLElement
 		super();
 
 		this._container;
+		this._element = this;
 		this._templates = {};
 		this._modalOptions;
 		this._modalResult;
@@ -119,8 +120,10 @@ export default class CustomComponent extends HTMLElement
 			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
 		});
 
+		this.trigger("initComponent", this);
+
 		this.open().then(() => {
-			this.__initOnAppendTemplate();
+		//	this.__initOnAppendTemplate();
 		});
 
 	}
@@ -152,9 +155,6 @@ export default class CustomComponent extends HTMLElement
 			}
 
 			this._autoLoadTemplate(this.getOption("templateName")).then(() => {
-				this.innerHTML = this._templates[this.getOption("templateName")].html
-				return this.setup();
-			}).then(() => {
 				if (this.getOption("autoRefresh"))
 				{
 					return this.refresh();
@@ -237,11 +237,11 @@ export default class CustomComponent extends HTMLElement
 			Promise.resolve().then(() => {
 				return this.trigger("_beforeClose", sender);
 			}).then(() => {
-				return this.listener.trigger("beforeClose", sender);
+				return this.trigger("beforeClose", sender);
 			}).then(() => {
-				return this.listener.trigger("close", sender);
+				return this.trigger("close", sender);
 			}).then(() => {
-				return this.listener.trigger("_close", sender);
+				return this.trigger("_close", sender);
 			}).then(() => {
 				console.debug(`Component.close(): Closed component. name=${this.name}`);
 				if (this._isModal)
@@ -275,7 +275,7 @@ export default class CustomComponent extends HTMLElement
 			Promise.resolve().then(() => {
 				return this.trigger("_beforeRefresh", sender);
 			}).then(() => {
-				return this.listener.trigger("beforeRefresh", sender);
+				return this.trigger("beforeRefresh", sender);
 			}).then(() => {
 				if (this.getOption("autoFill"))
 				{
@@ -669,7 +669,7 @@ export default class CustomComponent extends HTMLElement
 		// Auto focus
 		if (this.getOption("autoFocus"))
 		{
-			let element = this._element.querySelector(this.getOption("autoFocus"));
+			let element = this.querySelector(this.getOption("autoFocus"));
 			if (element)
 			{
 				element.focus();
@@ -681,7 +681,7 @@ export default class CustomComponent extends HTMLElement
 		let css = (this._events["open"] && this._events["open"]["css"] ? this._events["open"]["css"] : undefined );
 		if (css)
 		{
-			Object.assign(this._element.style, css);
+			Object.assign(this.style, css);
 		}
 
 	}
@@ -698,7 +698,7 @@ export default class CustomComponent extends HTMLElement
 		let css = (this._events && this._events["close"] && this._events["close"]["css"] ? this._events["close"]["css"] : undefined );
 		if (css)
 		{
-			Object.assign(this._element.style, css);
+			Object.assign(this.style, css);
 		}
 
 	}
@@ -746,34 +746,36 @@ export default class CustomComponent extends HTMLElement
 	{
 
 		return new Promise((resolve, reject) => {
-			if (!rootNode)
+			if (rootNode)
 			{
-				resolve();
-				return;
-			}
+				/*
+				let root = document.querySelector(rootNode);
+				if (!root)
+				{
+					throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+				}
 
-			let root = document.querySelector(rootNode);
-			if (!root)
+				// Add template to root node
+				root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+				this._element = root.children[0];
+				*/
+			}
+			else
 			{
-				throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+				this.innerHTML = this._templates[this.getOption("templateName")].html
 			}
-
-			// Add template to root node
-			root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
-			this._element = root.children[0];
 
 			console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
 
 			// Trigger events
 			Promise.resolve().then(() => {
+				return this.__initOnAppendTemplate();
+			}).then(() => {
 				return this.trigger("_append", this);
 			}).then(() => {
 				return this.trigger("append", this);
-				/*
 			}).then(() => {
-				console.log("###");
 				return this.setup();
-				*/
 			}).then(() => {
 				return this.trigger("init", this);
 			}).then(() => {
@@ -782,6 +784,7 @@ export default class CustomComponent extends HTMLElement
 		});
 
 	}
+
 
 	// -------------------------------------------------------------------------
 
@@ -824,6 +827,7 @@ export default class CustomComponent extends HTMLElement
 	{
 
 		return new Promise((resolve, reject) => {
+			/*
 			// Init plugins
 			if (this._options["plugins"])
 			{
@@ -831,6 +835,7 @@ export default class CustomComponent extends HTMLElement
 					this.addPlugin(pluginName, this._options["plugins"][pluginName]);
 				});
 			}
+			*/
 
 			let chain = Promise.resolve();
 
@@ -867,13 +872,14 @@ export default class CustomComponent extends HTMLElement
 	{
 
 		return new Promise((resolve, reject) => {
-			let component = this._bm_detail["component"];
-			let listeners = this._bm_detail["listeners"][e.type];
+			let listeners = ( this._bm_detail && this._bm_detail["listeners"] ? this._bm_detail["listeners"][e.type] : undefined );
 			let stopPropagation = false;
 			let chain = Promise.resolve();
 
 			if (listeners)
 			{
+				let component = this._bm_detail["component"];
+
 				for (let i = 0; i < listeners.length; i++)
 				{
 					chain = chain.then(() => {
