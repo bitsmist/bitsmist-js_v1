@@ -442,6 +442,22 @@ export default class Component
 
 	}
 
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Trigger the event.
+	 *
+	 * @param	{String}		eventName				Event name to trigger.
+	 * @param	{Object}		sender					Object which triggered the event.
+	 * @param	{Object}		options					Event parameter options.
+	 */
+	trigger(eventName, sender, options)
+	{
+
+		return this._listener.trigger(eventName, sender, options);
+
+	}
+
 	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
@@ -561,7 +577,16 @@ export default class Component
 			console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
 
 			// Trigger events
-			this._listener.trigger("_append", this).then(() => {
+			Promise.resolve().then(() => {
+				return new Promise((resolve, reject) => {
+					let promises = this._container["app"].waitFor(this.getOption("waitFor", []))
+					Promise.all(promises).then(() => {
+						resolve();
+					});
+				});
+			}).then(() => {
+				return this._listener.trigger("_append", this);
+			}).then(() => {
 				return this._listener.trigger("append", this);
 			}).then(() => {
 				return this.setup();

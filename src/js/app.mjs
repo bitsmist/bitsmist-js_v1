@@ -29,6 +29,8 @@ export default class App
 	constructor(settings)
 	{
 
+		this.__waitFor = {};
+
 		// Init error handling
 		this.__initError();
 
@@ -120,6 +122,7 @@ export default class App
 		{
 			let c = Function("return (" + className + ")")();
 			ret  = new c(componentName, options);
+			//ret = Reflect.construct(className, [componentName, options]);
 		}
 		else
 		{
@@ -186,6 +189,38 @@ export default class App
 
 	// -------------------------------------------------------------------------
 
+	waitFor(componentNames)
+	{
+
+		console.log("###waitFor", componentNames);
+
+		let promises = [];
+
+		for (let i = 0; i < componentNames.length; i++)
+		{
+			let promise;
+			if (!this.__waitFor[componentNames[i]])
+			{
+				this.__waitFor[componentNames[i]] = {};
+				promise = new Promise((resolve, reject) => {
+					this.__waitFor[componentNames[i]]["resolve"] = resolve;
+				});
+				this.__waitFor[componentNames[i]]["promise"] = promise;
+			}
+			else
+			{
+				promise = this.__waitFor[componentNames[i]]["promise"];
+			}
+
+			promises.push(promise);
+		}
+
+		console.log("###waitFor", promises);
+
+		return promises;
+
+	}
+
 	/**
 	 * Init error handling.
 	 */
@@ -193,7 +228,19 @@ export default class App
 	{
 
 		window.addEventListener("_bm_component_init", (e) => {
+			console.log("### _bm_component_init", e.detail.sender.name);
 			e.detail.sender.container = this.container;
+		});
+
+		window.addEventListener("_bm_component_ready", (e) => {
+			if (this.__waitFor[e.detail.sender.name] && this.__waitFor[e.detail.sender.name]["resolve"])
+			{
+				this.__waitFor[e.detail.sender.name]["resolve"]();
+			}
+			else if (!this.__waitFor[e.detail.sender.name])
+			{
+				this.__waitFor[e.detail.sender.name] = {"promise": Promise.resolve()};
+			}
 		});
 
 		window.addEventListener("unhandledrejection", (error) => {

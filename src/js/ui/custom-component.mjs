@@ -136,7 +136,7 @@ export default class CustomComponent extends HTMLElement
 		this.trigger("initComponent", this);
 
 		this.open().then(() => {
-		//	this.__initOnAppendTemplate();
+			this.triggerHtmlEvent(window, "_bm_component_ready", this);
 		});
 
 	}
@@ -784,6 +784,13 @@ export default class CustomComponent extends HTMLElement
 			Promise.resolve().then(() => {
 				return this.__initOnAppendTemplate();
 			}).then(() => {
+				return new Promise((resolve, reject) => {
+					let promises = this._container["app"].waitFor(this.getOption("waitFor", []))
+					Promise.all(promises).then(() => {
+						resolve();
+					});
+				});
+			}).then(() => {
 				return this.trigger("_append", this);
 			}).then(() => {
 				return this.trigger("append", this);
@@ -797,7 +804,6 @@ export default class CustomComponent extends HTMLElement
 		});
 
 	}
-
 
 	// -------------------------------------------------------------------------
 
