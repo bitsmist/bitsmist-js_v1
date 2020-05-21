@@ -56,6 +56,19 @@ export default class CustomComponent extends HTMLElement
 
 		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
+		// Init resource
+		if ("resource" in this._options && this._options["resource"])
+		{
+			if (this._options["resource"] in this._container["resources"])
+			{
+				this._resource = this._container["resources"][this._options["resource"]];
+			}
+			else
+			{
+				throw new NoResourceError(`Resource not found. name=${this._name}, resource=${this._options["resource"]}`);
+			}
+		}
+
 		// Register preferences
 		this._container["preferenceManager"].register(this, this._preferences);
 
@@ -279,7 +292,7 @@ export default class CustomComponent extends HTMLElement
 			}).then(() => {
 				if (this.getOption("autoFill"))
 				{
-					return this.fill();
+					return this.fill(options);
 				}
 			}).then(() => {
 				return this.trigger("refresh", sender);
@@ -431,7 +444,7 @@ export default class CustomComponent extends HTMLElement
 			this._plugins[pluginName].object = plugin;
 
 			plugin["events"].forEach((eventName) => {
-				this.addEventHandler("_" + eventName, this.__callPluginEvent);
+				this.addEventHandler(this, "_" + eventName, this.__callPluginEventHandler);
 			});
 
 			resolve(plugin);
@@ -793,12 +806,11 @@ export default class CustomComponent extends HTMLElement
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
 	/*
-	__initPadOnInitComponent(sender, e, ex)
+	__initPadOnInitComponent(sender, e)
 	{
 
 		// Init plugins
@@ -819,15 +831,13 @@ export default class CustomComponent extends HTMLElement
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 *
 	 * @return  {Promise}		Promise.
      */
-	__initOnAppendTemplate(sender, e, ex)
+	__initOnAppendTemplate(sender, e)
 	{
 
 		return new Promise((resolve, reject) => {
-			/*
 			// Init plugins
 			if (this._options["plugins"])
 			{
@@ -835,7 +845,6 @@ export default class CustomComponent extends HTMLElement
 					this.addPlugin(pluginName, this._options["plugins"][pluginName]);
 				});
 			}
-			*/
 
 			let chain = Promise.resolve();
 
@@ -912,21 +921,20 @@ export default class CustomComponent extends HTMLElement
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	__callPluginEventHandler(sender, e, ex)
+	__callPluginEventHandler(sender, e)
 	{
 
 		return new Promise((resolve, rejfect) => {
 			let promises = [];
-			let eventName = ex.eventName.substr(1);
+			let eventName = e.detail.eventName.substr(1);
 
 			Object.keys(this._plugins).forEach((pluginName) => {
 				if (this._plugins[pluginName]["enabled"])
 				{
-					promises.push(this._plugins[pluginName].object[eventName](sender, e, ex));
+					promises.push(this._plugins[pluginName].object[eventName](sender, e));
 				}
 			});
 
