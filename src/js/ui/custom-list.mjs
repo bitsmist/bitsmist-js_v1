@@ -141,6 +141,10 @@ export default class List extends CustomComponent
 			Promise.resolve().then(() => {
 				return this.trigger("target", this);
 			}).then(() => {
+				if (options["target"])
+				{
+					this._target = options["target"];
+				}
 				return this.trigger("beforeFetch", this);
 			}).then(() => {
 				// Auto load data
