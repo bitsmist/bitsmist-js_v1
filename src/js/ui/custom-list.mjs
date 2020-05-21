@@ -202,9 +202,8 @@ export default class List extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__initListOnAppend(sender, e, ex)
+	__initListOnAppend(sender, e)
 	{
 
 		this.row = this._components[this.getOption("row")].object;
@@ -219,9 +218,8 @@ export default class List extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__initListOnFill(sender, e, ex)
+	__initListOnFill(sender, e)
 	{
 
 		// Set HTML elements' event handlers after filling completed
