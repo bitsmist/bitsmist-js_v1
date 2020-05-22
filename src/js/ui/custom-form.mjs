@@ -100,7 +100,7 @@ export default class CustomForm extends CustomComponent
 	{
 
 		Object.keys(items).forEach((key) => {
-			FormUtil.buildFields(this, key, items[key]);
+			FormUtil.buildFields(this._element, key, items[key]);
 		});
 
 	}
@@ -142,7 +142,7 @@ export default class CustomForm extends CustomComponent
 			}).then(() => {
 				return this.trigger("beforeFill", sender);
 			}).then(() => {
-				FormUtil.setFields(this, this.item, this._container["masters"]);
+				FormUtil.setFields(this._element, this.item, this._container["masters"]);
 				return this.trigger("fill", sender);
 			}).then(() => {
 				resolve();
@@ -163,7 +163,7 @@ export default class CustomForm extends CustomComponent
 	clear(target)
 	{
 
-		return FormUtil.clearFields(this, target);
+		return FormUtil.clearFields(this._element, target);
 
 	}
 
@@ -186,7 +186,7 @@ export default class CustomForm extends CustomComponent
 
 			this.trigger("beforeValidate", sender).then(() => {
 				let ret = true;
-				let form = this.querySelector("form");
+				let form = this._element.querySelector("form");
 
 				if (this.getOption("autoValidate"))
 				{
@@ -196,7 +196,7 @@ export default class CustomForm extends CustomComponent
 					}
 					else
 					{
-						ret = FormUtil.reportValidity(this);
+						ret = FormUtil.reportValidity(this._element);
 					}
 				}
 
@@ -255,7 +255,7 @@ export default class CustomForm extends CustomComponent
 	getFields()
 	{
 
-		return FormUtil.getFields(this);
+		return FormUtil.getFields(this._element);
 
 	}
 
@@ -277,9 +277,9 @@ export default class CustomForm extends CustomComponent
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this.addEventHandler(this, "keydown", this.__defaultKey, {"options":defaultKeys});
-			this.addEventHandler(this, "compositionstart", this.__compositionStart, {"options":defaultKeys});
-			this.addEventHandler(this, "compositionend", this.__compositionEnd, {"options":defaultKeys});
+			this.addEventHandler(this._element, "keydown", this.__defaultKey, {"options":defaultKeys});
+			this.addEventHandler(this._element, "compositionstart", this.__compositionStart, {"options":defaultKeys});
+			this.addEventHandler(this._element, "compositionend", this.__compositionEnd, {"options":defaultKeys});
 		}
 
 		// default buttons
@@ -289,7 +289,7 @@ export default class CustomForm extends CustomComponent
 			let initElements = (options, handler) => {
 				if (options)
 				{
-					let elements = this.querySelectorAll(options["rootNode"]);
+					let elements = this._element.querySelectorAll(options["rootNode"]);
 					elements.forEach((element) => {
 						this.addEventHandler(element, "click", handler, {"options":options});
 					});
