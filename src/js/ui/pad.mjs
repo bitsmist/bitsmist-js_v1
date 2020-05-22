@@ -215,22 +215,41 @@ export default class Pad extends Component
 	_initOnOpen()
 	{
 
-		// Auto focus
-		if (this.getOption("autoFocus"))
-		{
-			let element = this._element.querySelector(this.getOption("autoFocus"));
-			if (element)
-			{
-				element.focus();
-			}
-
-		}
+		this.autoFocus();
 
 		// Css
 		let css = (this._events["open"] && this._events["open"]["css"] ? this._events["open"]["css"] : undefined );
 		if (css)
 		{
 			Object.assign(this._element.style, css);
+		}
+
+	}
+
+	autoFocus()
+	{
+
+		if (this.getOption("autoFocus"))
+		{
+			let element = document.querySelector(this.getOption("autoFocus")).focus({preventScroll:true});
+			if (element)
+			{
+				let scrollTop = ( document.scrollingElement ? document.scrollingElement.scrollTop : undefined );
+				/*
+				if (document.scrollingElement)
+				{
+					scrollTop = document.scrollingElement.scrollTop;
+				}
+				*/
+
+				element.focus({preventScroll:true});
+
+				if (scrollTop)
+				{
+					window.scrollTo(0, scrollTop); // workaround for safari
+				}
+			}
+
 		}
 
 	}

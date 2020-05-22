@@ -299,6 +299,7 @@ export default class CustomComponent extends HTMLElement
 			}).then(() => {
 				return this.trigger("_refresh", sender);
 			}).then(() => {
+				this.__autoFocus();
 				resolve();
 			});
 		});
@@ -969,6 +970,33 @@ export default class CustomComponent extends HTMLElement
 		}
 
 		return isLoaded
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Focus to a element.
+	 */
+	__autoFocus()
+	{
+
+		if (this.getOption("autoFocus"))
+		{
+			let element = document.querySelector(this.getOption("autoFocus")).focus({preventScroll:true});
+			if (element)
+			{
+				let scrollTop = ( document.scrollingElement ? document.scrollingElement.scrollTop : undefined );
+
+				element.focus({preventScroll:true});
+
+				if (scrollTop)
+				{
+					window.scrollTo(0, scrollTop); // workaround for safari
+				}
+			}
+
+		}
 
 	}
 

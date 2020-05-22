@@ -321,6 +321,7 @@ export default class Component
 			}).then(() => {
 				return this._listener.trigger("_refresh", sender);
 			}).then(() => {
+				this.autoFocus();
 				resolve();
 			});
 		});
