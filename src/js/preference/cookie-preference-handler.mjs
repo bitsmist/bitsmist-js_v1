@@ -24,16 +24,14 @@ export default class CookiePreferenceHandler
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(componentName, options)
+	constructor(options)
 	{
 
-		this.name = componentName;
 		this.options = ( options ? options : {} );
 		this.container = options["container"];
-		this.cookie = new CookieUtil("CookieUtil", {"container": this.container});
+		this.cookie = new CookieUtil({"container": this.container});
 
 	}
 

@@ -25,10 +25,9 @@ export default class ErrorManager extends ServiceManager
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(componentName, options)
+	constructor(options)
 	{
 
 		/*
@@ -38,7 +37,7 @@ export default class ErrorManager extends ServiceManager
 		return proxy;
 		*/
 
-		super(componentName, options);
+		super(options);
 		this.listener = new EventHandler(this);
 
 	}

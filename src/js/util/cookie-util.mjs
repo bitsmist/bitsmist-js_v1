@@ -22,13 +22,11 @@ export default class CookieUtil
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(componentName, options)
+	constructor(options)
 	{
 
-		this._name = componentName;
 		this._options = ( options ? options : {} );
 		this._container = options["container"];
 

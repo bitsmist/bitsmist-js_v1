@@ -107,22 +107,20 @@ export default class App
 	 * Instantiate the component.
 	 *
 	 * @param	{String}		className			Class name.
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
 	 *
 	 * @return  {Object}		Initaiated object.
 	 */
-	createObject(className, componentName, options)
+	createObject(className, ...args)
 	{
 
 		let ret = null;
-		componentName = ( componentName ? componentName : className );
 
 		if (this.isExistsClass(className))
 		{
 			let c = Function("return (" + className + ")")();
-			ret  = new c(componentName, options);
-			//ret = Reflect.construct(className, [componentName, options]);
+			ret  = new c(...args);
+			//ret = Reflect.construct(className, args);
 		}
 		else
 		{
@@ -167,10 +165,10 @@ export default class App
 	{
 
 		let loaderOptions = {"container": this.container};
-		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], this.container["settings"]["loader"]["class"], loaderOptions);
+		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], loaderOptions);
 
 		let routerOptions = {"container": this.container};
-		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], this.container["settings"]["router"]["class"], routerOptions);
+		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], routerOptions);
 
 		// Init exception manager
 		this.container["errorManager"].listener.addEventHandler("error", (sender, e, ex) => {
@@ -191,8 +189,6 @@ export default class App
 
 	waitFor(componentNames)
 	{
-
-		console.log("###waitFor", componentNames);
 
 		let promises = [];
 
@@ -215,8 +211,6 @@ export default class App
 			promises.push(promise);
 		}
 
-		console.log("###waitFor", promises);
-
 		return promises;
 
 	}
@@ -228,7 +222,6 @@ export default class App
 	{
 
 		window.addEventListener("_bm_component_init", (e) => {
-			console.log("### _bm_component_init", e.detail.sender.name);
 			e.detail.sender.container = this.container;
 		});
 
