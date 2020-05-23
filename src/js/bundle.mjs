@@ -49,20 +49,16 @@ window.BITSMIST.v1.CookiePreferenceHandler = CookiePreferenceHandler;
 window.BITSMIST.v1.ObserverPreferenceHandler = ObserverPreferenceHandler;
 
 // UI
-//import Component from './ui/component';
-//import EventHandler from './ui/event-handler';
+import Component from './ui/component';
 import Form from './ui/form';
 import List from './ui/list';
-import Pad from './ui/pad';
 import CustomComponent from './ui/custom-component';
 import CustomForm from './ui/custom-form';
 import CustomList from './ui/custom-list';
 
-//window.BITSMIST.v1.Component = Component;
-//window.BITSMIST.v1.EventHandler= EventHandler;;
+window.BITSMIST.v1.Component = Component;
 window.BITSMIST.v1.Form = Form;
 window.BITSMIST.v1.List = List;
-window.BITSMIST.v1.Pad = Pad;
 window.BITSMIST.v1.CustomComponent = CustomComponent;
 window.BITSMIST.v1.CustomForm = CustomForm;
 window.BITSMIST.v1.CustomList = CustomList;
