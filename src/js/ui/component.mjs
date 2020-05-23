@@ -9,8 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
-import {NoNodeError} from '../error/errors';
-import EventHandler from './event-handler';
+import { NoNodeError, NotValidFunctionError } from '../error/errors';
 
 // =============================================================================
 //	Component class
@@ -25,34 +24,94 @@ export default class Component
 
 	/**
      * Constructor.
-     *
-	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Options for the component.
+	 *
      */
 	constructor(componentName, options)
 	{
 
-		this._container = options["container"];
-		this._name = componentName;
-		this._className = (options["class"] ? options["class"] : componentName);
-		this._listener = new EventHandler(this);
-		this._shadows = {};
-		this._parent;
-		this._element;
+		this._container;
+		this._templates = {};
 		this._modalOptions;
 		this._modalResult;
 		this._modalPromise;
 		this._isModal = false;
 		this._isOpen = false;
+		this._isHTMLElement = false;
 
-		// Options
-		let defaults = { "templateName":this._className };
-		this._options = Object.assign( {}, defaults, (options ? options : {}) );
+		if (this._isHTMLElement)
+		{
+			this._element = this;
+
+			// Options
+			let options = this._getOptions();
+			let defaults = { "templateName": options["name"] };
+			this._options = Object.assign({}, defaults, options);
+		}
+		else
+		{
+			this._element = document.createElement("div");
+
+			// Options
+			let defaults = { "templateName": componentName };
+			this._options = Object.assign( {}, defaults, this._getOptions(), (options ? options : {}) );
+		}
+
+		this._components = ( this._options["components"] ? this._options["components"] : {} );
+		this._elements = ( this._options["elements"] ? this._options["elements"] : {} );
+		this._plugins = ( this._options["plugins"] ? this._options["plugins"] : {} );
+		this._events = ( this._options["events"] ? this._options["events"] : {} );
+		this._preferences = ( this._options["preferences"] ? this._options["preferences"] : {} );
+		this._resource;
+
+		this.triggerHtmlEvent(window, "_bm_component_init", this);
+
+		// Init resource
+		if ("resource" in this._options && this._options["resource"])
+		{
+			if (this._options["resource"] in this._container["resources"])
+			{
+				this._resource = this._container["resources"][this._options["resource"]];
+			}
+			else
+			{
+				throw new NoResourceError(`Resource not found. name=${this._name}, resource=${this._options["resource"]}`);
+			}
+		}
+
+		// Register preferences
+		this._container["preferenceManager"].register(this, this._preferences);
+
+		if (!this._isHTMLElement)
+		{
+			// Add proxy to addEventListener
+			this.addEventListener = (eventName, handler) => {
+				this._element.addEventListener(eventName, this.__callEventHandler);
+			};
+
+			// Init event handlers
+			Object.keys(this._events).forEach((eventName) => {
+				this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
+			});
+		}
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	/**
+     * Container. Set by App object.
+     *
+	 * @type	{String}
+     */
+	set container(value)
+	{
+
+		this._container = value;
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -63,49 +122,21 @@ export default class Component
 	get name()
 	{
 
-		return this._name;
+		return this.getOption("name");
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-     * Class name.
+     * Element.
      *
 	 * @type	{String}
-     */
-	get className()
-	{
-
-		return this._className;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * HTML element.
-     *
-	 * @type	{HTMLElement}
      */
 	get element()
 	{
 
 		return this._element;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Event listener.
-     *
-	 * @type	{Object}
-     */
-	get listener()
-	{
-
-		return this._listener;
 
 	}
 
@@ -163,6 +194,29 @@ export default class Component
 	}
 
 	// -------------------------------------------------------------------------
+	//  Callbacks
+	// -------------------------------------------------------------------------
+
+	/**
+     * Connected callback.
+     */
+	connectedCallback()
+	{
+
+		// Init event handlers
+		Object.keys(this._events).forEach((eventName) => {
+			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
+		});
+
+		this.trigger("initComponent", this);
+
+		this.open().then(() => {
+			this.triggerHtmlEvent(window, "_bm_component_ready", this);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -176,12 +230,11 @@ export default class Component
 	open(options)
 	{
 
-		console.debug(`Component.open(): Opening component. name=${this._name}`);
+		console.debug(`Component.open(): Opening component. name=${this.name}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
-			delete options["sender"];
 
 			if (this._isOpen)
 			{
@@ -195,16 +248,16 @@ export default class Component
 					return this.refresh();
 				}
 			}).then(() => {
-				return this._listener.trigger("_beforeOpen", sender);
+				return this.trigger("_beforeOpen", sender);
 			}).then(() => {
-				return this._listener.trigger("beforeOpen", sender);
+				return this.trigger("beforeOpen", sender);
 			}).then(() => {
-				return this._listener.trigger("open", sender);
+				return this.trigger("open", sender);
 			}).then(() => {
-				return this._listener.trigger("_open", sender);
+				return this.trigger("_open", sender);
 			}).then(() => {
 				this._initOnOpen();
-				console.debug(`Component.open(): Opened component. name=${this._name}`);
+				console.debug(`Component.open(): Opened component. name=${this.name}`);
 				this._isOpen = true;
 				resolve();
 			});
@@ -224,7 +277,7 @@ export default class Component
 	openModal(options)
 	{
 
-		console.debug(`Component.openModal(): Opening component. name=${this._name}`);
+		console.debug(`Component.openModal(): Opening modally component. name=${this.name}`);
 
 		return new Promise((resolve, reject) => {
 			if (this._isOpen)
@@ -257,12 +310,11 @@ export default class Component
 	close(options)
 	{
 
-		console.debug(`Component.close(): Closing component. name=${this._name}`);
+		console.debug(`Component.close(): Closing component. name=${this.name}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
-			delete options["sender"];
 
 			if (!this._isOpen)
 			{
@@ -271,15 +323,15 @@ export default class Component
 			}
 
 			Promise.resolve().then(() => {
-				return this._listener.trigger("_beforeClose", sender);
+				return this.trigger("_beforeClose", sender);
 			}).then(() => {
-				return this._listener.trigger("beforeClose", sender);
+				return this.trigger("beforeClose", sender);
 			}).then(() => {
-				return this._listener.trigger("close", sender);
+				return this.trigger("close", sender);
 			}).then(() => {
-				return this._listener.trigger("_close", sender);
+				return this.trigger("_close", sender);
 			}).then(() => {
-				console.debug(`Component.close(): Closed component. name=${this._name}`);
+				console.debug(`Component.close(): Closed component. name=${this.name}`);
 				if (this._isModal)
 				{
 					this._modalPromise.resolve(this._modalResult);
@@ -302,26 +354,27 @@ export default class Component
 	refresh(options)
 	{
 
-		console.debug(`Component.refresh(): Refreshing component. name=${this._name}`);
+		console.debug(`Component.refresh(): Refreshing component. name=${this.name}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
-			delete options["sender"];
 
-			this._listener.trigger("_beforeRefresh", sender).then(() => {
-				return this._listener.trigger("beforeRefresh", sender);
+			Promise.resolve().then(() => {
+				return this.trigger("_beforeRefresh", sender);
+			}).then(() => {
+				return this.trigger("beforeRefresh", sender);
 			}).then(() => {
 				if (this.getOption("autoFill"))
 				{
-					return this.fill();
+					return this.fill(options);
 				}
 			}).then(() => {
-				return this._listener.trigger("refresh", sender);
+				return this.trigger("refresh", sender);
 			}).then(() => {
-				return this._listener.trigger("_refresh", sender);
+				return this.trigger("_refresh", sender);
 			}).then(() => {
-				this.autoFocus();
+				this.__autoFocus();
 				resolve();
 			});
 		});
@@ -340,21 +393,22 @@ export default class Component
 	setup(options)
 	{
 
-		console.debug(`Component.setup(): Setting up component. name=${this._name}`);
+		console.debug(`Component.setup(): Setting up component. name=${this.name}`);
 
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this._container["preferences"] );
 			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this._container["preferences"] );
 			let sender = ( options["sender"] ? options["sender"] : this );
-			delete options["sender"];
 
-			this._listener.trigger("formatSettings", sender, options).then(() => {
-				return this._listener.trigger("validateSettings", sender,  options);
+			Promise.resolve().then(() => {
+				return this.trigger("formatSettings", sender, options);
 			}).then(() => {
-				return this._listener.trigger("beforeSetup", sender, options);
+				return this.trigger("validateSettings", sender,  options);
 			}).then(() => {
-				return this._listener.trigger("setup", sender, options);
+				return this.trigger("beforeSetup", sender, options);
+			}).then(() => {
+				return this.trigger("setup", sender, options);
 			}).then(() => {
 				resolve();
 			});
@@ -390,11 +444,164 @@ export default class Component
 		return new Promise((resolve, reject) => {
 			this._autoLoadTemplate(templateName).then(() => {
 				this._options["templateName"] = templateName;
-				return this._listener.trigger("templateChange", this);
+				return this.trigger("templateChange", this);
 			}).then(() => {
 				resolve();
 			});
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Add a component to the pad.
+     *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	addComponent(componentName, options)
+	{
+
+		return new Promise((resolve, reject) => {
+			options = Object.assign({}, options);
+
+			Promise.resolve().then(() => {
+				// Create component
+				if (!this._components[componentName] || !this._components[componentName].object)
+				{
+					return new Promise((resolve, reject) => {
+						this._container["loader"].createComponent(componentName, options).then((component) => {
+							component.parent = this;
+							this._components[componentName] = ( this._components[componentName] ? this._components[componentName] : {} );
+							this._components[componentName].object = component;
+							resolve();
+						});
+					});
+				}
+			}).then(() => {
+				// Auto open
+				let component = this._components[componentName].object;
+				if (component.getOption("autoOpen"))
+				{
+					return component.open();
+				}
+			}).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Add a plugin to the pad.
+     *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	addPlugin(pluginName, options)
+	{
+
+		return new Promise((resolve, reject) => {
+			options = ( options ? options : {} );
+			let className = ( "class" in options ? options["class"] : pluginName );
+			let plugin = null;
+
+			options["container"] = this._container;
+			options["component"] = this;
+			plugin = this._container["app"].createObject(className, pluginName, options);
+			this._plugins[pluginName] = ( this._options["plugins"][pluginName] ? this._options["plugins"][pluginName] : {} );
+			this._plugins[pluginName].object = plugin;
+
+			plugin["events"].forEach((eventName) => {
+				this.addEventHandler(this, "_" + eventName, this.__callPluginEventHandler);
+			});
+
+			resolve(plugin);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Init html element's event handler.
+	 *
+	 * @param	{String}		elementName			Element name.
+	 * @param	{Options}		options				Options.
+     */
+	initHtmlEvents(elementName, options)
+	{
+
+		// Get target elements
+		let elements;
+		if (elementName == "_self")
+		{
+			elements = [this];
+		}
+		else if (this._elements[elementName] && "rootNode" in this._elements[elementName])
+		{
+			elements = this._element.querySelectorAll(this._elements[elementName]["rootNode"]);
+		}
+		else
+		{
+			elements = this._element.querySelectorAll("#" + elementName);
+		}
+
+		// Set event handlers
+		let events = (this._elements[elementName]["events"] ? this._elements[elementName]["events"] : {});
+		for (let i = 0; i < elements.length; i++)
+		{
+			Object.keys(events).forEach((eventName) => {
+				// Merge options
+				options = Object.assign({}, events[eventName], options);
+
+				this.addEventHandler(elements[i], eventName, events[eventName]["handler"], options);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Add an event handler.
+	 *
+	 * @param	{HTMLElement}	element					HTML element.
+	 * @param	{String}		eventName				Event name.
+	 * @param	{Function}		handler					Event handler.
+	 * @param	{Object}		options					Options passed to elements.
+     */
+	addEventHandler(element, eventName, handler, options)
+	{
+
+		if (typeof handler === "function")
+		{
+			let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
+
+			if (!element._bm_detail)
+			{
+				element._bm_detail = { "component": this, "listeners": listeners };
+			}
+
+			if (!listeners[eventName])
+			{
+				listeners[eventName] = [];
+				element.addEventListener(eventName, this.__callEventHandler);
+			}
+
+			listeners[eventName].push({"handler":handler, "options":options});
+		}
+		else
+		{
+			throw new NotValidFunctionError(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
+		}
 
 	}
 
@@ -412,14 +619,14 @@ export default class Component
 	{
 
 		let clone;
-		let template = this._shadows[templateName].template;
+		let template = this._templates[templateName].template;
 
 		if (!template)
 		{
 			template = document.createElement('template');
-			template.innerHTML = this._shadows[templateName].html;
+			template.innerHTML = this._templates[templateName].html;
 
-			this._shadows[templateName].template = template;
+			this._templates[templateName].template = template;
 		}
 
 		if ( "content" in template )
@@ -455,12 +662,75 @@ export default class Component
 	trigger(eventName, sender, options)
 	{
 
-		return this._listener.trigger(eventName, sender, options);
+		options = options || {};
+		options["eventName"] = eventName;
+		options["sender"] = sender;
+		let e = null;
+
+		try
+		{
+			e = new CustomEvent(eventName, { detail: options });
+		}
+		catch(error)
+		{
+			e  = document.createEvent('CustomEvent');
+			e.initCustomEvent(eventName, false, false, null);
+			e.detail = options;
+		}
+
+		return this.__callEventHandler(e);
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Trigger the HTML event.
+	 *
+	 * @param	{HTMLElement}	element					Html element.
+	 * @param	{String}		eventName				Event name to trigger.
+	 * @param	{Object}		sender					Object which triggered the event.
+	 * @param	{Object}		options					Event parameter options.
+	 */
+	triggerHtmlEvent(element, eventName, sender, options)
+	{
+
+		options = options || {};
+		options["eventName"] = eventName;
+		options["sender"] = sender;
+		let e = null;
+
+		try
+		{
+			e = new CustomEvent(eventName, { detail: options });
+		}
+		catch(error)
+		{
+			e  = document.createEvent('CustomEvent');
+			e.initCustomEvent(eventName, false, false, null);
+			e.detail = options;
+		}
+
+		element.dispatchEvent(e);
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
+     * Get Pad options.  Need to override.
+	 *
+	 * @return  {Object}		Options.
+     */
+	_getOptions()
+	{
+
+		return {};
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -487,7 +757,7 @@ export default class Component
 				console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
 
 				this.__loadTemplate(templateName).then(() => {
-					return this._listener.trigger("load", this);
+					return this.trigger("load", this);
 				}).then(() => {
 					return this.__appendTemplate(this.getOption("rootNode"), templateName);
 				}).then(() => {
@@ -501,19 +771,46 @@ export default class Component
 	// -------------------------------------------------------------------------
 
 	/**
-     * Initialization of component on open().  Need to override.
+     * Initialization of component on open().
      */
 	_initOnOpen()
 	{
+
+		// Auto focus
+		if (this.getOption("autoFocus"))
+		{
+			let element = this._element.querySelector(this.getOption("autoFocus"));
+			if (element)
+			{
+				element.focus();
+			}
+
+		}
+
+		// Css
+		let css = (this._events["open"] && this._events["open"]["css"] ? this._events["open"]["css"] : undefined );
+		if (css)
+		{
+			Object.assign(this.style, css);
+		}
+
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-     * Initialization of clone on close().  Need to override.
+     * Initialization of clone on close().
      */
 	_initOnClose()
 	{
+
+		// Css
+		let css = (this._events && this._events["close"] && this._events["close"]["css"] ? this._events["close"]["css"] : undefined );
+		if (css)
+		{
+			Object.assign(this.style, css);
+		}
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -537,8 +834,8 @@ export default class Component
 		return new Promise((resolve, reject) => {
 			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 				console.debug(`Component.__loadTemplate(): Loaded template. templateName=${templateName}`);
-				this._shadows[templateName] = {};
-				this._shadows[templateName]["html"] = xhr.responseText;
+				this._templates[templateName] = {};
+				this._templates[templateName]["html"] = xhr.responseText;
 				resolve(xhr);
 			});
 		});
@@ -559,26 +856,29 @@ export default class Component
 	{
 
 		return new Promise((resolve, reject) => {
-			if (!rootNode)
+			if (rootNode)
 			{
-				resolve();
-				return;
-			}
+				let root = document.querySelector(rootNode);
+				if (!root)
+				{
+					throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+				}
 
-			let root = document.querySelector(rootNode);
-			if (!root)
+				// Add template to root node
+				root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+				this._element = root.children[0];
+			}
+			else
 			{
-				throw new NoNodeError(`Root node does not exist. name=${this._name}, rootNode=${rootNode}`);
+				this.innerHTML = this._templates[this.getOption("templateName")].html
 			}
-
-			// Add template to root node
-			root.insertAdjacentHTML("afterbegin", this._shadows[templateName].html);
-			this._element = root.children[0];
 
 			console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
 
 			// Trigger events
 			Promise.resolve().then(() => {
+				return this.__initOnAppendTemplate();
+			}).then(() => {
 				return new Promise((resolve, reject) => {
 					let promises = this._container["app"].waitFor(this.getOption("waitFor", []))
 					Promise.all(promises).then(() => {
@@ -586,13 +886,13 @@ export default class Component
 					});
 				});
 			}).then(() => {
-				return this._listener.trigger("_append", this);
+				return this.trigger("_append", this);
 			}).then(() => {
-				return this._listener.trigger("append", this);
+				return this.trigger("append", this);
 			}).then(() => {
 				return this.setup();
 			}).then(() => {
-				return this._listener.trigger("init", this);
+				return this.trigger("init", this);
 			}).then(() => {
 				resolve();
 			});
@@ -603,7 +903,154 @@ export default class Component
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component is loaded.
+	 * Init on initComponent.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	/*
+	__initPadOnInitComponent(sender, e)
+	{
+
+		// Init plugins
+		if (this._options["plugins"])
+		{
+			Object.keys(this._options["plugins"]).forEach((pluginName) => {
+				this.addPlugin(pluginName, this._options["plugins"][pluginName]);
+			});
+		}
+
+	}
+	*/
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Init on append template.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 *
+	 * @return  {Promise}		Promise.
+     */
+	__initOnAppendTemplate(sender, e)
+	{
+
+		return new Promise((resolve, reject) => {
+			// Init plugins
+			if (this._options["plugins"])
+			{
+				Object.keys(this._options["plugins"]).forEach((pluginName) => {
+					this.addPlugin(pluginName, this._options["plugins"][pluginName]);
+				});
+			}
+
+			let chain = Promise.resolve();
+
+			//  Add components
+			Object.keys(this._components).forEach((componentName) => {
+				if ("class" in this._components[componentName])
+				{
+					chain = chain.then(() => {
+						return this.addComponent(componentName, this._components[componentName]);
+					});
+				}
+			});
+
+			// Init HTML event handlers
+			chain.then(() => {
+				Object.keys(this._elements).forEach((elementName) => {
+						this.initHtmlEvents(elementName);
+				});
+
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Call event handler.
+	 *
+	 * @param	{Object}		e						Event parameter.
+	 */
+	__callEventHandler(e)
+	{
+
+		return new Promise((resolve, reject) => {
+			let listeners = ( this._bm_detail && this._bm_detail["listeners"] ? this._bm_detail["listeners"][e.type] : undefined );
+			let stopPropagation = false;
+			let chain = Promise.resolve();
+
+			if (listeners)
+			{
+				let component = this._bm_detail["component"];
+
+				for (let i = 0; i < listeners.length; i++)
+				{
+					chain = chain.then(() => {
+						e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
+						return (listeners[i]["handler"]).call(component, this, e, listeners[i]["options"]);
+					});
+
+					if (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"])
+					{
+						stopPropagation = true;
+					}
+				}
+			}
+
+			if (stopPropagation)
+			{
+				e.stopPropagation();
+			}
+
+			chain.then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Call plugin's event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	__callPluginEventHandler(sender, e)
+	{
+
+		return new Promise((resolve, rejfect) => {
+			let promises = [];
+			let eventName = e.detail.eventName.substr(1);
+
+			Object.keys(this._plugins).forEach((pluginName) => {
+				if (this._plugins[pluginName]["enabled"])
+				{
+					promises.push(this._plugins[pluginName].object[eventName](sender, e));
+				}
+			});
+
+			Promise.all(promises).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the template is loaded.
 	 *
 	 * @return  {bool}			True if loaded.
 	 */
@@ -612,12 +1059,39 @@ export default class Component
 
 		let isLoaded = false;
 
-		if (templateName in this._shadows && this._shadows[templateName].html)
+		if (templateName in this._templates && this._templates[templateName].html)
 		{
 			isLoaded = true;
 		}
 
 		return isLoaded
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Focus to a element.
+	 */
+	__autoFocus()
+	{
+
+		if (this.getOption("autoFocus"))
+		{
+			let element = document.querySelector(this.getOption("autoFocus"));
+			if (element)
+			{
+				let scrollTop = ( document.scrollingElement ? document.scrollingElement.scrollTop : undefined );
+
+				element.focus({preventScroll:true});
+
+				if (scrollTop)
+				{
+					window.scrollTo(0, scrollTop); // workaround for safari
+				}
+			}
+
+		}
 
 	}
 
