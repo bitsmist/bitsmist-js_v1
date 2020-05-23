@@ -32,18 +32,31 @@ export default class CustomComponent extends HTMLElement
 		super();
 
 		this._container;
-		this._element = this;
 		this._templates = {};
 		this._modalOptions;
 		this._modalResult;
 		this._modalPromise;
 		this._isModal = false;
 		this._isOpen = false;
+		this._isHTMLElement = true;
 
-		// Options
-		let options = this._getOptions();
-		let defaults = { "templateName": options["name"] };
-		this._options = Object.assign({}, defaults, options);
+		if (this._isHTMLElement)
+		{
+			this._element = this;
+
+			// Options
+			let options = this._getOptions();
+			let defaults = { "templateName": options["name"] };
+			this._options = Object.assign({}, defaults, options);
+		}
+		else
+		{
+			this._element = document.createElement("div");
+
+			// Options
+			let defaults = { "templateName": componentName };
+			this._options = Object.assign( {}, defaults, this._getOptions(), (options ? options : {}) );
+		}
 
 		this._components = ( this._options["components"] ? this._options["components"] : {} );
 		this._elements = ( this._options["elements"] ? this._options["elements"] : {} );
@@ -51,8 +64,6 @@ export default class CustomComponent extends HTMLElement
 		this._events = ( this._options["events"] ? this._options["events"] : {} );
 		this._preferences = ( this._options["preferences"] ? this._options["preferences"] : {} );
 		this._resource;
-
-//		this.__initPadOnInitComponent();
 
 		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
@@ -71,6 +82,19 @@ export default class CustomComponent extends HTMLElement
 
 		// Register preferences
 		this._container["preferenceManager"].register(this, this._preferences);
+
+		if (!this._isHTMLElement)
+		{
+			// Add proxy to addEventListener
+			this.addEventListener = (eventName, handler) => {
+				this._element.addEventListener(eventName, this.__callEventHandler);
+			};
+
+			// Init event handlers
+			Object.keys(this._events).forEach((eventName) => {
+				this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
+			});
+		}
 
 	}
 
@@ -107,6 +131,20 @@ export default class CustomComponent extends HTMLElement
 	// -------------------------------------------------------------------------
 
 	/**
+     * Element.
+     *
+	 * @type	{String}
+     */
+	get element()
+	{
+
+		return this._element;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
      * Instance hash code.
      *
 	 * @type	{String}
@@ -115,6 +153,45 @@ export default class CustomComponent extends HTMLElement
 	{
 
 		return new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Set option value.
+	 *
+	 * @param	{String}		key					Key to get.
+	 * @param	{Object}		value				Value  to set.
+	 */
+	setOption(key, value)
+	{
+
+		this._options[key] = value;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get option value. Return default value when specified key is not available.
+	 *
+	 * @param	{String}		key					Key to get.
+	 * @param	{Object}		defaultValue		Value returned when key is not found.
+	 *
+	 * @return  {*}				Value.
+	 */
+	getOption(key, defaultValue)
+	{
+
+		let result = defaultValue;
+
+		if (this._options && (key in this._options))
+		{
+			result = this._options[key];
+		}
+
+		return result;
 
 	}
 
@@ -128,12 +205,12 @@ export default class CustomComponent extends HTMLElement
 	connectedCallback()
 	{
 
+		this.trigger("initComponent", this);
+
 		// Init event handlers
 		Object.keys(this._events).forEach((eventName) => {
 			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
 		});
-
-		this.trigger("initComponent", this);
 
 		this.open().then(() => {
 			this.triggerHtmlEvent(window, "_bm_component_ready", this);
@@ -202,7 +279,7 @@ export default class CustomComponent extends HTMLElement
 	openModal(options)
 	{
 
-		console.debug(`Component.openModal(): Opening component. name=${this.name}`);
+		console.debug(`Component.openModal(): Opening modally component. name=${this.name}`);
 
 		return new Promise((resolve, reject) => {
 			if (this._isOpen)
@@ -472,11 +549,11 @@ export default class CustomComponent extends HTMLElement
 		}
 		else if (this._elements[elementName] && "rootNode" in this._elements[elementName])
 		{
-			elements = this.querySelectorAll(this._elements[elementName]["rootNode"]);
+			elements = this._element.querySelectorAll(this._elements[elementName]["rootNode"]);
 		}
 		else
 		{
-			elements = this.querySelectorAll("#" + elementName);
+			elements = this._element.querySelectorAll("#" + elementName);
 		}
 
 		// Set event handlers
@@ -527,6 +604,51 @@ export default class CustomComponent extends HTMLElement
 		{
 			throw new NotValidFunctionError(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
 		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clone the component.
+	 *
+	 * @param	{String}		newId				Id for the cloned component.
+	 * @param	{String}		templateName		Template name.
+	 *
+	 * @return  {Object}		Cloned component.
+	 */
+	clone(newId, templateName)
+	{
+
+		let clone;
+		let template = this._templates[templateName].template;
+
+		if (!template)
+		{
+			template = document.createElement('template');
+			template.innerHTML = this._templates[templateName].html;
+
+			this._templates[templateName].template = template;
+		}
+
+		if ( "content" in template )
+		{
+			clone = document.importNode(template.content, true);
+			if (newId)
+			{
+				clone.firstElementChild.id = newId;
+			}
+		}
+		else
+		{
+			clone = template.cloneNode(true).children[0];
+			if (newId)
+			{
+				clone.id = newId;
+			}
+		}
+
+		return clone;
 
 	}
 
@@ -596,30 +718,6 @@ export default class CustomComponent extends HTMLElement
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Get option value. Return default value when specified key is not available.
-	 *
-	 * @param	{String}		key					Key to get.
-	 * @param	{Object}		defaultValue		Value returned when key is not found.
-	 *
-	 * @return  {*}				Value.
-	 */
-	getOption(key, defaultValue)
-	{
-
-		let result = defaultValue;
-
-		if (this._options && (key in this._options))
-		{
-			result = this._options[key];
-		}
-
-		return result;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
 
@@ -683,7 +781,7 @@ export default class CustomComponent extends HTMLElement
 		// Auto focus
 		if (this.getOption("autoFocus"))
 		{
-			let element = this.querySelector(this.getOption("autoFocus"));
+			let element = this._element.querySelector(this.getOption("autoFocus"));
 			if (element)
 			{
 				element.focus();
@@ -762,7 +860,6 @@ export default class CustomComponent extends HTMLElement
 		return new Promise((resolve, reject) => {
 			if (rootNode)
 			{
-				/*
 				let root = document.querySelector(rootNode);
 				if (!root)
 				{
@@ -772,7 +869,6 @@ export default class CustomComponent extends HTMLElement
 				// Add template to root node
 				root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
 				this._element = root.children[0];
-				*/
 			}
 			else
 			{
@@ -899,6 +995,7 @@ export default class CustomComponent extends HTMLElement
 				for (let i = 0; i < listeners.length; i++)
 				{
 					chain = chain.then(() => {
+						e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
 						return (listeners[i]["handler"]).call(component, this, e, listeners[i]["options"]);
 					});
 
@@ -983,7 +1080,7 @@ export default class CustomComponent extends HTMLElement
 
 		if (this.getOption("autoFocus"))
 		{
-			let element = document.querySelector(this.getOption("autoFocus")).focus({preventScroll:true});
+			let element = document.querySelector(this.getOption("autoFocus"));
 			if (element)
 			{
 				let scrollTop = ( document.scrollingElement ? document.scrollingElement.scrollTop : undefined );

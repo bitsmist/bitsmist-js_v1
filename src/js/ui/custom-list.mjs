@@ -255,19 +255,19 @@ export default class List extends CustomComponent
 			// Set click event handler
 			if (this.row._events["click"])
 			{
-				this.row.listener.addHtmlEventHandler(element, "click", this.row._events["click"]["handler"], {"element":element});
+				this.row.addEventHandler(element, "click", this.row._events["click"]["handler"], {"element":element});
 			}
 
 			// Call event handlers
 			let chain = Promise.resolve();
 			chain = chain.then(() => {
-				return this.row.listener.trigger("formatRow", this, {"item":this.items[i], "no":i, "element":element});
+				return this.row.trigger("formatRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
-				return this.row.listener.trigger("beforeFillRow", this, {"item":this.items[i], "no":i, "element":element});
+				return this.row.trigger("beforeFillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				// Fill fields
 				FormUtil.setFields(element, this.items[i], this._container["masters"]);
-				return this.row.listener.trigger("fillRow", this, {"item":this.items[i], "no":i, "element":element});
+				return this.row.trigger("fillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				resolve();
 			});

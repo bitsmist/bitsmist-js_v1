@@ -268,9 +268,8 @@ export default class CustomForm extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__initFormOnAppend(sender, e, ex)
+	__initFormOnAppend(sender, e)
 	{
 
 		// default keys
@@ -310,9 +309,8 @@ export default class CustomForm extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__defaultKey(sender, e, ex)
+	__defaultKey(sender, e)
 	{
 
 		// Ignore all key input when composing.
@@ -324,20 +322,23 @@ export default class CustomForm extends CustomComponent
 		let key = e.key.toLowerCase()
 		key = ( key == "esc" ? "escape" : key ); // For IE11
 
-		if (ex.options.submit && key == ex.options.submit.key)
+		if (e.extraDetail.options.submit && key == e.extraDetail.options.submit.key)
 		{
 			// Submit
-			this.__defaultSubmit(sender, e, {"options":ex.options.submit});
+			e.extraDetail = {"options":e.extraDetail.options.submit};
+			this.__defaultSubmit(sender, e);
 		}
-		else if (ex.options.cancel && key == ex.options.cancel.key)
+		else if (e.extraDetail.options.cancel && key == e.extraDetail.options.cancel.key)
 		{
 			// Cancel
-			this.__defaultCancel(sender, e, {"options":ex.options.cancel});
+			e.extraDetail = {"options":e.extraDetail.options.cancel};
+			this.__defaultCancel(sender, e);
 		}
-		else if (ex.options.clear && key == ex.options.clear.key)
+		else if (e.extraDetail.options.clear && key == e.extraDetail.options.clear.key)
 		{
 			// Clear
-			this.__defaultClear(sender, e, {"options":ex.options.clear});
+			e.extraDetail = {"options":e.extraDetail.options.clear};
+			this.__defaultClear(sender, e);
 		}
 
 	}
@@ -349,9 +350,8 @@ export default class CustomForm extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__compositionStart(sender, e, ex)
+	__compositionStart(sender, e)
 	{
 
 		this.__isComposing = true;
@@ -365,9 +365,8 @@ export default class CustomForm extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__compositionEnd(sender, e, ex)
+	__compositionEnd(sender, e)
 	{
 
 		this.__isComposing = false;
@@ -381,9 +380,8 @@ export default class CustomForm extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__defaultSubmit(sender, e, ex)
+	__defaultSubmit(sender, e)
 	{
 
 		this.submit().then(() => {
@@ -396,7 +394,7 @@ export default class CustomForm extends CustomComponent
 				}
 
 				// Auto close
-				if (ex["options"]["autoClose"])
+				if (e.extraDetail["options"] && e.extraDetail["options"] && e.extraDetail["options"]["autoClose"])
 				{
 					this.close();
 				}
@@ -412,9 +410,8 @@ export default class CustomForm extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__defaultCancel(sender, e, ex)
+	__defaultCancel(sender, e)
 	{
 
 		this.close();
@@ -428,16 +425,15 @@ export default class CustomForm extends CustomComponent
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__defaultClear(sender, e, ex)
+	__defaultClear(sender, e)
 	{
 
 		let target;
 
-		if (ex.options.target)
+		if (e.extraDetail["options"] && e.extraDetail["options"] && e.extraDetail["options"]["target"])
 		{
-			target = sender.getAttribute(ex.options.target);
+			target = sender.getAttribute(e.extraDetail["options"]["target"]);
 		}
 
 		this.clear(target);

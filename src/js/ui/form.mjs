@@ -25,8 +25,6 @@ export default class Form extends Pad
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Options for the component.
      */
 	constructor(componentName, options)
 	{
@@ -39,7 +37,7 @@ export default class Form extends Pad
 		this.__cancelSubmit = false;
 
 		// Init system event handlers
-		this._listener.addEventHandler("_append", this.__initFormOnAppend);
+		this.addEventHandler(this, "_append", this.__initFormOnAppend);
 
 	}
 
@@ -129,8 +127,8 @@ export default class Form extends Pad
 				this.clear();
 			}
 
-			this._listener.trigger("target", sender).then(() => {
-				return this._listener.trigger("beforeFetch", sender);
+			this.trigger("target", sender).then(() => {
+				return this.trigger("beforeFetch", sender);
 			}).then(() => {
 				// Auto load data
 				if (options["autoLoad"])
@@ -138,14 +136,14 @@ export default class Form extends Pad
 					return this.__autoLoadData();
 				}
 			}).then(() => {
-				return this._listener.trigger("fetch", sender);
+				return this.trigger("fetch", sender);
 			}).then(() => {
-				return this._listener.trigger("format", sender);
+				return this.trigger("format", sender);
 			}).then(() => {
-				return this._listener.trigger("beforeFill", sender);
+				return this.trigger("beforeFill", sender);
 			}).then(() => {
 				FormUtil.setFields(this._element, this.item, this._container["masters"]);
-				return this._listener.trigger("fill", sender);
+				return this.trigger("fill", sender);
 			}).then(() => {
 				resolve();
 			});
@@ -186,7 +184,7 @@ export default class Form extends Pad
 			let sender = ( options["sender"] ? options["sender"] : this );
 			delete options["sender"];
 
-			this._listener.trigger("beforeValidate", sender).then(() => {
+			this.trigger("beforeValidate", sender).then(() => {
 				let ret = true;
 				let form = this._element.querySelector("form");
 
@@ -206,7 +204,7 @@ export default class Form extends Pad
 				{
 					this.__cancelSubmit = true;
 				}
-				return this._listener.trigger("validate", sender);
+				return this.trigger("validate", sender);
 			}).then(() => {
 				resolve();
 			});
@@ -231,14 +229,14 @@ export default class Form extends Pad
 			this.__cancelSubmit = false;
 			this.item = this.getFields();
 
-			this._listener.trigger("formatSubmit", sender).then(() => {
+			this.trigger("formatSubmit", sender).then(() => {
 				return this.validate();
 			}).then(() => {
-				return this._listener.trigger("beforeSubmit", sender);
+				return this.trigger("beforeSubmit", sender);
 			}).then(() => {
 				if (!this.__cancelSubmit)
 				{
-					return this._listener.trigger("submit", sender);
+					return this.trigger("submit", sender);
 				}
 			}).then(() => {
 				resolve();
@@ -270,18 +268,17 @@ export default class Form extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__initFormOnAppend(sender, e, ex)
+	__initFormOnAppend(sender, e)
 	{
 
 		// default keys
 		let defaultKeys = this.getOption("defaultKeys");
 		if (defaultKeys)
 		{
-			this._listener.addHtmlEventHandler(this._element, "keydown", this.__defaultKey, {"options":defaultKeys});
-			this._listener.addHtmlEventHandler(this._element, "compositionstart", this.__compositionStart, {"options":defaultKeys});
-			this._listener.addHtmlEventHandler(this._element, "compositionend", this.__compositionEnd, {"options":defaultKeys});
+			this.addEventHandler(this._element, "keydown", this.__defaultKey, {"options":defaultKeys});
+			this.addEventHandler(this._element, "compositionstart", this.__compositionStart, {"options":defaultKeys});
+			this.addEventHandler(this._element, "compositionend", this.__compositionEnd, {"options":defaultKeys});
 		}
 
 		// default buttons
@@ -293,7 +290,7 @@ export default class Form extends Pad
 				{
 					let elements = this._element.querySelectorAll(options["rootNode"]);
 					elements.forEach((element) => {
-						this._listener.addHtmlEventHandler(element, "click", handler, {"options":options});
+						this.addEventHandler(element, "click", handler, {"options":options});
 					});
 				}
 			};
@@ -312,9 +309,8 @@ export default class Form extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__defaultKey(sender, e, ex)
+	__defaultKey(sender, e)
 	{
 
 		// Ignore all key input when composing.
@@ -326,20 +322,23 @@ export default class Form extends Pad
 		let key = e.key.toLowerCase()
 		key = ( key == "esc" ? "escape" : key ); // For IE11
 
-		if (ex.options.submit && key == ex.options.submit.key)
+		if (e.extraDetail.options.submit && key == e.extraDetail.options.submit.key)
 		{
 			// Submit
-			this.__defaultSubmit(sender, e, {"options":ex.options.submit});
+			e.extraDetail = {"options":e.extraDetail.options.submit};
+			this.__defaultSubmit(sender, e);
 		}
-		else if (ex.options.cancel && key == ex.options.cancel.key)
+		else if (e.extraDetail.options.cancel && key == e.extraDetail.options.cancel.key)
 		{
 			// Cancel
-			this.__defaultCancel(sender, e, {"options":ex.options.cancel});
+			e.extraDetail = {"options":e.extraDetail.options.cancel};
+			this.__defaultCancel(sender, e);
 		}
-		else if (ex.options.clear && key == ex.options.clear.key)
+		else if (e.extraDetail.options.clear && key == e.extraDetail.options.clear.key)
 		{
 			// Clear
-			this.__defaultClear(sender, e, {"options":ex.options.clear});
+			e.extraDetail = {"options":e.extraDetail.options.clear};
+			this.__defaultClear(sender, e);
 		}
 
 	}
@@ -351,9 +350,8 @@ export default class Form extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__compositionStart(sender, e, ex)
+	__compositionStart(sender, e)
 	{
 
 		this.__isComposing = true;
@@ -367,9 +365,8 @@ export default class Form extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__compositionEnd(sender, e, ex)
+	__compositionEnd(sender, e)
 	{
 
 		this.__isComposing = false;
@@ -383,9 +380,8 @@ export default class Form extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__defaultSubmit(sender, e, ex)
+	__defaultSubmit(sender, e)
 	{
 
 		this.submit().then(() => {
@@ -398,7 +394,7 @@ export default class Form extends Pad
 				}
 
 				// Auto close
-				if (ex["options"]["autoClose"])
+				if (e.extraDetail["options"] && e.extraDetail["options"] && e.extraDetail["options"]["autoClose"])
 				{
 					this.close();
 				}
@@ -414,9 +410,8 @@ export default class Form extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__defaultCancel(sender, e, ex)
+	__defaultCancel(sender, e)
 	{
 
 		this.close();
@@ -430,16 +425,15 @@ export default class Form extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__defaultClear(sender, e, ex)
+	__defaultClear(sender, e)
 	{
 
 		let target;
 
-		if (ex.options.target)
+		if (e.extraDetail["options"] && e.extraDetail["options"] && e.extraDetail["options"]["target"])
 		{
-			target = sender.getAttribute(ex.options.target);
+			target = sender.getAttribute(e.extraDetail["options"]["target"]);
 		}
 
 		this.clear(target);
