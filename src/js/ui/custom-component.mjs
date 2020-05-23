@@ -12,7 +12,7 @@ import AjaxUtil from '../util/ajax-util';
 import { NoNodeError, NotValidFunctionError } from '../error/errors';
 
 // =============================================================================
-//	Custom Component class
+//	Component class
 // =============================================================================
 
 export default class CustomComponent extends HTMLElement
@@ -24,7 +24,6 @@ export default class CustomComponent extends HTMLElement
 
 	/**
      * Constructor.
-	 *
      */
 	constructor()
 	{
@@ -39,24 +38,9 @@ export default class CustomComponent extends HTMLElement
 		this._isModal = false;
 		this._isOpen = false;
 		this._isHTMLElement = true;
-
-		if (this._isHTMLElement)
-		{
-			this._element = this;
-
-			// Options
-			let options = this._getOptions();
-			let defaults = { "templateName": options["name"] };
-			this._options = Object.assign({}, defaults, options);
-		}
-		else
-		{
-			this._element = document.createElement("div");
-
-			// Options
-			let defaults = { "templateName": componentName };
-			this._options = Object.assign( {}, defaults, this._getOptions(), (options ? options : {}) );
-		}
+		this._element = ( this._isHTMLElement ? this : document.createElement("div") );
+		this._options = Object.assign({}, this._getOptions());
+		this._options["templateName"] = this.getOption("templateName", this.getOption("name"));
 
 		this._components = ( this._options["components"] ? this._options["components"] : {} );
 		this._elements = ( this._options["elements"] ? this._options["elements"] : {} );
