@@ -24,7 +24,6 @@ export default class List extends CustomComponent
 
 	/**
      * Constructor.
-     *
      */
 	constructor()
 	{

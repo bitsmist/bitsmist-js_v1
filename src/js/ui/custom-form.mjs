@@ -24,7 +24,6 @@ export default class CustomForm extends CustomComponent
 
 	/**
      * Constructor.
-     *
      */
 	constructor()
 	{
