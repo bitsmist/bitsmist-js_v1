@@ -24,11 +24,13 @@ export default class List extends CustomComponent
 
 	/**
      * Constructor.
+     *
+	 * @param	{Object}		options				Options for the component.
      */
-	constructor()
+	constructor(...args)
 	{
 
-		super();
+		super(...args);
 
 		this._target;
 		this._items;

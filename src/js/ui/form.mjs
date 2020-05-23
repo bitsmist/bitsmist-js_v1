@@ -27,10 +27,10 @@ export default class Form extends Component
      *
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(options)
+	constructor(...args)
 	{
 
-		super(options);
+		super(...args);
 
 		this._target;
 		this._item = {};

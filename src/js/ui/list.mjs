@@ -27,10 +27,10 @@ export default class List extends Component
      *
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(options)
+	constructor(...args)
 	{
 
-		super(options);
+		super(...args);
 
 		this._target;
 		this._items;
@@ -256,7 +256,6 @@ export default class List extends Component
 			// Set click event handler
 			if (this.row._events["click"])
 			{
-				//this.row.addHtmlEventHandler(element, "click", this.row._events["click"]["handler"], {"element":element});
 				this.row.addEventHandler(element, "click", this.row._events["click"]["handler"], {"element":element});
 			}
 
