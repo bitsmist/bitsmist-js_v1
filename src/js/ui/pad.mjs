@@ -203,12 +203,12 @@ export default class Pad
 	connectedCallback()
 	{
 
-		this.trigger("initComponent", this);
-
 		// Init event handlers
 		Object.keys(this._events).forEach((eventName) => {
 			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
 		});
+
+		this.trigger("initComponent", this);
 
 		this.open().then(() => {
 			this.triggerHtmlEvent(window, "_bm_component_ready", this);
