@@ -15,7 +15,7 @@ import { NoNodeError, NotValidFunctionError } from '../error/errors';
 //	Component class
 // =============================================================================
 
-export default class Component
+export default class Component extends HTMLElement
 {
 
 	// -------------------------------------------------------------------------
@@ -28,6 +28,8 @@ export default class Component
 	constructor()
 	{
 
+		super();
+
 		this._container;
 		this._templates = {};
 		this._modalOptions;
@@ -35,7 +37,7 @@ export default class Component
 		this._modalPromise;
 		this._isModal = false;
 		this._isOpen = false;
-		this._isHTMLElement = false;
+		this._isHTMLElement = true;
 		this._element = ( this._isHTMLElement ? this : document.createElement("div") );
 		this._options = Object.assign({}, this._getOptions());
 		this._options["templateName"] = this.getOption("templateName", this.getOption("name"));
@@ -65,18 +67,10 @@ export default class Component
 		// Register preferences
 		this._container["preferenceManager"].register(this, this._preferences);
 
-		if (!this._isHTMLElement)
-		{
-			// Add proxy to addEventListener
-			this.addEventListener = (eventName, handler) => {
-				this._element.addEventListener(eventName, this.__callEventHandler);
-			};
-
-			// Init event handlers
-			Object.keys(this._events).forEach((eventName) => {
-				this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
-			});
-		}
+		// Init event handlers
+		Object.keys(this._events).forEach((eventName) => {
+			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
+		});
 
 	}
 
@@ -187,10 +181,12 @@ export default class Component
 	connectedCallback()
 	{
 
+		/*
 		// Init event handlers
 		Object.keys(this._events).forEach((eventName) => {
 			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
 		});
+		*/
 
 		this.trigger("initComponent", this);
 
@@ -1080,3 +1076,5 @@ export default class Component
 	}
 
 }
+
+customElements.define("bm-component", Component);
