@@ -120,7 +120,14 @@ export default class App
 		{
 			let c = Function("return (" + className + ")")();
 			ret  = new c(...args);
-			//ret = Reflect.construct(className, args);
+
+			/*
+			let c = window;
+			className.split(".").forEach((value) => {
+				c = c[value];
+			});
+			ret = new c(...args);
+			*/
 		}
 		else
 		{
@@ -169,19 +176,6 @@ export default class App
 
 		let routerOptions = {"container": this.container};
 		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], routerOptions);
-
-		// Init exception manager
-		this.container["errorManager"].listener.addEventHandler("error", (sender, e, ex) => {
-			let error = {
-				"type":		"error",
-				"message":	ex.message,
-				"filename":	ex.filename,
-				"funcname":	ex.funcname,
-				"stack":	(ex.object && ex.object.stack ? ex.object.stack : undefined),
-				"object":	ex.object
-			};
-			this.__handleException(error);
-		});
 
 	}
 
