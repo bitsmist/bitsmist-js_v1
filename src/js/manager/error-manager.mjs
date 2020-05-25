@@ -8,7 +8,6 @@
  */
 // =============================================================================
 
-import EventHandler from '../ui/event-handler';
 import ServiceManager from './service-manager';
 
 // =============================================================================
@@ -25,21 +24,18 @@ export default class ErrorManager extends ServiceManager
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(componentName, options)
+	constructor(options)
 	{
 
 		/*
 		let proxy = super(componentName, options);
-		this.listeners = new EventHandler(proxy);
 
 		return proxy;
 		*/
 
-		super(componentName, options);
-		this.listener = new EventHandler(this);
+		super(options);
 
 	}
 

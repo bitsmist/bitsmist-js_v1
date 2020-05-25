@@ -29,18 +29,16 @@ export default class DefaultLoader
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the loader.
      */
-	constructor(componentName, options)
+	constructor(options)
 	{
 
-		this.name = componentName;
 		this.options = options;
 		this.container = options["container"];
 
-		this.container["errorManager"] = new ErrorManager("ErrorManager", {"container":this.container});
-		this.container["preferenceManager"] = new PreferenceManager("PreferenceManager", {"container":this.container});
+		this.container["errorManager"] = new ErrorManager({"container":this.container});
+		this.container["preferenceManager"] = new PreferenceManager({"container":this.container});
 
 	}
 
@@ -259,12 +257,12 @@ export default class DefaultLoader
 				let promise;
 
 				options["container"] = this.container;
-				component = this.container["app"].createObject(className, componentName, options);
+				component = this.container["app"].createObject(className, options);
 				this.container["components"][componentName] = {};
 				this.container["components"][componentName].object = component;
 
-				promise = component.listener.trigger("_initComponent", this).then(() => {
-					return component.listener.trigger("initComponent", this);
+				promise = component.trigger("_initComponent", this).then(() => {
+					return component.trigger("initComponent", this);
 				});
 
 				Promise.all([promise]).then(() => {

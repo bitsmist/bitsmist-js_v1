@@ -9,13 +9,13 @@
 // =============================================================================
 
 import FormUtil from '../util/form-util';
-import Pad from './pad';
+import Component from './component';
 
 // =============================================================================
 //	List class
 // =============================================================================
 
-export default class List extends Pad
+export default class List extends Component
 {
 
 	// -------------------------------------------------------------------------
@@ -24,14 +24,11 @@ export default class List extends Pad
 
 	/**
      * Constructor.
-     *
-	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Options.
      */
-	constructor(componentName, options)
+	constructor()
 	{
 
-		super(componentName, options);
+		super();
 
 		this._target;
 		this._items;
@@ -40,8 +37,8 @@ export default class List extends Pad
 		this._rows;
 
 		// Init system event handlers
-		this._listener.addEventHandler("_append", this.__initListOnAppend);
-		this._listener.addEventHandler("_fill", this.__initListOnFill);
+		this.addEventHandler(this, "_append", this.__initListOnAppend);
+		this.addEventHandler(this, "_fill", this.__initListOnFill);
 
 	}
 
@@ -120,7 +117,10 @@ export default class List extends Pad
 	clear()
 	{
 
-		this.row._element.innerHTML = "";
+		while (this.row._element.firstChild)
+		{
+			this.row._element.removeChild(this.row._element.firstChild);
+		}
 
 	}
 
@@ -134,12 +134,20 @@ export default class List extends Pad
 	fill(options)
 	{
 
+		console.debug(`List.fill(): Filling list. name=${this.name}`);
+
 		return new Promise((resolve, reject) => {
 			this.rows = [];
 			options = Object.assign({}, this._options, options);
 
-			this._listener.trigger("target", this).then(() => {;
-				return this._listener.trigger("beforeFetch", this);
+			Promise.resolve().then(() => {
+				return this.trigger("target", this);
+			}).then(() => {
+				if (options["target"])
+				{
+					this._target = options["target"];
+				}
+				return this.trigger("beforeFetch", this);
 			}).then(() => {
 				// Auto load data
 				if (options["autoLoad"])
@@ -147,9 +155,9 @@ export default class List extends Pad
 					return this.__autoLoadData();
 				}
 			}).then(() => {
-				return this._listener.trigger("fetch", this);
+				return this.trigger("fetch", this);
 			}).then(() => {
-				return this._listener.trigger("beforeFill", this);
+				return this.trigger("beforeFill", this);
 			}).then(() => {
 				let chain = Promise.resolve();
 				if (this.items)
@@ -164,22 +172,16 @@ export default class List extends Pad
 					chain.then(() => {
 						if (options["autoClear"])
 						{
-							let newNode = this.row._element.cloneNode();
-							newNode.appendChild(fragment);
-							this.row._element.parentNode.replaceChild(newNode, this.row._element);
-							this.row._element = newNode;
+							this.clear();
 						}
-						else
-						{
-							this.row._element.appendChild(fragment);
-						}
+						this.row._element.appendChild(fragment);
 					});
 				}
 				return chain;
 			}).then(() => {
-				return this._listener.trigger("_fill", this);
+				return this.trigger("_fill", this);
 			}).then(() => {
-				return this._listener.trigger("fill", this);
+				return this.trigger("fill", this);
 			}).then(() => {
 				resolve();
 			});
@@ -196,9 +198,8 @@ export default class List extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__initListOnAppend(sender, e, ex)
+	__initListOnAppend(sender, e)
 	{
 
 		this.row = this._components[this.getOption("row")].object;
@@ -213,9 +214,8 @@ export default class List extends Pad
 	 *
 	 * @param	{Object}		sender				Sender.
 	 * @param	{Object}		e					Event info.
- 	 * @param	{Object}		ex					Extra info.
 	 */
-	__initListOnFill(sender, e, ex)
+	__initListOnFill(sender, e)
 	{
 
 		// Set HTML elements' event handlers after filling completed
@@ -239,31 +239,27 @@ export default class List extends Pad
 
 		return new Promise((resolve, reject) => {
 			// Append row
-			rootNode.appendChild(this.row.clone("", this.row.getOption("templateName")));
-			let element = rootNode.lastElementChild;
-			if (!element)
-			{
-				element = rootNode.childNodes[rootNode.childNodes.length - 1];
-			}
+			let element = this.row.dupElement();
+			rootNode.appendChild(element);
 			this.rows.push(element);
 			let i = this.rows.length - 1;
 
 			// Set click event handler
 			if (this.row._events["click"])
 			{
-				this.row.listener.addHtmlEventHandler(element, "click", this.row._events["click"]["handler"], {"element":element});
+				this.row.addEventHandler(element, "click", this.row._events["click"]["handler"], {"element":element});
 			}
 
 			// Call event handlers
 			let chain = Promise.resolve();
 			chain = chain.then(() => {
-				return this.row.listener.trigger("formatRow", this, {"item":this.items[i], "no":i, "element":element});
+				return this.row.trigger("formatRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
-				return this.row.listener.trigger("beforeFillRow", this, {"item":this.items[i], "no":i, "element":element});
+				return this.row.trigger("beforeFillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				// Fill fields
 				FormUtil.setFields(element, this.items[i], this._container["masters"]);
-				return this.row.listener.trigger("fillRow", this, {"item":this.items[i], "no":i, "element":element});
+				return this.row.trigger("fillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				resolve();
 			});

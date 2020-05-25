@@ -22,13 +22,11 @@ export default class ServiceManager
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(componentName, options)
+	constructor(options)
 	{
 
-		this.name = componentName;
 		this.container = options["container"];
 		this.plugins = [];
 
@@ -71,7 +69,7 @@ export default class ServiceManager
 			newOptions["container"] = this.container;
 		}
 
-		let component = this.container["app"].createObject(className, pluginName, newOptions);
+		let component = this.container["app"].createObject(className, newOptions);
 		this.plugins.push(component);
 
 	}

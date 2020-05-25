@@ -24,13 +24,12 @@ export default class NoRouteErrorHandler extends BaseErrorHandler
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(componentName, options)
+	constructor(options)
 	{
 
-		super(componentName, options);
+		super(options);
 
 		this.target.push("NoRouteError");
 

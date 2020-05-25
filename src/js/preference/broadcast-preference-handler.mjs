@@ -22,13 +22,11 @@ export default class BroadcastPreferenceHandler
 	/**
      * Constructor.
      *
-	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
      */
-	constructor(componentName, options)
+	constructor(options)
 	{
 
-		this.name = componentName;
 		this.options = ( options ? options : {} );
 		this.container = options["container"];
 
