@@ -13,10 +13,10 @@
     "core-js": "^3.6.4",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
-  }
+  },
   "scripts": {
     "watch": "npx webpack --mode development --watch",
     "dev": "npx webpack --mode development",
     "build": "npx webpack --mode production"
-  },
+  }
 }
