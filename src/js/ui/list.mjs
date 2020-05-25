@@ -117,7 +117,10 @@ export default class List extends Component
 	clear()
 	{
 
-		this.row._element.innerHTML = "";
+		while (this.row._element.firstChild)
+		{
+			this.row._element.removeChild(this.row._element.firstChild);
+		}
 
 	}
 
@@ -169,15 +172,9 @@ export default class List extends Component
 					chain.then(() => {
 						if (options["autoClear"])
 						{
-							let newNode = this.row._element.cloneNode();
-							newNode.appendChild(fragment);
-							this.row._element.parentNode.replaceChild(newNode, this.row._element);
-							this.row._element = newNode;
+							this.clear();
 						}
-						else
-						{
-							this.row._element.appendChild(fragment);
-						}
+						this.row._element.appendChild(fragment);
 					});
 				}
 				return chain;
@@ -242,12 +239,8 @@ export default class List extends Component
 
 		return new Promise((resolve, reject) => {
 			// Append row
-			rootNode.appendChild(this.row.clone("", this.row.getOption("templateName")));
-			let element = rootNode.lastElementChild;
-			if (!element)
-			{
-				element = rootNode.childNodes[rootNode.childNodes.length - 1];
-			}
+			let element = this.row.dupElement();
+			rootNode.appendChild(element);
 			this.rows.push(element);
 			let i = this.rows.length - 1;
 

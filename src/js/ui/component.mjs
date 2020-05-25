@@ -181,13 +181,6 @@ export default class Component extends HTMLElement
 	connectedCallback()
 	{
 
-		/*
-		// Init event handlers
-		Object.keys(this._events).forEach((eventName) => {
-			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
-		});
-		*/
-
 		this.trigger("initComponent", this);
 
 		this.open().then(() => {
@@ -595,7 +588,8 @@ export default class Component extends HTMLElement
 	 *
 	 * @return  {Object}		Cloned component.
 	 */
-	clone(newId, templateName)
+	/*
+	cloneElement(newId, templateName)
 	{
 
 		let clone;
@@ -627,6 +621,29 @@ export default class Component extends HTMLElement
 		}
 
 		return clone;
+
+	}
+	*/
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Duplicate the component element.
+	 *
+	 * @param	{String}		newId				Id for the cloned component.
+	 * @param	{String}		templateName		Template name.
+	 *
+	 * @return  {Object}		Cloned component.
+	 */
+	dupElement(templateName)
+	{
+
+		templateName = ( templateName ? templateName : this.getOption("templateName") );
+
+		let ele = document.createElement("div");
+		ele.innerHTML = this._templates[templateName].html;
+
+		return ele.firstElementChild;
 
 	}
 
