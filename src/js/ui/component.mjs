@@ -671,8 +671,7 @@ export default class Component extends HTMLElement
 		catch(error)
 		{
 			e  = document.createEvent('CustomEvent');
-			e.initCustomEvent(eventName, false, false, null);
-			e.detail = options;
+			e.initCustomEvent(eventName, false, false, options);
 		}
 
 		return this.__callEventHandler(e);
@@ -704,8 +703,7 @@ export default class Component extends HTMLElement
 		catch(error)
 		{
 			e  = document.createEvent('CustomEvent');
-			e.initCustomEvent(eventName, false, false, null);
-			e.detail = options;
+			e.initCustomEvent(eventName, false, false, options);
 		}
 
 		element.dispatchEvent(e);
