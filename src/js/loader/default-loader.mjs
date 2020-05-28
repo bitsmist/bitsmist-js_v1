@@ -81,23 +81,17 @@ export default class DefaultLoader
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	loadSpec()
+	loadSpec(spec)
 	{
 
-		let routeInfo = this.container["router"].loadRoute();
-		let urlCommon = this.buildSpecUrl("common");
-		let url = this.buildSpecUrl(routeInfo["resourceName"]);
+		let basePath = this.container["router"]["options"]["options"]["specs"];
+		let urlCommon = basePath + "common.js";
+		let url = basePath + spec + ".js";
 		let specCommon;
-		let spec;
+		let specMerged;
 
 		return new Promise((resolve, reject) => {
 			let promises = [];
-
-			if (!routeInfo["resourceName"])
-			{
-				// No route
-				throw new NoRouteError(`No route. url=${url}`);
-			}
 
 			// Load specs
 			promises.push(this.__loadSpecFile(urlCommon, "{}"));
@@ -115,10 +109,8 @@ export default class DefaultLoader
 					throw new Error(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
 				}
 
-				// Merge common spec and spec.
-				let specMerged = this.__deepMerge(specCommon, spec);
-
-				// Merge settings to spec
+				// Merge common spec, spec and settings
+				specMerged = this.__deepMerge(specCommon, spec);
 				specMerged = this.__mergeSettings(specMerged, this.container["settings"]);
 
 				resolve(specMerged);
@@ -215,6 +207,7 @@ export default class DefaultLoader
 		return new Promise((resolve, reject) => {
 			let promises = [];
 			let chain = Promise.resolve();
+
 			Object.keys(spec).forEach((componentName) => {
 				let options = Object.assign({}, spec[componentName]);
 
@@ -282,12 +275,14 @@ export default class DefaultLoader
 	 *
 	 * @return  {String}		Url.
 	 */
+	/*
 	buildSpecUrl(specName)
 	{
 
 		return this.container["appInfo"]["baseUrl"] + "/specs/" + specName + ".js";
 
 	}
+	*/
 
     // -------------------------------------------------------------------------
 
@@ -299,12 +294,14 @@ export default class DefaultLoader
 	 *
 	 * @return  {String}		Url.
 	 */
+	/*
 	buildComponentScriptUrl(componentName, path)
 	{
 
 		return this.container["appInfo"]["baseUrl"] + "/components/" + (path ? path + "/" : "") + componentName;
 
 	}
+	*/
 
     // -------------------------------------------------------------------------
 
@@ -316,12 +313,14 @@ export default class DefaultLoader
 	 *
 	 * @return  {String}		Url.
 	 */
+	/*
 	buildTemplateUrl(componentName, path)
 	{
 
 		return this.container["appInfo"]["baseUrl"]+ "/components/" + (path ? path + "/" : "") + componentName + ".html";
 
 	}
+	*/
 
     // -------------------------------------------------------------------------
 
@@ -334,6 +333,7 @@ export default class DefaultLoader
 	 *
 	 * @return  {String}		Url.
 	 */
+	/*
 	buildApiUrl(resource, id, options)
 	{
 
@@ -342,6 +342,7 @@ export default class DefaultLoader
 		return url;
 
 	}
+	*/
 
     // -------------------------------------------------------------------------
 
@@ -353,6 +354,7 @@ export default class DefaultLoader
 	 *
 	 * @return  {string}		Url.
 	 */
+	/*
 	buildUrl(routeInfo, options)
 	{
 
@@ -361,11 +363,20 @@ export default class DefaultLoader
 			routeInfo = this.container["router"].loadRoute();
 		}
 
-		var url = this.container["appInfo"]["baseUrl"] + "/" + routeInfo["resourceName"] + "/" + routeInfo["commandName"] + "/" + this.buildUrlOption(options);
+		var url
+		if (routeInfo["resourceName"] && routeInfo["commandName"])
+		{
+			url = this.container["appInfo"]["baseUrl"] + "/" + routeInfo["resourceName"] + "/" + routeInfo["commandName"] + "/" + this.buildUrlOption(options);
+		}
+		else
+		{
+			url = routeInfo["path"] + this.buildUrlOption(options);
+		}
 
 		return url;
 
 	}
+	*/
 
     // -------------------------------------------------------------------------
 
@@ -376,6 +387,7 @@ export default class DefaultLoader
 	 *
 	 * @return  {String}		Query string.
 	 */
+	/*
 	buildUrlOption(options)
 	{
 
@@ -400,6 +412,7 @@ export default class DefaultLoader
 		return ( query ? "?" + query.slice(0, -1) : "");
 
 	}
+	*/
 
     // -------------------------------------------------------------------------
 
@@ -407,6 +420,7 @@ export default class DefaultLoader
 	 * Create options array from the current url.
 	 *
 	 */
+	/*
 	loadParameters()
 	{
 
@@ -430,6 +444,7 @@ export default class DefaultLoader
 		return vars;
 
 	}
+	*/
 
 	// -------------------------------------------------------------------------
 	//	Private
@@ -438,7 +453,7 @@ export default class DefaultLoader
 	/**
 	 * Load the component if not loaded yet.
 	 *
-	 * @param	{String}		clasName			Component class name.
+	 * @param	{String}		className			Component class name.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
@@ -471,7 +486,7 @@ export default class DefaultLoader
 
 	}
 
-    // -------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Load the component js files.
@@ -483,8 +498,9 @@ export default class DefaultLoader
 	__loadComponentScript(componentName, path) {
 
 		return new Promise((resolve, reject) => {
-			let url1 = this.buildComponentScriptUrl(componentName, path) + ".auto.js";
-			let url2 = this.buildComponentScriptUrl(componentName, path) + ".js";
+			let basePath = this.container["router"]["options"]["options"]["specs"] + (path ? path + "/" : "");
+			let url1 = basePath + componentName + ".auto.js";
+			let url2 = basePath + componentName + ".js";
 
 			AjaxUtil.loadScript(url1).then(() => {
 				AjaxUtil.loadScript(url2).then(() => {
@@ -520,14 +536,37 @@ export default class DefaultLoader
 					response = defaultResponse;
 					resolve(response);
 				}
-				else
-				{
-					throw new NoRouteError(`No route. url=${url}`);
-				}
 			});
 		});
 
 	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Load the template html.
+	 *
+	 * @param	{String}		templateName		Template name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	/*
+	__loadTemplate(templateName, path)
+	{
+
+		let basePath = this.container["router"]["options"]["options"]["templates"] + (path ? path + "/" : "");
+		let url = basePath + templateName + ".html";
+		console.debug(`Loader.__loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
+
+		return new Promise((resolve, reject) => {
+			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+				console.debug(`Loader.__loadTemplate(): Loaded template. templateName=${templateName}`);
+				resolve(xhr.responseText);
+			});
+		});
+
+	}
+	*/
 
     // -------------------------------------------------------------------------
 
@@ -571,7 +610,8 @@ export default class DefaultLoader
 		Object.keys(arr2).forEach((key) => {
 			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
 			{
-				this.__mergeSettings(arr1[key], arr2[key]);
+				//this.__mergeSettings(arr1[key], arr2[key]);
+				this.__deepMerge(arr1[key], arr2[key]);
 			}
 			else
 			{
@@ -592,6 +632,7 @@ export default class DefaultLoader
 	 *
 	 * @return  {String}		Pad name.
 	 */
+	/*
 	__getTargetPadName(commandName)
 	{
 
@@ -609,5 +650,6 @@ export default class DefaultLoader
 		return padName;
 
 	}
+	*/
 
 }

@@ -52,7 +52,9 @@ export default class ResourceUtil
 	getList(parameters)
 	{
 
-		let url = this._container["loader"].buildApiUrl(this._name, "list", parameters);
+//		let url = this._container["loader"].buildApiUrl(this._name, "list", parameters);
+//		let url = this._container["sysInfo"]["baseUrl"] + "/v" + this._container["sysInfo"]["version"] + "-" + this._container["appInfo"]["version"] + "/" +  this._name + "/" + "list" + ".json" + this._container["loader"].buildUrlOption(parameters);
+		let url = this.__buildApiUrl(this._name, "list", parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "GET");
@@ -80,7 +82,8 @@ export default class ResourceUtil
 	getItem(id, parameters)
 	{
 
-		let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
+		//let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
+		let url = this.__buildApiUrl(this._name, id, parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "GET");
@@ -106,7 +109,8 @@ export default class ResourceUtil
 	deleteItem(id, parameters)
 	{
 
-		let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
+		//let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
+		let url = this.__buildApiUrl(this._name, id, parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "DELETE");
@@ -133,7 +137,8 @@ export default class ResourceUtil
 	insertItem(id, items, parameters)
 	{
 
-		let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
+		//let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
+		let url = this.__buildApiUrl(this._name, id, parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "POST");
@@ -160,7 +165,8 @@ export default class ResourceUtil
 	updateItem(id, items, parameters)
 	{
 
-		let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
+		//let url = this._container["loader"].buildApiUrl(this._name, id, parameters);
+		let url = this.__buildApiUrl(this._name, id, parameters);
 
 		return new Promise((resolve, reject) => {
 			let headers = this.__getOptions("extraHeaders", "PUT");
@@ -227,4 +233,23 @@ export default class ResourceUtil
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Build url for the api.
+	 *
+	 * @param	{String}		resource			API resource.
+	 * @param	{String}		id					Id for the resource.
+	 * @param	{Object}		parameters			Query parameters.
+	 *
+	 * @return  {String}		Url.
+	 */
+	__buildApiUrl(resourceName, id, parameters)
+	{
+
+		let url = this._container["sysInfo"]["baseUrl"] + "/v" + this._container["sysInfo"]["version"] + "-" + this._container["appInfo"]["version"] + "/" +  resourceName + "/" + id + ".json" + this._container["router"].buildUrlQuery(parameters);
+
+		return url
+
+	}
 }

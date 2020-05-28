@@ -71,29 +71,43 @@ export default class App
 	run()
 	{
 
+		if (this.container["settings"]["routes"])
+		{
+			let routerOptions = {"container": this.container};
+			//this.container["router"] = this.createObject(this.container["settings"]["routes"]["class"], routerOptions);
+			let options = Object.assign({"container": this.container}, this.container["settings"]["routes"]);
+			this.container["router"] = this.createObject(this.container["settings"]["routes"]["class"], options);
+			//this.container["router"].match(location.href);
+		}
+
 		// load spec
-		this.container["loader"].loadSpec().then((spec) => {
+		this.container["loader"].loadSpec(this.container["router"].routeInfo.specName).then((spec) => {
+		//this.container["loader"].loadSpec("saleitems").then((spec) => {
 			this.container["appInfo"]["spec"] = spec;
 
 			let promises = [];
 
-			// load preferences
-			promises.push(this.container["loader"].loadPreferences());
+			if (spec)
+			{
+				// load preferences
+				promises.push(this.container["loader"].loadPreferences());
 
-			// load resources
-			promises.push(this.container["loader"].loadResources(this.container["appInfo"]["spec"]["resources"]));
+				// load resources
+				promises.push(this.container["loader"].loadResources(this.container["appInfo"]["spec"]["resources"]));
 
-			// load masters
-			promises.push(this.container["loader"].loadMasters(this.container["appInfo"]["spec"]["masters"]));
+				// load masters
+				promises.push(this.container["loader"].loadMasters(this.container["appInfo"]["spec"]["masters"]));
 
-			// load components
-			promises.push(this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]));
+				// load components
+				promises.push(this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]));
 
-			Promise.all(promises).then(() => {
-				// Open startup pad
-				let routeInfo = this.container["router"].loadRoute();
-				this.container["router"].openRoute(routeInfo, {"autoOpen":true});
-			});
+				Promise.all(promises).then(() => {
+					// Open startup pad
+					//let routeInfo = this.container["router"].loadRoute();
+					//this.container["router"].openRoute(routeInfo, {"autoOpen":true});
+					this.container["router"].openRoute(undefined, {"autoOpen":true});
+				});
+			}
 
 			// Init pop state handling
 			this.__initPopState();
@@ -174,8 +188,10 @@ export default class App
 		let loaderOptions = {"container": this.container};
 		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], loaderOptions);
 
+		/*
 		let routerOptions = {"container": this.container};
 		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], routerOptions);
+		*/
 
 	}
 
@@ -208,6 +224,8 @@ export default class App
 		return promises;
 
 	}
+
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Init error handling.
@@ -397,7 +415,7 @@ export default class App
 		if (window.history && window.history.pushState){
 			window.addEventListener("popstate", (event) => {
 				Object.keys(this.container["components"]).forEach((componentName) => {
-					this.container["components"][componentName].object.listener.trigger("popState", this);
+					this.container["components"][componentName].object.trigger("popState", this);
 				});
 			});
 		}
