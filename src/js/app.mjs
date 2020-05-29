@@ -59,6 +59,9 @@ export default class App
 		// load services
 		this.container["loader"].loadServices();
 
+		// Init pop state handling
+		this.__initPopState();
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -71,24 +74,23 @@ export default class App
 	run()
 	{
 
+		// Init router
 		if (this.container["settings"]["routes"])
 		{
 			let routerOptions = {"container": this.container};
 			//this.container["router"] = this.createObject(this.container["settings"]["routes"]["class"], routerOptions);
 			let options = Object.assign({"container": this.container}, this.container["settings"]["routes"]);
 			this.container["router"] = this.createObject(this.container["settings"]["routes"]["class"], options);
-			//this.container["router"].match(location.href);
 		}
 
-		// load spec
-		this.container["loader"].loadSpec(this.container["router"].routeInfo.specName).then((spec) => {
-		//this.container["loader"].loadSpec("saleitems").then((spec) => {
-			this.container["appInfo"]["spec"] = spec;
+		if (this.container["router"].routeInfo.specName)
+		{
+			// load spec
+			this.container["loader"].loadSpec(this.container["router"].routeInfo.specName).then((spec) => {
+				this.container["appInfo"]["spec"] = spec;
 
-			let promises = [];
+				let promises = [];
 
-			if (spec)
-			{
 				// load preferences
 				promises.push(this.container["loader"].loadPreferences());
 
@@ -101,17 +103,18 @@ export default class App
 				// load components
 				promises.push(this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]));
 
+				// load routes
+				this.container["router"].__initRoutes(spec["routes"].concat(this.container["settings"]["routes"]["routes"]));
+
 				Promise.all(promises).then(() => {
 					// Open startup pad
-					//let routeInfo = this.container["router"].loadRoute();
-					//this.container["router"].openRoute(routeInfo, {"autoOpen":true});
-					this.container["router"].openRoute(undefined, {"autoOpen":true});
+					//this.container["router"].openRoute(undefined, {"autoOpen":true});
+					this.container["router"].open(this.container["router"].routeInfo, {"pushState":false});
+					// this.container["router"].open(this.container["router"].routeInfo);
 				});
-			}
 
-			// Init pop state handling
-			this.__initPopState();
-		});
+			});
+		}
 
 	}
 
@@ -414,6 +417,7 @@ export default class App
 
 		if (window.history && window.history.pushState){
 			window.addEventListener("popstate", (event) => {
+				this.container["router"].__loadRouteInfo(window.location.href);
 				Object.keys(this.container["components"]).forEach((componentName) => {
 					this.container["components"][componentName].object.trigger("popState", this);
 				});

@@ -241,9 +241,7 @@ export default class DefaultRouter
 
 		let url = this.__buildUrl(routeInfo);
 		options = ( options ? options : {} );
-		options["pushState"] = ( options["pushState"] ? options["pushState"] : true );
-
-		console.log("@@@",url);
+		options["pushState"] = ( options["pushState"] !== undefined ? options["pushState"] : true );
 
 		if (options["jump"])
 		{
@@ -284,6 +282,23 @@ export default class DefaultRouter
 				}
 			});
 		}
+
+	}
+
+	updateRoute(routeInfo, options)
+	{
+
+		if (routeInfo["routeParameters"])
+		{
+			routeInfo["routeParameters"] = Object.assign(this._routeInfo["routeParameters"], routeInfo["routeParameters"]);
+		}
+
+		if (routeInfo["queryParameters"])
+		{
+			routeInfo["queryParameters"] = Object.assign(this._routeInfo["queryParameters"], routeInfo["queryParameters"]);
+		}
+
+		this.open(routeInfo, options);
 
 	}
 
@@ -349,10 +364,10 @@ export default class DefaultRouter
 	}
 
 
+		/*
 	openRoute(routeInfo, options)
 	{
 
-		/*
 		let currentRouteInfo = this.__loadRouteInfo(window.location.href);
 		routeInfo = (routeInfo ? routeInfo : currentRouteInfo);
 
@@ -407,9 +422,9 @@ export default class DefaultRouter
 			});
 
 		}
-		*/
 
 	}
+		*/
 
    	// -------------------------------------------------------------------------
 

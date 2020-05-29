@@ -70,18 +70,24 @@ export default class FormUtil
 			let key = element.getAttribute("data-bm-field");
 			let value = this.getValue(element);
 
-			if (value)
+			//if (value)
 			{
 				if (Array.isArray(item[key]))
 				{
-					item[key].push(value);
+					if (value)
+					{
+						item[key].push(value);
+					}
 				}
 				else if (item[key])
 				{
-					let items = [];
-					items.push(item[key]);
-					items.push(value);
-					item[key]= items;
+					if (value)
+					{
+						let items = [];
+						items.push(item[key]);
+						items.push(value);
+						item[key]= items;
+					}
 				}
 				else
 				{
@@ -91,7 +97,7 @@ export default class FormUtil
 			/*
 			else
 			{
-				item[key] = "@NULL@";
+				item[key] = "";
 			}
 			*/
 		});
