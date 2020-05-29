@@ -498,7 +498,7 @@ export default class DefaultLoader
 	__loadComponentScript(componentName, path) {
 
 		return new Promise((resolve, reject) => {
-			let basePath = this.container["router"]["options"]["options"]["specs"] + (path ? path + "/" : "");
+			let basePath = this.container["router"]["options"]["options"]["components"] + (path ? path + "/" : "");
 			let url1 = basePath + componentName + ".auto.js";
 			let url2 = basePath + componentName + ".js";
 
