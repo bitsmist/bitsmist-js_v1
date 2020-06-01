@@ -52,16 +52,7 @@ export default class Component extends HTMLElement
 
 		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
-		// Init resource
 		if (this.getOption("resource"))
-		{
-			//this._resource = this._container["app"].createObject(this._options["class"], resourceName, options);
-			this._resource = new ResourceUtil(this.getOption("resource"), {"container":this._container});
-		}
-
-
-		/*
-		if ("resource" in this._options && this._options["resource"])
 		{
 			if (this._options["resource"] in this._container["resources"])
 			{
@@ -69,10 +60,9 @@ export default class Component extends HTMLElement
 			}
 			else
 			{
-				throw new NoResourceError(`Resource not found. name=${this._name}, resource=${this._options["resource"]}`);
+				this._resource = new ResourceUtil(this.getOption("resource"), {"container":this._container});
 			}
 		}
-		*/
 
 		// Register preferences
 		this._container["preferenceManager"].register(this, this._preferences);
@@ -218,23 +208,6 @@ export default class Component extends HTMLElement
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
-
-			if (this._isOpen)
-			{
-				if (this.getOption("autoRefresh"))
-				{
-					this.refresh().then(() => {
-						resolve();
-					});
-				}
-				else
-				{
-					resolve();
-				}
-
-				//resolve();
-				return;
-			}
 
 			this._autoLoadTemplate(this.getOption("templateName")).then(() => {
 				if (this.getOption("autoRefresh"))
@@ -774,7 +747,6 @@ export default class Component extends HTMLElement
 
 				let path = ("path" in this._options ? this._options["path"] : "");
 				this.__loadTemplate(templateName, path).then((template) => {
-				// this._container["loader"].__loadTemplate(templateName, path).then((template) => {
 					this._templates[templateName] = {};
 					this._templates[templateName]["html"] = template;
 					return this.trigger("load", this);
