@@ -61,10 +61,13 @@ export default class AjaxErrorHandler extends BaseErrorHandler
 							{
 								options["appName"] = "";
 							}
-							let urlToRoute = this.container["loader"].buildUrl(options, null);
-							let parameter = options["parameter"].replace("@url@", encodeURIComponent(location.href));
-							location.href = urlToRoute + "?" + parameter;
+							let routeInfo = options["routeInfo"];
+							Object.keys(routeInfo["queryParameters"]).forEach((key) => {
+								routeInfo["queryParameters"][key] = routeInfo["queryParameters"][key].replace("@url@", location.href);
+							});
+							this.container["router"].open(routeInfo, {"jump":true});
 							break;
+							/*
 						case "transfer":
 							let urlToTransfer = this.options["handlers"]["statusCode"][code][command];
 							urlToTransfer = urlToTransfer.replace("@url@", location.href);
@@ -72,6 +75,7 @@ export default class AjaxErrorHandler extends BaseErrorHandler
 							break;
 						case "custom":
 							break;
+							*/
 					}
 				});
 			}
