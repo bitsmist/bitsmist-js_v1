@@ -35,60 +35,7 @@ export default class DefaultRouter
 
 		this.__initRoutes(options["routes"]);
 
-//		this._routeInfo = this.__loadRouteInfo(window.location.href);
-
 	}
-
-	// -------------------------------------------------------------------------
-
-	__initRoutes(routes)
-	{
-
-		this._routes = [];
-
-		for (let i = 0; i < routes.length; i++)
-		{
-			this.addRoute({
-				"name": routes[i]["name"],
-				"path": routes[i]["path"],
-				"specName": routes[i]["specName"],
-				"componentName": (routes[i]["componentName"] ? routes[i]["componentName"] : "" )
-			});
-		}
-
-		this._routeInfo = this.__loadRouteInfo(window.location.href);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	addRoute(routeInfo)
-	{
-
-		let keys = [];
-		let route = {
-			"name": routeInfo["name"],
-			"path": routeInfo["path"],
-			"keys": keys,
-			"specName": routeInfo["specName"],
-			"componentName": routeInfo["componentName"],
-			"re": PathToRegexp.pathToRegexp(routeInfo["path"], keys)
-		};
-
-		this._routes.push(route);
-
-	}
-
-	/*
-	addRoutes(routeInfo)
-	{
-
-		for ()
-		{
-		}
-
-	}
-	*/
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
@@ -111,6 +58,90 @@ export default class DefaultRouter
 	// -------------------------------------------------------------------------
 
 	/**
+     * Add a route.
+     *
+	 * @param	{Object}		routeInfo			Route info.
+     */
+	addRoute(routeInfo)
+	{
+
+		let keys = [];
+		let route = {
+			"name": routeInfo["name"],
+			"path": routeInfo["path"],
+			"keys": keys,
+			"specName": routeInfo["specName"],
+			"componentName": routeInfo["componentName"],
+			"re": PathToRegexp.pathToRegexp(routeInfo["path"], keys)
+		};
+
+		this._routes.push(route);
+
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Build url from route info.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 * @param	{Object}		options				Query options.
+	 *
+	 * @return  {string}		Url.
+	 */
+	buildUrl(routeInfo)
+	{
+
+		let url;
+
+		// Path
+		if (routeInfo["url"])
+		{
+			url = routeInfo["url"];
+		}
+		else
+		{
+			/*
+			else if (routeInfo["name"])
+			{
+				url = this.__routes[]["path"];
+			}
+			*/
+			if (routeInfo["path"])
+			{
+				url = routeInfo["path"];
+			}
+			else
+			{
+				url = this._routeInfo["path"];
+			}
+
+			// Route parameters
+			/*
+			if (routeInfo["routeParamters"])
+			{
+				url = 
+			}
+			*/
+
+			// Query parameters
+			if (routeInfo["query"])
+			{
+				url = url + "?" + routeInfo["query"];
+			}
+			else if (routeInfo["queryParameters"])
+			{
+				url = url + this.buildUrlQuery(routeInfo["queryParameters"]);
+			}
+		}
+
+		return url;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Build query string from the options object.
 	 *
 	 * @param	{Object}		options				Query options.
@@ -122,7 +153,6 @@ export default class DefaultRouter
 
 		let query = "";
 
-		//console.log("###", options);
 		if (options)
 		{
 			query = Object.keys(options).reduce((result, current) => {
@@ -171,6 +201,169 @@ export default class DefaultRouter
 		}
 
 		return vars;
+
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Open route.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 * @param	{Object}		options				Query options.
+	 */
+	openRoute(routeInfo, options)
+	{
+
+		options = ( options ? options : {} );
+		options["pushState"] = true;
+
+		this._open(routeInfo, options);
+
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Refresh route.
+	 *
+	 * @param	{Object}		options				Query options.
+	 */
+	refreshRoute(routeInfo, options)
+	{
+
+		options = ( options ? options : {} );
+		options["pushState"] = false;
+
+		this._open(this._routeInfo, options);
+
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Update route.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 * @param	{Object}		options				Query options.
+	 */
+	updateRoute(routeInfo, options)
+	{
+
+		if (routeInfo["routeParameters"])
+		{
+			routeInfo["routeParameters"] = Object.assign(this._routeInfo["routeParameters"], routeInfo["routeParameters"]);
+		}
+
+		if (routeInfo["queryParameters"])
+		{
+			routeInfo["queryParameters"] = Object.assign(this._routeInfo["queryParameters"], routeInfo["queryParameters"]);
+		}
+
+		this._open(routeInfo, options);
+
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Replace current url.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 *
+	 * @return  {string}		Url.
+	 */
+	replace(routeInfo)
+	{
+
+		history.replaceState(null, null, this.buildUrl(routeInfo));
+
+	}
+
+	// -------------------------------------------------------------------------
+	//	Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Open route.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 * @param	{Object}		options				Query options.
+	 */
+	_open(routeInfo, options)
+	{
+
+		let url = this.buildUrl(routeInfo);
+		options = ( options ? options : {} );
+		options["pushState"] = ( options["pushState"] !== undefined ? options["pushState"] : true );
+
+		if (options["jump"])
+		{
+			// Jump to another page
+			location.href = url;
+		}
+		else
+		{
+			Promise.resolve().then(() => {
+				if (options["pushState"])
+				{
+					history.pushState(null, null, url);
+				}
+				this._routeInfo = this.__loadRouteInfo(window.location.href);
+			}).then(() => {
+				//if (options["autoOpen"])
+				{
+					let componentName = this._routeInfo["componentName"];
+					if (this.container["components"][componentName])
+					{
+						return this.container["components"][componentName].object.open({"sender":this});
+					}
+				}
+			}).then(() => {
+				if (options["autoRefresh"])
+				{
+					let componentName = this._routeInfo["componentName"];
+					if (this.container["components"][componentName])
+					{
+						return this.container["components"][componentName].object.refresh({"sender":this});
+					}
+				}
+			}).then(() => {
+				if (routeInfo["dispUrl"])
+				{
+					// Replace url
+					history.replaceState(null, null, routeInfo["dispUrl"]);
+				}
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//	Private
+	// -------------------------------------------------------------------------
+
+	/**
+     * Init routes.
+     *
+	 * @param	{Object}		routes				Routes.
+     */
+	__initRoutes(routes)
+	{
+
+		this._routes = [];
+
+		for (let i = 0; i < routes.length; i++)
+		{
+			this.addRoute({
+				"name": routes[i]["name"],
+				"path": routes[i]["path"],
+				"specName": routes[i]["specName"],
+				"componentName": (routes[i]["componentName"] ? routes[i]["componentName"] : "" )
+			});
+		}
+
+		this._routeInfo = this.__loadRouteInfo(window.location.href);
 
 	}
 
@@ -223,357 +416,6 @@ export default class DefaultRouter
 		routeInfo["queryParameters"] = this.loadParameters();
 
 		return routeInfo;
-
-	}
-
-   	// -------------------------------------------------------------------------
-
-	/**
-	 * Open route.
-	 *
-	 * @param	{Object}		routeInfo			Route information.
-	 * @param	{Object}		options				Query options.
-	 *
-	 * @return  {string}		Url.
-	 */
-	open(routeInfo, options)
-	{
-
-		let url = this.__buildUrl(routeInfo);
-		options = ( options ? options : {} );
-		options["pushState"] = ( options["pushState"] !== undefined ? options["pushState"] : true );
-
-		if (options["jump"])
-		{
-			// Jump to another page
-			location.href = url;
-		}
-		else
-		{
-			Promise.resolve().then(() => {
-				if (options["pushState"])
-				{
-					history.pushState(null, null, url);
-				}
-				this._routeInfo = this.__loadRouteInfo(window.location.href);
-			}).then(() => {
-				//if (options["autoOpen"])
-				{
-					let componentName = this._routeInfo["componentName"];
-					if (this.container["components"][componentName])
-					{
-						return this.container["components"][componentName].object.open({"sender":this});
-					}
-				}
-			}).then(() => {
-				if (options["autoRefresh"])
-				{
-					let componentName = this._routeInfo["componentName"];
-					if (this.container["components"][componentName])
-					{
-						return this.container["components"][componentName].object.refresh({"sender":this});
-					}
-				}
-			}).then(() => {
-				if (routeInfo["dispUrl"])
-				{
-					// Replace url
-					history.replaceState(null, null, routeInfo["dispUrl"]);
-				}
-			});
-		}
-
-	}
-
-	updateRoute(routeInfo, options)
-	{
-
-		if (routeInfo["routeParameters"])
-		{
-			routeInfo["routeParameters"] = Object.assign(this._routeInfo["routeParameters"], routeInfo["routeParameters"]);
-		}
-
-		if (routeInfo["queryParameters"])
-		{
-			routeInfo["queryParameters"] = Object.assign(this._routeInfo["queryParameters"], routeInfo["queryParameters"]);
-		}
-
-		this.open(routeInfo, options);
-
-	}
-
-	/*
-	openRoute(routeInfo)
-	{
-
-		open(routeInfo, { "pushState":true });
-
-	}
-
-	refreshRoute(routeInfo)
-	{
-
-		open(routeInfo, { "replaceState":true });
-
-	}
-	*/
-
-   	// -------------------------------------------------------------------------
-
-	/*
-	refresh(routeInfo)
-	{
-
-		return new Promise((resolve, reject) => {
-			let componentName = this._routeInfo["componentName"];
-
-			Promise.resolve().then(() => {
-				let url = this.__buildUrl(routeInfo);
-				this.replace(url);
-				if (this.container["components"][componentName])
-				{
-					return this.container["components"][componentName].object.refresh({"sender":this});
-					// return this.container["components"][componentName].object.open({"sender":this});
-					// return this.container["components"][componentName].object.open({"sender":this}).then(() => {
-					// 	return this.container["components"][componentName].object.refresh({"sender":this});
-					// });
-				}
-			}).then(() => {
-				//this._routeInfo = this.__loadRouteInfo(window.location.href);
-				resolve();
-			});
-		});
-
-	}
-	*/
-
-   	// -------------------------------------------------------------------------
-
-	/**
-	 * Replace current url.
-	 *
-	 * @param	{Object}		routeInfo			Route information.
-	 *
-	 * @return  {string}		Url.
-	 */
-	replace(routeInfo)
-	{
-
-		history.replaceState(null, null, this.__buildUrl(routeInfo));
-
-	}
-
-
-		/*
-	openRoute(routeInfo, options)
-	{
-
-		let currentRouteInfo = this.__loadRouteInfo(window.location.href);
-		routeInfo = (routeInfo ? routeInfo : currentRouteInfo);
-
-		if (currentRouteInfo.params["resource"] != routeInfo.params["resource"])
-		{
-			// Load resource
-			location.href = this.__buildUrl(routeInfo, routeInfo["parameters"]);
-		}
-		else
-		{
-			let urlOrg = this.__buildUrl(this._routeInfo, routeInfo["parameters"]);
-			let url;
-			if (routeInfo["parameters"]["_url"])
-			{
-				url = routeInfo["parameters"]["_url"];
-			}
-
-			// Get startup pad name
-			let padName = this.__getTargetPadName(routeInfo.params["command"]);
-
-			Promise.resolve().then(() => {
-				if (options["pushState"])
-				{
-					// Push state
-					history.pushState(null, null, urlOrg);
-				}
-				else if (options["replaceState"])
-				{
-					// Replace state
-					history.replaceState(null, null, urlOrg);
-				}
-			}).then(() => {
-				// Open
-				if (options["autoOpen"])
-				{
-					if (padName)
-					return this.container["components"][padName].object.open({"sender":this});
-				}
-			}).then(() => {
-				// Refresh
-				if (options["autoRefresh"])
-				{
-					if (padName)
-					return this.container["components"][padName].object.refresh({"sender":this});
-				}
-			}).then(() => {
-				if (url)
-				{
-					// Replace state
-					history.replaceState(null, null, url);
-				}
-			});
-
-		}
-
-	}
-		*/
-
-   	// -------------------------------------------------------------------------
-
-	/**
-	 * Build url for the app.
-	 *
-	 * @param	{Object}		routeInfo			Route information.
-	 * @param	{Object}		options				Query options.
-	 *
-	 * @return  {string}		Url.
-	 */
-	__buildUrl(routeInfo)
-	{
-
-		let url;
-
-		// Path
-		if (routeInfo["url"])
-		{
-			url = routeInfo["url"];
-		}
-		else
-		{
-			/*
-			else if (routeInfo["name"])
-			{
-				url = this.__routes[]["path"];
-			}
-			*/
-			if (routeInfo["path"])
-			{
-				url = routeInfo["path"];
-			}
-			else
-			{
-				url = this._routeInfo["path"];
-			}
-
-			// Route parameters
-			/*
-			if (routeInfo["routeParamters"])
-			{
-				url = 
-			}
-			*/
-
-			// Query parameters
-			if (routeInfo["query"])
-			{
-				url = url + "?" + routeInfo["query"];
-			}
-			else if (routeInfo["queryParameters"])
-			{
-				url = url + this.buildUrlQuery(routeInfo["queryParameters"]);
-			}
-		}
-
-		return url;
-
-	}
-
-	/*
-	openRoute(routeInfo, options)
-	{
-
-		let currentRouteInfo = this.loadRoute();
-		routeInfo = (routeInfo ? routeInfo : currentRouteInfo);
-
-		if (currentRouteInfo["resourceName"] != routeInfo["resourceName"])
-		{
-			// Load resource
-			location.href = this.container["loader"].buildUrl(routeInfo, routeInfo["parameters"]);
-		}
-		else
-		{
-			let urlOrg = this.container["loader"].buildUrl(null, routeInfo["parameters"]);
-			let url;
-			if (routeInfo["parameters"]["_url"])
-			{
-				url = routeInfo["parameters"]["_url"];
-			}
-
-			// Get startup pad name
-			let padName = this.__getTargetPadName(routeInfo["commandName"]);
-
-			Promise.resolve().then(() => {
-				if (options["pushState"])
-				{
-					// Push state
-					history.pushState(null, null, urlOrg);
-				}
-				else if (options["replaceState"])
-				{
-					// Replace state
-					history.replaceState(null, null, urlOrg);
-				}
-			}).then(() => {
-				// Open
-				if (options["autoOpen"])
-				{
-					if (padName)
-					return this.container["components"][padName].object.open({"sender":this});
-				}
-			}).then(() => {
-				// Refresh
-				if (options["autoRefresh"])
-				{
-					if (padName)
-					return this.container["components"][padName].object.refresh({"sender":this});
-				}
-			}).then(() => {
-				if (url)
-				{
-					// Replace state
-					history.replaceState(null, null, url);
-				}
-			});
-
-		}
-
-	}
-	*/
-
-	// -------------------------------------------------------------------------
-	//	Private
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get target pad name.
-	 *
-	 * @param	{String}		commandName			Command name.
-	 *
-	 * @return  {String}		Pad name.
-	 */
-	__getTargetPadName(commandName)
-	{
-
-		let padName;
-
-		if (this.container["appInfo"]["spec"] && this.container["appInfo"]["spec"]["commands"] && this.container["appInfo"]["spec"]["commands"][commandName])
-		{
-			padName = this.container["appInfo"]["spec"]["commands"][commandName]["startup"];
-		}
-		else if (this.container["appInfo"]["spec"] && this.container["appInfo"]["spec"]["commands"] && this.container["appInfo"]["spec"]["commands"]["*"])
-		{
-			padName = this.container["appInfo"]["spec"]["commands"]["*"]["startup"];
-		}
-
-		return padName;
 
 	}
 
