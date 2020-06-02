@@ -311,18 +311,20 @@ export default class DefaultRouter
 			let newRouteInfo = this.__loadRouteInfo(url);
 			console.log("@@@", this._routeInfo, newRouteInfo);
 
-			/*
 			if (this._routeInfo["name"] != newRouteInfo["name"])
 			{
 				location.href = url;
 				return;
 			}
-			*/
-			if (this._routeInfo["componentName"] != newRouteInfo["componentName"])
+			else if (this._routeInfo["componentName"] != newRouteInfo["componentName"])
 			{
+				location.href = url;
+				return;
+				/*
 				history.pushState(null, null, newRouteInfo["url"]);
 				this.container["loader"].loadApp(newRouteInfo["specName"]);
 				return;
+				*/
 			}
 
 			Promise.resolve().then(() => {
