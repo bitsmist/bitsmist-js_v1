@@ -35,6 +35,9 @@ export default class DefaultRouter
 
 		this.__initRoutes(options["routes"]);
 
+		// Init pop state handling
+		this.__initPopState();
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -120,7 +123,7 @@ export default class DefaultRouter
 			/*
 			if (routeInfo["routeParamters"])
 			{
-				url = 
+				url =
 			}
 			*/
 
@@ -235,7 +238,7 @@ export default class DefaultRouter
 		options = ( options ? options : {} );
 		options["pushState"] = false;
 
-		this._open(this._routeInfo, options);
+		this._open(routeInfo, options);
 
 	}
 
@@ -301,9 +304,27 @@ export default class DefaultRouter
 		{
 			// Jump to another page
 			location.href = url;
+			return;
 		}
 		else
 		{
+			let newRouteInfo = this.__loadRouteInfo(url);
+			console.log("@@@", this._routeInfo, newRouteInfo);
+
+			/*
+			if (this._routeInfo["name"] != newRouteInfo["name"])
+			{
+				location.href = url;
+				return;
+			}
+			*/
+			if (this._routeInfo["componentName"] != newRouteInfo["componentName"])
+			{
+				history.pushState(null, null, newRouteInfo["url"]);
+				this.container["loader"].loadApp(newRouteInfo["specName"]);
+				return;
+			}
+
 			Promise.resolve().then(() => {
 				if (options["pushState"])
 				{
@@ -320,6 +341,7 @@ export default class DefaultRouter
 					}
 				}
 			}).then(() => {
+				/*
 				if (options["autoRefresh"])
 				{
 					let componentName = this._routeInfo["componentName"];
@@ -328,6 +350,7 @@ export default class DefaultRouter
 						return this.container["components"][componentName].object.refresh({"sender":this});
 					}
 				}
+				*/
 			}).then(() => {
 				if (routeInfo["dispUrl"])
 				{
@@ -381,7 +404,7 @@ export default class DefaultRouter
 
 		let routeInfo = {};
 		let routeName;
-		let parsedUrl = new URL(url);
+		let parsedUrl = new URL(url, window.location.href);
 		let specName;
 		let componentName;
 		let params = {};
@@ -408,7 +431,7 @@ export default class DefaultRouter
 		routeInfo["name"] = routeName;
 		routeInfo["specName"] = specName;
 		routeInfo["componentName"] = componentName;
-		routeInfo["url"] = url;
+		routeInfo["url"] = parsedUrl["href"];
 		routeInfo["path"] = parsedUrl.pathname;
 		routeInfo["query"] = parsedUrl.search;
 		routeInfo["parsedUrl"] = parsedUrl;
@@ -416,6 +439,34 @@ export default class DefaultRouter
 		routeInfo["queryParameters"] = this.loadParameters();
 
 		return routeInfo;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init pop state handling.
+	 */
+	__initPopState()
+	{
+
+		if (window.history && window.history.pushState){
+			window.addEventListener("popstate", (event) => {
+				let promises = [];
+
+				Object.keys(this.container["components"]).forEach((componentName) => {
+					promises.push(this.container["components"][componentName].object.trigger("beforePopState", this));
+				});
+
+				Promise.all(promises).then(() => {
+					this.refreshRoute(this.__loadRouteInfo(window.location.href));
+				}).then(() => {
+					Object.keys(this.container["components"]).forEach((componentName) => {
+						this.container["components"][componentName].object.trigger("PopState", this);
+					});
+				});
+			});
+		}
 
 	}
 

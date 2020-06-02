@@ -74,19 +74,67 @@ export default class DefaultLoader
 
 	}
 
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Load App.
+	 *
+	 * @param	{String}		specName			Spec name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	loadApp(specName)
+	{
+
+		return new Promise((resolve, reject) => {
+			this.loadSpec(specName).then((spec) => {
+				this.container["appInfo"]["spec"] = spec;
+
+				let promises = [];
+
+				/*
+				// load preferences
+				promises.push(this.loadPreferences());
+				*/
+
+				// load resources
+				promises.push(this.loadResources(this.container["appInfo"]["spec"]["resources"]));
+
+				// load masters
+				promises.push(this.loadMasters(this.container["appInfo"]["spec"]["masters"]));
+
+				// load components
+				promises.push(this.loadComponents(this.container["appInfo"]["spec"]["components"]));
+
+				// load routes
+				this.container["router"].__initRoutes(spec["routes"].concat(this.container["settings"]["routes"]["routes"]));
+
+				Promise.all(promises).then(() => {
+					// Open startup page
+					this.container["router"].refreshRoute(this.container["router"]._routeInfo);
+					resolve();
+				});
+			});
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Load the spec file for this page.
 	 *
+	 * @param	{String}		specName			Spec name.
+	 *
 	 * @return  {Promise}		Promise.
 	 */
-	loadSpec(spec)
+	loadSpec(specName)
 	{
 
 		let basePath = this.container["router"]["options"]["options"]["specs"];
 		let urlCommon = basePath + "common.js";
-		let url = basePath + spec + ".js";
+		let url = basePath + specName + ".js";
+		let spec;
 		let specCommon;
 		let specMerged;
 
@@ -266,186 +314,6 @@ export default class DefaultLoader
 
 	}
 
-   	// -------------------------------------------------------------------------
-
-	/**
-	 * Build url for the spec file.
-	 *
-	 * @param	{String}		specName			Spec name.
-	 *
-	 * @return  {String}		Url.
-	 */
-	/*
-	buildSpecUrl(specName)
-	{
-
-		return this.container["appInfo"]["baseUrl"] + "/specs/" + specName + ".js";
-
-	}
-	*/
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Build url for the component script.
-	 *
-	 * @param	{String}		componentName		Component name.
-	 * @param	{String}		path				Path.
-	 *
-	 * @return  {String}		Url.
-	 */
-	/*
-	buildComponentScriptUrl(componentName, path)
-	{
-
-		return this.container["appInfo"]["baseUrl"] + "/components/" + (path ? path + "/" : "") + componentName;
-
-	}
-	*/
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Build url for the template html.
-	 *
-	 * @param	{String}		componentName		Component name.
-	 * @param	{String}		path				Path.
-	 *
-	 * @return  {String}		Url.
-	 */
-	/*
-	buildTemplateUrl(componentName, path)
-	{
-
-		return this.container["appInfo"]["baseUrl"]+ "/components/" + (path ? path + "/" : "") + componentName + ".html";
-
-	}
-	*/
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Build url for the api.
-	 *
-	 * @param	{String}		resource			API resource.
-	 * @param	{String}		id					Id for the resource.
-	 * @param	{Object}		options				Query options.
-	 *
-	 * @return  {String}		Url.
-	 */
-	/*
-	buildApiUrl(resource, id, options)
-	{
-
-		let url = this.container["sysInfo"]["baseUrl"] + "/v" + this.container["sysInfo"]["version"] + "-" + this.container["appInfo"]["version"] + "/" +  resource + "/" + id + ".json" + this.buildUrlOption(options);
-
-		return url;
-
-	}
-	*/
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Build url for the app.
-	 *
-	 * @param	{Object}		routeInfo			Route information.
-	 * @param	{Object}		options				Query options.
-	 *
-	 * @return  {string}		Url.
-	 */
-	/*
-	buildUrl(routeInfo, options)
-	{
-
-		if (!routeInfo)
-		{
-			routeInfo = this.container["router"].loadRoute();
-		}
-
-		var url
-		if (routeInfo["resourceName"] && routeInfo["commandName"])
-		{
-			url = this.container["appInfo"]["baseUrl"] + "/" + routeInfo["resourceName"] + "/" + routeInfo["commandName"] + "/" + this.buildUrlOption(options);
-		}
-		else
-		{
-			url = routeInfo["path"] + this.buildUrlOption(options);
-		}
-
-		return url;
-
-	}
-	*/
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Build query string from the options array.
-	 *
-	 * @param	{Object}		options				Query options.
-	 *
-	 * @return  {String}		Query string.
-	 */
-	/*
-	buildUrlOption(options)
-	{
-
-		let query = "";
-
-		if (options)
-		{
-			query = Object.keys(options).reduce((result, current) => {
-				if (Array.isArray(options[current]))
-				{
-					result += encodeURIComponent(current) + "=" + encodeURIComponent(options[current].join()) + "&";
-				}
-				else if (options[current])
-				{
-					result += encodeURIComponent(current) + "=" + encodeURIComponent(options[current]) + "&";
-				}
-
-				return result;
-			}, "");
-		}
-
-		return ( query ? "?" + query.slice(0, -1) : "");
-
-	}
-	*/
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Create options array from the current url.
-	 *
-	 */
-	/*
-	loadParameters()
-	{
-
-		let vars = {}, hash, value;
-
-		if (window.location.href.indexOf("?") > -1)
-		{
-			let hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-
-			for(var i = 0; i < hashes.length; i++) {
-				hash = hashes[i].split('=');
-				if (hash[1]){
-					value = hash[1].split('#')[0];
-				} else {
-					value = hash[1];
-				}
-				vars[hash[0]] = decodeURIComponent(value);
-			}
-		}
-
-		return vars;
-
-	}
-	*/
-
 	// -------------------------------------------------------------------------
 	//	Private
 	// -------------------------------------------------------------------------
@@ -544,33 +412,6 @@ export default class DefaultLoader
     // -------------------------------------------------------------------------
 
 	/**
-	 * Load the template html.
-	 *
-	 * @param	{String}		templateName		Template name.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	/*
-	__loadTemplate(templateName, path)
-	{
-
-		let basePath = this.container["router"]["options"]["options"]["templates"] + (path ? path + "/" : "");
-		let url = basePath + templateName + ".html";
-		console.debug(`Loader.__loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
-
-		return new Promise((resolve, reject) => {
-			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`Loader.__loadTemplate(): Loaded template. templateName=${templateName}`);
-				resolve(xhr.responseText);
-			});
-		});
-
-	}
-	*/
-
-    // -------------------------------------------------------------------------
-
-	/**
 	 * Merge settings to spec.
 	 *
 	 * @param	{Object}		spec					Spec.
@@ -622,34 +463,5 @@ export default class DefaultLoader
 		return arr1;
 
 	}
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Get target pad name.
-	 *
-	 * @param	{String}		commandName			Command name.
-	 *
-	 * @return  {String}		Pad name.
-	 */
-	/*
-	__getTargetPadName(commandName)
-	{
-
-		let padName;
-
-		if (this.container["appInfo"]["spec"]["commands"][commandName])
-		{
-			padName = this.container["appInfo"]["spec"]["commands"][commandName]["startup"];
-		}
-		else if (this.container["appInfo"]["spec"]["commands"]["*"])
-		{
-			padName = this.container["appInfo"]["spec"]["commands"]["*"]["startup"];
-		}
-
-		return padName;
-
-	}
-	*/
 
 }

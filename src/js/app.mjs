@@ -57,6 +57,7 @@ export default class App
 		let loaderOptions = {"container": this.container};
 		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], loaderOptions);
 
+		/*
 		// Init router
 		if (this.container["settings"]["routes"])
 		{
@@ -64,12 +65,15 @@ export default class App
 			let options = Object.assign({"container": this.container}, this.container["settings"]["routes"]);
 			this.container["router"] = this.createObject(this.container["settings"]["routes"]["class"], options);
 		}
+		*/
 
 		// load services
 		this.container["loader"].loadServices();
 
+		/*
 		// Init pop state handling
 		this.__initPopState();
+		*/
 
 	}
 
@@ -83,6 +87,10 @@ export default class App
 	run()
 	{
 
+		// load preferences
+		this.container["loader"].loadPreferences();
+
+		/*
 		if (this.container["router"].routeInfo.specName)
 		{
 			// load spec
@@ -112,6 +120,19 @@ export default class App
 				});
 			});
 		}
+		*/
+
+		// Init router
+		if (this.container["settings"]["routes"])
+		{
+			let routerOptions = {"container": this.container};
+			let options = Object.assign({"container": this.container}, this.container["settings"]["routes"]);
+			this.container["router"] = this.createObject(this.container["settings"]["routes"]["class"], options);
+
+			this.container["loader"].loadApp(this.container["router"].routeInfo["specName"]);
+		}
+
+
 
 	}
 
@@ -398,13 +419,12 @@ export default class App
 	/**
 	 * Init pop state handling.
 	 */
+	/*
 	__initPopState()
 	{
 
 		if (window.history && window.history.pushState){
 			window.addEventListener("popstate", (event) => {
-				this.container["router"].__loadRouteInfo(window.location.href);
-
 				let promises = [];
 
 				Object.keys(this.container["components"]).forEach((componentName) => {
@@ -412,7 +432,7 @@ export default class App
 				});
 
 				Promise.all(promises).then(() => {
-					this.container["router"].refreshRoute();
+					this.container["router"].refreshRoute(this.container["router"].__loadRouteInfo(window.location.href));
 				}).then(() => {
 					Object.keys(this.container["components"]).forEach((componentName) => {
 						this.container["components"][componentName].object.trigger("PopState", this);
@@ -422,6 +442,7 @@ export default class App
 		}
 
 	}
+	*/
 
 }
 
