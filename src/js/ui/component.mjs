@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import ResourceUtil from '../util/resource-util';
 import { NoNodeError, NotValidFunctionError } from '../error/errors';
 
 // =============================================================================
@@ -51,8 +52,7 @@ export default class Component extends HTMLElement
 
 		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
-		// Init resource
-		if ("resource" in this._options && this._options["resource"])
+		if (this.getOption("resource"))
 		{
 			if (this._options["resource"] in this._container["resources"])
 			{
@@ -60,7 +60,7 @@ export default class Component extends HTMLElement
 			}
 			else
 			{
-				throw new NoResourceError(`Resource not found. name=${this._name}, resource=${this._options["resource"]}`);
+				this._resource = new ResourceUtil(this.getOption("resource"), {"container":this._container});
 			}
 		}
 
@@ -208,12 +208,6 @@ export default class Component extends HTMLElement
 		return new Promise((resolve, reject) => {
 			options = Object.assign({}, options);
 			let sender = ( options["sender"] ? options["sender"] : this );
-
-			if (this._isOpen)
-			{
-				resolve();
-				return;
-			}
 
 			this._autoLoadTemplate(this.getOption("templateName")).then(() => {
 				if (this.getOption("autoRefresh"))
@@ -751,7 +745,10 @@ export default class Component extends HTMLElement
 			{
 				console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
 
-				this.__loadTemplate(templateName).then(() => {
+				let path = ("path" in this._options ? this._options["path"] : "");
+				this.__loadTemplate(templateName, path).then((template) => {
+					this._templates[templateName] = {};
+					this._templates[templateName]["html"] = template;
 					return this.trigger("load", this);
 				}).then(() => {
 					return this.__appendTemplate(this.getOption("rootNode"), templateName);
@@ -819,19 +816,18 @@ export default class Component extends HTMLElement
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	__loadTemplate(templateName)
+	__loadTemplate(templateName, path)
 	{
 
-		let path = ("path" in this._options ? this._options["path"] : "");
-		let url = this._container["loader"].buildTemplateUrl(templateName, path);
+		let basePath = this._container["router"]["options"]["options"]["templates"] + (path ? path + "/" : "");
+		let url = basePath + templateName + ".html";
+
 		console.debug(`Component.__loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
 
 		return new Promise((resolve, reject) => {
 			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 				console.debug(`Component.__loadTemplate(): Loaded template. templateName=${templateName}`);
-				this._templates[templateName] = {};
-				this._templates[templateName]["html"] = xhr.responseText;
-				resolve(xhr);
+				resolve(xhr.responseText);
 			});
 		});
 
@@ -898,31 +894,6 @@ export default class Component extends HTMLElement
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init on initComponent.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	/*
-	__initPadOnInitComponent(sender, e)
-	{
-
-		// Init plugins
-		if (this._options["plugins"])
-		{
-			Object.keys(this._options["plugins"]).forEach((pluginName) => {
-				this.addPlugin(pluginName, this._options["plugins"][pluginName]);
-			});
-		}
-
-	}
-	*/
-
-	// -------------------------------------------------------------------------
-
-	/**
      * Init on append template.
 	 *
 	 * @param	{Object}		sender				Sender.
@@ -943,6 +914,8 @@ export default class Component extends HTMLElement
 			}
 
 			let chain = Promise.resolve();
+
+			//chain = this._container["loader"].loadMasters({ "malls": { "id":"mallId", "title":"mallName", "autoLoad":true } });
 
 			//  Add components
 			Object.keys(this._components).forEach((componentName) => {

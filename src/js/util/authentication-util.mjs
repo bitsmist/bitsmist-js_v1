@@ -54,7 +54,7 @@ export default class AuthenticationUtil extends ResourceUtil
 				{
 					if (options && "redirect" in options)
 					{
-						location.href = options["redirect"];
+						location.href = decodeURI(options["redirect"]);
 					}
 				}
 				else

@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import PathToRegexp from 'path-to-regexp';
+
 // =============================================================================
 //	Default router class
 // =============================================================================
@@ -29,6 +31,28 @@ export default class DefaultRouter
 
 		this.options = options;
 		this.container = options["container"];
+		this._routes;
+
+		this.__initRoutes(options["routes"]);
+
+		// Init pop state handling
+		this.__initPopState();
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	/**
+     * Route info.
+     *
+	 * @type	{Object}
+     */
+	get routeInfo()
+	{
+
+		return this._routeInfo;
 
 	}
 
@@ -37,35 +61,149 @@ export default class DefaultRouter
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get route info from the url.
-	 *
-	 * @return  {Object}		Route info.
- 	 */
-	loadRoute()
+     * Add a route.
+     *
+	 * @param	{Object}		routeInfo			Route info.
+     */
+	addRoute(routeInfo)
 	{
 
-		let routeInfo = {};
+		let keys = [];
+		let route = {
+			"name": routeInfo["name"],
+			"path": routeInfo["path"],
+			"keys": keys,
+			"specName": routeInfo["specName"],
+			"componentName": routeInfo["componentName"],
+			"re": PathToRegexp.pathToRegexp(routeInfo["path"], keys)
+		};
 
-		let pos = window.location.href.indexOf("?");
-		let url = (pos >= 0 ? window.location.href.substr(0, pos) : window.location.href);
-		let p = url.split("/");
+		this._routes.push(route);
 
-		if (p.length == 6)
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Build url from route info.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 * @param	{Object}		options				Query options.
+	 *
+	 * @return  {string}		Url.
+	 */
+	buildUrl(routeInfo)
+	{
+
+		let url;
+
+		// Path
+		if (routeInfo["url"])
 		{
-			routeInfo["appName"] = "";
-			routeInfo["resourceName"] = p[3];
-			routeInfo["commandName"] = p[4];
+			url = routeInfo["url"];
 		}
 		else
 		{
-			routeInfo["appName"] = p[3];
-			routeInfo["resourceName"] = p[4];
-			routeInfo["commandName"] = p[5];
+			/*
+			else if (routeInfo["name"])
+			{
+				url = this.__routes[]["path"];
+			}
+			*/
+			if (routeInfo["path"])
+			{
+				url = routeInfo["path"];
+			}
+			else
+			{
+				url = this._routeInfo["path"];
+			}
+
+			// Route parameters
+			/*
+			if (routeInfo["routeParamters"])
+			{
+				url =
+			}
+			*/
+
+			// Query parameters
+			if (routeInfo["query"])
+			{
+				url = url + "?" + routeInfo["query"];
+			}
+			else if (routeInfo["queryParameters"])
+			{
+				url = url + this.buildUrlQuery(routeInfo["queryParameters"]);
+			}
 		}
 
-		routeInfo["parameters"] = this.container["loader"].loadParameters();
+		return url;
 
-		return routeInfo;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Build query string from the options object.
+	 *
+	 * @param	{Object}		options				Query options.
+	 *
+	 * @return  {String}		Query string.
+	 */
+	buildUrlQuery(options)
+	{
+
+		let query = "";
+
+		if (options)
+		{
+			query = Object.keys(options).reduce((result, current) => {
+				if (Array.isArray(options[current]))
+				{
+					result += encodeURIComponent(current) + "=" + encodeURIComponent(options[current].join()) + "&";
+				}
+				else if (options[current])
+				{
+					result += encodeURIComponent(current) + "=" + encodeURIComponent(options[current]) + "&";
+				}
+
+				return result;
+			}, "");
+		}
+
+		return ( query ? "?" + query.slice(0, -1) : "");
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Create options array from the current url.
+	 */
+	loadParameters()
+	{
+
+		let vars = {}
+		let hash;
+		let value;
+
+		if (window.location.href.indexOf("?") > -1)
+		{
+			let hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+
+			for(let i = 0; i < hashes.length; i++) {
+				hash = hashes[i].split('=');
+				if (hash[1]){
+					value = hash[1].split('#')[0];
+				} else {
+					value = hash[1];
+				}
+				vars[hash[0]] = decodeURIComponent(value);
+			}
+		}
+
+		return vars;
 
 	}
 
@@ -75,64 +213,153 @@ export default class DefaultRouter
 	 * Open route.
 	 *
 	 * @param	{Object}		routeInfo			Route information.
- 	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {string}		Url.
+	 * @param	{Object}		options				Query options.
 	 */
 	openRoute(routeInfo, options)
 	{
 
-		let currentRouteInfo = this.loadRoute();
-		routeInfo = (routeInfo ? routeInfo : currentRouteInfo);
+		options = ( options ? options : {} );
+		options["pushState"] = true;
 
-		if (currentRouteInfo["resourceName"] != routeInfo["resourceName"])
+		this._open(routeInfo, options);
+
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Refresh route.
+	 *
+	 * @param	{Object}		options				Query options.
+	 */
+	refreshRoute(routeInfo, options)
+	{
+
+		options = ( options ? options : {} );
+		options["pushState"] = false;
+
+		this._open(routeInfo, options);
+
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Update route.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 * @param	{Object}		options				Query options.
+	 */
+	updateRoute(routeInfo, options)
+	{
+
+		if (routeInfo["routeParameters"])
 		{
-			// Load resource
-			location.href = this.container["loader"].buildUrl(routeInfo, routeInfo["parameters"]);
+			routeInfo["routeParameters"] = Object.assign(this._routeInfo["routeParameters"], routeInfo["routeParameters"]);
+		}
+
+		if (routeInfo["queryParameters"])
+		{
+			routeInfo["queryParameters"] = Object.assign(this._routeInfo["queryParameters"], routeInfo["queryParameters"]);
+		}
+
+		this._open(routeInfo, options);
+
+	}
+
+   	// -------------------------------------------------------------------------
+
+	/**
+	 * Replace current url.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 *
+	 * @return  {string}		Url.
+	 */
+	replace(routeInfo)
+	{
+
+		history.replaceState(null, null, this.buildUrl(routeInfo));
+
+	}
+
+	// -------------------------------------------------------------------------
+	//	Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Open route.
+	 *
+	 * @param	{Object}		routeInfo			Route information.
+	 * @param	{Object}		options				Query options.
+	 */
+	_open(routeInfo, options)
+	{
+
+		let url = this.buildUrl(routeInfo);
+		options = ( options ? options : {} );
+		options["pushState"] = ( options["pushState"] !== undefined ? options["pushState"] : true );
+
+		if (options["jump"])
+		{
+			// Jump to another page
+			location.href = url;
+			return;
 		}
 		else
 		{
-			let urlOrg = this.container["loader"].buildUrl(null, routeInfo["parameters"]);
-			let url;
-			if (routeInfo["parameters"]["_url"])
-			{
-				url = routeInfo["parameters"]["_url"];
-			}
+			let newRouteInfo = this.__loadRouteInfo(url);
+			console.log("@@@", this._routeInfo, newRouteInfo);
 
-			// Get startup pad name
-			let padName = this.__getTargetPadName(routeInfo["commandName"]);
+			if (this._routeInfo["name"] != newRouteInfo["name"])
+			{
+				location.href = url;
+				return;
+			}
+			else if (this._routeInfo["componentName"] != newRouteInfo["componentName"])
+			{
+				location.href = url;
+				return;
+				/*
+				history.pushState(null, null, newRouteInfo["url"]);
+				this.container["loader"].loadApp(newRouteInfo["specName"]);
+				return;
+				*/
+			}
 
 			Promise.resolve().then(() => {
 				if (options["pushState"])
 				{
-					// Push state
-					history.pushState(null, null, urlOrg);
+					history.pushState(null, null, url);
 				}
-				else if (options["replaceState"])
+				this._routeInfo = this.__loadRouteInfo(window.location.href);
+			}).then(() => {
+				//if (options["autoOpen"])
 				{
-					// Replace state
-					history.replaceState(null, null, urlOrg);
+					let componentName = this._routeInfo["componentName"];
+					if (this.container["components"][componentName])
+					{
+						return this.container["components"][componentName].object.open({"sender":this});
+					}
 				}
 			}).then(() => {
-				// Open
-				if (options["autoOpen"])
-				{
-					return this.container["components"][padName].object.open({"sender":this});
-				}
-			}).then(() => {
-				// Refresh
+				/*
 				if (options["autoRefresh"])
 				{
-					return this.container["components"][padName].object.refresh({"sender":this});
+					let componentName = this._routeInfo["componentName"];
+					if (this.container["components"][componentName])
+					{
+						return this.container["components"][componentName].object.refresh({"sender":this});
+					}
 				}
+				*/
 			}).then(() => {
-				if (url)
+				if (routeInfo["dispUrl"])
 				{
-					// Replace state
-					history.replaceState(null, null, url);
+					// Replace url
+					history.replaceState(null, null, routeInfo["dispUrl"]);
 				}
 			});
-
 		}
 
 	}
@@ -142,27 +369,106 @@ export default class DefaultRouter
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get target pad name.
-	 *
-	 * @param	{String}		commandName			Command name.
-	 *
-	 * @return  {String}		Pad name.
-	 */
-	__getTargetPadName(commandName)
+     * Init routes.
+     *
+	 * @param	{Object}		routes				Routes.
+     */
+	__initRoutes(routes)
 	{
 
-		let padName;
+		this._routes = [];
 
-		if (this.container["appInfo"]["spec"]["commands"][commandName])
+		for (let i = 0; i < routes.length; i++)
 		{
-			padName = this.container["appInfo"]["spec"]["commands"][commandName]["startup"];
-		}
-		else if (this.container["appInfo"]["spec"]["commands"]["*"])
-		{
-			padName = this.container["appInfo"]["spec"]["commands"]["*"]["startup"];
+			this.addRoute({
+				"name": routes[i]["name"],
+				"path": routes[i]["path"],
+				"specName": routes[i]["specName"],
+				"componentName": (routes[i]["componentName"] ? routes[i]["componentName"] : "" )
+			});
 		}
 
-		return padName;
+		this._routeInfo = this.__loadRouteInfo(window.location.href);
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Get route info from the url.
+	 *
+	 * @param	{String}		url					Url.
+	 *
+	 * @return  {Object}		Route info.
+ 	 */
+	__loadRouteInfo(url)
+	{
+
+		let routeInfo = {};
+		let routeName;
+		let parsedUrl = new URL(url, window.location.href);
+		let specName;
+		let componentName;
+		let params = {};
+		for (let i = 0; i < this._routes.length ; i++)
+		{
+			let result = this._routes[i].re.exec(parsedUrl.pathname);
+			if (result)
+			{
+				routeName = this._routes[i].name;
+				specName = ( this._routes[i].specName ? this._routes[i].specName : "" );
+				componentName = this._routes[i].componentName;
+				for (let j = 0; j < result.length - 1; j++)
+				{
+					params[this._routes[i].keys[j].name] = result[j + 1];
+					let keyName = this._routes[i].keys[j].name;
+					let value = result[j + 1];
+					specName = specName.replace("{{:" + keyName + "}}", value);
+				}
+
+				break;
+			}
+		}
+
+		routeInfo["name"] = routeName;
+		routeInfo["specName"] = specName;
+		routeInfo["componentName"] = componentName;
+		routeInfo["url"] = parsedUrl["href"];
+		routeInfo["path"] = parsedUrl.pathname;
+		routeInfo["query"] = parsedUrl.search;
+		routeInfo["parsedUrl"] = parsedUrl;
+		routeInfo["routeParameters"] = params;
+		routeInfo["queryParameters"] = this.loadParameters();
+
+		return routeInfo;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init pop state handling.
+	 */
+	__initPopState()
+	{
+
+		if (window.history && window.history.pushState){
+			window.addEventListener("popstate", (event) => {
+				let promises = [];
+
+				Object.keys(this.container["components"]).forEach((componentName) => {
+					promises.push(this.container["components"][componentName].object.trigger("beforePopState", this));
+				});
+
+				Promise.all(promises).then(() => {
+					this.refreshRoute(this.__loadRouteInfo(window.location.href));
+				}).then(() => {
+					Object.keys(this.container["components"]).forEach((componentName) => {
+						this.container["components"][componentName].object.trigger("PopState", this);
+					});
+				});
+			});
+		}
 
 	}
 

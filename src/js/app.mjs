@@ -45,9 +45,6 @@ export default class App
 		this.container["masters"] = {};
 		this.container["preferences"] = settings["preferences"];
 
-		// Init loader and router;
-		this.__initLoaderAndRouter();
-
 		// Init system information
 		this.container["sysInfo"]["version"] = settings["defaults"]["apiVersion"];
 		this.container["sysInfo"]["baseUrl"] = settings["defaults"]["apiBaseUrl"];
@@ -56,8 +53,27 @@ export default class App
 		this.container["appInfo"]["version"] = settings["defaults"]["appVersion"];
 		this.container["appInfo"]["baseUrl"] = settings["defaults"]["appBaseUrl"];
 
+		// Init loader
+		let loaderOptions = {"container": this.container};
+		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], loaderOptions);
+
+		/*
+		// Init router
+		if (this.container["settings"]["routes"])
+		{
+			let routerOptions = {"container": this.container};
+			let options = Object.assign({"container": this.container}, this.container["settings"]["routes"]);
+			this.container["router"] = this.createObject(this.container["settings"]["routes"]["class"], options);
+		}
+		*/
+
 		// load services
 		this.container["loader"].loadServices();
+
+		/*
+		// Init pop state handling
+		this.__initPopState();
+		*/
 
 	}
 
@@ -71,33 +87,50 @@ export default class App
 	run()
 	{
 
-		// load spec
-		this.container["loader"].loadSpec().then((spec) => {
-			this.container["appInfo"]["spec"] = spec;
+		// load preferences
+		this.container["loader"].loadPreferences();
 
-			let promises = [];
+		/*
+		if (this.container["router"].routeInfo.specName)
+		{
+			// load spec
+			this.container["loader"].loadSpec(this.container["router"].routeInfo.specName).then((spec) => {
+				this.container["appInfo"]["spec"] = spec;
 
-			// load preferences
-			promises.push(this.container["loader"].loadPreferences());
+				let promises = [];
 
-			// load resources
-			promises.push(this.container["loader"].loadResources(this.container["appInfo"]["spec"]["resources"]));
+				// load preferences
+				promises.push(this.container["loader"].loadPreferences());
 
-			// load masters
-			promises.push(this.container["loader"].loadMasters(this.container["appInfo"]["spec"]["masters"]));
+				// load resources
+				promises.push(this.container["loader"].loadResources(this.container["appInfo"]["spec"]["resources"]));
 
-			// load components
-			promises.push(this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]));
+				// load masters
+				promises.push(this.container["loader"].loadMasters(this.container["appInfo"]["spec"]["masters"]));
 
-			Promise.all(promises).then(() => {
-				// Open startup pad
-				let routeInfo = this.container["router"].loadRoute();
-				this.container["router"].openRoute(routeInfo, {"autoOpen":true});
+				// load components
+				promises.push(this.container["loader"].loadComponents(this.container["appInfo"]["spec"]["components"]));
+
+				// load routes
+				this.container["router"].__initRoutes(spec["routes"].concat(this.container["settings"]["routes"]["routes"]));
+
+				Promise.all(promises).then(() => {
+					// Open startup page
+					this.container["router"].refreshRoute();
+				});
 			});
+		}
+		*/
 
-			// Init pop state handling
-			this.__initPopState();
-		});
+		// Init router
+		if (this.container["settings"]["routes"])
+		{
+			let routerOptions = {"container": this.container};
+			let options = Object.assign({"container": this.container}, this.container["settings"]["routes"]);
+			this.container["router"] = this.createObject(this.container["settings"]["routes"]["class"], options);
+
+			this.container["loader"].loadApp(this.container["router"].routeInfo["specName"]);
+		}
 
 	}
 
@@ -166,21 +199,12 @@ export default class App
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init loader and router.
+	 * Wait for components to be loaded.
+	 *
+	 * @param	{Array}			componentNames		Component names to wait.
+	 *
+	 * @return  {Array}			Promises.
 	 */
-	__initLoaderAndRouter()
-	{
-
-		let loaderOptions = {"container": this.container};
-		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["class"], loaderOptions);
-
-		let routerOptions = {"container": this.container};
-		this.container["router"] = this.createObject(this.container["settings"]["router"]["class"], routerOptions);
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	waitFor(componentNames)
 	{
 
@@ -208,6 +232,8 @@ export default class App
 		return promises;
 
 	}
+
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Init error handling.
@@ -391,18 +417,30 @@ export default class App
 	/**
 	 * Init pop state handling.
 	 */
+	/*
 	__initPopState()
 	{
 
 		if (window.history && window.history.pushState){
 			window.addEventListener("popstate", (event) => {
+				let promises = [];
+
 				Object.keys(this.container["components"]).forEach((componentName) => {
-					this.container["components"][componentName].object.listener.trigger("popState", this);
+					promises.push(this.container["components"][componentName].object.trigger("beforePopState", this));
+				});
+
+				Promise.all(promises).then(() => {
+					this.container["router"].refreshRoute(this.container["router"].__loadRouteInfo(window.location.href));
+				}).then(() => {
+					Object.keys(this.container["components"]).forEach((componentName) => {
+						this.container["components"][componentName].object.trigger("PopState", this);
+					});
 				});
 			});
 		}
 
 	}
+	*/
 
 }
 
