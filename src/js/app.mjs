@@ -132,8 +132,6 @@ export default class App
 			this.container["loader"].loadApp(this.container["router"].routeInfo["specName"]);
 		}
 
-
-
 	}
 
 	// -------------------------------------------------------------------------
