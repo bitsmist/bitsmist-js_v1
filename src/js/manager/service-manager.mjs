@@ -63,7 +63,7 @@ export default class ServiceManager
 	{
 
 		let newOptions = Object.assign({}, options);
-		let className =  ("class" in options ? options["class"] : pluginName);
+		let className =  ("className" in options ? options["className"] : pluginName);
 		if (!("container" in options))
 		{
 			newOptions["container"] = this.container;
