@@ -29,13 +29,7 @@ window.BITSMIST.v1.NoRouteErrorHandler = NoRouteErrorHandler;
 import DefaultLoader from './loader/default-loader';
 window.BITSMIST.v1.DefaultLoader = DefaultLoader;
 
-// Manager
-
-import ErrorManager from './manager/error-manager';
-window.BITSMIST.v1.ErrorManager = ErrorManager;
-
-import PreferenceManager from './manager/preference-manager';
-window.BITSMIST.v1.PreferenceManager = PreferenceManager;
+// Service Manager
 
 import ServiceManager from './manager/service-manager';
 window.BITSMIST.v1.ServiceManager = ServiceManager;
