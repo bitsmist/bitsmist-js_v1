@@ -12,6 +12,8 @@
 //	Service manager class
 // =============================================================================
 
+import 'proxy-polyfill';
+
 export default class ServiceManager
 {
 
@@ -30,7 +32,6 @@ export default class ServiceManager
 		this.container = options["container"];
 		this.plugins = [];
 
-		/*
 		return new Proxy(this, {
 			get: (target, property) => {
 				if (property in target)
@@ -45,7 +46,6 @@ export default class ServiceManager
 				}
 			}
 		});
-		*/
 
 	}
 
