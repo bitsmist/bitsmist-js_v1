@@ -9,10 +9,8 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
-import {NoRouteError, NoClassError, NotValidFunctionError} from '../error/errors';
-import ErrorManager from '../manager/error-manager';
+import { NoClassError } from '../error/errors';
 import MasterUtil from '../util/master-util';
-import PreferenceManager from '../manager/preference-manager';
 import ResourceUtil from '../util/resource-util';
 
 // =============================================================================
@@ -37,9 +35,6 @@ export default class DefaultLoader
 		this.options = options;
 		this.container = options["container"];
 
-		this.container["errorManager"] = new ErrorManager({"container":this.container});
-		this.container["preferenceManager"] = new PreferenceManager({"container":this.container});
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -52,25 +47,14 @@ export default class DefaultLoader
 	loadServices()
 	{
 
-		// Error handlers
-		if (this.container["settings"]["errorManager"] && this.container["settings"]["errorManager"]["handlers"])
-		{
-			Object.keys(this.container["settings"]["errorManager"]["handlers"]).forEach((pluginName) => {
-				let options = this.container["settings"]["errorManager"]["handlers"][pluginName];
-				options["events"] = this.container["errorManager"].events;
-				options["parent"] = this.container["errorManager"];
-				this.container["errorManager"].add(pluginName, options);
+		Object.keys(this.container["settings"]["services"]).forEach((key) => {
+			let className = this.container["settings"]["services"][key]["className"];
+			this.container[key] = this.container["app"].createObject(className, {"container":this.container});
+			Object.keys(this.container["settings"]["services"][key]["handlers"]).forEach((pluginName) => {
+				let options = this.container["settings"]["services"][key]["handlers"][pluginName];
+				this.container[key].add(pluginName, options);
 			});
-		}
-
-		// Preference handlers
-		if (this.container["settings"]["preferenceManager"] && this.container["settings"]["preferenceManager"]["handlers"])
-		{
-			Object.keys(this.container["settings"]["preferenceManager"]["handlers"]).forEach((pluginName) => {
-				let options = this.container["settings"]["preferenceManager"]["handlers"][pluginName];
-				this.container["preferenceManager"].add(pluginName, options);
-			});
-		}
+		});
 
 	}
 
@@ -107,7 +91,7 @@ export default class DefaultLoader
 				promises.push(this.loadComponents(this.container["appInfo"]["spec"]["components"]));
 
 				// load routes
-				this.container["router"].__initRoutes(spec["routes"].concat(this.container["settings"]["routes"]["routes"]));
+				this.container["router"].__initRoutes(spec["routes"].concat(this.container["settings"]["router"]["routes"]));
 
 				Promise.all(promises).then(() => {
 					// Open startup page
