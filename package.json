@@ -1,7 +1,7 @@
 {
   "name": "bitsmist-webview_v1",
   "version": "0.9.0",
-  "description": "Bitsmist Webview",
+  "description": "Bitsmist Webview V1",
   "private": true,
   "dependencies": {},
   "devDependencies": {
@@ -11,6 +11,7 @@
     "babel-loader": "^8.0.6",
     "core-js": "^3.6.4",
     "path-to-regexp": "^6.1.0",
+    "proxy-polyfill": "^0.3.1",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10"
   },
