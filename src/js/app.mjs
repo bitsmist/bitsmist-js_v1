@@ -9,12 +9,13 @@
 // =============================================================================
 
 import {NoClassError} from './error/errors';
+import Component from './ui/component';
 
 // =============================================================================
 //	App class
 // =============================================================================
 
-export default class App
+export default class App extends Component
 {
 
 	// -------------------------------------------------------------------------
@@ -23,70 +24,127 @@ export default class App
 
 	/**
 	 * Constructor.
-	 *
-	 * @param	{array}			settings		Settings.
 	 */
-	constructor(settings)
+	constructor()
 	{
 
+		super();
+
+		// Init a container
+		this._container = {};
+		this._container["app"] = this;
+
 		this.__waitFor = {};
+		this.watchers = {};
+		this.watchers["error"] = {};
+		this.watchers["preference"] = {};
 
 		// Init error handling
 		this.__initError();
 
+	}
+
+	_getOptions()
+	{
+
+		return {
+			"name": "App",
+
+			"events": {
+				"initComponent": {
+					"handler": this.onInitComponent,
+				},
+				"init": {
+					"handler": this.onInit,
+				},
+				"setup": {
+					"handler": this.onSetup,
+				},
+				"beforeOpen": {
+					"handler": this.onBeforeOpen,
+				},
+				"open": {
+					"handler": this.onOpen,
+				},
+			},
+		};
+
+	}
+
+	onInitComponent(sender, e)
+	{
+
+		console.log("@@@onInitComponent", this.name, sender, e);
+
+	}
+
+	onInit(sender, e)
+	{
+
+		console.log("@@@onInit", this.name, sender, e);
+
+	}
+
+	onSetup(sender, e)
+	{
+
+		console.log("@@@onSetup", this.name, sender, e);
+
+	}
+
+	onBeforeOpen(sender, e)
+	{
+
+		console.log("@@@onBeforeOpen", this.name, sender, e);
+
+	}
+
+	onOpen(sender, e)
+	{
+
+		console.log("@@@onOpen", this.name, sender, e);
+
+		let settings = e.detail.options;
+
 		// Init a container
-		this.container = {};
-		this.container["app"] = this;
-		this.container["settings"] = settings;
-		this.container["appInfo"] = {};
-		this.container["sysInfo"] = {};
-		this.container["components"] = {};
-		this.container["resources"] = {};
-		this.container["masters"] = {};
-		this.container["preferences"] = settings["preferences"];
+		this._container["settings"] = settings;
+		this._container["appInfo"] = {};
+		this._container["sysInfo"] = {};
+		this._container["components"] = {};
+
+		this._container["masters"] = {};
+		this._container["preferences"] = {};
+		this._container["resources"] = {};
 
 		// Init system information
-		this.container["sysInfo"]["version"] = settings["defaults"]["apiVersion"];
-		this.container["sysInfo"]["baseUrl"] = settings["defaults"]["apiBaseUrl"];
+		this._container["sysInfo"]["version"] = settings["defaults"]["apiVersion"];
+		this._container["sysInfo"]["baseUrl"] = settings["defaults"]["apiBaseUrl"];
 
 		// Init application information
-		this.container["appInfo"]["version"] = settings["defaults"]["appVersion"];
-		this.container["appInfo"]["baseUrl"] = settings["defaults"]["appBaseUrl"];
+		this._container["appInfo"]["version"] = settings["defaults"]["appVersion"];
+		this._container["appInfo"]["baseUrl"] = settings["defaults"]["appBaseUrl"];
 
 		// Init loader
-		let loaderOptions = {"container": this.container};
-		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["className"], loaderOptions);
+		let loaderOptions = {"container": this._container};
+		this._container["loader"] = this.createObject(this._container["settings"]["loader"]["className"], loaderOptions);
 
 		// load services
-		this.container["loader"].loadServices();
+		this._container["loader"].loadServices();
+
+		// Init router
+		if (this._container["settings"]["router"])
+		{
+			let routerOptions = {"container": this._container};
+			let options = Object.assign({"container": this._container}, this._container["settings"]["router"]);
+			this._container["router"] = this.createObject(this._container["settings"]["router"]["className"], options);
+
+			this._container["loader"].loadApp(this._container["router"].routeInfo["specName"]);
+		}
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Methods
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Start the application.
-	 */
-	run()
-	{
-
-		// load preferences
-		this.container["loader"].loadPreferences();
-
-		// Init router
-		if (this.container["settings"]["router"])
-		{
-			let routerOptions = {"container": this.container};
-			let options = Object.assign({"container": this.container}, this.container["settings"]["router"]);
-			this.container["router"] = this.createObject(this.container["settings"]["router"]["className"], options);
-
-			this.container["loader"].loadApp(this.container["router"].routeInfo["specName"]);
-		}
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -100,6 +158,29 @@ export default class App
 	createObject(className, ...args)
 	{
 
+		let ret;
+
+		try
+		{
+			let c = Function("return (" + className + ")")();
+			ret = new c(...args);
+		}
+		catch
+		{
+			let c = window;
+			className.split(".").forEach((value) => {
+				c = c[value];
+				if (!c)
+				{
+					throw new NoClassError(`Class not found. className=${className}`);
+				}
+			});
+			ret = new c(...args);
+		}
+
+		return ret;
+
+		/*
 		let c = window;
 
 		className.split(".").forEach((value) => {
@@ -111,6 +192,7 @@ export default class App
 		});
 
 		return new c(...args);
+		*/
 
 	}
 
@@ -119,9 +201,9 @@ export default class App
 	/**
 	 * Check if the class exists.
 	 *
-	 * @param	{string}		className			Class name.
+	 * @param	{String}		className			Class name.
 	 *
-	 * @return  {bool}			True if exists.
+	 * @return  {Bool}			True if exists.
 	 */
 	isExistsClass(className)
 	{
@@ -140,6 +222,37 @@ export default class App
 		return ret;
 
 	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Check if the class exists.
+	 *
+	 * @param	{Array}			eventNames			Array of event names.
+	 * @param	{String}		title				Servce name.
+	 * @param	{Object}		manager				Servce manager.
+	 */
+	registerService(eventNames, title, manager)
+	{
+
+		for (let i = 0; i < eventNames.length; i++)
+		{
+			this.watchers[eventNames[i]][title] = manager;
+		}
+
+	}
+
+	/*
+	registerWatcher(eventNames, title, component)
+	{
+
+		for (let i = 0; i < eventNames.length; i++)
+		{
+			this.watchers[eventNames[i]][title] = component;
+		}
+
+	}
+	*/
 
 	// -------------------------------------------------------------------------
 	//  Privates
@@ -189,7 +302,7 @@ export default class App
 	{
 
 		window.addEventListener("_bm_component_init", (e) => {
-			e.detail.sender.container = this.container;
+			e.detail.sender.container = this._container;
 		});
 
 		window.addEventListener("_bm_component_ready", (e) => {
@@ -348,6 +461,12 @@ export default class App
 	__handleException(e)
 	{
 
+		Object.keys(this.watchers["error"]).forEach((key) => {
+			//this.watchers["error"][key].triggerEvent("error", e);
+			this.watchers["error"][key].handle(e);
+		});
+
+		/*
 		if (this.container["errorManager"] && this.container["errorManager"].plugins.length > 0)
 		{
 			this.container["errorManager"].handle(e);
@@ -356,8 +475,10 @@ export default class App
 		{
 //			console.error(e);
 		}
+		*/
 
 	}
 
 }
 
+customElements.define("bm-app", App);

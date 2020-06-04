@@ -48,11 +48,20 @@ export default class DefaultLoader
 	{
 
 		Object.keys(this.container["settings"]["services"]).forEach((key) => {
-			let className = this.container["settings"]["services"][key]["className"];
+			// Create manager
+			let className = ( this.container["settings"]["services"][key]["className"] ? this.container["settings"]["services"][key]["className"] : "BITSMIST.v1.ServiceManager" );
 			this.container[key] = this.container["app"].createObject(className, {"container":this.container});
-			Object.keys(this.container["settings"]["services"][key]["handlers"]).forEach((pluginName) => {
-				let options = this.container["settings"]["services"][key]["handlers"][pluginName];
-				this.container[key].add(pluginName, options);
+
+			// Watch
+			if (this.container["settings"]["services"][key]["watch"])
+			{
+				this.container["app"].registerService(this.container["settings"]["services"][key]["watch"], key, this.container[key]);
+			}
+
+			// Add handlers
+			Object.keys(this.container["settings"]["services"][key]["handlers"]).forEach((handlerName) => {
+				let options = this.container["settings"]["services"][key]["handlers"][handlerName];
+				this.container[key].add(handlerName, options);
 			});
 		});
 
@@ -82,7 +91,7 @@ export default class DefaultLoader
 				*/
 
 				// load resources
-				promises.push(this.loadResources(this.container["appInfo"]["spec"]["resources"]));
+	//			promises.push(this.loadResources(this.container["appInfo"]["spec"]["resources"]));
 
 				// load masters
 				promises.push(this.loadMasters(this.container["appInfo"]["spec"]["masters"]));
@@ -159,6 +168,7 @@ export default class DefaultLoader
 	loadPreferences()
 	{
 
+		/*
 		return new Promise((resolve, reject) => {
 			this.container["preferenceManager"].load().then((results) => {
 				if (results.length > 0)
@@ -168,6 +178,7 @@ export default class DefaultLoader
 				resolve();
 			});
 		})
+		*/
 
 	}
 

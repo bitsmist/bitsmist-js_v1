@@ -34,8 +34,6 @@ export default class DefaultRouter
 		this._routes;
 
 		this.__initRoutes(options["routes"]);
-
-		// Init pop state handling
 		this.__initPopState();
 
 	}
@@ -309,7 +307,6 @@ export default class DefaultRouter
 		else
 		{
 			let newRouteInfo = this.__loadRouteInfo(url);
-			console.log("@@@", this._routeInfo, newRouteInfo);
 
 			if (this._routeInfo["name"] != newRouteInfo["name"])
 			{

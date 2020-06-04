@@ -9,13 +9,14 @@
 // =============================================================================
 
 import FormUtil from '../util/form-util';
-import Component from './component';
+//import Component from './component';
+import Pad from './pad';
 
 // =============================================================================
 //	Form class
 // =============================================================================
 
-export default class Form extends Component
+export default class Form extends Pad
 {
 
 	// -------------------------------------------------------------------------

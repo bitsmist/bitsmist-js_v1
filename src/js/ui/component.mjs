@@ -9,7 +9,6 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
-import ResourceUtil from '../util/resource-util';
 import { NoNodeError, NotValidFunctionError } from '../error/errors';
 
 // =============================================================================
@@ -33,13 +32,14 @@ export default class Component extends HTMLElement
 
 		this._container;
 		this._templates = {};
+		/*
 		this._modalOptions;
 		this._modalResult;
 		this._modalPromise;
 		this._isModal = false;
+		*/
 		this._isOpen = false;
-		this._isHTMLElement = true;
-		this._element = ( this._isHTMLElement ? this : document.createElement("div") );
+		this._element = this;
 		this._options = Object.assign({}, this._getOptions());
 		this._options["templateName"] = this.getOption("templateName", this.getOption("name"));
 
@@ -52,24 +52,13 @@ export default class Component extends HTMLElement
 
 		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
-		if (this.getOption("resource"))
-		{
-			if (this._options["resource"] in this._container["resources"])
-			{
-				this._resource = this._container["resources"][this._options["resource"]];
-			}
-			else
-			{
-				this._resource = new ResourceUtil(this.getOption("resource"), {"container":this._container});
-			}
-		}
-
-		// Register preferences
-		this._container["preferenceManager"].register(this, this._preferences);
-
 		// Init event handlers
 		Object.keys(this._events).forEach((eventName) => {
 			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
+		});
+
+		this.trigger("_initComponent", this).then(() => {
+			return this.trigger("initComponent", this);
 		});
 
 	}
@@ -210,18 +199,20 @@ export default class Component extends HTMLElement
 			let sender = ( options["sender"] ? options["sender"] : this );
 
 			this._autoLoadTemplate(this.getOption("templateName")).then(() => {
+				return this.setup();
+			}).then(() => {
 				if (this.getOption("autoRefresh"))
 				{
 					return this.refresh();
 				}
 			}).then(() => {
-				return this.trigger("_beforeOpen", sender);
+				return this.trigger("_beforeOpen", sender, {"options":options});
 			}).then(() => {
-				return this.trigger("beforeOpen", sender);
+				return this.trigger("beforeOpen", sender, {"options":options});
 			}).then(() => {
-				return this.trigger("open", sender);
+				return this.trigger("open", sender, {"options":options});
 			}).then(() => {
-				return this.trigger("_open", sender);
+				return this.trigger("_open", sender, {"options":options});
 			}).then(() => {
 				this._initOnOpen();
 				console.debug(`Component.open(): Opened component. name=${this.name}`);
@@ -477,7 +468,7 @@ export default class Component extends HTMLElement
 
 		return new Promise((resolve, reject) => {
 			options = ( options ? options : {} );
-			let className = ( "class" in options ? options["class"] : pluginName );
+			let className = ( "className" in options ? options["className"] : pluginName );
 			let plugin = null;
 
 			options["container"] = this._container;
@@ -741,6 +732,10 @@ export default class Component extends HTMLElement
 			{
 				resolve();
 			}
+			else if (!this.getOption("path"))
+			{
+				resolve();
+			}
 			else
 			{
 				console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
@@ -752,6 +747,12 @@ export default class Component extends HTMLElement
 					return this.trigger("load", this);
 				}).then(() => {
 					return this.__appendTemplate(this.getOption("rootNode"), templateName);
+					/*
+				}).then(() => {
+					return this.setup();
+					*/
+				}).then(() => {
+					return this.trigger("init", this);
 				}).then(() => {
 					resolve();
 				});
@@ -880,10 +881,12 @@ export default class Component extends HTMLElement
 				return this.trigger("_append", this);
 			}).then(() => {
 				return this.trigger("append", this);
+				/*
 			}).then(() => {
 				return this.setup();
 			}).then(() => {
 				return this.trigger("init", this);
+				*/
 			}).then(() => {
 				resolve();
 			});
