@@ -65,7 +65,7 @@ export default class AjaxErrorHandler extends BaseErrorHandler
 							Object.keys(routeInfo["queryParameters"]).forEach((key) => {
 								routeInfo["queryParameters"][key] = routeInfo["queryParameters"][key].replace("@url@", location.href);
 							});
-							this.container["router"].open(routeInfo, {"jump":true});
+							this.container["router"].openRoute(routeInfo, {"jump":true});
 							break;
 							/*
 						case "transfer":
