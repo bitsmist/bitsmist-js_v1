@@ -12,8 +12,6 @@
 //	Service manager class
 // =============================================================================
 
-import 'proxy-polyfill';
-
 export default class ServiceManager
 {
 
