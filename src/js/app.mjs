@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import AjaxUtil from './util/ajax-util';
 import {NoClassError} from './error/errors';
 import Component from './ui/component';
 
@@ -30,9 +31,9 @@ export default class App extends Component
 
 		super();
 
-		// Init a container
-		this._container = {};
-		this._container["app"] = this;
+		this._app = this;
+		this._spec;
+		this._services = {};
 
 		this.__waitFor = {};
 		this.watchers = {};
@@ -44,6 +45,10 @@ export default class App extends Component
 
 	}
 
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
+
 	_getOptions()
 	{
 
@@ -51,179 +56,49 @@ export default class App extends Component
 			"name": "App",
 
 			"events": {
-				"initComponent": {
-					"handler": this.onInitComponent,
-				},
-				"init": {
-					"handler": this.onInit,
-				},
-				"setup": {
-					"handler": this.onSetup,
-				},
-				"beforeOpen": {
-					"handler": this.onBeforeOpen,
-				},
-				"open": {
-					"handler": this.onOpen,
-				},
 			},
+
+			"components": {
+			}
 		};
 
 	}
 
-	onInitComponent(sender, e)
+	// -------------------------------------------------------------------------
+
+	run(settings)
 	{
 
-		console.log("@@@onInitComponent", this.name, sender, e);
-
-	}
-
-	onInit(sender, e)
-	{
-
-		console.log("@@@onInit", this.name, sender, e);
-
-	}
-
-	onSetup(sender, e)
-	{
-
-		console.log("@@@onSetup", this.name, sender, e);
-
-	}
-
-	onBeforeOpen(sender, e)
-	{
-
-		console.log("@@@onBeforeOpen", this.name, sender, e);
-
-	}
-
-	onOpen(sender, e)
-	{
-
-		console.log("@@@onOpen", this.name, sender, e);
-
-		let settings = e.detail.options;
-
-		// Init a container
-		this._container["settings"] = settings;
-		this._container["appInfo"] = {};
-		this._container["sysInfo"] = {};
-		this._container["components"] = {};
-
-		this._container["masters"] = {};
-		this._container["preferences"] = {};
-		this._container["resources"] = {};
-
-		// Init system information
-		this._container["sysInfo"]["version"] = settings["defaults"]["apiVersion"];
-		this._container["sysInfo"]["baseUrl"] = settings["defaults"]["apiBaseUrl"];
-
-		// Init application information
-		this._container["appInfo"]["version"] = settings["defaults"]["appVersion"];
-		this._container["appInfo"]["baseUrl"] = settings["defaults"]["appBaseUrl"];
-
-		// Init loader
-		let loaderOptions = {"container": this._container};
-		this._container["loader"] = this.createObject(this._container["settings"]["loader"]["className"], loaderOptions);
+		this._settings = settings;
 
 		// load services
-		this._container["loader"].loadServices();
+		this.loadServices();
 
 		// Init router
-		if (this._container["settings"]["router"])
+		if (this._settings["router"])
 		{
-			let routerOptions = {"container": this._container};
-			let options = Object.assign({"container": this._container}, this._container["settings"]["router"]);
-			this._container["router"] = this.createObject(this._container["settings"]["router"]["className"], options);
-
-			this._container["loader"].loadApp(this._container["router"].routeInfo["specName"]);
+			let options = Object.assign({"app": this._app}, this._settings["router"]);
+			this._router = this._createObject(this._settings["router"]["className"], options);
 		}
+
+		let specName = this._router.routeInfo["specName"];
+		this.loadSpec(specName).then((spec) => {
+			this._spec = spec;
+
+			this._router.__initRoutes(spec["routes"].concat(this._settings["router"]["routes"]));
+
+			Object.keys(spec["components"]).forEach((key) => {
+				this._components[key] = spec["components"][key];
+			});
+
+			this.open();
+		});
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Instantiate the component.
-	 *
-	 * @param	{String}		className			Class name.
-	 * @param	{Object}		options				Options for the component.
-	 *
-	 * @return  {Object}		Initaiated object.
-	 */
-	createObject(className, ...args)
-	{
-
-		let ret;
-
-		try
-		{
-			let c = Function("return (" + className + ")")();
-			ret = new c(...args);
-		}
-		catch
-		{
-			let c = window;
-			className.split(".").forEach((value) => {
-				c = c[value];
-				if (!c)
-				{
-					throw new NoClassError(`Class not found. className=${className}`);
-				}
-			});
-			ret = new c(...args);
-		}
-
-		return ret;
-
-		/*
-		let c = window;
-
-		className.split(".").forEach((value) => {
-			c = c[value];
-			if (!c)
-			{
-				throw new NoClassError(`Class not found. className=${className}`);
-			}
-		});
-
-		return new c(...args);
-		*/
-
-	}
-
-    // -------------------------------------------------------------------------
-
-	/**
-	 * Check if the class exists.
-	 *
-	 * @param	{String}		className			Class name.
-	 *
-	 * @return  {Bool}			True if exists.
-	 */
-	isExistsClass(className)
-	{
-
-		let ret = true;
-		let c = window;
-
-		className.split(".").forEach((value) => {
-			c = c[value];
-			if (!c)
-			{
-				ret = false;
-			}
-		});
-
-		return ret;
-
-	}
-
-    // -------------------------------------------------------------------------
 
 	/**
 	 * Check if the class exists.
@@ -254,8 +129,6 @@ export default class App extends Component
 	}
 	*/
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
@@ -294,6 +167,8 @@ export default class App extends Component
 	}
 
 	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Init error handling.
@@ -302,7 +177,9 @@ export default class App extends Component
 	{
 
 		window.addEventListener("_bm_component_init", (e) => {
-			e.detail.sender.container = this._container;
+			e.detail.sender._app = this;
+			e.detail.sender._router = this._router;
+			e.detail.sender._settings = this._settings;
 		});
 
 		window.addEventListener("_bm_component_ready", (e) => {
@@ -476,6 +353,166 @@ export default class App extends Component
 //			console.error(e);
 		}
 		*/
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load services.
+	 */
+	loadServices()
+	{
+
+		Object.keys(this._settings["services"]).forEach((key) => {
+			// Create manager
+			let className = ( this._settings["services"][key]["className"] ? this._settings["services"][key]["className"] : "BITSMIST.v1.ServiceManager" );
+			this._services[key] = this._createObject(className, {"app":this});
+
+			// Watch
+			if (this._settings["services"][key]["watch"])
+			{
+				this.registerService(this._settings["services"][key]["watch"], key, this._services[key]);
+			}
+
+			// Add handlers
+			Object.keys(this._settings["services"][key]["handlers"]).forEach((handlerName) => {
+				let options = this._settings["services"][key]["handlers"][handlerName];
+				this._services[key].add(handlerName, options);
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the spec file for this page.
+	 *
+	 * @param	{String}		specName			Spec name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	loadSpec(specName)
+	{
+
+		let basePath = this._router["options"]["options"]["specs"];
+		let urlCommon = basePath + "common.js";
+		let url = basePath + specName + ".js";
+		let spec;
+		let specCommon;
+		let specMerged;
+
+		return new Promise((resolve, reject) => {
+			let promises = [];
+
+			// Load specs
+			promises.push(this.__loadSpecFile(urlCommon, "{}"));
+			promises.push(this.__loadSpecFile(url));
+
+			Promise.all(promises).then((result) => {
+				// Convert to json
+				try
+				{
+					specCommon = JSON.parse(result[0]);
+					spec = JSON.parse(result[1]);
+				}
+				catch(e)
+				{
+					throw new Error(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
+				}
+
+				// Merge common spec, spec and settings
+				specMerged = this.__deepMerge(specCommon, spec);
+				specMerged = this.__mergeSettings(specMerged, this._settings);
+
+				resolve(specMerged);
+			});
+		});
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Load spec file.
+	 *
+	 * @param	{String}		url					Spec file url.
+	 * @param	{String}		defaultResponse		Response when error.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	__loadSpecFile(url, defaultResponse)
+	{
+
+		return new Promise((resolve, reject) => {
+			let response;
+
+			AjaxUtil.ajaxRequest({"url":url, "method":"GET"}).then((xhr) => {
+				response = xhr.responseText;
+				resolve(response);
+			}).catch((xhr) => {
+				if (defaultResponse)
+				{
+					response = defaultResponse;
+					resolve(response);
+				}
+			});
+		});
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Merge settings to spec.
+	 *
+	 * @param	{Object}		spec					Spec.
+	 * @param	{Object}		settings				Settings.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
+	__mergeSettings(spec, settings)
+	{
+
+		Object.keys(spec).forEach((key) => {
+			Object.keys(spec[key]).forEach((componentName) => {
+				if (key in settings && componentName in settings[key])
+				{
+					spec[key][componentName] = this.__mergeSettings(settings[key][componentName], spec[key][componentName]);
+				}
+			});
+		});
+
+		return spec;
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Deep merge.
+	 *
+	 * @param	{Object}		arr1					Array1.
+	 * @param	{Object}		arr2					Array2.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
+	__deepMerge(arr1, arr2)
+	{
+
+		Object.keys(arr2).forEach((key) => {
+			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
+			{
+				this.__deepMerge(arr1[key], arr2[key]);
+			}
+			else
+			{
+				arr1[key] = arr2[key];
+			}
+		});
+
+		return arr1;
 
 	}
 

@@ -37,17 +37,20 @@ export default class Pad extends Component
 		this._modalPromise;
 		this._isModal = false;
 
-		this.triggerHtmlEvent(window, "_bm_component_init", this);
+//		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
 		if (this.getOption("resource"))
 		{
+			/*
 			if (this._options["resource"] in this._container["resources"])
 			{
 				this._resource = this._container["resources"][this._options["resource"]];
 			}
 			else
+			*/
 			{
-				this._resource = new ResourceUtil(this.getOption("resource"), {"container":this._container});
+				//this._resource = new ResourceUtil(this.getOption("resource"), {"container":this._container});
+				this._resource = new ResourceUtil(this.getOption("resource"), {"router":this._router, "settings":this._settings, "baseUrl":this._settings["defaults"]["apiBaseUrl"], "version":this._settings["defaults"]["apiVersion"] + "-" + this._settings["defaults"]["appVersion"]});
 			}
 		}
 
