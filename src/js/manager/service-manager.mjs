@@ -27,8 +27,16 @@ export default class ServiceManager
 	constructor(options)
 	{
 
-		this.container = options["container"];
-		this.plugins = [];
+		this._options = ( options ? options : {} );
+		this._app = options["app"];
+		this._services;
+		this._index;
+
+		// Load services
+		if (options["services"])
+		{
+			this.loadServices(options["services"]);
+		}
 
 		return new Proxy(this, {
 			get: (target, property) => {
@@ -52,23 +60,56 @@ export default class ServiceManager
 	// -------------------------------------------------------------------------
 
 	/**
-     * Add a plugin.
+     * Add a service.
      *
-	 * @param	{String}		pluginName			Plugin name.
-	 * @param	{Object}		options				Options for the plugin.
+	 * @param	{String}		serviceName			Service name.
+	 * @param	{Object}		options				Options for the service.
      */
-	add(pluginName, options)
+	add(serviceName, options)
 	{
 
 		let newOptions = Object.assign({}, options);
-		let className =  ("className" in options ? options["className"] : pluginName);
-		if (!("container" in options))
-		{
-			newOptions["container"] = this.container;
-		}
+		let className =  ("className" in options ? options["className"] : serviceName);
+		newOptions["app"] = this._app;
 
-		let component = this.container["app"].createObject(className, newOptions);
-		this.plugins.push(component);
+		let component = this._app._createObject(className, newOptions); //@@@fix
+		this._services.push(component);
+		this._index[serviceName] = component;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Add a service.
+     *
+	 * @param	{Object}		settings			Service settings.
+     */
+	loadServices(settings)
+	{
+
+		// Clear
+		this._services = [];
+		this._index = {};
+
+		// Add services
+		Object.keys(settings).forEach((key) => {
+			this.add(key, settings[key]);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Get service.
+     *
+	 * @param	{String}		serviceName			Service name.
+     */
+	getService(serviceName)
+	{
+
+		return this._index[serviceName];
 
 	}
 
@@ -77,26 +118,27 @@ export default class ServiceManager
 	// -------------------------------------------------------------------------
 
 	/**
-     * Call plugin method.
+     * Call service method.
      *
 	 * @param	{String}		methodName			Method name.
 	 * @param	{Array}			args				Arguments to method.
-	 * @param	{Function}		filter				Filter function.
 	 *
 	 * @return  {Promise}		Promise.
      */
-	_callMethod(methodName, args, filter)
+	_callMethod(methodName, args)
 	{
+
+		let filter = ( args.length > 1 && typeof args[1] == "function" ? args[1] : undefined );
 
 		return new Promise((resolve, reject) => {
 			let promises = [];
-			for (let i = 0; i < this.plugins.length; i++)
+			for (let i = 0; i < this._services.length; i++)
 			{
-				if (typeof this.plugins[i][methodName] == "function")
+				if (typeof this._services[i][methodName] == "function")
 				{
-					if (!filter || (typeof filter == "function" && filter(this.plugins[i])))
+					if (!filter || filter(this._services[i]))
 					{
-						promises.push(this.plugins[i][methodName].apply(this.plugins[i], args));
+						promises.push(this._services[i][methodName].apply(this._services[i], args));
 					}
 				}
 			}

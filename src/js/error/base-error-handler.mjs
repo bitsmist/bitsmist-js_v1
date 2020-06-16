@@ -28,7 +28,7 @@ export default class BaseErrorHandler
 	{
 
 		this.options = ( options ? options : {} );
-		this.container = options["container"];
+		this._app = options["app"];
 		this.events = options["events"];
 		this.target = [];
 

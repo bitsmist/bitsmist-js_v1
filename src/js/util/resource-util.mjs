@@ -31,8 +31,9 @@ export default class ResourceUtil
 	{
 
 		this._name = resourceName;
-		this._container = options["container"];
 		this._options = options;
+		this._router = options["router"];
+		this._settings = options["settings"];
 		this._data;
 		this._parameters = {};
 
@@ -215,10 +216,10 @@ export default class ResourceUtil
 
 		let result;
 
-		if ("settings" in this._container && "ajaxUtil" in this._container["settings"] && target in this._container["settings"]["ajaxUtil"])
+		if ("ajaxUtil" in this._settings && target in this._settings["ajaxUtil"])
 		{
-			let options1 = ("COMMON" in this._container["settings"]["ajaxUtil"][target] ? this._container["settings"]["ajaxUtil"][target]["COMMON"] : {} );
-			let options2 = (method in this._container["settings"]["ajaxUtil"][target] ? this._container["settings"]["ajaxUtil"][target][method] : {} );
+			let options1 = ("COMMON" in this._settings["ajaxUtil"][target] ? this._settings["ajaxUtil"][target]["COMMON"] : {} );
+			let options2 = (method in this._settings["ajaxUtil"][target] ? this._settings["ajaxUtil"][target][method] : {} );
 
 			result = Object.assign(options1, options2);
 		}
@@ -241,7 +242,7 @@ export default class ResourceUtil
 	__buildApiUrl(resourceName, id, parameters)
 	{
 
-		let url = this._container["sysInfo"]["baseUrl"] + "/v" + this._container["sysInfo"]["version"] + "-" + this._container["appInfo"]["version"] + "/" +  resourceName + "/" + id + ".json" + this._container["router"].buildUrlQuery(parameters);
+		let url = this._options["baseUrl"] + "/v" + this._options["version"] + "/" +  resourceName + "/" + id + ".json" + this._router.buildUrlQuery(parameters);
 
 		return url
 

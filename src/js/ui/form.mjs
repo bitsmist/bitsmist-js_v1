@@ -142,7 +142,7 @@ export default class Form extends Pad
 			}).then(() => {
 				return this.trigger("beforeFill", sender);
 			}).then(() => {
-				FormUtil.setFields(this._element, this.item, this._container["masters"]);
+				FormUtil.setFields(this._element, this.item, this.masters); //@@@fix
 				return this.trigger("fill", sender);
 			}).then(() => {
 				resolve();

@@ -9,7 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from './util/ajax-util';
-import {NoClassError} from './error/errors';
+//import {NoClassError} from './error/errors';
 import Component from './ui/component';
 
 // =============================================================================
@@ -33,15 +33,42 @@ export default class App extends Component
 
 		this._app = this;
 		this._spec;
-		this._services = {};
+		/*
+		this._serviceManagers = {};
+		this._serviceManagers["error"] = this._createObject("BITSMIST.v1.ServiceManager", {"app":this});
+		this._serviceManagers["preference"] = this._createObject("BITSMIST.v1.ServiceManager", {"app":this});
+		*/
+		// this._serviceManagers["error"] = {};
+		// this._serviceManagers["preference"] = {};
+		//this._serviceManager = this._createObject("BITSMIST.v1.ServiceManager", {"app":this});
+		this._serviceManager;
+		this._masters = {};
 
 		this.__waitFor = {};
+
+		/*
 		this.watchers = {};
 		this.watchers["error"] = {};
 		this.watchers["preference"] = {};
+		*/
 
-		// Init error handling
-		this.__initError();
+		this.__initGlobalEventListener();
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	/**
+     * Service manager.
+     *
+	 * @type	{Object}
+     */
+	get serviceManager()
+	{
+
+		return this._serviceManager;
 
 	}
 
@@ -56,11 +83,49 @@ export default class App extends Component
 			"name": "App",
 
 			"events": {
+				"setup": {
+					"handler": this.onSetup,
+				}
 			},
 
 			"components": {
 			}
 		};
+
+	}
+
+	onSetup(sender, e)
+	{
+
+		/*
+		this._serviceManagers["preference"].setup({
+			"newPreferences":e.detail.newPreferences,
+			"currentPreferences":e.detail.currentPreferences
+		});
+
+		this._serviceManagers["preference"].save(e.detail.newPreferences);
+		*/
+
+		this._serviceManager.setup({
+			"newPreferences":e.detail.newPreferences,
+			"currentPreferences":e.detail.currentPreferences
+		}, (service) => {
+			return service.options["type"] == "preference"
+		});
+		this._serviceManager.save(e.detail.newPreferences);
+
+		/*
+		Object.keys(this.watchers["preference"]).forEach((key) => {
+			this.watchers["preference"][key].setup({
+				"newPreferences":e.detail.newPreferences,
+				"currentPreferences":e.detail.currentPreferences
+			});
+		});
+
+		Object.keys(this.watchers["preference"]).forEach((key) => {
+			this.watchers["preference"][key].save(e.detail.newPreferences);
+		});
+		*/
 
 	}
 
@@ -72,7 +137,9 @@ export default class App extends Component
 		this._settings = settings;
 
 		// load services
-		this.loadServices();
+		//this.loadServices();
+		//this._serviceManager.load(this._settings["services"]);
+		this._serviceManager = this._createObject("BITSMIST.v1.ServiceManager", {"app":this, "services":settings["services"]});
 
 		// Init router
 		if (this._settings["router"])
@@ -81,18 +148,52 @@ export default class App extends Component
 			this._router = this._createObject(this._settings["router"]["className"], options);
 		}
 
-		let specName = this._router.routeInfo["specName"];
-		this.loadSpec(specName).then((spec) => {
-			this._spec = spec;
-
-			this._router.__initRoutes(spec["routes"].concat(this._settings["router"]["routes"]));
-
-			Object.keys(spec["components"]).forEach((key) => {
-				this._components[key] = spec["components"][key];
-			});
-
-			this.open();
+		// load preference
+		/*
+		this._serviceManagers["preference"].load().then((preferences) => {
+			for (let i = 0; i < preferences.length; i++)
+			{
+				this._settings["preferences"] = Object.assign(this._settings["preferences"], preferences[i]);
+			}
 		});
+		*/
+
+		this._serviceManager.load(null, (service) => {
+			return service.options["type"] == "preference"
+		}).then((preferences) => {
+			for (let i = 0; i < preferences.length; i++)
+			{
+				this._settings["preferences"] = Object.assign(this._settings["preferences"], preferences[i]);
+			}
+		});
+
+		/*
+		Object.keys(this.watchers["preference"]).forEach((key) => {
+			this.watchers["preference"][key].load().then((preferences) => {
+				for (let i = 0; i < preferences.length; i++)
+				{
+					this._settings["preferences"] = Object.assign(this._settings["preferences"], preferences[i]);
+				}
+			});
+		});
+		*/
+
+		// load spec
+		let specName = this._router.routeInfo["specName"];
+		if (specName)
+		{
+			this.loadSpec(specName).then((spec) => {
+				this._spec = spec;
+
+				this._router.__initRoutes(spec["routes"].concat(this._settings["router"]["routes"]));
+
+				Object.keys(spec["components"]).forEach((key) => {
+					this._components[key] = spec["components"][key];
+				});
+
+				this.open();
+			});
+		}
 
 	}
 
@@ -107,23 +208,31 @@ export default class App extends Component
 	 * @param	{String}		title				Servce name.
 	 * @param	{Object}		manager				Servce manager.
 	 */
+	/*
 	registerService(eventNames, title, manager)
 	{
 
 		for (let i = 0; i < eventNames.length; i++)
 		{
-			this.watchers[eventNames[i]][title] = manager;
+			this._serviceManagers[eventNames[i]][title] = manager;
 		}
 
 	}
+	*/
 
 	/*
-	registerWatcher(eventNames, title, component)
+	registerService(serviceName, component, options)
+	//registerServiceClient(serviceName, component, options)
 	{
 
-		for (let i = 0; i < eventNames.length; i++)
+		console.log("@@@registerService:", serviceName, component.name, options);
+	//	this._serviceManagers[""][serviceName].
+		let service = this._serviceManager.get(serviceName);
+		console.log("@@@registerService:", service);
+
+		if (service && service.register)
 		{
-			this.watchers[eventNames[i]][title] = component;
+			service.register(component, options);
 		}
 
 	}
@@ -173,7 +282,7 @@ export default class App extends Component
 	/**
 	 * Init error handling.
 	 */
-	__initError()
+	__initGlobalEventListener()
 	{
 
 		window.addEventListener("_bm_component_init", (e) => {
@@ -338,9 +447,18 @@ export default class App extends Component
 	__handleException(e)
 	{
 
-		Object.keys(this.watchers["error"]).forEach((key) => {
+		/*
+		//Object.keys(this.watchers["error"]).forEach((key) => {
+		Object.keys(this._serviceManagers["error"]).forEach((key) => {
 			//this.watchers["error"][key].triggerEvent("error", e);
-			this.watchers["error"][key].handle(e);
+			//this.watchers["error"][key].handle(e);
+			this._serviceManagers["error"][key].handle(e);
+		});
+		*/
+
+	//	this._serviceManagers["error"].handle(e);
+		this._serviceManager.handle(e, (service) => {
+			return service.options["type"] == "error";
 		});
 
 		/*
@@ -361,28 +479,68 @@ export default class App extends Component
 	/**
 	 * Load services.
 	 */
+	/*
 	loadServices()
 	{
 
 		Object.keys(this._settings["services"]).forEach((key) => {
 			// Create manager
 			let className = ( this._settings["services"][key]["className"] ? this._settings["services"][key]["className"] : "BITSMIST.v1.ServiceManager" );
-			this._services[key] = this._createObject(className, {"app":this});
+			this._serviceManagers[key] = this._createObject(className, {"app":this});
 
 			// Watch
-			if (this._settings["services"][key]["watch"])
+			if (this._settings["services"][key]["options"]["watch"])
 			{
-				this.registerService(this._settings["services"][key]["watch"], key, this._services[key]);
+				this.registerService(this._settings["services"][key]["options"]["watch"], key, this._serviceManagers[key]);
 			}
 
 			// Add handlers
 			Object.keys(this._settings["services"][key]["handlers"]).forEach((handlerName) => {
 				let options = this._settings["services"][key]["handlers"][handlerName];
-				this._services[key].add(handlerName, options);
+				this._serviceManagers[key].add(handlerName, options);
 			});
 		});
 
 	}
+	*/
+
+	/*
+	loadServices()
+	{
+
+		Object.keys(this._settings["services"]).forEach((key) => {
+			let type = this._settings["services"][key]["type"];
+
+			// Add handler
+			let options = this._settings["services"][key];
+			this._serviceManagers[type].add(key, options);
+		});
+
+	}
+	*/
+
+	/*
+	loadServices()
+	{
+
+		Object.keys(this._settings["services"]).forEach((key) => {
+			let options = this._settings["services"][key];
+			this._serviceManager.add(key, options);
+		});
+
+	}
+	*/
+
+	// registerService(eventNames, title, manager)
+	// {
+
+	// 	for (let i = 0; i < eventNames.length; i++)
+	// 	{
+	// 		this._serviceManagers[eventNames[i]][title] = manager;
+	// 	}
+
+	// }
+
 
 	// -------------------------------------------------------------------------
 

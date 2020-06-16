@@ -28,7 +28,6 @@ export default class ObserverPreferenceHandler
 	{
 
 		this.options = ( options ? options : {} );
-		this.container = options["container"];
 		this.targets = {};
 
 	}
@@ -48,7 +47,8 @@ export default class ObserverPreferenceHandler
 	register(component, options)
 	{
 
-		this.targets[component.hashCode] = {"object":component, "options":options};
+		console.log("@@@register", component.name, options);
+		this.targets[component.uniqueId] = {"object":component, "options":options};
 
 	}
 
@@ -64,13 +64,14 @@ export default class ObserverPreferenceHandler
 	setup(settings)
 	{
 
+//		console.log("@@@setup", "observer-preference-handler", settings, "@@@");
 		return new Promise((resolve, reject) => {
 			let promises = [];
 
-			Object.keys(this.targets).forEach((componentName) => {
-				if (this.__isTarget(settings, this.targets[componentName].options))
+			Object.keys(this.targets).forEach((componentId) => {
+				if (this.__isTarget(settings, this.targets[componentId].options["register"]))
 				{
-					promises.push(this.targets[componentName].object.setup(settings));
+					promises.push(this.targets[componentId].object.setup(settings));
 				}
 			});
 

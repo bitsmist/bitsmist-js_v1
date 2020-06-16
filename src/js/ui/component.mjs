@@ -9,7 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
-import { NoNodeError, NotValidFunctionError } from '../error/errors';
+import { NoClassError, NoNodeError, NotValidFunctionError } from '../error/errors';
 
 // =============================================================================
 //	Component class
@@ -37,9 +37,6 @@ export default class Component extends HTMLElement
 		this._settings;
 		*/
 
-//		this._waitFor = {};
-
-
 		this._templates = {};
 		/*
 		this._modalOptions;
@@ -56,8 +53,11 @@ export default class Component extends HTMLElement
 		this._elements = ( this._options["elements"] ? this._options["elements"] : {} );
 		this._plugins = ( this._options["plugins"] ? this._options["plugins"] : {} );
 		this._events = ( this._options["events"] ? this._options["events"] : {} );
+		this._services = ( this._options["services"] ? this._options["services"] : {} );
 		//this._preferences = ( this._options["preferences"] ? this._options["preferences"] : {} );
 		//this._resource;
+
+		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 
 		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
@@ -65,13 +65,6 @@ export default class Component extends HTMLElement
 		Object.keys(this._events).forEach((eventName) => {
 			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
 		});
-
-		/*
-		if (this.parent)
-		{
-			this.addEventHandler(this.parent, "componentReady", this.__waitFor);
-		}
-		*/
 
 		this.trigger("_initComponent", this).then(() => {
 			return this.trigger("initComponent", this);
@@ -116,14 +109,12 @@ export default class Component extends HTMLElement
      *
 	 * @type	{String}
      */
-	/*
 	get uniqueId()
 	{
 
-		return new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+		return this._uniqueId;
 
 	}
-	*/
 
 }
 
@@ -408,7 +399,7 @@ Component.prototype.addComponent = function(componentName, options)
 			{
 				return new Promise((resolve, reject) => {
 					this._createComponent(componentName, options).then((component) => {
-						component.parent = this;
+						component._parent = this;
 						this._components[componentName] = ( this._components[componentName] ? this._components[componentName] : {} );
 						this._components[componentName].object = component;
 						resolve();
@@ -609,44 +600,6 @@ Component.prototype.triggerHtmlEvent = function(element, eventName, sender, opti
 }
 
 // -----------------------------------------------------------------------------
-
-/**
- * Wait for components to be loaded.
- *
- * @param	{Array}			componentNames		Component names to wait.
- *
- * @return  {Array}			Promises.
- */
-Component.prototype.waitFor = function(componentNames)
-{
-
-	let promises = [];
-
-	for (let i = 0; i < componentNames.length; i++)
-	{
-		let promise;
-		if (!this._waitFor[componentNames[i]])
-		{
-			this._waitFor[componentNames[i]] = {};
-			promise = new Promise((resolve, reject) => {
-				this._waitFor[componentNames[i]]["resolve"] = resolve;
-			});
-			this._waitFor[componentNames[i]]["promise"] = promise;
-		}
-		else
-		{
-			promise = this._waitFor[componentNames[i]]["promise"];
-		}
-
-		promises.push(promise);
-	}
-
-	return promises;
-
-}
-
-
-// -----------------------------------------------------------------------------
 //  Callbacks
 // -----------------------------------------------------------------------------
 
@@ -660,7 +613,6 @@ Component.prototype.connectedCallback = function()
 
 	this.open().then(() => {
 		this.triggerHtmlEvent(window, "_bm_component_ready", this);
-		//this.trigger("componentReady", this);
 	});
 
 }
@@ -875,13 +827,20 @@ Component.prototype.__initOnAppendTemplate = function(sender, e)
 {
 
 	return new Promise((resolve, reject) => {
+		// Init services
+		Object.keys(this._services).forEach((serviceName) => {
+			let service = this._app.serviceManager.getService(serviceName);
+			this._services[serviceName].object = service;
+			if (service && typeof service.register == "function")
+			{
+				service.register(this, this._services[serviceName]);
+			}
+		});
+
 		// Init plugins
-		if (this._options["plugins"])
-		{
-			Object.keys(this._options["plugins"]).forEach((pluginName) => {
-				this.addPlugin(pluginName, this._options["plugins"][pluginName]);
-			});
-		}
+		Object.keys(this._plugins).forEach((pluginName) => {
+			this.addPlugin(pluginName, this._options["plugins"][pluginName]);
+		});
 
 		let chain = Promise.resolve();
 
@@ -900,7 +859,7 @@ Component.prototype.__initOnAppendTemplate = function(sender, e)
 		// Init HTML event handlers
 		chain.then(() => {
 			Object.keys(this._elements).forEach((elementName) => {
-					this._initHtmlEvents(elementName);
+				this._initHtmlEvents(elementName);
 			});
 
 			resolve();
@@ -1023,7 +982,6 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 		}).then(() => {
 			return new Promise((resolve, reject) => {
 				let promises = this._app.waitFor(this.getOption("waitFor", []))
-				//let promises = this.waitFor(this.getOption("waitFor", []))
 				Promise.all(promises).then(() => {
 					resolve();
 				});
@@ -1257,24 +1215,6 @@ Component.prototype.__loadTemplate = function(templateName, path)
 	});
 
 }
-
-/*
-Component.prototype.__waitFor = function(sender, e)
-{
-
-	console.log("@@@__waitFor", this.name, sender, e);
-
-	if (this._waitFor[e.detail.sender.name] && this._waitFor[e.detail.sender.name]["resolve"])
-	{
-		this._waitFor[e.detail.sender.name]["resolve"]();
-	}
-	else if (!this._waitFor[e.detail.sender.name])
-	{
-		this._waitFor[e.detail.sender.name] = {"promise": Promise.resolve()};
-	}
-
-}
-*/
 
 // -----------------------------------------------------------------------------
 
