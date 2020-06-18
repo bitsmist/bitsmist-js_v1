@@ -9,8 +9,8 @@
 // =============================================================================
 
 import AjaxUtil from './util/ajax-util';
-//import {NoClassError} from './error/errors';
 import Component from './ui/component';
+import ServiceManager from './manager/service-manager';
 
 // =============================================================================
 //	App class
@@ -26,33 +26,21 @@ export default class App extends Component
 	/**
 	 * Constructor.
 	 */
-	constructor()
+	constructor(settings)
 	{
 
 		super();
 
 		this._app = this;
+		this._serviceManager = new ServiceManager({"app":this});
+		this._settings = ( settings ? settings : {} );
 		this._spec;
-		/*
-		this._serviceManagers = {};
-		this._serviceManagers["error"] = this._createObject("BITSMIST.v1.ServiceManager", {"app":this});
-		this._serviceManagers["preference"] = this._createObject("BITSMIST.v1.ServiceManager", {"app":this});
-		*/
-		// this._serviceManagers["error"] = {};
-		// this._serviceManagers["preference"] = {};
-		//this._serviceManager = this._createObject("BITSMIST.v1.ServiceManager", {"app":this});
-		this._serviceManager;
-		this._masters = {};
+		this.__waiting = [];
+		this.__loaded = [];
 
-		this.__waitFor = {};
-
-		/*
-		this.watchers = {};
-		this.watchers["error"] = {};
-		this.watchers["preference"] = {};
-		*/
-
-		this.__initGlobalEventListener();
+		// Init global listeners
+		this.__initComponentListeners();
+		this.__initErrorListeners();
 
 	}
 
@@ -76,70 +64,75 @@ export default class App extends Component
 	//  Protected
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Get component options.  Need to override.
+	 */
 	_getOptions()
 	{
 
 		return {
 			"name": "App",
+			"templateName": "",
 
 			"events": {
 				"setup": {
 					"handler": this.onSetup,
 				}
 			},
-
-			"components": {
-			}
 		};
 
 	}
 
+	// -------------------------------------------------------------------------
+	//  Event Handler
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Setup event handler.
+	 *
+	 * @param   {Object}        sender              Sender.
+	 * @param   {Object}        e                   Event info.
+	 */
 	onSetup(sender, e)
 	{
-
-		/*
-		this._serviceManagers["preference"].setup({
-			"newPreferences":e.detail.newPreferences,
-			"currentPreferences":e.detail.currentPreferences
-		});
-
-		this._serviceManagers["preference"].save(e.detail.newPreferences);
-		*/
 
 		this._serviceManager.setup({
 			"newPreferences":e.detail.newPreferences,
 			"currentPreferences":e.detail.currentPreferences
 		}, (service) => {
-			return service.options["type"] == "preference"
-		});
-		this._serviceManager.save(e.detail.newPreferences);
-
-		/*
-		Object.keys(this.watchers["preference"]).forEach((key) => {
-			this.watchers["preference"][key].setup({
-				"newPreferences":e.detail.newPreferences,
-				"currentPreferences":e.detail.currentPreferences
-			});
+			return service.options["serviceType"] == "preference"
 		});
 
-		Object.keys(this.watchers["preference"]).forEach((key) => {
-			this.watchers["preference"][key].save(e.detail.newPreferences);
+		this._serviceManager.save(e.detail.newPreferences, (service) => {
+			return service.options["serviceType"] == "preference"
 		});
-		*/
 
 	}
 
 	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
 
-	run(settings)
+	/**
+	 * Start application.
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Array}			Promises.
+	 */
+	//run(settings)
+	run()
 	{
 
-		this._settings = settings;
+		/*
+		if (settings)
+		{
+			this._settings = settings;
+		}
+		*/
 
 		// load services
-		//this.loadServices();
-		//this._serviceManager.load(this._settings["services"]);
-		this._serviceManager = this._createObject("BITSMIST.v1.ServiceManager", {"app":this, "services":settings["services"]});
+		this._serviceManager.loadServices(this._settings["services"]);
 
 		// Init router
 		if (this._settings["router"])
@@ -149,34 +142,14 @@ export default class App extends Component
 		}
 
 		// load preference
-		/*
-		this._serviceManagers["preference"].load().then((preferences) => {
-			for (let i = 0; i < preferences.length; i++)
-			{
-				this._settings["preferences"] = Object.assign(this._settings["preferences"], preferences[i]);
-			}
-		});
-		*/
-
 		this._serviceManager.load(null, (service) => {
-			return service.options["type"] == "preference"
+			return service.options["serviceType"] == "preference"
 		}).then((preferences) => {
 			for (let i = 0; i < preferences.length; i++)
 			{
 				this._settings["preferences"] = Object.assign(this._settings["preferences"], preferences[i]);
 			}
 		});
-
-		/*
-		Object.keys(this.watchers["preference"]).forEach((key) => {
-			this.watchers["preference"][key].load().then((preferences) => {
-				for (let i = 0; i < preferences.length; i++)
-				{
-					this._settings["preferences"] = Object.assign(this._settings["preferences"], preferences[i]);
-				}
-			});
-		});
-		*/
 
 		// load spec
 		let specName = this._router.routeInfo["specName"];
@@ -198,80 +171,55 @@ export default class App extends Component
 	}
 
 	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the class exists.
+	 * Set settings.
 	 *
-	 * @param	{Array}			eventNames			Array of event names.
-	 * @param	{String}		title				Servce name.
-	 * @param	{Object}		manager				Servce manager.
+	 * @param	{String}		settingName			Setting name.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Array}			Promises.
 	 */
-	/*
-	registerService(eventNames, title, manager)
+	setSettings(settingName, settings)
 	{
 
-		for (let i = 0; i < eventNames.length; i++)
-		{
-			this._serviceManagers[eventNames[i]][title] = manager;
-		}
+		this._settings[settingName] = settings;
 
 	}
-	*/
-
-	/*
-	registerService(serviceName, component, options)
-	//registerServiceClient(serviceName, component, options)
-	{
-
-		console.log("@@@registerService:", serviceName, component.name, options);
-	//	this._serviceManagers[""][serviceName].
-		let service = this._serviceManager.get(serviceName);
-		console.log("@@@registerService:", service);
-
-		if (service && service.register)
-		{
-			service.register(component, options);
-		}
-
-	}
-	*/
 
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Wait for components to be loaded.
 	 *
-	 * @param	{Array}			componentNames		Component names to wait.
+	 * @param	{Array}			waitlist			Components to wait.
 	 *
 	 * @return  {Array}			Promises.
 	 */
-	waitFor(componentNames)
+	waitFor(waitlist)
 	{
 
-		let promises = [];
+		let promise;
 
-		for (let i = 0; i < componentNames.length; i++)
+		if (!waitlist || this.__isLoaded(waitlist))
 		{
-			let promise;
-			if (!this.__waitFor[componentNames[i]])
-			{
-				this.__waitFor[componentNames[i]] = {};
-				promise = new Promise((resolve, reject) => {
-					this.__waitFor[componentNames[i]]["resolve"] = resolve;
-				});
-				this.__waitFor[componentNames[i]]["promise"] = promise;
-			}
-			else
-			{
-				promise = this.__waitFor[componentNames[i]]["promise"];
-			}
+			promise = Promise.resolve();
+		}
+		else
+		{
+			let waitInfo = {};
+			waitInfo["waitlist"] = waitlist;
 
-			promises.push(promise);
+			promise = new Promise((resolve, reject) => {
+				waitInfo["resolve"] = resolve;
+				waitInfo["reject"] = reject;
+			});
+			waitInfo["promise"] = promise;
+
+			this.__waiting.push(waitInfo);
 		}
 
-		return promises;
+		return promise;
 
 	}
 
@@ -280,9 +228,47 @@ export default class App extends Component
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init error handling.
+	 * Check if components are loaded.
+	 *
+	 * @param	{Array}			waitlist			Components to wait.
+	 *
+	 * @return  {Array}			Promises.
 	 */
-	__initGlobalEventListener()
+	__isLoaded(waitlist)
+	{
+
+		let result = true;
+
+		for (let i = 0; i < waitlist.length; i++)
+		{
+			let match = false;
+
+			for (let j = 0; j < this.__loaded.length; j++)
+			{
+				if (this.__loaded[j].name == waitlist[i]["componentName"])
+				{
+					match = true;
+					break;
+				}
+			}
+
+			if (!match)
+			{
+				result = false;
+				break;
+			}
+		}
+
+		return result;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init component handling listeners.
+	 */
+	__initComponentListeners()
 	{
 
 		window.addEventListener("_bm_component_init", (e) => {
@@ -292,15 +278,26 @@ export default class App extends Component
 		});
 
 		window.addEventListener("_bm_component_ready", (e) => {
-			if (this.__waitFor[e.detail.sender.name] && this.__waitFor[e.detail.sender.name]["resolve"])
+			this.__loaded.push(e.detail.sender);
+
+			for (let i = 0; i < this.__waiting.length; i++)
 			{
-				this.__waitFor[e.detail.sender.name]["resolve"]();
-			}
-			else if (!this.__waitFor[e.detail.sender.name])
-			{
-				this.__waitFor[e.detail.sender.name] = {"promise": Promise.resolve()};
+				if (this.__isLoaded(this.__waiting[i]["waitlist"]))
+				{
+					this.__waiting[i].resolve();
+				}
 			}
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init error handling listeners.
+	 */
+	__initErrorListeners()
+	{
 
 		window.addEventListener("unhandledrejection", (error) => {
 			let e = {};
@@ -373,57 +370,19 @@ export default class App extends Component
 		let name;
 		let e;
 
-		if (error.reason)
-		{
-			e = error.reason;
-		}
-		else if (error.error)
-		{
-			e = error.error;
-		}
-		else
-		{
-			e = error.message;
-		}
+		if (error.reason)		e = error.reason;
+		else if (error.error)	e = error.error;
+		else					e = error.message;
 
-		if (e.name)
-		{
-			name = e.name;
-		}
-		else if (e instanceof TypeError)
-		{
-			name = "TypeError";
-		}
-		else if (e instanceof XMLHttpRequest)
-		{
-			name = "AjaxError";
-		}
-		else if (e instanceof EvalError)
-		{
-			name = "EvalError";
-		}
-		/*
-		else if (e instanceof InternalError)
-		{
-			name = "InternalError";
-		}
-		*/
-		else if (e instanceof RangeError)
-		{
-			name = "RangeError";
-		}
-		else if (e instanceof ReferenceError)
-		{
-			name = "ReferenceError";
-		}
-		else if (e instanceof SyntaxError)
-		{
-			name = "SyntaxError";
-		}
-		else if (e instanceof URIError)
-		{
-			name = "URIError";
-		}
+		if (e.name)									name = e.name;
+		else if (e instanceof TypeError)			name = "TypeError";
+		else if (e instanceof XMLHttpRequest)		name = "AjaxError";
+		else if (e instanceof EvalError)			name = "EvalError";
+		else if (e instanceof InternalError)		name = "InternalError";
+		else if (e instanceof RangeError)			name = "RangeError";
+		else if (e instanceof ReferenceError)		name = "ReferenceError";
+		else if (e instanceof SyntaxError)			name = "SyntaxError";
+		else if (e instanceof URIError)				name = "URIError";
 		else
 		{
 			let pos = e.indexOf(":");
@@ -447,100 +406,11 @@ export default class App extends Component
 	__handleException(e)
 	{
 
-		/*
-		//Object.keys(this.watchers["error"]).forEach((key) => {
-		Object.keys(this._serviceManagers["error"]).forEach((key) => {
-			//this.watchers["error"][key].triggerEvent("error", e);
-			//this.watchers["error"][key].handle(e);
-			this._serviceManagers["error"][key].handle(e);
-		});
-		*/
-
-	//	this._serviceManagers["error"].handle(e);
 		this._serviceManager.handle(e, (service) => {
-			return service.options["type"] == "error";
-		});
-
-		/*
-		if (this.container["errorManager"] && this.container["errorManager"].plugins.length > 0)
-		{
-			this.container["errorManager"].handle(e);
-		}
-		else
-		{
-//			console.error(e);
-		}
-		*/
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load services.
-	 */
-	/*
-	loadServices()
-	{
-
-		Object.keys(this._settings["services"]).forEach((key) => {
-			// Create manager
-			let className = ( this._settings["services"][key]["className"] ? this._settings["services"][key]["className"] : "BITSMIST.v1.ServiceManager" );
-			this._serviceManagers[key] = this._createObject(className, {"app":this});
-
-			// Watch
-			if (this._settings["services"][key]["options"]["watch"])
-			{
-				this.registerService(this._settings["services"][key]["options"]["watch"], key, this._serviceManagers[key]);
-			}
-
-			// Add handlers
-			Object.keys(this._settings["services"][key]["handlers"]).forEach((handlerName) => {
-				let options = this._settings["services"][key]["handlers"][handlerName];
-				this._serviceManagers[key].add(handlerName, options);
-			});
+			return service.options["serviceType"] == "error";
 		});
 
 	}
-	*/
-
-	/*
-	loadServices()
-	{
-
-		Object.keys(this._settings["services"]).forEach((key) => {
-			let type = this._settings["services"][key]["type"];
-
-			// Add handler
-			let options = this._settings["services"][key];
-			this._serviceManagers[type].add(key, options);
-		});
-
-	}
-	*/
-
-	/*
-	loadServices()
-	{
-
-		Object.keys(this._settings["services"]).forEach((key) => {
-			let options = this._settings["services"][key];
-			this._serviceManager.add(key, options);
-		});
-
-	}
-	*/
-
-	// registerService(eventNames, title, manager)
-	// {
-
-	// 	for (let i = 0; i < eventNames.length; i++)
-	// 	{
-	// 		this._serviceManagers[eventNames[i]][title] = manager;
-	// 	}
-
-	// }
-
 
 	// -------------------------------------------------------------------------
 

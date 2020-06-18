@@ -32,11 +32,6 @@ export default class Component extends HTMLElement
 
 		this._app;
 		this._router;
-		/*
-		this._preferences;
-		this._settings;
-		*/
-
 		this._templates = {};
 		/*
 		this._modalOptions;
@@ -47,18 +42,18 @@ export default class Component extends HTMLElement
 		this._isOpen = false;
 		this._element = this;
 		this._options = Object.assign({}, this._getOptions());
-		this._options["templateName"] = this.getOption("templateName", this.getOption("name"));
+		this._options["templateName"] = ( "templateName" in this._options ? this._options["templateName"] : this.name );
+		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+		//this._resource;
+		//this._masters;
 
 		this._components = ( this._options["components"] ? this._options["components"] : {} );
 		this._elements = ( this._options["elements"] ? this._options["elements"] : {} );
 		this._plugins = ( this._options["plugins"] ? this._options["plugins"] : {} );
 		this._events = ( this._options["events"] ? this._options["events"] : {} );
 		this._services = ( this._options["services"] ? this._options["services"] : {} );
-		//this._preferences = ( this._options["preferences"] ? this._options["preferences"] : {} );
-		//this._resource;
 
-		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-
+		// Init
 		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
 		// Init event handlers
@@ -622,7 +617,7 @@ Component.prototype.connectedCallback = function()
 // -----------------------------------------------------------------------------
 
 /**
- * Get Pad options.  Need to override.
+ * Get component options.  Need to override.
  *
  * @return  {Object}		Options.
  */
@@ -980,12 +975,7 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 		Promise.resolve().then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {
-			return new Promise((resolve, reject) => {
-				let promises = this._app.waitFor(this.getOption("waitFor", []))
-				Promise.all(promises).then(() => {
-					resolve();
-				});
-			});
+			return this._app.waitFor(this.getOption("waitFor"));
 		}).then(() => {
 			return this.trigger("_append", this);
 		}).then(() => {
@@ -1136,11 +1126,12 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 		{
 			console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
 
-			let path = ("path" in this._options ? this._options["path"] : "");
 			Promise.resolve().then(() => {
-				if (path) // @@@fix this
+				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
+						let path = ("path" in this._options ? this._options["path"] : "");
+
 						this.__loadTemplate(templateName, path).then((template) => {
 							this._templates[templateName] = {};
 							this._templates[templateName]["html"] = template;
@@ -1152,8 +1143,6 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				return this.trigger("load", this);
 			}).then(() => {
 				return this.__appendTemplate(this.getOption("rootNode"), templateName);
-			}).then(() => {
-				// return this.setup();
 			}).then(() => {
 				return this.trigger("init", this);
 			}).then(() => {
