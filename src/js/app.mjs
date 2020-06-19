@@ -32,6 +32,7 @@ export default class App extends Component
 		super();
 
 		this._app = this;
+		this._router;
 		this._serviceManager = new ServiceManager({"app":this});
 		this._settings = ( settings ? settings : {} );
 		this._spec;
@@ -57,6 +58,20 @@ export default class App extends Component
 	{
 
 		return this._serviceManager;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Router.
+     *
+	 * @type	{Object}
+     */
+	get router()
+	{
+
+		return this._router;
 
 	}
 
@@ -177,13 +192,27 @@ export default class App extends Component
 	 *
 	 * @param	{String}		settingName			Setting name.
 	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return  {Array}			Promises.
 	 */
 	setSettings(settingName, settings)
 	{
 
 		this._settings[settingName] = settings;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get settings.
+	 *
+	 * @param	{String}		settingName			Setting name.
+	 *
+	 * @return  {Object}		settings.
+	 */
+	getSettings(settingName)
+	{
+
+		return Object.assign({}, this._settings[settingName]);
 
 	}
 
@@ -273,8 +302,6 @@ export default class App extends Component
 
 		window.addEventListener("_bm_component_init", (e) => {
 			e.detail.sender._app = this;
-			e.detail.sender._router = this._router;
-			e.detail.sender._settings = this._settings;
 		});
 
 		window.addEventListener("_bm_component_ready", (e) => {

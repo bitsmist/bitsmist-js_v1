@@ -37,8 +37,6 @@ export default class Pad extends Component
 		this._modalPromise;
 		this._isModal = false;
 
-//		this.triggerHtmlEvent(window, "_bm_component_init", this);
-
 		if (this.getOption("resource"))
 		{
 			/*
@@ -49,8 +47,8 @@ export default class Pad extends Component
 			else
 			*/
 			{
-				//this._resource = new ResourceUtil(this.getOption("resource"), {"container":this._container});
-				this._resource = new ResourceUtil(this.getOption("resource"), {"router":this._router, "settings":this._settings, "baseUrl":this._settings["defaults"]["apiBaseUrl"], "version":this._settings["defaults"]["apiVersion"] + "-" + this._settings["defaults"]["appVersion"]});
+				let defaults = this._app.getSettings("defaults");
+				this._resource = new ResourceUtil(this.getOption("resource"), {"router":this._app.router, "baseUrl":defaults["apiBaseUrl"], "version":defaults["apiVersion"] + "-" + defaults["appVersion"], "settings":this._app.getSettings("ajaxUtil")});
 			}
 		}
 

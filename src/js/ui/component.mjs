@@ -31,7 +31,6 @@ export default class Component extends HTMLElement
 		super();
 
 		this._app;
-		this._router;
 		this._templates = {};
 		/*
 		this._modalOptions;
@@ -317,8 +316,9 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this._settings["preferences"] );
-		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this._settings["preferences"] );
+		let preferences = this._app.getSettings("preferences");
+		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : preferences);
+		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : preferences );
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
@@ -604,7 +604,7 @@ Component.prototype.triggerHtmlEvent = function(element, eventName, sender, opti
 Component.prototype.connectedCallback = function()
 {
 
-	this.trigger("initComponent", this);
+//	this.trigger("initComponent", this);
 
 	this.open().then(() => {
 		this.triggerHtmlEvent(window, "_bm_component_ready", this);
@@ -975,6 +975,7 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 		Promise.resolve().then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {
+			console.log("@@@", this.name, this._app);
 			return this._app.waitFor(this.getOption("waitFor"));
 		}).then(() => {
 			return this.trigger("_append", this);
@@ -1166,7 +1167,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 Component.prototype.__loadComponentScript = function(componentName, path) {
 
 	return new Promise((resolve, reject) => {
-		let basePath = this._router["options"]["options"]["components"] + (path ? path + "/" : "");
+		let basePath = this._app.router["options"]["options"]["components"] + (path ? path + "/" : "");
 		let url1 = basePath + componentName + ".auto.js";
 		let url2 = basePath + componentName + ".js";
 
@@ -1191,7 +1192,7 @@ Component.prototype.__loadComponentScript = function(componentName, path) {
 Component.prototype.__loadTemplate = function(templateName, path)
 {
 
-	let basePath = this._router["options"]["options"]["templates"] + (path ? path + "/" : "");
+	let basePath = this._app.router["options"]["options"]["templates"] + (path ? path + "/" : "");
 	let url = basePath + templateName + ".html";
 
 	console.debug(`Component.__loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);

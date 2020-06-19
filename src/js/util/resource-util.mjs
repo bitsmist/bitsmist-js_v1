@@ -216,10 +216,10 @@ export default class ResourceUtil
 
 		let result;
 
-		if ("ajaxUtil" in this._settings && target in this._settings["ajaxUtil"])
+		if (this._settings[target])
 		{
-			let options1 = ("COMMON" in this._settings["ajaxUtil"][target] ? this._settings["ajaxUtil"][target]["COMMON"] : {} );
-			let options2 = (method in this._settings["ajaxUtil"][target] ? this._settings["ajaxUtil"][target][method] : {} );
+			let options1 = ("COMMON" in this._settings[target] ? this._settings[target]["COMMON"] : {} );
+			let options2 = (method in this._settings[target] ? this._settings[target][method] : {} );
 
 			result = Object.assign(options1, options2);
 		}

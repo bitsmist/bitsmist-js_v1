@@ -47,7 +47,6 @@ export default class ObserverPreferenceHandler
 	register(component, options)
 	{
 
-		console.log("@@@register", component.name, options);
 		this.targets[component.uniqueId] = {"object":component, "options":options};
 
 	}
