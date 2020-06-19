@@ -8,13 +8,15 @@
  */
 // =============================================================================
 
-import {NoClassError} from './error/errors';
+import AjaxUtil from './util/ajax-util';
+import Component from './ui/component';
+import ServiceManager from './manager/service-manager';
 
 // =============================================================================
 //	App class
 // =============================================================================
 
-export default class App
+export default class App extends Component
 {
 
 	// -------------------------------------------------------------------------
@@ -23,42 +25,102 @@ export default class App
 
 	/**
 	 * Constructor.
-	 *
-	 * @param	{array}			settings		Settings.
 	 */
 	constructor(settings)
 	{
 
-		this.__waitFor = {};
+		super();
 
-		// Init error handling
-		this.__initError();
+		this._app = this;
+		this._router;
+		this._serviceManager = new ServiceManager({"app":this});
+		this._settings = ( settings ? settings : {} );
+		this._spec;
+		this.__waiting = [];
+		this.__loaded = [];
 
-		// Init a container
-		this.container = {};
-		this.container["app"] = this;
-		this.container["settings"] = settings;
-		this.container["appInfo"] = {};
-		this.container["sysInfo"] = {};
-		this.container["components"] = {};
-		this.container["resources"] = {};
-		this.container["masters"] = {};
-		this.container["preferences"] = settings["preferences"];
+		// Init global listeners
+		this.__initComponentListeners();
+		this.__initErrorListeners();
 
-		// Init system information
-		this.container["sysInfo"]["version"] = settings["defaults"]["apiVersion"];
-		this.container["sysInfo"]["baseUrl"] = settings["defaults"]["apiBaseUrl"];
+	}
 
-		// Init application information
-		this.container["appInfo"]["version"] = settings["defaults"]["appVersion"];
-		this.container["appInfo"]["baseUrl"] = settings["defaults"]["appBaseUrl"];
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
 
-		// Init loader
-		let loaderOptions = {"container": this.container};
-		this.container["loader"] = this.createObject(this.container["settings"]["loader"]["className"], loaderOptions);
+	/**
+     * Service manager.
+     *
+	 * @type	{Object}
+     */
+	get serviceManager()
+	{
 
-		// load services
-		this.container["loader"].loadServices();
+		return this._serviceManager;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Router.
+     *
+	 * @type	{Object}
+     */
+	get router()
+	{
+
+		return this._router;
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get component options.  Need to override.
+	 */
+	_getOptions()
+	{
+
+		return {
+			"name": "App",
+			"templateName": "",
+
+			"events": {
+				"setup": {
+					"handler": this.onSetup,
+				}
+			},
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handler
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Setup event handler.
+	 *
+	 * @param   {Object}        sender              Sender.
+	 * @param   {Object}        e                   Event info.
+	 */
+	onSetup(sender, e)
+	{
+
+		this._serviceManager.setup({
+			"newPreferences":e.detail.newPreferences,
+			"currentPreferences":e.detail.currentPreferences
+		}, (service) => {
+			return service.options["serviceType"] == "preference"
+		});
+
+		this._serviceManager.save(e.detail.newPreferences, (service) => {
+			return service.options["serviceType"] == "preference"
+		});
 
 	}
 
@@ -67,22 +129,58 @@ export default class App
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Start the application.
+	 * Start application.
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Array}			Promises.
 	 */
+	//run(settings)
 	run()
 	{
 
-		// load preferences
-		this.container["loader"].loadPreferences();
+		/*
+		if (settings)
+		{
+			this._settings = settings;
+		}
+		*/
+
+		// load services
+		this._serviceManager.loadServices(this._settings["services"]);
 
 		// Init router
-		if (this.container["settings"]["router"])
+		if (this._settings["router"])
 		{
-			let routerOptions = {"container": this.container};
-			let options = Object.assign({"container": this.container}, this.container["settings"]["router"]);
-			this.container["router"] = this.createObject(this.container["settings"]["router"]["className"], options);
+			let options = Object.assign({"app": this._app}, this._settings["router"]);
+			this._router = this._createObject(this._settings["router"]["className"], options);
+		}
 
-			this.container["loader"].loadApp(this.container["router"].routeInfo["specName"]);
+		// load preference
+		this._serviceManager.load(null, (service) => {
+			return service.options["serviceType"] == "preference"
+		}).then((preferences) => {
+			for (let i = 0; i < preferences.length; i++)
+			{
+				this._settings["preferences"] = Object.assign(this._settings["preferences"], preferences[i]);
+			}
+		});
+
+		// load spec
+		let specName = this._router.routeInfo["specName"];
+		if (specName)
+		{
+			this.loadSpec(specName).then((spec) => {
+				this._spec = spec;
+
+				this._router.__initRoutes(spec["routes"].concat(this._settings["router"]["routes"]));
+
+				Object.keys(spec["components"]).forEach((key) => {
+					this._components[key] = spec["components"][key];
+				});
+
+				this.open();
+			});
 		}
 
 	}
@@ -90,54 +188,67 @@ export default class App
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Instantiate the component.
+	 * Set settings.
 	 *
-	 * @param	{String}		className			Class name.
-	 * @param	{Object}		options				Options for the component.
-	 *
-	 * @return  {Object}		Initaiated object.
+	 * @param	{String}		settingName			Setting name.
+	 * @param	{Object}		settings			Settings.
 	 */
-	createObject(className, ...args)
+	setSettings(settingName, settings)
 	{
 
-		let c = window;
-
-		className.split(".").forEach((value) => {
-			c = c[value];
-			if (!c)
-			{
-				throw new NoClassError(`Class not found. className=${className}`);
-			}
-		});
-
-		return new c(...args);
+		this._settings[settingName] = settings;
 
 	}
 
-    // -------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the class exists.
+	 * Get settings.
 	 *
-	 * @param	{string}		className			Class name.
+	 * @param	{String}		settingName			Setting name.
 	 *
-	 * @return  {bool}			True if exists.
+	 * @return  {Object}		settings.
 	 */
-	isExistsClass(className)
+	getSettings(settingName)
 	{
 
-		let ret = true;
-		let c = window;
+		return Object.assign({}, this._settings[settingName]);
 
-		className.split(".").forEach((value) => {
-			c = c[value];
-			if (!c)
-			{
-				ret = false;
-			}
-		});
+	}
 
-		return ret;
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Wait for components to be loaded.
+	 *
+	 * @param	{Array}			waitlist			Components to wait.
+	 *
+	 * @return  {Array}			Promises.
+	 */
+	waitFor(waitlist)
+	{
+
+		let promise;
+
+		if (!waitlist || this.__isLoaded(waitlist))
+		{
+			promise = Promise.resolve();
+		}
+		else
+		{
+			let waitInfo = {};
+			waitInfo["waitlist"] = waitlist;
+
+			promise = new Promise((resolve, reject) => {
+				waitInfo["resolve"] = resolve;
+				waitInfo["reject"] = reject;
+			});
+			waitInfo["promise"] = promise;
+
+			this.__waiting.push(waitInfo);
+		}
+
+		return promise;
 
 	}
 
@@ -146,62 +257,74 @@ export default class App
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for components to be loaded.
+	 * Check if components are loaded.
 	 *
-	 * @param	{Array}			componentNames		Component names to wait.
+	 * @param	{Array}			waitlist			Components to wait.
 	 *
 	 * @return  {Array}			Promises.
 	 */
-	waitFor(componentNames)
+	__isLoaded(waitlist)
 	{
 
-		let promises = [];
+		let result = true;
 
-		for (let i = 0; i < componentNames.length; i++)
+		for (let i = 0; i < waitlist.length; i++)
 		{
-			let promise;
-			if (!this.__waitFor[componentNames[i]])
+			let match = false;
+
+			for (let j = 0; j < this.__loaded.length; j++)
 			{
-				this.__waitFor[componentNames[i]] = {};
-				promise = new Promise((resolve, reject) => {
-					this.__waitFor[componentNames[i]]["resolve"] = resolve;
-				});
-				this.__waitFor[componentNames[i]]["promise"] = promise;
-			}
-			else
-			{
-				promise = this.__waitFor[componentNames[i]]["promise"];
+				if (this.__loaded[j].name == waitlist[i]["componentName"])
+				{
+					match = true;
+					break;
+				}
 			}
 
-			promises.push(promise);
+			if (!match)
+			{
+				result = false;
+				break;
+			}
 		}
 
-		return promises;
+		return result;
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init error handling.
+	 * Init component handling listeners.
 	 */
-	__initError()
+	__initComponentListeners()
 	{
 
 		window.addEventListener("_bm_component_init", (e) => {
-			e.detail.sender.container = this.container;
+			e.detail.sender._app = this;
 		});
 
 		window.addEventListener("_bm_component_ready", (e) => {
-			if (this.__waitFor[e.detail.sender.name] && this.__waitFor[e.detail.sender.name]["resolve"])
+			this.__loaded.push(e.detail.sender);
+
+			for (let i = 0; i < this.__waiting.length; i++)
 			{
-				this.__waitFor[e.detail.sender.name]["resolve"]();
-			}
-			else if (!this.__waitFor[e.detail.sender.name])
-			{
-				this.__waitFor[e.detail.sender.name] = {"promise": Promise.resolve()};
+				if (this.__isLoaded(this.__waiting[i]["waitlist"]))
+				{
+					this.__waiting[i].resolve();
+				}
 			}
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init error handling listeners.
+	 */
+	__initErrorListeners()
+	{
 
 		window.addEventListener("unhandledrejection", (error) => {
 			let e = {};
@@ -274,57 +397,19 @@ export default class App
 		let name;
 		let e;
 
-		if (error.reason)
-		{
-			e = error.reason;
-		}
-		else if (error.error)
-		{
-			e = error.error;
-		}
-		else
-		{
-			e = error.message;
-		}
+		if (error.reason)		e = error.reason;
+		else if (error.error)	e = error.error;
+		else					e = error.message;
 
-		if (e.name)
-		{
-			name = e.name;
-		}
-		else if (e instanceof TypeError)
-		{
-			name = "TypeError";
-		}
-		else if (e instanceof XMLHttpRequest)
-		{
-			name = "AjaxError";
-		}
-		else if (e instanceof EvalError)
-		{
-			name = "EvalError";
-		}
-		/*
-		else if (e instanceof InternalError)
-		{
-			name = "InternalError";
-		}
-		*/
-		else if (e instanceof RangeError)
-		{
-			name = "RangeError";
-		}
-		else if (e instanceof ReferenceError)
-		{
-			name = "ReferenceError";
-		}
-		else if (e instanceof SyntaxError)
-		{
-			name = "SyntaxError";
-		}
-		else if (e instanceof URIError)
-		{
-			name = "URIError";
-		}
+		if (e.name)									name = e.name;
+		else if (e instanceof TypeError)			name = "TypeError";
+		else if (e instanceof XMLHttpRequest)		name = "AjaxError";
+		else if (e instanceof EvalError)			name = "EvalError";
+		else if (e instanceof InternalError)		name = "InternalError";
+		else if (e instanceof RangeError)			name = "RangeError";
+		else if (e instanceof ReferenceError)		name = "ReferenceError";
+		else if (e instanceof SyntaxError)			name = "SyntaxError";
+		else if (e instanceof URIError)				name = "URIError";
 		else
 		{
 			let pos = e.indexOf(":");
@@ -348,16 +433,144 @@ export default class App
 	__handleException(e)
 	{
 
-		if (this.container["errorManager"] && this.container["errorManager"].plugins.length > 0)
-		{
-			this.container["errorManager"].handle(e);
-		}
-		else
-		{
-//			console.error(e);
-		}
+		this._serviceManager.handle(e, (service) => {
+			return service.options["serviceType"] == "error";
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the spec file for this page.
+	 *
+	 * @param	{String}		specName			Spec name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	loadSpec(specName)
+	{
+
+		let basePath = this._router["options"]["options"]["specs"];
+		let urlCommon = basePath + "common.js";
+		let url = basePath + specName + ".js";
+		let spec;
+		let specCommon;
+		let specMerged;
+
+		return new Promise((resolve, reject) => {
+			let promises = [];
+
+			// Load specs
+			promises.push(this.__loadSpecFile(urlCommon, "{}"));
+			promises.push(this.__loadSpecFile(url));
+
+			Promise.all(promises).then((result) => {
+				// Convert to json
+				try
+				{
+					specCommon = JSON.parse(result[0]);
+					spec = JSON.parse(result[1]);
+				}
+				catch(e)
+				{
+					throw new Error(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
+				}
+
+				// Merge common spec, spec and settings
+				specMerged = this.__deepMerge(specCommon, spec);
+				specMerged = this.__mergeSettings(specMerged, this._settings);
+
+				resolve(specMerged);
+			});
+		});
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Load spec file.
+	 *
+	 * @param	{String}		url					Spec file url.
+	 * @param	{String}		defaultResponse		Response when error.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	__loadSpecFile(url, defaultResponse)
+	{
+
+		return new Promise((resolve, reject) => {
+			let response;
+
+			AjaxUtil.ajaxRequest({"url":url, "method":"GET"}).then((xhr) => {
+				response = xhr.responseText;
+				resolve(response);
+			}).catch((xhr) => {
+				if (defaultResponse)
+				{
+					response = defaultResponse;
+					resolve(response);
+				}
+			});
+		});
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Merge settings to spec.
+	 *
+	 * @param	{Object}		spec					Spec.
+	 * @param	{Object}		settings				Settings.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
+	__mergeSettings(spec, settings)
+	{
+
+		Object.keys(spec).forEach((key) => {
+			Object.keys(spec[key]).forEach((componentName) => {
+				if (key in settings && componentName in settings[key])
+				{
+					spec[key][componentName] = this.__mergeSettings(settings[key][componentName], spec[key][componentName]);
+				}
+			});
+		});
+
+		return spec;
+
+	}
+
+    // -------------------------------------------------------------------------
+
+	/**
+	 * Deep merge.
+	 *
+	 * @param	{Object}		arr1					Array1.
+	 * @param	{Object}		arr2					Array2.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
+	__deepMerge(arr1, arr2)
+	{
+
+		Object.keys(arr2).forEach((key) => {
+			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
+			{
+				this.__deepMerge(arr1[key], arr2[key]);
+			}
+			else
+			{
+				arr1[key] = arr2[key];
+			}
+		});
+
+		return arr1;
 
 	}
 
 }
 
+customElements.define("bm-app", App);

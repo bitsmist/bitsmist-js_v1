@@ -29,9 +29,9 @@ export default class CookiePreferenceHandler
 	constructor(options)
 	{
 
-		this.options = ( options ? options : {} );
-		this.container = options["container"];
-		this.cookie = new CookieUtil({"container": this.container});
+		this._options = ( options ? options : {} );
+		this.options = this._options;
+		this.cookie = new CookieUtil(this._options.options);
 
 	}
 
@@ -64,8 +64,6 @@ export default class CookiePreferenceHandler
 	 *
 	 * @param	{Object}		settings			Settings.
 	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
 	 */
 	save(settings, options)
 	{

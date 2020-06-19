@@ -30,12 +30,10 @@ export default class DefaultRouter
 	{
 
 		this.options = options;
-		this.container = options["container"];
+		this._app = options["app"];
 		this._routes;
 
 		this.__initRoutes(options["routes"]);
-
-		// Init pop state handling
 		this.__initPopState();
 
 	}
@@ -309,7 +307,6 @@ export default class DefaultRouter
 		else
 		{
 			let newRouteInfo = this.__loadRouteInfo(url);
-			console.log("@@@", this._routeInfo, newRouteInfo);
 
 			if (this._routeInfo["name"] != newRouteInfo["name"])
 			{
@@ -337,9 +334,11 @@ export default class DefaultRouter
 				//if (options["autoOpen"])
 				{
 					let componentName = this._routeInfo["componentName"];
-					if (this.container["components"][componentName])
+					//if (this.container["components"][componentName])
+					if (this._app._components[componentName])
 					{
-						return this.container["components"][componentName].object.open({"sender":this});
+						//return this.container["components"][componentName].object.open({"sender":this});
+						return this._app._components[componentName].object.open({"sender":this});
 					}
 				}
 			}).then(() => {
@@ -456,15 +455,21 @@ export default class DefaultRouter
 			window.addEventListener("popstate", (event) => {
 				let promises = [];
 
-				Object.keys(this.container["components"]).forEach((componentName) => {
-					promises.push(this.container["components"][componentName].object.trigger("beforePopState", this));
+				//Object.keys(this.container["components"]).forEach((componentName) => {
+				Object.keys(this._app._components).forEach((componentName) => {
+					promises.push(this._app._components[componentName].object.trigger("beforePopState", this));
+					//
+					//promises.push(this.container["components"][componentName].object.trigger("beforePopState", this));
 				});
 
 				Promise.all(promises).then(() => {
 					this.refreshRoute(this.__loadRouteInfo(window.location.href));
 				}).then(() => {
-					Object.keys(this.container["components"]).forEach((componentName) => {
-						this.container["components"][componentName].object.trigger("PopState", this);
+					//Object.keys(this.container["components"]).forEach((componentName) => {
+					Object.keys(this._app._components).forEach((componentName) => {
+						//this.container["components"][componentName].object.trigger("PopState", this);
+						//this.container["components"][componentName].object.trigger("PopState", this);
+						this._app._components[componentName].object.trigger("PopState", this);
 					});
 				});
 			});

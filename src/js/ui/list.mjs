@@ -9,13 +9,14 @@
 // =============================================================================
 
 import FormUtil from '../util/form-util';
-import Component from './component';
+//import Component from './component';
+import Pad from './pad';
 
 // =============================================================================
 //	List class
 // =============================================================================
 
-export default class List extends Component
+export default class List extends Pad
 {
 
 	// -------------------------------------------------------------------------
@@ -174,7 +175,7 @@ export default class List extends Component
 						{
 							this.clear();
 						}
-						this.row._element.appendChild(fragment);
+						this.row._element.appendChild(fragment, options["masters"]);
 					});
 				}
 				return chain;
@@ -220,7 +221,7 @@ export default class List extends Component
 
 		// Set HTML elements' event handlers after filling completed
 		Object.keys(this.row._elements).forEach((elementName) => {
-			this.row.initHtmlEvents(elementName);
+			this.row._initHtmlEvents(elementName);
 		});
 
 	}
@@ -234,12 +235,12 @@ export default class List extends Component
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	__appendRow(rootNode)
+	__appendRow(rootNode, masters)
 	{
 
 		return new Promise((resolve, reject) => {
 			// Append row
-			let element = this.row.dupElement();
+			let element = this.row._dupElement();
 			rootNode.appendChild(element);
 			this.rows.push(element);
 			let i = this.rows.length - 1;
@@ -258,7 +259,8 @@ export default class List extends Component
 				return this.row.trigger("beforeFillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				// Fill fields
-				FormUtil.setFields(element, this.items[i], this._container["masters"]);
+				FormUtil.setFields(element, this.items[i], this.masters);
+				//FormUtil.setFields(element, this.items[i], masters);
 				return this.row.trigger("fillRow", this, {"item":this.items[i], "no":i, "element":element});
 			}).then(() => {
 				resolve();

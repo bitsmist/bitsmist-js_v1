@@ -28,7 +28,6 @@ export default class CookieUtil
 	{
 
 		this._options = ( options ? options : {} );
-		this._container = options["container"];
 
 	}
 
@@ -73,9 +72,9 @@ export default class CookieUtil
 		let cookie = key + "=" + encodeURIComponent(JSON.stringify(value)) + "; ";
 
 		options = ( options ? options : {} );
-		if (this._container["settings"]["cookieUtil"]["options"])
+		if (this._options)
 		{
-			options = Object.assign(this._container["settings"]["cookieUtil"]["options"], options);
+			options = Object.assign(this._options, options);
 		}
 
 		cookie += Object.keys(options).reduce((result, current) => {

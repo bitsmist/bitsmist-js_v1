@@ -9,13 +9,14 @@
 // =============================================================================
 
 import FormUtil from '../util/form-util';
-import Component from './component';
+//import Component from './component';
+import Pad from './pad';
 
 // =============================================================================
 //	Form class
 // =============================================================================
 
-export default class Form extends Component
+export default class Form extends Pad
 {
 
 	// -------------------------------------------------------------------------
@@ -141,7 +142,7 @@ export default class Form extends Component
 			}).then(() => {
 				return this.trigger("beforeFill", sender);
 			}).then(() => {
-				FormUtil.setFields(this._element, this.item, this._container["masters"]);
+				FormUtil.setFields(this._element, this.item, this.masters); //@@@fix
 				return this.trigger("fill", sender);
 			}).then(() => {
 				resolve();
