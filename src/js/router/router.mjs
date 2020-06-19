@@ -14,7 +14,7 @@ import PathToRegexp from 'path-to-regexp';
 //	Default router class
 // =============================================================================
 
-export default class DefaultRouter
+export default class Router
 {
 
 	// -------------------------------------------------------------------------
