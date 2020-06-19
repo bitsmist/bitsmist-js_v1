@@ -111,15 +111,20 @@ export default class App extends Component
 	onSetup(sender, e)
 	{
 
+		// Setup
 		this._serviceManager.setup({
 			"newPreferences":e.detail.newPreferences,
-			"currentPreferences":e.detail.currentPreferences
+	//		"currentPreferences":e.detail.currentPreferences
 		}, (service) => {
 			return service.options["serviceType"] == "preference"
-		});
+		}).then(() => {
+			// Merge new settings
+			this._settings["preferences"] = Object.assign(this._settings["preferences"], e.detail.newPreferences);
 
-		this._serviceManager.save(e.detail.newPreferences, (service) => {
-			return service.options["serviceType"] == "preference"
+			// Save settings
+			this._serviceManager.save(e.detail.newPreferences, (service) => {
+				return service.options["serviceType"] == "preference"
+			});
 		});
 
 	}

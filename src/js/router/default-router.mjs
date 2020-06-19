@@ -218,6 +218,7 @@ export default class DefaultRouter
 
 		options = ( options ? options : {} );
 		options["pushState"] = true;
+		options["autoOpen"] = true;
 
 		this._open(routeInfo, options);
 
@@ -235,6 +236,7 @@ export default class DefaultRouter
 
 		options = ( options ? options : {} );
 		options["pushState"] = false;
+		options["autoOpen"] = true;
 
 		this._open(routeInfo, options);
 
@@ -250,6 +252,9 @@ export default class DefaultRouter
 	 */
 	updateRoute(routeInfo, options)
 	{
+
+		options = ( options ? options : {} );
+		options["autoRefresh"] = true;
 
 		if (routeInfo["routeParameters"])
 		{
@@ -331,27 +336,23 @@ export default class DefaultRouter
 				}
 				this._routeInfo = this.__loadRouteInfo(window.location.href);
 			}).then(() => {
-				//if (options["autoOpen"])
+				if (options["autoOpen"])
 				{
 					let componentName = this._routeInfo["componentName"];
-					//if (this.container["components"][componentName])
 					if (this._app._components[componentName])
 					{
-						//return this.container["components"][componentName].object.open({"sender":this});
 						return this._app._components[componentName].object.open({"sender":this});
 					}
 				}
 			}).then(() => {
-				/*
 				if (options["autoRefresh"])
 				{
 					let componentName = this._routeInfo["componentName"];
-					if (this.container["components"][componentName])
+					if (this._app._components[componentName])
 					{
-						return this.container["components"][componentName].object.refresh({"sender":this});
+						return this._app._components[componentName].object.refresh({"sender":this});
 					}
 				}
-				*/
 			}).then(() => {
 				if (routeInfo["dispUrl"])
 				{
@@ -455,21 +456,15 @@ export default class DefaultRouter
 			window.addEventListener("popstate", (event) => {
 				let promises = [];
 
-				//Object.keys(this.container["components"]).forEach((componentName) => {
 				Object.keys(this._app._components).forEach((componentName) => {
 					promises.push(this._app._components[componentName].object.trigger("beforePopState", this));
-					//
-					//promises.push(this.container["components"][componentName].object.trigger("beforePopState", this));
 				});
 
 				Promise.all(promises).then(() => {
 					this.refreshRoute(this.__loadRouteInfo(window.location.href));
 				}).then(() => {
-					//Object.keys(this.container["components"]).forEach((componentName) => {
 					Object.keys(this._app._components).forEach((componentName) => {
-						//this.container["components"][componentName].object.trigger("PopState", this);
-						//this.container["components"][componentName].object.trigger("PopState", this);
-						this._app._components[componentName].object.trigger("PopState", this);
+						this._app._components[componentName].object.trigger("popState", this);
 					});
 				});
 			});

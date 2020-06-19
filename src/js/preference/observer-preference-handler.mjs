@@ -63,7 +63,6 @@ export default class ObserverPreferenceHandler
 	setup(settings)
 	{
 
-//		console.log("@@@setup", "observer-preference-handler", settings, "@@@");
 		return new Promise((resolve, reject) => {
 			let promises = [];
 

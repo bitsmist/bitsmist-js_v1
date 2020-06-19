@@ -171,7 +171,9 @@ Component.prototype.open = function(options)
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
-		this.__autoLoadTemplate(this.getOption("templateName")).then(() => {
+		Promise.resolve().then(() => {
+			return this.__autoLoadTemplate(this.getOption("templateName"));
+		}).then(() => {
 			return this.setup();
 		}).then(() => {
 			if (this.getOption("autoRefresh"))
@@ -975,7 +977,6 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 		Promise.resolve().then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {
-			console.log("@@@", this.name, this._app);
 			return this._app.waitFor(this.getOption("waitFor"));
 		}).then(() => {
 			return this.trigger("_append", this);
