@@ -31,7 +31,6 @@ export default class App extends Component
 
 		super();
 
-		this._app = this;
 		this._router;
 		this._serviceManager = new ServiceManager({"app":this});
 		this._settings = ( settings ? settings : {} );
@@ -577,5 +576,7 @@ export default class App extends Component
 	}
 
 }
+
+// -------------------------------------------------------------------------
 
 customElements.define("bm-app", App);

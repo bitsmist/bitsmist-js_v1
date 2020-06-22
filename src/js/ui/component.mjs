@@ -9,7 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
-import { NoClassError, NoNodeError, NotValidFunctionError } from '../error/errors';
+//import { NoClassError, NoNodeError, NotValidFunctionError } from '../error/errors';
 
 // =============================================================================
 //	Component class
@@ -30,21 +30,17 @@ export default class Component extends HTMLElement
 
 		super();
 
-		this._app;
+		this._app = this;
 		this._templates = {};
-		/*
-		this._modalOptions;
-		this._modalResult;
-		this._modalPromise;
-		this._isModal = false;
-		*/
 		this._isOpen = false;
 		this._element = this;
 		this._options = Object.assign({}, this._getOptions());
 		this._options["templateName"] = ( "templateName" in this._options ? this._options["templateName"] : this.name );
 		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-		//this._resource;
-		//this._masters;
+		this._modalOptions;
+		this._modalResult;
+		this._modalPromise;
+		this._isModal = false;
 
 		this._components = ( this._options["components"] ? this._options["components"] : {} );
 		this._elements = ( this._options["elements"] ? this._options["elements"] : {} );
@@ -52,7 +48,7 @@ export default class Component extends HTMLElement
 		this._events = ( this._options["events"] ? this._options["events"] : {} );
 		this._services = ( this._options["services"] ? this._options["services"] : {} );
 
-		// Init
+		// Receive App object
 		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
 		// Init event handlers
@@ -363,6 +359,8 @@ Component.prototype.fill = function(options)
 Component.prototype.switchTemplate = function(templateName)
 {
 
+	console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
+
 	return new Promise((resolve, reject) => {
 		this.__autoLoadTemplate(templateName).then(() => {
 			this._options["templateName"] = templateName;
@@ -481,7 +479,8 @@ Component.prototype.addEventHandler = function(element, eventName, handler, opti
 	}
 	else
 	{
-		throw new NotValidFunctionError(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
+		//throw new NotValidFunctionError(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
+		throw new Error(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
 	}
 
 }
@@ -606,8 +605,6 @@ Component.prototype.triggerHtmlEvent = function(element, eventName, sender, opti
 Component.prototype.connectedCallback = function()
 {
 
-//	this.trigger("initComponent", this);
-
 	this.open().then(() => {
 		this.triggerHtmlEvent(window, "_bm_component_ready", this);
 	});
@@ -657,7 +654,8 @@ Component.prototype._createObject = function(className, ...args)
 			c = c[value];
 			if (!c)
 			{
-				throw new NoClassError(`Class not found. className=${className}`);
+				//throw new NoClassError(`Class not found. className=${className}`);
+				throw new Error(`Class not found. className=${className}`);
 			}
 		});
 		ret = new c(...args);
@@ -841,8 +839,6 @@ Component.prototype.__initOnAppendTemplate = function(sender, e)
 
 		let chain = Promise.resolve();
 
-		//chain = this._container["loader"].loadMasters({ "malls": { "id":"mallId", "title":"mallName", "autoLoad":true } });
-
 		//  Add components
 		Object.keys(this._components).forEach((componentName) => {
 			if ("className" in this._components[componentName])
@@ -932,7 +928,6 @@ Component.prototype.__autoFocus = function()
 				window.scrollTo(0, scrollTop); // workaround for safari
 			}
 		}
-
 	}
 
 }
@@ -950,42 +945,28 @@ Component.prototype.__autoFocus = function()
 Component.prototype.__appendTemplate = function(rootNode, templateName)
 {
 
-	return new Promise((resolve, reject) => {
-		if (rootNode)
+	if (rootNode)
+	{
+		let root = document.querySelector(rootNode);
+		if (!root)
 		{
-			let root = document.querySelector(rootNode);
-			if (!root)
-			{
-				throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
-			}
-
-			// Add template to root node
-			root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
-			this._element = root.children[0];
-		}
-		else
-		{
-			if (this._templates[this.getOption("templateName")])
-			{
-				this.innerHTML = this._templates[this.getOption("templateName")].html
-			}
+			//throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+			throw new Error(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
 		}
 
-		console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
+		// Add template to root node
+		root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+		this._element = root.children[0];
+	}
+	else
+	{
+		if (this._templates[this.getOption("templateName")])
+		{
+			this.innerHTML = this._templates[this.getOption("templateName")].html
+		}
+	}
 
-		// Trigger events
-		Promise.resolve().then(() => {
-			return this.__initOnAppendTemplate();
-		}).then(() => {
-			return this._app.waitFor(this.getOption("waitFor"));
-		}).then(() => {
-			return this.trigger("_append", this);
-		}).then(() => {
-			return this.trigger("append", this);
-		}).then(() => {
-			resolve();
-		});
-	});
+	console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
 
 }
 
@@ -1078,10 +1059,15 @@ Component.prototype.__callPluginEventHandler = function(sender, e)
 Component.prototype.__autoloadComponent = function(className, options)
 {
 
-	console.debug(`Loader.__autoLoadComponent(): Auto loading component. className=${className}`);
+	console.debug(`Component.__autoLoadComponent(): Auto loading component. className=${className}`);
 
 	return new Promise((resolve, reject) => {
-		if (!this._isLoadedClass(className))
+		if (this._isLoadedClass(className))
+		{
+			console.debug(`Component.__autoLoadComponent(): Component Already exists. className=${className}`, );
+			resolve();
+		}
+		else
 		{
 			let path = "";
 			if (options && "path" in options)
@@ -1090,14 +1076,8 @@ Component.prototype.__autoloadComponent = function(className, options)
 			}
 
 			let promise = this.__loadComponentScript(className, path).then(() => {
-				console.debug(`Loader.__autoLoadComponent(): Auto loaded component. className=${className}, path=${path}`);
 				resolve();
 			});
-		}
-		else
-		{
-			console.debug(`Loader.__autoLoadComponent(): Component Already exists. className=${className}`, );
-			resolve();
 		}
 	});
 
@@ -1115,18 +1095,18 @@ Component.prototype.__autoloadComponent = function(className, options)
 Component.prototype.__autoLoadTemplate = function(templateName)
 {
 
-	let promise;
+	console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
 
 	return new Promise((resolve, reject) => {
 		let rootNode;
 
 		if (this._isLoadedTemplate(templateName))
 		{
+			console.debug(`Component.__autoLoadTemplate(): Template Already exists. templateName=${templateName}`, );
 			resolve();
 		}
 		else
 		{
-			console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
 
 			Promise.resolve().then(() => {
 				if (templateName)
@@ -1145,6 +1125,14 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				return this.trigger("load", this);
 			}).then(() => {
 				return this.__appendTemplate(this.getOption("rootNode"), templateName);
+			}).then(() => {
+				return this.__initOnAppendTemplate();
+			}).then(() => {
+				return this._app.waitFor(this.getOption("waitFor"));
+			}).then(() => {
+				return this.trigger("_append", this);
+			}).then(() => {
+				return this.trigger("append", this);
 			}).then(() => {
 				return this.trigger("init", this);
 			}).then(() => {
@@ -1167,15 +1155,20 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 */
 Component.prototype.__loadComponentScript = function(componentName, path) {
 
+	console.debug(`Component.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
+
 	return new Promise((resolve, reject) => {
 		let basePath = this._app.router["options"]["options"]["components"] + (path ? path + "/" : "");
 		let url1 = basePath + componentName + ".auto.js";
 		let url2 = basePath + componentName + ".js";
 
-		AjaxUtil.loadScript(url1).then(() => {
-			AjaxUtil.loadScript(url2).then(() => {
-				resolve();
-			});
+		Promise.resolve().then(() => {
+			return AjaxUtil.loadScript(url1);
+		}).then(() => {
+			return AjaxUtil.loadScript(url2);
+		}).then(() => {
+			console.debug(`Component.__loadComponentScript(): Loaded script. componentName=${componentName}`);
+			resolve();
 		});
 	});
 
