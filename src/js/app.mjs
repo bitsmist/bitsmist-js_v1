@@ -34,9 +34,8 @@ export default class App extends Component
 		this._router;
 		this._serviceManager = new ServiceManager({"app":this});
 		this._settings = ( settings ? settings : {} );
+		BITSMIST.v1.Settings = ( settings ? settings : {} );
 		this._spec;
-		this.__waiting = [];
-		this.__loaded = [];
 
 		// Init global listeners
 		this.__initComponentListeners();
@@ -143,13 +142,6 @@ export default class App extends Component
 	run()
 	{
 
-		/*
-		if (settings)
-		{
-			this._settings = settings;
-		}
-		*/
-
 		// load services
 		this._serviceManager.loadServices(this._settings["services"]);
 
@@ -170,129 +162,30 @@ export default class App extends Component
 			}
 		});
 
+		let promise;
+
 		// load spec
 		let specName = this._router.routeInfo["specName"];
 		if (specName)
 		{
-			this.loadSpec(specName).then((spec) => {
-				this._spec = spec;
-
-				this._router.__initRoutes(spec["routes"].concat(this._settings["router"]["routes"]));
-
-				Object.keys(spec["components"]).forEach((key) => {
-					this._components[key] = spec["components"][key];
-				});
-
-				this.open();
-			});
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Set settings.
-	 *
-	 * @param	{String}		settingName			Setting name.
-	 * @param	{Object}		settings			Settings.
-	 */
-	setSettings(settingName, settings)
-	{
-
-		this._settings[settingName] = settings;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get settings.
-	 *
-	 * @param	{String}		settingName			Setting name.
-	 *
-	 * @return  {Object}		settings.
-	 */
-	getSettings(settingName)
-	{
-
-		return Object.assign({}, this._settings[settingName]);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Wait for components to be loaded.
-	 *
-	 * @param	{Array}			waitlist			Components to wait.
-	 *
-	 * @return  {Array}			Promises.
-	 */
-	waitFor(waitlist)
-	{
-
-		let promise;
-
-		if (!waitlist || this.__isLoaded(waitlist))
-		{
-			promise = Promise.resolve();
-		}
-		else
-		{
-			let waitInfo = {};
-			waitInfo["waitlist"] = waitlist;
-
 			promise = new Promise((resolve, reject) => {
-				waitInfo["resolve"] = resolve;
-				waitInfo["reject"] = reject;
+				this.loadSpec(specName).then((spec) => {
+					this._spec = spec;
+
+					this._router.__initRoutes(spec["routes"].concat(this._settings["router"]["routes"]));
+
+					Object.keys(spec["components"]).forEach((key) => {
+						this._components[key] = spec["components"][key];
+					});
+
+					resolve();
+				});
 			});
-			waitInfo["promise"] = promise;
-
-			this.__waiting.push(waitInfo);
 		}
 
-		return promise;
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Privates
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if components are loaded.
-	 *
-	 * @param	{Array}			waitlist			Components to wait.
-	 *
-	 * @return  {Array}			Promises.
-	 */
-	__isLoaded(waitlist)
-	{
-
-		let result = true;
-
-		for (let i = 0; i < waitlist.length; i++)
-		{
-			let match = false;
-
-			for (let j = 0; j < this.__loaded.length; j++)
-			{
-				if (this.__loaded[j].name == waitlist[i]["componentName"])
-				{
-					match = true;
-					break;
-				}
-			}
-
-			if (!match)
-			{
-				result = false;
-				break;
-			}
-		}
-
-		return result;
+		Promise.all([promise]).then(() => {
+			this.open();
+		});
 
 	}
 
@@ -306,18 +199,6 @@ export default class App extends Component
 
 		window.addEventListener("_bm_component_init", (e) => {
 			e.detail.sender._app = this;
-		});
-
-		window.addEventListener("_bm_component_ready", (e) => {
-			this.__loaded.push(e.detail.sender);
-
-			for (let i = 0; i < this.__waiting.length; i++)
-			{
-				if (this.__isLoaded(this.__waiting[i]["waitlist"]))
-				{
-					this.__waiting[i].resolve();
-				}
-			}
 		});
 
 	}
@@ -455,9 +336,9 @@ export default class App extends Component
 	loadSpec(specName)
 	{
 
-		let basePath = this._router["options"]["options"]["specs"];
-		let urlCommon = basePath + "common.js";
-		let url = basePath + specName + ".js";
+		let basePath = ( BITSMIST.v1.Settings["system"]["specPath"] ? BITSMIST.v1.Settings["system"]["specPath"] : "/specs/");
+		let urlCommon = basePath + "/" + "common.js";
+		let url = basePath + "/" + specName + ".js";
 		let spec;
 		let specCommon;
 		let specMerged;

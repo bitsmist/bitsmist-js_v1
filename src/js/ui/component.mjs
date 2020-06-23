@@ -314,7 +314,7 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		let preferences = this._app.getSettings("preferences");
+		let preferences = BITSMIST.v1.Settings["preferences"];
 		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : preferences);
 		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : preferences );
 		let sender = ( options["sender"] ? options["sender"] : this );
@@ -595,6 +595,42 @@ Component.prototype.triggerHtmlEvent = function(element, eventName, sender, opti
 
 }
 
+// -------------------------------------------------------------------------
+
+/**
+ * Wait for components to be loaded.
+ *
+ * @param	{Array}			waitlist			Components to wait.
+ *
+ * @return  {Array}			Promises.
+ */
+Component.prototype.waitFor = function(waitlist)
+{
+
+	let promise;
+
+	if (!waitlist || this._isLoadedComponent(waitlist))
+	{
+		promise = Promise.resolve();
+	}
+	else
+	{
+		let waitInfo = {};
+		waitInfo["waitlist"] = waitlist;
+
+		promise = new Promise((resolve, reject) => {
+			waitInfo["resolve"] = resolve;
+			waitInfo["reject"] = reject;
+		});
+		waitInfo["promise"] = promise;
+
+		BITSMIST.v1._waiting.push(waitInfo);
+	}
+
+	return promise;
+
+}
+
 // -----------------------------------------------------------------------------
 //  Callbacks
 // -----------------------------------------------------------------------------
@@ -606,7 +642,7 @@ Component.prototype.connectedCallback = function()
 {
 
 	this.open().then(() => {
-		this.triggerHtmlEvent(window, "_bm_component_ready", this);
+		this.__registerComponent();
 	});
 
 }
@@ -723,6 +759,44 @@ Component.prototype._isLoadedClass = function(className)
 
 }
 
+// -------------------------------------------------------------------------
+
+/**
+ * Check if components are loaded.
+ *
+ * @param	{Array}			waitlist			Components to wait.
+ *
+ * @return  {Array}			Promises.
+ */
+Component.prototype._isLoadedComponent = function(waitlist)
+{
+
+	let result = true;
+
+	for (let i = 0; i < waitlist.length; i++)
+	{
+		let match = false;
+
+		for (let j = 0; j < BITSMIST.v1._loaded.length; j++)
+		{
+			if (BITSMIST.v1._loaded[j].name == waitlist[i]["componentName"])
+			{
+				match = true;
+				break;
+			}
+		}
+
+		if (!match)
+		{
+			result = false;
+			break;
+		}
+	}
+
+	return result;
+
+}
+
 // -----------------------------------------------------------------------------
 
 /**
@@ -824,7 +898,7 @@ Component.prototype.__initOnAppendTemplate = function(sender, e)
 	return new Promise((resolve, reject) => {
 		// Init services
 		Object.keys(this._services).forEach((serviceName) => {
-			let service = this._app.serviceManager.getService(serviceName);
+			let service = this._app.serviceManager.getService(serviceName); //@@@fix
 			this._services[serviceName].object = service;
 			if (service && typeof service.register == "function")
 			{
@@ -935,44 +1009,6 @@ Component.prototype.__autoFocus = function()
 // -----------------------------------------------------------------------------
 
 /**
- * Append the template html to its root node.
- *
- * @param	{String}		rootNode			Root node to append.
- * @param	{String}		templateName		Template name.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.__appendTemplate = function(rootNode, templateName)
-{
-
-	if (rootNode)
-	{
-		let root = document.querySelector(rootNode);
-		if (!root)
-		{
-			//throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
-			throw new Error(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
-		}
-
-		// Add template to root node
-		root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
-		this._element = root.children[0];
-	}
-	else
-	{
-		if (this._templates[this.getOption("templateName")])
-		{
-			this.innerHTML = this._templates[this.getOption("templateName")].html
-		}
-	}
-
-	console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
  * Call event handler.
  *
  * @param	{Object}		e						Event parameter.
@@ -1070,15 +1106,49 @@ Component.prototype.__autoloadComponent = function(className, options)
 		else
 		{
 			let path = "";
+			let base = ( BITSMIST.v1.Settings["system"]["componentPath"] ? BITSMIST.v1.Settings["system"]["componentPath"] : "/components/" );
 			if (options && "path" in options)
 			{
 				path = options["path"];
 			}
 
-			let promise = this.__loadComponentScript(className, path).then(() => {
+			let promise = this.__loadComponentScript(className, base + path).then(() => {
 				resolve();
 			});
 		}
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+* Load the component js files.
+*
+* @param	{String}		componentName		Component name.
+* @param	{String}		path				Component path.
+*
+* @return  {Promise}		Promise.
+*/
+Component.prototype.__loadComponentScript = function(componentName, path) {
+
+	console.debug(`Component.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
+
+	return new Promise((resolve, reject) => {
+		let url1 = path + "/" + componentName + ".auto.js";
+		let url2 = path + "/" + componentName + ".js";
+
+		Promise.resolve().then(() => {
+			if (BITSMIST.v1.Settings["system"]["splitComponent"])
+			{
+				return AjaxUtil.loadScript(url1);
+			}
+		}).then(() => {
+			return AjaxUtil.loadScript(url2);
+		}).then(() => {
+			console.debug(`Component.__loadComponentScript(): Loaded script. componentName=${componentName}`);
+			resolve();
+		});
 	});
 
 }
@@ -1107,14 +1177,14 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 		}
 		else
 		{
-
 			Promise.resolve().then(() => {
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
+						let base = ( BITSMIST.v1.Settings["system"]["templatePath"] ? BITSMIST.v1.Settings["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
-						this.__loadTemplate(templateName, path).then((template) => {
+						this.__loadTemplate(templateName, base + path).then((template) => {
 							this._templates[templateName] = {};
 							this._templates[templateName]["html"] = template;
 							resolve();
@@ -1128,7 +1198,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 			}).then(() => {
 				return this.__initOnAppendTemplate();
 			}).then(() => {
-				return this._app.waitFor(this.getOption("waitFor"));
+				return this.waitFor(this.getOption("waitFor"));
 			}).then(() => {
 				return this.trigger("_append", this);
 			}).then(() => {
@@ -1146,37 +1216,6 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 // -----------------------------------------------------------------------------
 
 /**
-* Load the component js files.
-*
-* @param	{String}		componentName		Component name.
-* @param	{String}		path				Component path.
-*
-* @return  {Promise}		Promise.
-*/
-Component.prototype.__loadComponentScript = function(componentName, path) {
-
-	console.debug(`Component.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
-
-	return new Promise((resolve, reject) => {
-		let basePath = this._app.router["options"]["options"]["components"] + (path ? path + "/" : "");
-		let url1 = basePath + componentName + ".auto.js";
-		let url2 = basePath + componentName + ".js";
-
-		Promise.resolve().then(() => {
-			return AjaxUtil.loadScript(url1);
-		}).then(() => {
-			return AjaxUtil.loadScript(url2);
-		}).then(() => {
-			console.debug(`Component.__loadComponentScript(): Loaded script. componentName=${componentName}`);
-			resolve();
-		});
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
  * Load the template html.
  *
  * @param	{String}		templateName		Template name.
@@ -1186,7 +1225,7 @@ Component.prototype.__loadComponentScript = function(componentName, path) {
 Component.prototype.__loadTemplate = function(templateName, path)
 {
 
-	let basePath = this._app.router["options"]["options"]["templates"] + (path ? path + "/" : "");
+	let basePath = (path ? path + "/" : "");
 	let url = basePath + templateName + ".html";
 
 	console.debug(`Component.__loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
@@ -1197,6 +1236,64 @@ Component.prototype.__loadTemplate = function(templateName, path)
 			resolve(xhr.responseText);
 		});
 	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Append the template html to its root node.
+ *
+ * @param	{String}		rootNode			Root node to append.
+ * @param	{String}		templateName		Template name.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.__appendTemplate = function(rootNode, templateName)
+{
+
+	if (rootNode)
+	{
+		let root = document.querySelector(rootNode);
+		if (!root)
+		{
+			//throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+			throw new Error(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+		}
+
+		// Add template to root node
+		root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+		this._element = root.children[0];
+	}
+	else
+	{
+		if (this._templates[this.getOption("templateName")])
+		{
+			this.innerHTML = this._templates[this.getOption("templateName")].html
+		}
+	}
+
+	console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
+
+}
+
+// -------------------------------------------------------------------------
+
+/**
+ * Register component to loaded list.
+ */
+Component.prototype.__registerComponent = function()
+{
+
+	BITSMIST.v1._loaded.push(this);
+
+	for (let i = 0; i < BITSMIST.v1._waiting.length; i++)
+	{
+		if (this._isLoadedComponent(BITSMIST.v1._waiting[i]["waitlist"]))
+		{
+			BITSMIST.v1._waiting[i].resolve();
+		}
+	}
 
 }
 
