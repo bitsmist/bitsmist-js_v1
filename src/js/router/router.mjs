@@ -213,8 +213,7 @@ Router.prototype.loadParameters = function()
 Router.prototype.openRoute = function(routeInfo, options)
 {
 
-	//options = ( options ? options : {} );
-	options = Object.assign({}, settings);
+	options = Object.assign({}, options);
 	options["pushState"] = true;
 	options["autoOpen"] = true;
 
@@ -232,8 +231,7 @@ Router.prototype.openRoute = function(routeInfo, options)
 Router.prototype.refreshRoute = function(routeInfo, options)
 {
 
-	//options = ( options ? options : {} );
-	options = Object.assign({}, settings);
+	options = Object.assign({}, options);
 	options["pushState"] = false;
 	options["autoOpen"] = true;
 
@@ -252,8 +250,7 @@ Router.prototype.refreshRoute = function(routeInfo, options)
 Router.prototype.updateRoute = function(routeInfo, options)
 {
 
-	//options = ( options ? options : {} );
-	options = Object.assign({}, settings);
+	options = Object.assign({}, options);
 	options["autoRefresh"] = true;
 
 	if (routeInfo["routeParameters"])
@@ -299,8 +296,7 @@ Router.prototype.replace = function(routeInfo)
 Router.prototype._open = function(routeInfo, options)
 {
 
-	//options = ( options ? options : {} );
-	options = Object.assign({}, settings);
+	options = Object.assign({}, options);
 	options["pushState"] = ( options["pushState"] !== undefined ? options["pushState"] : true );
 	let url = this.buildUrl(routeInfo);
 
