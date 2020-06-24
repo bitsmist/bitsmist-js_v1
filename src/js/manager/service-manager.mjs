@@ -20,8 +20,10 @@ import LoaderUtil from '../util/loader-util';
 
 /**
  * Constructor.
+ *
+ * @param	{Object}		options				Options.
  */
- export default function ServiceManager()
+ export default function ServiceManager(options)
 {
 
 	this._options = Object.assign({}, options);
