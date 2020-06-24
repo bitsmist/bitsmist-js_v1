@@ -10,6 +10,7 @@
 
 import AjaxUtil from '../util/ajax-util';
 //import { NoClassError, NoNodeError, NotValidFunctionError } from '../error/errors';
+import LoaderUtil from '../util/loader-util';
 
 // =============================================================================
 //	Component class
@@ -47,9 +48,6 @@ export default class Component extends HTMLElement
 		this._plugins = ( this._options["plugins"] ? this._options["plugins"] : {} );
 		this._events = ( this._options["events"] ? this._options["events"] : {} );
 		this._services = ( this._options["services"] ? this._options["services"] : {} );
-
-		// Receive App object
-		this.triggerHtmlEvent(window, "_bm_component_init", this);
 
 		// Init event handlers
 		Object.keys(this._events).forEach((eventName) => {
@@ -103,6 +101,34 @@ export default class Component extends HTMLElement
 	{
 
 		return this._uniqueId;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * App instance.
+     *
+	 * @type	{String}
+     */
+	get app()
+	{
+
+		return BITSMIST.v1._app;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Router instance.
+     *
+	 * @type	{String}
+     */
+	get router()
+	{
+
+		return BITSMIST.v1._router;
 
 	}
 
@@ -393,7 +419,7 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName] || !this._components[componentName].object)
 			{
 				return new Promise((resolve, reject) => {
-					this._createComponent(componentName, options).then((component) => {
+					LoaderUtil.createComponent(componentName, options).then((component) => {
 						component._parent = this;
 						this._components[componentName] = ( this._components[componentName] ? this._components[componentName] : {} );
 						this._components[componentName].object = component;
@@ -429,12 +455,12 @@ Component.prototype.addPlugin = function(pluginName, options)
 {
 
 	return new Promise((resolve, reject) => {
-		options = ( options ? options : {} );
+		options = Object.assign({}, options);
 		let className = ( "className" in options ? options["className"] : pluginName );
 		let plugin = null;
 
 		options["component"] = this;
-		plugin = this._createObject(className, pluginName, options);
+		plugin = LoaderUtil.createObject(className, pluginName, options);
 		this._plugins[pluginName] = ( this._options["plugins"][pluginName] ? this._options["plugins"][pluginName] : {} );
 		this._plugins[pluginName].object = plugin;
 
@@ -544,7 +570,7 @@ Component.prototype.clone(newId, templateName)
 Component.prototype.trigger = function(eventName, sender, options)
 {
 
-	options = options || {};
+	options = Object.assign({}, options);
 	options["eventName"] = eventName;
 	options["sender"] = sender;
 	let e = null;
@@ -576,7 +602,7 @@ Component.prototype.trigger = function(eventName, sender, options)
 Component.prototype.triggerHtmlEvent = function(element, eventName, sender, options)
 {
 
-	options = options || {};
+	options = Object.assign({}, options);
 	options["eventName"] = eventName;
 	options["sender"] = sender;
 	let e = null;
@@ -660,102 +686,6 @@ Component.prototype._getOptions = function()
 {
 
 	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Instantiate the component.
- *
- * @param	{String}		className			Class name.
- * @param	{Object}		options				Options for the component.
- *
- * @return  {Object}		Initaiated object.
- */
-Component.prototype._createObject = function(className, ...args)
-{
-
-	let ret;
-
-	try
-	{
-		let c = Function("return (" + className + ")")();
-		ret = new c(...args);
-	}
-	catch
-	{
-		let c = window;
-		className.split(".").forEach((value) => {
-			c = c[value];
-			if (!c)
-			{
-				//throw new NoClassError(`Class not found. className=${className}`);
-				throw new Error(`Class not found. className=${className}`);
-			}
-		});
-		ret = new c(...args);
-	}
-
-	return ret;
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Create component.
- *
- * @param	{String}		componentName		Component name.
- * @param	{Object}		options				Options for the component.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype._createComponent = function(componentName, options)
-{
-
-	return new Promise((resolve, reject) => {
-		options = ( options ? options : {} );
-		let className = ( "className" in options ? options["className"] : componentName );
-		let component = null;
-
-		this.__autoloadComponent(className, options).then(() => {
-			let promise;
-
-			component = this._createObject(className, options);
-
-			Promise.all([promise]).then(() => {
-				resolve(component);
-			});
-		});
-	});
-
-};
-
-// -------------------------------------------------------------------------
-
-/**
- * Check if the class exists.
- *
- * @param	{String}		className			Class name.
- *
- * @return  {Bool}			True if exists.
- */
-Component.prototype._isLoadedClass = function(className)
-{
-
-	let ret = true;
-	let c = window;
-
-	className.split(".").forEach((value) => {
-		c = c[value];
-		if (!c)
-		{
-			ret = false;
-		}
-	});
-
-	return ret;
 
 }
 
@@ -887,18 +817,15 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 /**
  * Init on append template.
  *
- * @param	{Object}		sender				Sender.
- * @param	{Object}		e					Event info.
- *
  * @return  {Promise}		Promise.
  */
-Component.prototype.__initOnAppendTemplate = function(sender, e)
+Component.prototype.__initOnAppendTemplate = function()
 {
 
 	return new Promise((resolve, reject) => {
 		// Init services
 		Object.keys(this._services).forEach((serviceName) => {
-			let service = this._app.serviceManager.getService(serviceName); //@@@fix
+			let service = this.app.serviceManager.getService(serviceName); //@@@fix
 			this._services[serviceName].object = service;
 			if (service && typeof service.register == "function")
 			{
@@ -1085,77 +1012,6 @@ Component.prototype.__callPluginEventHandler = function(sender, e)
 // -----------------------------------------------------------------------------
 
 /**
- * Load the component if not loaded yet.
- *
- * @param	{String}		className			Component class name.
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.__autoloadComponent = function(className, options)
-{
-
-	console.debug(`Component.__autoLoadComponent(): Auto loading component. className=${className}`);
-
-	return new Promise((resolve, reject) => {
-		if (this._isLoadedClass(className))
-		{
-			console.debug(`Component.__autoLoadComponent(): Component Already exists. className=${className}`, );
-			resolve();
-		}
-		else
-		{
-			let path = "";
-			let base = ( BITSMIST.v1.Settings["system"]["componentPath"] ? BITSMIST.v1.Settings["system"]["componentPath"] : "/components/" );
-			if (options && "path" in options)
-			{
-				path = options["path"];
-			}
-
-			let promise = this.__loadComponentScript(className, base + path).then(() => {
-				resolve();
-			});
-		}
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
-* Load the component js files.
-*
-* @param	{String}		componentName		Component name.
-* @param	{String}		path				Component path.
-*
-* @return  {Promise}		Promise.
-*/
-Component.prototype.__loadComponentScript = function(componentName, path) {
-
-	console.debug(`Component.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
-
-	return new Promise((resolve, reject) => {
-		let url1 = path + "/" + componentName + ".auto.js";
-		let url2 = path + "/" + componentName + ".js";
-
-		Promise.resolve().then(() => {
-			if (BITSMIST.v1.Settings["system"]["splitComponent"])
-			{
-				return AjaxUtil.loadScript(url1);
-			}
-		}).then(() => {
-			return AjaxUtil.loadScript(url2);
-		}).then(() => {
-			console.debug(`Component.__loadComponentScript(): Loaded script. componentName=${componentName}`);
-			resolve();
-		});
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
  * Load the template html if not loaded yet.
  *
  * @param	{String}		templateName		Template name.
@@ -1184,7 +1040,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 						let base = ( BITSMIST.v1.Settings["system"]["templatePath"] ? BITSMIST.v1.Settings["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
-						this.__loadTemplate(templateName, base + path).then((template) => {
+						LoaderUtil.loadTemplate(templateName, base + path).then((template) => {
 							this._templates[templateName] = {};
 							this._templates[templateName]["html"] = template;
 							resolve();
@@ -1209,32 +1065,6 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				resolve();
 			});
 		}
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Load the template html.
- *
- * @param	{String}		templateName		Template name.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.__loadTemplate = function(templateName, path)
-{
-
-	let basePath = (path ? path + "/" : "");
-	let url = basePath + templateName + ".html";
-
-	console.debug(`Component.__loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
-
-	return new Promise((resolve, reject) => {
-		AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`Component.__loadTemplate(): Loaded template. templateName=${templateName}`);
-			resolve(xhr.responseText);
-		});
 	});
 
 }
