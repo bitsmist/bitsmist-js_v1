@@ -8,7 +8,7 @@
  */
 // =============================================================================
 
-import PathToRegexp from 'path-to-regexp';
+import { pathToRegexp } from 'path-to-regexp';
 
 // =============================================================================
 //	Default router class
@@ -70,7 +70,7 @@ Router.prototype.addRoute = function(routeInfo)
 		"keys": keys,
 		"specName": routeInfo["specName"],
 		"componentName": routeInfo["componentName"],
-		"re": PathToRegexp.pathToRegexp(routeInfo["path"], keys)
+		"re": pathToRegexp(routeInfo["path"], keys)
 	};
 
 	this._routes.push(route);
