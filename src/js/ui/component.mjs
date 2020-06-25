@@ -16,6 +16,7 @@ import LoaderUtil from '../util/loader-util';
 //	Component class
 // =============================================================================
 
+//export default function Component()
 export default class Component extends HTMLElement
 {
 
@@ -30,6 +31,7 @@ export default class Component extends HTMLElement
 	{
 
 		super();
+		//HTMLElement.constructor.call(this);
 
 		this._app = this;
 		this._templates = {};
@@ -58,85 +60,89 @@ export default class Component extends HTMLElement
 			return this.trigger("initComponent", this);
 		});
 
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	/**
-     * Component name.
-     *
-	 * @type	{String}
-     */
-	get name()
-	{
-
-		return this.getOption("name");
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Element.
-     *
-	 * @type	{String}
-     */
-	get element()
-	{
-
-		return this._element;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Instance's unique id.
-     *
-	 * @type	{String}
-     */
-	get uniqueId()
-	{
-
-		return this._uniqueId;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * App instance.
-     *
-	 * @type	{String}
-     */
-	get app()
-	{
-
-		return BITSMIST.v1._app;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-     * Router instance.
-     *
-	 * @type	{String}
-     */
-	get router()
-	{
-
-		return BITSMIST.v1._router;
-
+		//return Reflect.construct(HTMLElement, [], this.constructor);
 	}
 
 }
 
-// -------------------------------------------------------------------------
+// Component.prototype = Object.create(HTMLElement.prototype);
+// Component.prototype.constructor = Component;
+
+// -----------------------------------------------------------------------------
+//  Setter/Getter
+// -----------------------------------------------------------------------------
+
+/**
+ * Component name.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'name', {
+	get()
+	{
+		return this.getOption("name");
+	}
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Element.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'element', {
+	get()
+	{
+		return this._element;
+	}
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Instance's unique id.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'uniqueId', {
+	get()
+	{
+		return this._uniqueId;
+	}
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * App instance.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'app', {
+	get()
+	{
+		return BITSMIST.v1._app;
+	}
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Router instance.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'router', {
+	get()
+	{
+		return BITSMIST.v1._router;
+	}
+})
+
+// -----------------------------------------------------------------------------
 //  Methods
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Set option value.
@@ -151,7 +157,7 @@ Component.prototype.setOption = function(key, value)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Get option value. Return default value when specified key is not available.
@@ -175,7 +181,7 @@ Component.prototype.getOption = function(key, defaultValue)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Open component.
@@ -220,7 +226,7 @@ Component.prototype.open = function(options)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Open component modally.
@@ -247,7 +253,7 @@ Component.prototype.openModal = function(options)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Close component.
@@ -287,7 +293,7 @@ Component.prototype.close = function(options)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Refresh component.
@@ -324,7 +330,7 @@ Component.prototype.refresh = function(options)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Apply settings.
@@ -360,7 +366,7 @@ Component.prototype.setup = function(options)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Fill.
@@ -373,7 +379,7 @@ Component.prototype.fill = function(options)
 {
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Change template html.
@@ -398,7 +404,7 @@ Component.prototype.switchTemplate = function(templateName)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Add a component to the pad.
@@ -441,7 +447,7 @@ Component.prototype.addComponent = function(componentName, options)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Add a plugin to the pad.
@@ -473,7 +479,7 @@ Component.prototype.addPlugin = function(pluginName, options)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Add an event handler.
@@ -511,7 +517,7 @@ Component.prototype.addEventHandler = function(element, eventName, handler, opti
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Clone the component.
@@ -558,7 +564,7 @@ Component.prototype.clone(newId, templateName)
 }
 */
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Trigger the event.
@@ -589,7 +595,7 @@ Component.prototype.trigger = function(eventName, sender, options)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Trigger the HTML event.
@@ -621,7 +627,7 @@ Component.prototype.triggerHtmlEvent = function(element, eventName, sender, opti
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Wait for components to be loaded.
@@ -689,7 +695,7 @@ Component.prototype._getOptions = function()
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Check if components are loaded.
@@ -748,7 +754,7 @@ Component.prototype._isLoadedTemplate = function(templateName)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Duplicate the component element.
@@ -770,7 +776,7 @@ Component.prototype._dupElement = function(templateName)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Init html element's event handler.
@@ -1107,7 +1113,7 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 
 }
 
-// -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * Register component to loaded list.
