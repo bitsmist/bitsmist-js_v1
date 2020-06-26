@@ -5,7 +5,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const config = {
 	mode: "production",
 	entry:{
-		"bitsmist-webview_v1": path.resolve(__dirname, "./src/js/bundle.mjs"),
+		"bitsmist-webview_v1": path.resolve(__dirname, "./src/js/bundle.js"),
 	},
 	output: {
 		path: path.resolve(__dirname, "./public/js/"),
@@ -14,7 +14,8 @@ const config = {
 	module: {
 		rules: [
 			{
-				test: /\.mjs$/,
+				test: /\.js$/,
+				exclude: /node_modules/,
 				use: [
 					{
 						loader: 'babel-loader',
