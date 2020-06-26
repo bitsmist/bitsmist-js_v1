@@ -3,18 +3,6 @@ import 'proxy-polyfill';
 
 window.BITSMIST = window.BITSMIST || {};
 window.BITSMIST.v1 = window.BITSMIST.v1 || {};
-window.BITSMIST.v1._waiting = [];
-window.BITSMIST.v1._loaded = [];
-window.BITSMIST.v1._router;
-window.BITSMIST.v1._app;
-
-//@@@
-window.BITSMIST.v1.Settings = {};
-/*
-window.BITSMIST.v1.app;
-window.BITSMIST.v1.router;
-window.BITSMIST.v1.services;
-*/
 
 // App
 import App from './app';
