@@ -1,5 +1,4 @@
 import '@webcomponents/custom-elements';
-import 'proxy-polyfill';
 
 window.BITSMIST = window.BITSMIST || {};
 window.BITSMIST.v1 = window.BITSMIST.v1 || {};
@@ -17,10 +16,6 @@ window.BITSMIST.v1.App = App;
 // window.BITSMIST.v1.NoRouteError = NoRouteError;
 // window.BITSMIST.v1.NotValidFunctionError = NotValidFunctionError;
 
-// Service Manager
-import ServiceManager from './manager/service-manager';
-window.BITSMIST.v1.ServiceManager = ServiceManager;
-
 // Router
 import Router from './router/router';
 window.BITSMIST.v1.Router = Router;
@@ -32,4 +27,6 @@ window.BITSMIST.v1.Component = Component;
 // Util
 import AjaxUtil from './util/ajax-util';
 window.BITSMIST.v1.AjaxUtil = AjaxUtil;
+import LoaderUtil from './util/loader-util';
+window.BITSMIST.v1.LoaderUtil = LoaderUtil;
 
