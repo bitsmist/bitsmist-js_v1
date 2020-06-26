@@ -42,7 +42,7 @@ LoaderUtil.createObject = function(className, ...args)
 		let c = Function("return (" + className + ")")();
 		ret = new c(...args);
 	}
-	catch
+	catch(e)
 	{
 		let c = window;
 		className.split(".").forEach((value) => {
