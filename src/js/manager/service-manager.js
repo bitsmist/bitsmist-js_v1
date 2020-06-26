@@ -37,6 +37,7 @@ import LoaderUtil from '../util/loader-util';
 		this.loadServices(this._options["services"]);
 	}
 
+	/*
 	return new Proxy(this, {
 		get: (target, property) => {
 			if (property in target)
@@ -51,6 +52,7 @@ import LoaderUtil from '../util/loader-util';
 			}
 		}
 	});
+	*/
 
 }
 
@@ -74,6 +76,65 @@ ServiceManager.prototype.add = function(serviceName, options)
 	let component = LoaderUtil.createObject(className, options);
 	this._services.push(component);
 	this._index[serviceName] = component;
+
+}
+
+// Error
+
+ServiceManager.prototype.handle = function(options, filter)
+{
+
+	return new Promise((resolve, reject) => {
+		this._callMethod("handle", [options], filter).then(() => {
+			resolve();
+		});;
+	});
+
+}
+
+// Preferences
+
+ServiceManager.prototype.load = function(options, filter)
+{
+
+	return new Promise((resolve, reject) => {
+		this._callMethod("load", [options], filter).then((result) => {
+			resolve(result);
+		});;
+	});
+
+}
+
+ServiceManager.prototype.save = function(options, filter)
+{
+
+	return new Promise((resolve, reject) => {
+		this._callMethod("save", [options], filter).then(() => {
+			resolve();
+		});;
+	});
+
+}
+
+ServiceManager.prototype.setup = function(options, filter)
+{
+
+	return new Promise((resolve, reject) => {
+		this._callMethod("setup", [options], filter).then(() => {
+			resolve();
+		});;
+	});
+
+}
+
+ServiceManager.prototype.register = function(component, options, filter)
+{
+
+	return new Promise((resolve, reject) => {
+		this._callMethod("register", [component, options], filter).then(() => {
+			resolve();
+		});;
+	});
 
 }
 
@@ -124,10 +185,11 @@ ServiceManager.prototype.getService = function(serviceName)
  *
  * @return  {Promise}		Promise.
  */
-ServiceManager.prototype._callMethod = function(methodName, args)
+//ServiceManager.prototype._callMethod = function(methodName, args)
+ServiceManager.prototype._callMethod = function(methodName, args, filter)
 {
 
-	let filter = ( args.length > 1 && typeof args[1] == "function" ? args[1] : undefined );
+//	let filter = ( args.length > 1 && typeof args[1] == "function" ? args[1] : undefined );
 
 	return new Promise((resolve, reject) => {
 		let promises = [];
