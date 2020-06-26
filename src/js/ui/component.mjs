@@ -10,6 +10,7 @@
 
 import AjaxUtil from '../util/ajax-util';
 //import { NoClassError, NoNodeError, NotValidFunctionError } from '../error/errors';
+import Globals from '../globals';
 import LoaderUtil from '../util/loader-util';
 
 // =============================================================================
@@ -33,7 +34,6 @@ export default class Component extends HTMLElement
 		super();
 		//HTMLElement.constructor.call(this);
 
-		this._app = this;
 		this._templates = {};
 		this._isOpen = false;
 		this._element = this;
@@ -122,7 +122,7 @@ Object.defineProperty(Component.prototype, 'uniqueId', {
 Object.defineProperty(Component.prototype, 'app', {
 	get()
 	{
-		return BITSMIST.v1._app;
+		return Globals["app"];
 	}
 })
 
@@ -136,7 +136,21 @@ Object.defineProperty(Component.prototype, 'app', {
 Object.defineProperty(Component.prototype, 'router', {
 	get()
 	{
-		return BITSMIST.v1._router;
+		return Globals["router"];
+	}
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Global settings.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'globalSettings', {
+	get()
+	{
+		return Globals["settings"];
 	}
 })
 
@@ -346,7 +360,7 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		let preferences = BITSMIST.v1.Settings["preferences"];
+		let preferences = Globals["settings"]["preferences"];
 		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : preferences);
 		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : preferences );
 		let sender = ( options["sender"] ? options["sender"] : this );
@@ -628,42 +642,6 @@ Component.prototype.triggerHtmlEvent = function(element, eventName, sender, opti
 }
 
 // -----------------------------------------------------------------------------
-
-/**
- * Wait for components to be loaded.
- *
- * @param	{Array}			waitlist			Components to wait.
- *
- * @return  {Array}			Promises.
- */
-Component.prototype.waitFor = function(waitlist)
-{
-
-	let promise;
-
-	if (!waitlist || this._isLoadedComponent(waitlist))
-	{
-		promise = Promise.resolve();
-	}
-	else
-	{
-		let waitInfo = {};
-		waitInfo["waitlist"] = waitlist;
-
-		promise = new Promise((resolve, reject) => {
-			waitInfo["resolve"] = resolve;
-			waitInfo["reject"] = reject;
-		});
-		waitInfo["promise"] = promise;
-
-		BITSMIST.v1._waiting.push(waitInfo);
-	}
-
-	return promise;
-
-}
-
-// -----------------------------------------------------------------------------
 //  Callbacks
 // -----------------------------------------------------------------------------
 
@@ -674,7 +652,7 @@ Component.prototype.connectedCallback = function()
 {
 
 	this.open().then(() => {
-		this.__registerComponent();
+		LoaderUtil.registerComponent(this);
 	});
 
 }
@@ -692,44 +670,6 @@ Component.prototype._getOptions = function()
 {
 
 	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Check if components are loaded.
- *
- * @param	{Array}			waitlist			Components to wait.
- *
- * @return  {Array}			Promises.
- */
-Component.prototype._isLoadedComponent = function(waitlist)
-{
-
-	let result = true;
-
-	for (let i = 0; i < waitlist.length; i++)
-	{
-		let match = false;
-
-		for (let j = 0; j < BITSMIST.v1._loaded.length; j++)
-		{
-			if (BITSMIST.v1._loaded[j].name == waitlist[i]["componentName"])
-			{
-				match = true;
-				break;
-			}
-		}
-
-		if (!match)
-		{
-			result = false;
-			break;
-		}
-	}
-
-	return result;
 
 }
 
@@ -1043,7 +983,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
-						let base = ( BITSMIST.v1.Settings["system"]["templatePath"] ? BITSMIST.v1.Settings["system"]["templatePath"] : "/components/");
+						let base = ( Globals["settings"]["system"]["templatePath"] ? Globals["settings"]["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
 						LoaderUtil.loadTemplate(templateName, base + path).then((template) => {
@@ -1060,7 +1000,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 			}).then(() => {
 				return this.__initOnAppendTemplate();
 			}).then(() => {
-				return this.waitFor(this.getOption("waitFor"));
+				return LoaderUtil.waitFor(this.getOption("waitFor"));
 			}).then(() => {
 				return this.trigger("_append", this);
 			}).then(() => {
@@ -1110,26 +1050,6 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 	}
 
 	console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Register component to loaded list.
- */
-Component.prototype.__registerComponent = function()
-{
-
-	BITSMIST.v1._loaded.push(this);
-
-	for (let i = 0; i < BITSMIST.v1._waiting.length; i++)
-	{
-		if (this._isLoadedComponent(BITSMIST.v1._waiting[i]["waitlist"]))
-		{
-			BITSMIST.v1._waiting[i].resolve();
-		}
-	}
 
 }
 
