@@ -10,6 +10,7 @@
 
 import AjaxUtil from './util/ajax-util';
 import Component from './ui/component';
+import Globals from './globals';
 import LoaderUtil from './util/loader-util';
 import ServiceManager from './manager/service-manager';
 
@@ -29,25 +30,24 @@ import ServiceManager from './manager/service-manager';
 export default function App(settings)
 {
 
-	BITSMIST.v1._app = this;
-	BITSMIST.v1.Settings = Object.assign({}, settings);
+	Globals["app"] = this;
+	Globals["settings"] = Object.assign({}, settings);
 
 	this._components = {};
 	this._serviceManager = new ServiceManager({"app":this});
-	this._settings = BITSMIST.v1.Settings;
 	this._spec;
 
 	// Init error listeners
 	this.__initErrorListeners();
 
 	// load services
-	this._serviceManager.loadServices(this._settings["services"]);
+	this._serviceManager.loadServices(Globals["settings"]["services"]);
 
 	// Init router
-	if (this._settings["router"])
+	if (Globals["settings"]["router"])
 	{
-		let options = Object.assign({"app": this}, this._settings["router"]);
-		BITSMIST.v1._router = LoaderUtil.createObject(this._settings["router"]["className"], options);
+		let options = Object.assign({"app": this}, Globals["settings"]["router"]);
+		Globals["router"] = LoaderUtil.createObject(Globals["settings"]["router"]["className"], options);
 	}
 
 	// load preference
@@ -56,7 +56,7 @@ export default function App(settings)
 	}).then((preferences) => {
 		for (let i = 0; i < preferences.length; i++)
 		{
-			this._settings["preferences"] = Object.assign(this._settings["preferences"], preferences[i]);
+			Globals["settings"]["preferences"] = Object.assign(Globals["settings"]["preferences"], preferences[i]);
 		}
 	});
 
@@ -81,7 +81,7 @@ Object.defineProperty(App.prototype, 'serviceManager', {
 Object.defineProperty(App.prototype, 'router', {
 	get()
 	{
-		return BITSMIST.v1._router;
+		return Globals["router"];
 	}
 })
 
@@ -106,10 +106,10 @@ App.prototype.run = function()
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
-			LoaderUtil.loadSpec(specName, this._settings).then((spec) => {
+			LoaderUtil.loadSpec(specName, Globals["settings"]).then((spec) => {
 				this._spec = spec;
 
-				this.router.__initRoutes(spec["routes"].concat(this._settings["router"]["routes"]));
+				this.router.__initRoutes(spec["routes"].concat(Globals["settings"]["router"]["routes"]));
 
 				Object.keys(spec["components"]).forEach((key) => {
 					this._components[key] = spec["components"][key];
@@ -146,7 +146,7 @@ App.prototype.setup = function(options)
 		return service.options["serviceType"] == "preference"
 	}).then(() => {
 		// Merge new settings
-		this._settings["preferences"] = Object.assign(this._settings["preferences"], options["newPreferences"]);
+		Globals["settings"]["preferences"] = Object.assign(Globals["settings"]["preferences"], options["newPreferences"]);
 
 		// Save settings
 		this._serviceManager.save(options["newPreferences"], (service) => {
