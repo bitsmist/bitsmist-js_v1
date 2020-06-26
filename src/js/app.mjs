@@ -35,7 +35,6 @@ export default function App(settings)
 
 	this._components = {};
 	this._serviceManager = new ServiceManager({"app":this});
-	this._spec;
 
 	// Init error listeners
 	this.__initErrorListeners();
@@ -107,7 +106,7 @@ App.prototype.run = function()
 	{
 		promise = new Promise((resolve, reject) => {
 			LoaderUtil.loadSpec(specName, Globals["settings"]).then((spec) => {
-				this._spec = spec;
+				Globals["spec"] = spec;
 
 				this.router.__initRoutes(spec["routes"].concat(Globals["settings"]["router"]["routes"]));
 
