@@ -9,12 +9,16 @@
 // =============================================================================
 
 import AjaxUtil from './ajax-util';
+import Globals from '../globals';
 
 // =============================================================================
 //	Loader util class
 // =============================================================================
 
 export default function LoaderUtil() {}
+
+LoaderUtil.__waitingList = [];
+LoaderUtil.__loadedList = [];
 
 // -----------------------------------------------------------------------------
 //  Methods
@@ -162,6 +166,61 @@ LoaderUtil.loadTemplate = function(templateName, path)
 
 }
 
+// -----------------------------------------------------------------------------
+
+/**
+ * Wait for components to be loaded.
+ *
+ * @param	{Array}			waitlist			Components to wait.
+ *
+ * @return  {Array}			Promises.
+ */
+LoaderUtil.waitFor = function(waitlist)
+{
+
+	let promise;
+
+	if (!waitlist || LoaderUtil.__isLoadedComponents(waitlist))
+	{
+		promise = Promise.resolve();
+	}
+	else
+	{
+		let waitInfo = {};
+		waitInfo["waitlist"] = waitlist;
+
+		promise = new Promise((resolve, reject) => {
+			waitInfo["resolve"] = resolve;
+			waitInfo["reject"] = reject;
+		});
+		waitInfo["promise"] = promise;
+
+		LoaderUtil.__waitingList.push(waitInfo);
+	}
+
+	return promise;
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Register component to loaded list.
+ */
+LoaderUtil.registerComponent = function(component)
+{
+
+	LoaderUtil.__loadedList.push(component);
+
+	for (let i = 0; i < LoaderUtil.__waitingList.length; i++)
+	{
+		if (LoaderUtil.__isLoadedComponents(LoaderUtil.__waitingList[i]["waitlist"]))
+		{
+			LoaderUtil.__waitingList[i].resolve();
+		}
+	}
+
+}
 
 // -----------------------------------------------------------------------------
 //  Privates
@@ -195,6 +254,44 @@ LoaderUtil.__isLoadedClass = function(className)
 // -----------------------------------------------------------------------------
 
 /**
+ * Check if components are loaded.
+ *
+ * @param	{Array}			waitlist			Components to wait.
+ *
+ * @return  {Array}			Promises.
+ */
+LoaderUtil.__isLoadedComponents = function(waitlist)
+{
+
+	let result = true;
+
+	for (let i = 0; i < waitlist.length; i++)
+	{
+		let match = false;
+
+		for (let j = 0; j < LoaderUtil.__loadedList.length; j++)
+		{
+			if (LoaderUtil.__loadedList[j].name == waitlist[i]["componentName"])
+			{
+				match = true;
+				break;
+			}
+		}
+
+		if (!match)
+		{
+			result = false;
+			break;
+		}
+	}
+
+	return result;
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Load the component if not loaded yet.
  *
  * @param	{String}		className			Component class name.
@@ -216,7 +313,7 @@ LoaderUtil.__autoloadComponent = function(className, options)
 		else
 		{
 			let path = "";
-			let base = ( BITSMIST.v1.Settings["system"]["componentPath"] ? BITSMIST.v1.Settings["system"]["componentPath"] : "/components/" );
+			let base = ( Globals["settings"]["system"]["componentPath"] ? Globals["settings"]["system"]["componentPath"] : "/components/" );
 			if (options && "path" in options)
 			{
 				path = options["path"];
@@ -249,7 +346,7 @@ LoaderUtil.__loadComponentScript = function(componentName, path) {
 		let url2 = path + "/" + componentName + ".js";
 
 		Promise.resolve().then(() => {
-			if (BITSMIST.v1.Settings["system"]["splitComponent"])
+			if (Globals["settings"]["system"]["splitComponent"])
 			{
 				return AjaxUtil.loadScript(url1);
 			}
