@@ -17,56 +17,46 @@ import LoaderUtil from '../util/loader-util';
 //	Component class
 // =============================================================================
 
-//export default function Component()
-export default class Component extends HTMLElement
+/**
+ * Constructor.
+ */
+export default function Component()
 {
 
-	// -------------------------------------------------------------------------
-	//  Constructor
-	// -------------------------------------------------------------------------
+	let _this = Reflect.construct(HTMLElement, [], Object.getPrototypeOf(this).constructor);
 
-	/**
-     * Constructor.
-     */
-	constructor()
-	{
+	_this._templates = {};
+	_this._isOpen = false;
+	_this._element = _this;
+	_this._options = Object.assign({}, this._getOptions());
+	_this._options["templateName"] = ( "templateName" in _this._options ? _this._options["templateName"] : _this.name );
+	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+	_this._modalOptions;
+	_this._modalResult;
+	_this._modalPromise;
+	_this._isModal = false;
 
-		super();
-		//HTMLElement.constructor.call(this);
+	_this._components = ( _this._options["components"] ? _this._options["components"] : {} );
+	_this._elements = ( _this._options["elements"] ? _this._options["elements"] : {} );
+	_this._plugins = ( _this._options["plugins"] ? _this._options["plugins"] : {} );
+	_this._events = ( _this._options["events"] ? _this._options["events"] : {} );
+	_this._services = ( _this._options["services"] ? _this._options["services"] : {} );
 
-		this._templates = {};
-		this._isOpen = false;
-		this._element = this;
-		this._options = Object.assign({}, this._getOptions());
-		this._options["templateName"] = ( "templateName" in this._options ? this._options["templateName"] : this.name );
-		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-		this._modalOptions;
-		this._modalResult;
-		this._modalPromise;
-		this._isModal = false;
+	// Init event handlers
+	Object.keys(_this._events).forEach((eventName) => {
+		_this.addEventHandler(_this, eventName, _this._events[eventName]["handler"]);
+	});
 
-		this._components = ( this._options["components"] ? this._options["components"] : {} );
-		this._elements = ( this._options["elements"] ? this._options["elements"] : {} );
-		this._plugins = ( this._options["plugins"] ? this._options["plugins"] : {} );
-		this._events = ( this._options["events"] ? this._options["events"] : {} );
-		this._services = ( this._options["services"] ? this._options["services"] : {} );
+	_this.trigger("_initComponent", _this).then(() => {
+		return _this.trigger("initComponent", _this);
+	});
 
-		// Init event handlers
-		Object.keys(this._events).forEach((eventName) => {
-			this.addEventHandler(this, eventName, this._events[eventName]["handler"]);
-		});
-
-		this.trigger("_initComponent", this).then(() => {
-			return this.trigger("initComponent", this);
-		});
-
-		//return Reflect.construct(HTMLElement, [], this.constructor);
-	}
+	return _this;
 
 }
 
-// Component.prototype = Object.create(HTMLElement.prototype);
-// Component.prototype.constructor = Component;
+Component.prototype = Object.create(HTMLElement.prototype);
+Component.prototype.constructor = Component;
 
 // -----------------------------------------------------------------------------
 //  Setter/Getter
