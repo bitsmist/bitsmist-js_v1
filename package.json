@@ -5,19 +5,19 @@
   "private": true,
   "dependencies": {},
   "devDependencies": {
-    "@babel/core": "^7.10.2",
-    "@babel/preset-env": "^7.10.2",
+    "@rollup/plugin-buble": "^0.21.3",
+    "@rollup/plugin-commonjs": "^13.0.0",
+    "@rollup/plugin-node-resolve": "^8.1.0",
     "@webcomponents/custom-elements": "^1.4.1",
-    "babel-loader": "^8.0.6",
-    "core-js": "^3.6.4",
     "path-to-regexp": "^6.1.0",
     "proxy-polyfill": "^0.3.1",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
+    "rollup": "^2.18.0",
+    "rollup-plugin-buble": "^0.19.8",
+    "rollup-plugin-uglify": "^6.0.4"
   },
   "scripts": {
-    "watch": "npx webpack --mode development --watch",
-    "dev": "npx webpack --mode development",
-    "build": "npx webpack --mode production"
+    "watch": "npx rollup -c -w --environment BUILD:dev",
+    "dev": "npx rollup -c --environment BUILD:dev",
+    "prod": "npx rollup -c --environment BUILD:prod"
   }
 }
