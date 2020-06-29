@@ -1,12 +1,10 @@
-import babel from '@rollup/plugin-babel'
 import buble from '@rollup/plugin-buble'
 import commonjs from '@rollup/plugin-commonjs'
 import nodeResolve from '@rollup/plugin-node-resolve';
 import {uglify} from 'rollup-plugin-uglify';
-import {terser} from 'rollup-plugin-terser';
 
 export default {
-	input: 'src/js/bundle.js',
+	input: 'src/js/index.js',
 	output: {
 		file: 'dist/bitsmist-webview_v1.bundle.js',
 		format: 'iife',
@@ -19,25 +17,6 @@ export default {
 				ie:11
 			}
 		}),
-		/*
-		babel({
-			babelrc: false,
-			exclude: 'node_modules/**',
-			presets: [
-				[
-					'@babel/preset-env',
-					{
-						"targets": {
-							"ie": 11
-						},
-						"corejs": 3,
-						"useBuiltIns": "usage"
-					}
-				]
-			]
-		}),
-		*/
 		uglify(),
-//		terser(),
 	],
 }

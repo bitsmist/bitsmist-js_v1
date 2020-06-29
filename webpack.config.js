@@ -5,10 +5,10 @@ const TerserPlugin = require('terser-webpack-plugin');
 const config = {
 	mode: "production",
 	entry:{
-		"bitsmist-webview_v1": path.resolve(__dirname, "./src/js/bundle.js"),
+		"bitsmist-webview_v1": path.resolve(__dirname, "./src/js/index.js"),
 	},
 	output: {
-		path: path.resolve(__dirname, "./public/js/"),
+		path: path.resolve(__dirname, "./dist/"),
 		filename: "[name].bundle.js"
 	},
 	module: {
