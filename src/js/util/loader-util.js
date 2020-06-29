@@ -49,8 +49,7 @@ LoaderUtil.createObject = function(className, ...args)
 			c = c[value];
 			if (!c)
 			{
-				//throw new NoClassError(`Class not found. className=${className}`);
-				throw new Error(`Class not found. className=${className}`);
+				throw new ReferenceError(`Class not found. className=${className}`);
 			}
 		});
 		ret = new c(...args);
@@ -127,7 +126,7 @@ LoaderUtil.loadSpec = function(specName, settings)
 			}
 			catch(e)
 			{
-				throw new Error(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
+				throw new SyntaxError(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
 			}
 
 			// Merge common spec, spec and settings

@@ -9,7 +9,6 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
-//import { NoClassError, NoNodeError, NotValidFunctionError } from '../error/errors';
 import Globals from '../globals';
 import LoaderUtil from '../util/loader-util';
 
@@ -515,8 +514,7 @@ Component.prototype.addEventHandler = function(element, eventName, handler, opti
 	}
 	else
 	{
-		//throw new NotValidFunctionError(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
-		throw new Error(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
+		throw new TypeError(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
 	}
 
 }
@@ -1023,8 +1021,7 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 		let root = document.querySelector(rootNode);
 		if (!root)
 		{
-			//throw new NoNodeError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
-			throw new Error(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
+			throw new ReferenceError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
 		}
 
 		// Add template to root node

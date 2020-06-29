@@ -7,15 +7,6 @@ window.BITSMIST.v1 = window.BITSMIST.v1 || {};
 import App from './app';
 window.BITSMIST.v1.App = App;
 
-// Error
-// import {NoClassError, NoNodeError, NoMethodError, NoResourceError, NoRouteError, NotValidFunctionError} from './error/errors';
-// window.BITSMIST.v1.NoClassError = NoClassError;
-// window.BITSMIST.v1.NoNodeError = NoNodeError;
-// window.BITSMIST.v1.NoMethodError = NoMethodError;
-// window.BITSMIST.v1.NoResourceError = NoResourceError;
-// window.BITSMIST.v1.NoRouteError = NoRouteError;
-// window.BITSMIST.v1.NotValidFunctionError = NotValidFunctionError;
-
 // Router
 import Router from './router/router';
 window.BITSMIST.v1.Router = Router;
