@@ -8,6 +8,7 @@ export default {
 	output: {
 		file: 'dist/bitsmist-webview_v1.bundle.js',
 		format: 'iife',
+		sourcemap: ( process.env.BUILD === 'prod' ? false : true )
 	},
 	plugins: [
 		nodeResolve(),
@@ -17,6 +18,6 @@ export default {
 				ie:11
 			}
 		}),
-		uglify(),
+		( process.env.BUILD === 'prod' && uglify() ),
 	],
 }
