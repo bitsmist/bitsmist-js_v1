@@ -8,13 +8,17 @@
  */
 // =============================================================================
 
-import AjaxUtil from '../util/ajax-util';
-import Globals from '../globals';
-import LoaderUtil from '../util/loader-util';
+import AjaxUtil from './util/ajax-util';
+import Globals from './globals';
+import LoaderUtil from './util/loader-util';
 
 // =============================================================================
 //	Component class
 // =============================================================================
+
+// -----------------------------------------------------------------------------
+//  Constructor
+// -----------------------------------------------------------------------------
 
 /**
  * Constructor.
@@ -22,7 +26,7 @@ import LoaderUtil from '../util/loader-util';
 export default function Component()
 {
 
-	let _this = Reflect.construct(HTMLElement, [], Object.getPrototypeOf(this).constructor);
+	let _this = Reflect.construct(HTMLElement, [], this.constructor);
 
 	_this._templates = {};
 	_this._isOpen = false;
@@ -54,8 +58,7 @@ export default function Component()
 
 }
 
-Component.prototype = Object.create(HTMLElement.prototype);
-Component.prototype.constructor = Component;
+LoaderUtil.inherit(Component, HTMLElement);
 
 // -----------------------------------------------------------------------------
 //  Setter/Getter
@@ -1042,4 +1045,4 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 
 // -----------------------------------------------------------------------------
 
-customElements.define("bm-component", Component);
+//customElements.define("bm-component", Component);

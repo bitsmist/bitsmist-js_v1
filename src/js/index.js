@@ -1,4 +1,6 @@
 import '@webcomponents/custom-elements';
+import 'proxy-polyfill';
+import 'url-polyfill';
 
 window.BITSMIST = window.BITSMIST || {};
 window.BITSMIST.v1 = window.BITSMIST.v1 || {};
@@ -8,11 +10,11 @@ import App from './app';
 window.BITSMIST.v1.App = App;
 
 // Router
-import Router from './router/router';
+import Router from './router';
 window.BITSMIST.v1.Router = Router;
 
-// UI
-import Component from './ui/component';
+// Component
+import Component from './component';
 window.BITSMIST.v1.Component = Component;
 
 // Util

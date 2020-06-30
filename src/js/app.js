@@ -9,10 +9,9 @@
 // =============================================================================
 
 import AjaxUtil from './util/ajax-util';
-import Component from './ui/component';
 import Globals from './globals';
 import LoaderUtil from './util/loader-util';
-import ServiceManager from './manager/service-manager';
+import ServiceManager from './service-manager';
 
 // =============================================================================
 //	App class
