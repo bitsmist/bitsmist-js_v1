@@ -12,7 +12,8 @@
     "path-to-regexp": "^6.1.0",
     "proxy-polyfill": "^0.3.1",
     "rollup": "^2.18.0",
-    "rollup-plugin-uglify": "^6.0.4"
+    "rollup-plugin-uglify": "^6.0.4",
+    "url-polyfill": "^1.1.9"
   },
   "scripts": {
     "watch": "npx rollup -c -w --environment BUILD:dev",
