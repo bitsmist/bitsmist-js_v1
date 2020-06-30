@@ -27,6 +27,23 @@ LoaderUtil.__loadedList = [];
 /**
  * Instantiate the component.
  *
+ * @param	{Object}		subClass			Sub class.
+ * @param	{Object}		superClass			Super class.
+ */
+LoaderUtil.inherit = function(subClass, superClass)
+{
+
+	subClass.prototype = Object.create(superClass.prototype);
+	subClass.prototype.constructor = subClass;
+	Object.setPrototypeOf(subClass, superClass);
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Instantiate the component.
+ *
  * @param	{String}		className			Class name.
  * @param	{Object}		options				Options for the component.
  *
