@@ -1,7 +1,3 @@
-import '@webcomponents/custom-elements';
-import 'proxy-polyfill';
-import 'url-polyfill';
-
 window.BITSMIST = window.BITSMIST || {};
 window.BITSMIST.v1 = window.BITSMIST.v1 || {};
 
