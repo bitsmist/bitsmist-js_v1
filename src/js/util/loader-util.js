@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from './ajax-util';
+//import Component from '../component'; // Break the code when imported.
 import Globals from '../globals';
 
 // =============================================================================
@@ -22,6 +23,28 @@ LoaderUtil.__loadedList = [];
 
 // -----------------------------------------------------------------------------
 //  Methods
+// -----------------------------------------------------------------------------
+
+LoaderUtil.new = function(componentName, settings, superClass)
+{
+
+	superClass = ( superClass ? superClass : BITSMIST.v1.Component );
+
+	let component = function() {
+		let _this = Reflect.construct(superClass, [], this.constructor);
+		return _this;
+	};
+	LoaderUtil.inherit(component, superClass);
+	customElements.define(componentName, component);
+
+	component.prototype._getOptions = function() {
+		return settings;
+	}
+
+	return component;
+
+}
+
 // -----------------------------------------------------------------------------
 
 /**
