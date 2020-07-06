@@ -47,7 +47,8 @@ export default function Component()
 
 	// Init event handlers
 	Object.keys(_this._events).forEach((eventName) => {
-		_this.addEventHandler(_this, eventName, _this._events[eventName]["handler"]);
+		let handler = ( typeof _this._events[eventName] === "object" ? _this._events[eventName]["handler"] : _this._events[eventName] );
+		_this.addEventHandler(_this, eventName, handler);
 	});
 
 	_this.trigger("_initComponent", _this).then(() => {
@@ -498,27 +499,20 @@ Component.prototype.addPlugin = function(pluginName, options)
 Component.prototype.addEventHandler = function(element, eventName, handler, options)
 {
 
-	if (typeof handler === "function")
+	let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
+
+	if (!element._bm_detail)
 	{
-		let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
-
-		if (!element._bm_detail)
-		{
-			element._bm_detail = { "component": this, "listeners": listeners };
-		}
-
-		if (!listeners[eventName])
-		{
-			listeners[eventName] = [];
-			element.addEventListener(eventName, this.__callEventHandler);
-		}
-
-		listeners[eventName].push({"handler":handler, "options":options});
+		element._bm_detail = { "component": this, "listeners": listeners };
 	}
-	else
+
+	if (!listeners[eventName])
 	{
-		throw new TypeError(`Event handler is not a function. name=${this.name}, eventName=${eventName}`);
+		listeners[eventName] = [];
+		element.addEventListener(eventName, this.__callEventHandler);
 	}
+
+	listeners[eventName].push({"handler":handler, "options":options});
 
 }
 
@@ -741,7 +735,8 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 			// Merge options
 			options = Object.assign({}, events[eventName], options);
 
-			this.addEventHandler(elements[i], eventName, events[eventName]["handler"], options);
+			let handler = ( typeof events[eventName] === "object" ? events[eventName]["handler"] : events[eventName] );
+			this.addEventHandler(elements[i], eventName, handler, options);
 		});
 	}
 
@@ -769,6 +764,8 @@ Component.prototype.__initOnAppendTemplate = function()
 				service.register(this, this._services[serviceName]);
 			}
 		});
+
+//		this.app.serviceManager.serve("register", [this, this._services[serviceName]]);
 
 		// Init plugins
 		Object.keys(this._plugins).forEach((pluginName) => {
@@ -875,6 +872,9 @@ Component.prototype.__autoFocus = function()
 /**
  * Call event handler.
  *
+ * This function is registered as event listener to element.addEventListner(),
+ * so "this" is HTML element which triggered the event.
+ *
  * @param	{Object}		e						Event parameter.
  */
 Component.prototype.__callEventHandler = function(e)
@@ -891,9 +891,10 @@ Component.prototype.__callEventHandler = function(e)
 
 			for (let i = 0; i < listeners.length; i++)
 			{
+				let handler = (typeof listeners[i]["handler"] === "string" ? component[listeners[i]["handler"]] : listeners[i]["handler"] );
 				chain = chain.then(() => {
 					e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
-					return (listeners[i]["handler"]).call(component, this, e, listeners[i]["options"]);
+					return handler.call(component, this, e, listeners[i]["options"]);
 				});
 
 				if (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"])
@@ -974,7 +975,8 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
-						let base = ( Globals["settings"]["system"]["templatePath"] ? Globals["settings"]["system"]["templatePath"] : "/components/");
+						//let base = ( Globals["settings"]["system"]["templatePath"] ? Globals["settings"]["system"]["templatePath"] : "/components/");
+						let base = ( Globals["settings"]["system"] && Globals["settings"]["system"]["templatePath"] ? Globals["settings"]["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
 						LoaderUtil.loadTemplate(templateName, base + path).then((template) => {
@@ -1042,7 +1044,3 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 	console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
 
 }
-
-// -----------------------------------------------------------------------------
-
-//customElements.define("bm-component", Component);
