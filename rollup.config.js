@@ -13,11 +13,7 @@ export default {
 	plugins: [
 		nodeResolve(),
 		commonjs(),
-		buble({
-			target:{
-				ie:11
-			}
-		}),
+		buble(),
 		( process.env.BUILD === 'prod' && uglify() ),
 	],
 }
