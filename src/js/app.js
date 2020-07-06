@@ -33,13 +33,10 @@ export default function App(settings)
 	Globals["settings"] = Object.assign({}, settings);
 
 	this._components = {};
-	this._serviceManager = new ServiceManager({"app":this});
+	this._serviceManager = new ServiceManager({"app":this, "services":Globals["settings"]["services"]});
 
 	// Init error listeners
 	this.__initErrorListeners();
-
-	// load services
-	this._serviceManager.loadServices(Globals["settings"]["services"]);
 
 	// Init router
 	if (Globals["settings"]["router"])
@@ -49,9 +46,7 @@ export default function App(settings)
 	}
 
 	// load preference
-	this._serviceManager.load(null, (service) => {
-		return service.options["serviceType"] == "preference"
-	}).then((preferences) => {
+	this._serviceManager.serve("load", null).then((preferences) => {
 		for (let i = 0; i < preferences.length; i++)
 		{
 			Globals["settings"]["preferences"] = Object.assign(Globals["settings"]["preferences"], preferences[i]);
@@ -100,7 +95,7 @@ App.prototype.run = function()
 	let promise;
 
 	// load spec
-	let specName = this.router.routeInfo["specName"];
+	let specName = ( this.router ? this.router.routeInfo["specName"] : "" );
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
@@ -138,18 +133,12 @@ App.prototype.setup = function(options)
 {
 
 	// Setup
-	this._serviceManager.setup({
-		"newPreferences":options["newPreferences"],
-	}, (service) => {
-		return service.options["serviceType"] == "preference"
-	}).then(() => {
+	this._serviceManager.serve("setup", { "newPreferences":options["newPreferences"] }).then(() => {
 		// Merge new settings
 		Globals["settings"]["preferences"] = Object.assign(Globals["settings"]["preferences"], options["newPreferences"]);
 
 		// Save settings
-		this._serviceManager.save(options["newPreferences"], (service) => {
-			return service.options["serviceType"] == "preference"
-		});
+		this._serviceManager.serve("save", options["newPreferences"]);
 	});
 
 }
@@ -271,8 +260,6 @@ App.prototype.__getErrorName = function(error)
 App.prototype.__handleException = function(e)
 {
 
-	this._serviceManager.handle(e, (service) => {
-		return service.options["serviceType"] == "error";
-	});
+	this._serviceManager.serve("handle", e);
 
 }

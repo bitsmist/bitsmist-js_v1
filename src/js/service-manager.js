@@ -26,37 +26,15 @@ import LoaderUtil from './util/loader-util';
  export default function ServiceManager(options)
 {
 
-	let _this;
-
-	let proxyArg = {
-		get: (target, property) => {
-			if (property in target)
-			{
-				return target[property];
-			}
-			else
-			{
-				return (...args) => {
-					return _this._callMethod(property, args);
-				};
-			}
-		}
-	};
-
-	_this = Reflect.construct(Proxy, [this, proxyArg], Object.getPrototypeOf(this).constructor);
-
-	_this._options = Object.assign({}, options);
-	_this._app = options["app"];
-	_this._services;
-	_this._index;
+	this._options = Object.assign({}, options);
+	this._services = {};
+	this._index = [];
 
 	// Load services
-	if (_this._options["services"])
+	if (this._options["services"])
 	{
-		_this.loadServices(_this._options["services"]);
+		this.loadServices(this._options["services"]);
 	}
-
-	return _this;
 
 }
 
@@ -65,28 +43,21 @@ import LoaderUtil from './util/loader-util';
 // -----------------------------------------------------------------------------
 
 /**
- * Add a service.
+ * Get service.
  *
  * @param	{String}		serviceName			Service name.
- * @param	{Object}		options				Options for the service.
  */
-ServiceManager.prototype.add = function(serviceName, options)
+ServiceManager.prototype.getService = function(serviceName)
 {
 
-	options = Object.assign({}, options);
-	let className =  ("className" in options ? options["className"] : serviceName);
-	options["app"] = this._app;
-
-	let component = LoaderUtil.createObject(className, options);
-	this._services.push(component);
-	this._index[serviceName] = component;
+	return this._index[serviceName];
 
 }
 
 // -----------------------------------------------------------------------------
 
 /**
- * Add a service.
+ * Load services.
  *
  * @param	{Object}		settings			Service settings.
  */
@@ -107,14 +78,38 @@ ServiceManager.prototype.loadServices = function(settings)
 // -----------------------------------------------------------------------------
 
 /**
- * Get service.
+ * Add a service.
  *
  * @param	{String}		serviceName			Service name.
+ * @param	{Object}		options				Options for the service.
  */
-ServiceManager.prototype.getService = function(serviceName)
+ServiceManager.prototype.add = function(serviceName, options)
 {
 
-	return this._index[serviceName];
+	options = Object.assign({}, options);
+	let className =  ("className" in options ? options["className"] : serviceName);
+	options["app"] = this._options["app"];
+
+	let component = LoaderUtil.createObject(className, options);
+	this._services.push(component);
+	this._index[serviceName] = component;
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Serve.
+ *
+ * @param	{String}		methodName			Method name.
+ * @param	{Array}			args				Arguments to method.
+ *
+ * @return  {Promise}		Promise.
+ */
+ServiceManager.prototype.serve = function(methodName, options)
+{
+
+	return this._callMethod(methodName, [options]);
 
 }
 
@@ -130,11 +125,8 @@ ServiceManager.prototype.getService = function(serviceName)
  *
  * @return  {Promise}		Promise.
  */
-ServiceManager.prototype._callMethod = function(methodName, args)
-//ServiceManager.prototype._callMethod = function(methodName, args, filter)
+ServiceManager.prototype._callMethod = function(methodName, args, filter)
 {
-
-	let filter = ( args.length > 1 && typeof args[1] == "function" ? args[1] : undefined );
 
 	return new Promise((resolve, reject) => {
 		let promises = [];
