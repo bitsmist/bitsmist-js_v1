@@ -9,9 +9,9 @@
 // =============================================================================
 
 import AjaxUtil from './util/ajax-util';
+import Component from './component';
 import Globals from './globals';
 import LoaderUtil from './util/loader-util';
-import ServiceManager from './service-manager';
 
 // =============================================================================
 //	App class
@@ -29,48 +29,53 @@ import ServiceManager from './service-manager';
 export default function App(settings)
 {
 
-	Globals["app"] = this;
+	let _this = Reflect.construct(Component, [], this.constructor);
+
+	/*
+	let options = {
+		"name": "App",
+		"templateName": "",
+		"plugins": setttings["plugins"],
+	}
+	let _this = Reflect.construct(Component, [options], this.constructor);
+	*/
+
+	Globals["app"] = _this;
 	Globals["settings"] = Object.assign({}, settings);
 
-	this._components = {};
-	this._serviceManager = new ServiceManager({"app":this, "services":Globals["settings"]["services"]});
-
 	// Init error listeners
-	this.__initErrorListeners();
+	_this.__initErrorListeners();
 
 	// Init router
 	if (Globals["settings"]["router"])
 	{
-		let options = Object.assign({"app": this}, Globals["settings"]["router"]);
+		let options = Object.assign({"app": _this}, Globals["settings"]["router"]);
 		Globals["router"] = LoaderUtil.createObject(Globals["settings"]["router"]["className"], options);
 	}
 
-	// load preference
-	this._serviceManager.serve("load", null).then((preferences) => {
-		for (let i = 0; i < preferences.length; i++)
-		{
-			Globals["settings"]["preferences"] = Object.assign(Globals["settings"]["preferences"], preferences[i]);
-		}
-	});
+	// Set plugin
+	if (settings["plugins"])
+	{
+		_this._options["plugins"] = settings["plugins"];
+		_this._plugins = settings["plugins"];
+	}
+
+	return _this;
 
 }
+
+LoaderUtil.inherit(App, Component);
+customElements.define("bm-app", App);
 
 // -----------------------------------------------------------------------------
 //  Setter/Getter
 // -----------------------------------------------------------------------------
 
 /**
- * Service manager.
+ * Router.
  *
  * @type	{Object}
  */
-Object.defineProperty(App.prototype, 'serviceManager', {
-	get()
-	{
-		return this._serviceManager;
-	}
-})
-
 Object.defineProperty(App.prototype, 'router', {
 	get()
 	{
@@ -104,15 +109,9 @@ App.prototype.run = function()
 
 				this.router.__initRoutes(spec["routes"].concat(Globals["settings"]["router"]["routes"]));
 
+				// Components
 				Object.keys(spec["components"]).forEach((key) => {
 					this._components[key] = spec["components"][key];
-					let className = spec["components"][key]["className"];
-					LoaderUtil.createComponent(className, spec["components"][key]).then((component) => {
-						component._parent = this;
-						this._components[key].object = component;
-
-						component.open();
-					});
 				});
 
 				resolve();
@@ -120,26 +119,28 @@ App.prototype.run = function()
 		});
 	}
 
+	Promise.all([promise]).then(() => {
+		return this.open();
+	});
+
 }
 
 // -----------------------------------------------------------------------------
+//  Protected
+// -----------------------------------------------------------------------------
 
 /**
- * Setup event handler.
- *
- * @param   {Object}        options				Options.
+ * Get component options.
  */
-App.prototype.setup = function(options)
+App.prototype._getOptions = function()
 {
 
-	// Setup
-	this._serviceManager.serve("setup", { "newPreferences":options["newPreferences"] }).then(() => {
-		// Merge new settings
-		Globals["settings"]["preferences"] = Object.assign(Globals["settings"]["preferences"], options["newPreferences"]);
-
-		// Save settings
-		this._serviceManager.serve("save", options["newPreferences"]);
-	});
+	return {
+		"name": "App",
+		"templateName": "",
+		"plugins": {
+		},
+	};
 
 }
 
@@ -260,6 +261,7 @@ App.prototype.__getErrorName = function(error)
 App.prototype.__handleException = function(e)
 {
 
-	this._serviceManager.serve("handle", e);
+	// Call plugins
+	this.trigger("_error", this, {"error":e});
 
 }

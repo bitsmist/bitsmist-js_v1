@@ -39,6 +39,7 @@ export default function Component()
 	_this._modalPromise;
 	_this._isModal = false;
 
+	// Shortcuts
 	_this._components = ( _this._options["components"] ? _this._options["components"] : {} );
 	_this._elements = ( _this._options["elements"] ? _this._options["elements"] : {} );
 	_this._plugins = ( _this._options["plugins"] ? _this._options["plugins"] : {} );
@@ -60,6 +61,7 @@ export default function Component()
 }
 
 LoaderUtil.inherit(Component, HTMLElement);
+customElements.define("bm-component", Component);
 
 // -----------------------------------------------------------------------------
 //  Setter/Getter
@@ -363,7 +365,11 @@ Component.prototype.setup = function(options)
 		}).then(() => {
 			return this.trigger("validateSettings", sender,  options);
 		}).then(() => {
+			return this.trigger("_beforeSetup", sender, options);
+		}).then(() => {
 			return this.trigger("beforeSetup", sender, options);
+		}).then(() => {
+			return this.trigger("_setup", sender, options);
 		}).then(() => {
 			return this.trigger("setup", sender, options);
 		}).then(() => {
@@ -757,15 +763,12 @@ Component.prototype.__initOnAppendTemplate = function()
 	return new Promise((resolve, reject) => {
 		// Init services
 		Object.keys(this._services).forEach((serviceName) => {
-			let service = this.app.serviceManager.getService(serviceName); //@@@fix
-			this._services[serviceName].object = service;
+			let service = this.app._plugins[serviceName].object;
 			if (service && typeof service.register == "function")
 			{
 				service.register(this, this._services[serviceName]);
 			}
 		});
-
-//		this.app.serviceManager.serve("register", [this, this._services[serviceName]]);
 
 		// Init plugins
 		Object.keys(this._plugins).forEach((pluginName) => {
@@ -884,6 +887,7 @@ Component.prototype.__callEventHandler = function(e)
 		let listeners = ( this._bm_detail && this._bm_detail["listeners"] ? this._bm_detail["listeners"][e.type] : undefined );
 		let stopPropagation = false;
 		let chain = Promise.resolve();
+		let results = [];
 
 		if (listeners)
 		{
@@ -892,7 +896,11 @@ Component.prototype.__callEventHandler = function(e)
 			for (let i = 0; i < listeners.length; i++)
 			{
 				let handler = (typeof listeners[i]["handler"] === "string" ? component[listeners[i]["handler"]] : listeners[i]["handler"] );
-				chain = chain.then(() => {
+				chain = chain.then((result) => {
+					if (result)
+					{
+						results.push(result);
+					}
 					e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
 					return handler.call(component, this, e, listeners[i]["options"]);
 				});
@@ -909,8 +917,12 @@ Component.prototype.__callEventHandler = function(e)
 			e.stopPropagation();
 		}
 
-		chain.then(() => {
-			resolve();
+		chain.then((result) => {
+			if (result)
+			{
+				results.push(result);
+			}
+			resolve(results);
 		});
 	});
 
@@ -934,14 +946,14 @@ Component.prototype.__callPluginEventHandler = function(sender, e)
 		let eventName = e.detail.eventName.substr(1);
 
 		Object.keys(this._plugins).forEach((pluginName) => {
-			if (this._plugins[pluginName]["enabled"])
+			if (this._plugins[pluginName]["enabled"] && typeof this._plugins[pluginName].object[eventName] == "function")
 			{
 				promises.push(this._plugins[pluginName].object[eventName](sender, e));
 			}
 		});
 
-		Promise.all(promises).then(() => {
-			resolve();
+		Promise.all(promises).then((results) => {
+			resolve(results);
 		});
 	});
 
@@ -975,7 +987,6 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
-						//let base = ( Globals["settings"]["system"]["templatePath"] ? Globals["settings"]["system"]["templatePath"] : "/components/");
 						let base = ( Globals["settings"]["system"] && Globals["settings"]["system"]["templatePath"] ? Globals["settings"]["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
@@ -998,6 +1009,8 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				return this.trigger("_append", this);
 			}).then(() => {
 				return this.trigger("append", this);
+			}).then(() => {
+				return this.trigger("_init", this);
 			}).then(() => {
 				return this.trigger("init", this);
 			}).then(() => {
