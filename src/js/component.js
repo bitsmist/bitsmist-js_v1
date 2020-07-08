@@ -23,7 +23,7 @@ import LoaderUtil from './util/loader-util';
 /**
  * Constructor.
  */
-export default function Component()
+export default function Component(options)
 {
 
 	let _this = Reflect.construct(HTMLElement, [], this.constructor);
@@ -31,7 +31,7 @@ export default function Component()
 	_this._templates = {};
 	_this._isOpen = false;
 	_this._element = _this;
-	_this._options = Object.assign({}, this._getOptions());
+	_this._options = Object.assign({}, options, this._getOptions());
 	_this._options["templateName"] = ( "templateName" in _this._options ? _this._options["templateName"] : _this.name );
 	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 	_this._modalOptions;
@@ -50,6 +50,20 @@ export default function Component()
 	Object.keys(_this._events).forEach((eventName) => {
 		let handler = ( typeof _this._events[eventName] === "object" ? _this._events[eventName]["handler"] : _this._events[eventName] );
 		_this.addEventHandler(_this, eventName, handler);
+	});
+
+	// Init services
+	Object.keys(_this._services).forEach((serviceName) => {
+		let service = _this.app._plugins[serviceName].object;
+		if (service && typeof service.register == "function")
+		{
+			service.register(_this, _this._services[serviceName]);
+		}
+	});
+
+	// Init plugins
+	Object.keys(_this._plugins).forEach((pluginName) => {
+		_this.addPlugin(pluginName, _this._options["plugins"][pluginName]);
 	});
 
 	_this.trigger("_initComponent", _this).then(() => {
@@ -761,20 +775,6 @@ Component.prototype.__initOnAppendTemplate = function()
 {
 
 	return new Promise((resolve, reject) => {
-		// Init services
-		Object.keys(this._services).forEach((serviceName) => {
-			let service = this.app._plugins[serviceName].object;
-			if (service && typeof service.register == "function")
-			{
-				service.register(this, this._services[serviceName]);
-			}
-		});
-
-		// Init plugins
-		Object.keys(this._plugins).forEach((pluginName) => {
-			this.addPlugin(pluginName, this._options["plugins"][pluginName]);
-		});
-
 		let chain = Promise.resolve();
 
 		//  Add components
@@ -971,14 +971,14 @@ Component.prototype.__callPluginEventHandler = function(sender, e)
 Component.prototype.__autoLoadTemplate = function(templateName)
 {
 
-	console.debug(`Component._autoLoadTemplate(): Auto loading template. templateName=${templateName}`);
+	console.debug(`Component._autoLoadTemplate(): Auto loading template. name=${this.name}, templateName=${templateName}`);
 
 	return new Promise((resolve, reject) => {
 		let rootNode;
 
 		if (this._isLoadedTemplate(templateName))
 		{
-			console.debug(`Component.__autoLoadTemplate(): Template Already exists. templateName=${templateName}`, );
+			console.debug(`Component.__autoLoadTemplate(): Template Already exists. name=${this.name}, templateName=${templateName}`, );
 			resolve();
 		}
 		else
@@ -997,6 +997,8 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 						});
 					});
 				}
+			}).then(() => {
+				return this.trigger("_load", this);
 			}).then(() => {
 				return this.trigger("load", this);
 			}).then(() => {
@@ -1054,6 +1056,6 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 		}
 	}
 
-	console.debug(`Component.__appendTemplate(): Appended. templateName=${templateName}`);
+	console.debug(`Component.__appendTemplate(): Appended. name=${this.name}, templateName=${templateName}`);
 
 }

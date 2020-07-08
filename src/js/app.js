@@ -29,16 +29,12 @@ import LoaderUtil from './util/loader-util';
 export default function App(settings)
 {
 
-	let _this = Reflect.construct(Component, [], this.constructor);
-
-	/*
 	let options = {
 		"name": "App",
 		"templateName": "",
-		"plugins": setttings["plugins"],
+		"plugins": ( settings["plugins"] ? settings["plugins"] : null ),
 	}
 	let _this = Reflect.construct(Component, [options], this.constructor);
-	*/
 
 	Globals["app"] = _this;
 	Globals["settings"] = Object.assign({}, settings);
@@ -51,13 +47,6 @@ export default function App(settings)
 	{
 		let options = Object.assign({"app": _this}, Globals["settings"]["router"]);
 		Globals["router"] = LoaderUtil.createObject(Globals["settings"]["router"]["className"], options);
-	}
-
-	// Set plugin
-	if (settings["plugins"])
-	{
-		_this._options["plugins"] = settings["plugins"];
-		_this._plugins = settings["plugins"];
 	}
 
 	return _this;
@@ -122,25 +111,6 @@ App.prototype.run = function()
 	Promise.all([promise]).then(() => {
 		return this.open();
 	});
-
-}
-
-// -----------------------------------------------------------------------------
-//  Protected
-// -----------------------------------------------------------------------------
-
-/**
- * Get component options.
- */
-App.prototype._getOptions = function()
-{
-
-	return {
-		"name": "App",
-		"templateName": "",
-		"plugins": {
-		},
-	};
 
 }
 
