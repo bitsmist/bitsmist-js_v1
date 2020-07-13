@@ -22,6 +22,8 @@ import LoaderUtil from './util/loader-util';
 
 /**
  * Constructor.
+ *
+ * @param	{Object}		options				Options for the component.
  */
 export default function Component(options)
 {
@@ -492,8 +494,7 @@ Component.prototype.addPlugin = function(pluginName, options)
 		let className = ( "className" in options ? options["className"] : pluginName );
 		let plugin = null;
 
-		options["component"] = this;
-		plugin = LoaderUtil.createObject(className, options);
+		plugin = LoaderUtil.createObject(className, this, options);
 		this._plugins[pluginName] = ( this._options["plugins"][pluginName] ? this._options["plugins"][pluginName] : {} );
 		this._plugins[pluginName].object = plugin;
 
