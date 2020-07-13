@@ -493,12 +493,13 @@ Component.prototype.addPlugin = function(pluginName, options)
 		let plugin = null;
 
 		options["component"] = this;
-		plugin = LoaderUtil.createObject(className, pluginName, options);
+		plugin = LoaderUtil.createObject(className, options);
 		this._plugins[pluginName] = ( this._options["plugins"][pluginName] ? this._options["plugins"][pluginName] : {} );
 		this._plugins[pluginName].object = plugin;
 
-		plugin["events"].forEach((eventName) => {
-			this.addEventHandler(this, "_" + eventName, this.__callPluginEventHandler);
+		Object.keys(plugin["_events"]).forEach((eventName) => {
+			let handler = ( typeof plugin["_events"][eventName] === "object" ? plugin["_events"][eventName]["handler"] : plugin["_events"][eventName] );
+			this.addEventHandler(this, "_" + eventName, handler.bind(plugin));
 		});
 
 		resolve(plugin);
@@ -922,37 +923,6 @@ Component.prototype.__callEventHandler = function(e)
 			{
 				results.push(result);
 			}
-			resolve(results);
-		});
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Call plugin's event handler.
- *
- * @param	{Object}		sender				Sender.
- * @param	{Object}		e					Event info.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.__callPluginEventHandler = function(sender, e)
-{
-
-	return new Promise((resolve, rejfect) => {
-		let promises = [];
-		let eventName = e.detail.eventName.substr(1);
-
-		Object.keys(this._plugins).forEach((pluginName) => {
-			if (this._plugins[pluginName]["enabled"] && typeof this._plugins[pluginName].object[eventName] == "function")
-			{
-				promises.push(this._plugins[pluginName].object[eventName](sender, e));
-			}
-		});
-
-		Promise.all(promises).then((results) => {
 			resolve(results);
 		});
 	});
