@@ -43,10 +43,9 @@ export default function App(settings)
 	_this.__initErrorListeners();
 
 	// Init router
-	if (Globals["settings"]["router"])
+	if (_this._plugins["Router"])
 	{
-		let options = Object.assign({"app": _this}, Globals["settings"]["router"]);
-		Globals["router"] = LoaderUtil.createObject(Globals["settings"]["router"]["className"], options);
+		Globals["router"] = _this._plugins["Router"].object;
 	}
 
 	return _this;
@@ -55,22 +54,6 @@ export default function App(settings)
 
 LoaderUtil.inherit(App, Component);
 customElements.define("bm-app", App);
-
-// -----------------------------------------------------------------------------
-//  Setter/Getter
-// -----------------------------------------------------------------------------
-
-/**
- * Router.
- *
- * @type	{Object}
- */
-Object.defineProperty(App.prototype, 'router', {
-	get()
-	{
-		return Globals["router"];
-	}
-})
 
 // -----------------------------------------------------------------------------
 //  Methods
@@ -88,7 +71,7 @@ App.prototype.run = function()
 
 	let promise;
 
-	// load spec
+	// Load spec
 	let specName = ( this.router ? this.router.routeInfo["specName"] : "" );
 	if (specName)
 	{
@@ -96,7 +79,11 @@ App.prototype.run = function()
 			LoaderUtil.loadSpec(specName, Globals["settings"]).then((spec) => {
 				Globals["spec"] = spec;
 
-				this.router.__initRoutes(spec["routes"].concat(Globals["settings"]["router"]["routes"]));
+				// Add new routes
+				for(let i = 0; i < spec["routes"].length; i++)
+				{
+					this.router.addRoute(spec["routes"][i], true);
+				}
 
 				// Components
 				Object.keys(spec["components"]).forEach((key) => {
@@ -108,6 +95,7 @@ App.prototype.run = function()
 		});
 	}
 
+	// Open app
 	Promise.all([promise]).then(() => {
 		return this.open();
 	});

@@ -21,13 +21,16 @@ import { pathToRegexp } from 'path-to-regexp';
 /**
  * Constructor.
  *
+ * @param	{Object}		component			Component which the plugin is
+ * 												attached to.
  * @param	{Object}		options				Options.
  */
-export default function Router(options)
+export default function Router(component, options)
 {
 
+	this._component = component;
+	this._events = {};
 	this._options = Object.assign({}, options);
-	this._app = this._options["app"];
 	this._routes;
 
 	this.__initRoutes(this._options["routes"]);
@@ -59,8 +62,9 @@ Object.defineProperty(Router.prototype, 'routeInfo', {
  * Add a route.
  *
  * @param	{Object}		routeInfo			Route info.
+ * @param	{Boolean}		first				Add to top when true.
  */
-Router.prototype.addRoute = function(routeInfo)
+Router.prototype.addRoute = function(routeInfo, first)
 {
 
 	let keys = [];
@@ -73,7 +77,16 @@ Router.prototype.addRoute = function(routeInfo)
 		"re": pathToRegexp(routeInfo["path"], keys)
 	};
 
-	this._routes.push(route);
+	if (first)
+	{
+		this._routes.unshift(route);
+	}
+	else
+	{
+		this._routes.push(route);
+	}
+
+	this._routeInfo = this.__loadRouteInfo(window.location.href);
 
 }
 
@@ -336,18 +349,18 @@ Router.prototype._open = function(routeInfo, options)
 			if (options["autoOpen"])
 			{
 				let componentName = this._routeInfo["componentName"];
-				if (this._app._components[componentName])
+				if (this._component._components[componentName])
 				{
-					return this._app._components[componentName].object.open({"sender":this});
+					return this._component._components[componentName].object.open({"sender":this});
 				}
 			}
 		}).then(() => {
 			if (options["autoRefresh"])
 			{
 				let componentName = this._routeInfo["componentName"];
-				if (this._app._components[componentName])
+				if (this._component._components[componentName])
 				{
-					return this._app._components[componentName].object.refresh({"sender":this});
+					return this._component._components[componentName].object.refresh({"sender":this});
 				}
 			}
 		}).then(() => {
@@ -384,8 +397,6 @@ Router.prototype.__initRoutes = function(routes)
 			"componentName": (routes[i]["componentName"] ? routes[i]["componentName"] : "" )
 		});
 	}
-
-	this._routeInfo = this.__loadRouteInfo(window.location.href);
 
 }
 
@@ -453,15 +464,15 @@ Router.prototype.__initPopState = function()
 		window.addEventListener("popstate", (event) => {
 			let promises = [];
 
-			Object.keys(this._app._components).forEach((componentName) => {
-				promises.push(this._app._components[componentName].object.trigger("beforePopState", this));
+			Object.keys(this._component._components).forEach((componentName) => {
+				promises.push(this._component._components[componentName].object.trigger("beforePopState", this));
 			});
 
 			Promise.all(promises).then(() => {
 				this.refreshRoute(this.__loadRouteInfo(window.location.href));
 			}).then(() => {
-				Object.keys(this._app._components).forEach((componentName) => {
-					this._app._components[componentName].object.trigger("popState", this);
+				Object.keys(this._component._components).forEach((componentName) => {
+					this._component._components[componentName].object.trigger("popState", this);
 				});
 			});
 		});
