@@ -29,6 +29,7 @@ import LoaderUtil from './util/loader-util';
 export default function App(settings)
 {
 
+	// super()
 	let options = {
 		"name": "App",
 		"templateName": "",
@@ -42,11 +43,7 @@ export default function App(settings)
 	// Init error listeners
 	_this.__initErrorListeners();
 
-	// Init router
-	if (_this._plugins["Router"])
-	{
-		Globals["router"] = _this._plugins["Router"].object;
-	}
+	_this.trigger("_appInit", this, {"settings":settings});
 
 	return _this;
 
@@ -72,7 +69,7 @@ App.prototype.run = function()
 	let promise;
 
 	// Load spec
-	let specName = ( this.router ? this.router.routeInfo["specName"] : "" );
+	let specName = ( this._plugins["router"] ? this._plugins["router"].object.routeInfo["specName"] : "" );
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
@@ -97,6 +94,8 @@ App.prototype.run = function()
 
 	// Open app
 	Promise.all([promise]).then(() => {
+		return this.trigger("_specLoad", this, {"spec":Globals["spec"]});
+	}).then(() => {
 		return this.open();
 	});
 
