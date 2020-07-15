@@ -138,34 +138,6 @@ Object.defineProperty(Component.prototype, 'app', {
 })
 
 // -----------------------------------------------------------------------------
-
-/**
- * Router instance.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'router', {
-	get()
-	{
-		return Globals["router"];
-	}
-})
-
-// -----------------------------------------------------------------------------
-
-/**
- * Global settings.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'globalSettings', {
-	get()
-	{
-		return Globals["settings"];
-	}
-})
-
-// -----------------------------------------------------------------------------
 //  Methods
 // -----------------------------------------------------------------------------
 
@@ -502,6 +474,11 @@ Component.prototype.addPlugin = function(pluginName, options)
 			let handler = ( typeof plugin["_events"][eventName] === "object" ? plugin["_events"][eventName]["handler"] : plugin["_events"][eventName] );
 			this.addEventHandler(this, "_" + eventName, handler.bind(plugin));
 		});
+
+		if (options["expose"])
+		{
+			this[pluginName] = plugin;
+		}
 
 		resolve(plugin);
 	});
