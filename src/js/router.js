@@ -28,6 +28,7 @@ import { pathToRegexp } from 'path-to-regexp';
 export default function Router(component, options)
 {
 
+	// Init variables
 	this._component = component;
 	this._events = {};
 	this._options = Object.assign({}, options);
@@ -351,7 +352,7 @@ Router.prototype._open = function(routeInfo, options)
 				let componentName = this._routeInfo["componentName"];
 				if (this._component._components[componentName])
 				{
-					return this._component._components[componentName].object.open({"sender":this});
+					return this._component._components[componentName].open({"sender":this});
 				}
 			}
 		}).then(() => {
@@ -360,7 +361,7 @@ Router.prototype._open = function(routeInfo, options)
 				let componentName = this._routeInfo["componentName"];
 				if (this._component._components[componentName])
 				{
-					return this._component._components[componentName].object.refresh({"sender":this});
+					return this._component._components[componentName].refresh({"sender":this});
 				}
 			}
 		}).then(() => {
@@ -465,14 +466,14 @@ Router.prototype.__initPopState = function()
 			let promises = [];
 
 			Object.keys(this._component._components).forEach((componentName) => {
-				promises.push(this._component._components[componentName].object.trigger("beforePopState", this));
+				promises.push(this._component._components[componentName].trigger("beforePopState", this));
 			});
 
 			Promise.all(promises).then(() => {
 				this.refreshRoute(this.__loadRouteInfo(window.location.href));
 			}).then(() => {
 				Object.keys(this._component._components).forEach((componentName) => {
-					this._component._components[componentName].object.trigger("popState", this);
+					this._component._components[componentName].trigger("popState", this);
 				});
 			});
 		});

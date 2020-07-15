@@ -28,43 +28,49 @@ import LoaderUtil from './util/loader-util';
 export default function Component(options)
 {
 
+	// super()
 	let _this = Reflect.construct(HTMLElement, [], this.constructor);
 
-	_this._templates = {};
-	_this._isOpen = false;
+	// Init variables
+	_this._components = {};
 	_this._element = _this;
-	_this._options = Object.assign({}, options, this._getOptions());
-	_this._options["templateName"] = ( "templateName" in _this._options ? _this._options["templateName"] : _this.name );
-	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-	_this._modalOptions;
-	_this._modalResult;
-	_this._modalPromise;
+	_this._events = {};
 	_this._isModal = false;
+	_this._isOpen = false;
+	_this._modalOptions;
+	_this._modalPromise;
+	_this._modalResult;
+	_this._options = Object.assign({}, options, this._getOptions());
+	_this._plugins = {};
+	_this._services = {};
+	_this._templates = {};
+	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 
-	// Shortcuts
-	_this._components = ( _this._options["components"] ? _this._options["components"] : {} );
-	_this._elements = ( _this._options["elements"] ? _this._options["elements"] : {} );
-	_this._plugins = ( _this._options["plugins"] ? _this._options["plugins"] : {} );
-	_this._events = ( _this._options["events"] ? _this._options["events"] : {} );
-	_this._services = ( _this._options["services"] ? _this._options["services"] : {} );
+	// Init options
+	_this._options["templateName"] = ( "templateName" in _this._options ? _this._options["templateName"] : _this.name );
+	_this._options["components"] = ( _this._options["components"] ? _this._options["components"] : {} );
+	_this._options["plugins"] = ( _this._options["plugins"] ? _this._options["plugins"] : {} );
+	_this._options["events"] = ( _this._options["events"] ? _this._options["events"] : {} );
+	_this._options["services"] = ( _this._options["services"] ? _this._options["services"] : {} );
+	_this._options["elements"] = ( _this._options["elements"] ? _this._options["elements"] : {} );
 
 	// Init event handlers
-	Object.keys(_this._events).forEach((eventName) => {
-		let handler = ( typeof _this._events[eventName] === "object" ? _this._events[eventName]["handler"] : _this._events[eventName] );
+	Object.keys(_this._options["events"]).forEach((eventName) => {
+		let handler = ( typeof _this._options["events"][eventName] === "object" ? _this._options["events"][eventName]["handler"] : _this._options["events"][eventName] );
 		_this.addEventHandler(_this, eventName, handler);
 	});
 
 	// Init services
-	Object.keys(_this._services).forEach((serviceName) => {
-		let service = _this.app._plugins[serviceName].object;
+	Object.keys(_this._options["services"]).forEach((serviceName) => {
+		let service = _this.app._plugins[serviceName];
 		if (service && typeof service.register == "function")
 		{
-			service.register(_this, _this._services[serviceName]);
+			service.register(_this, _this._options["services"][serviceName]);
 		}
 	});
 
 	// Init plugins
-	Object.keys(_this._plugins).forEach((pluginName) => {
+	Object.keys(_this._options["plugins"]).forEach((pluginName) => {
 		_this.addPlugin(pluginName, _this._options["plugins"][pluginName]);
 	});
 
@@ -423,20 +429,19 @@ Component.prototype.addComponent = function(componentName, options)
 
 		Promise.resolve().then(() => {
 			// Create component
-			if (!this._components[componentName] || !this._components[componentName].object)
+			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
 					LoaderUtil.createComponent(componentName, options).then((component) => {
 						component._parent = this;
-						this._components[componentName] = ( this._components[componentName] ? this._components[componentName] : {} );
-						this._components[componentName].object = component;
+						this._components[componentName] = component;
 						resolve();
 					});
 				});
 			}
 		}).then(() => {
 			// Open
-			let component = this._components[componentName].object;
+			let component = this._components[componentName];
 			if (component.getOption("autoOpen"))
 			{
 				return component.open();
@@ -467,8 +472,7 @@ Component.prototype.addPlugin = function(pluginName, options)
 		let plugin = null;
 
 		plugin = LoaderUtil.createObject(className, this, options);
-		this._plugins[pluginName] = ( this._options["plugins"][pluginName] ? this._options["plugins"][pluginName] : {} );
-		this._plugins[pluginName].object = plugin;
+		this._plugins[pluginName] = plugin;
 
 		Object.keys(plugin["_events"]).forEach((eventName) => {
 			let handler = ( typeof plugin["_events"][eventName] === "object" ? plugin["_events"][eventName]["handler"] : plugin["_events"][eventName] );
@@ -717,9 +721,9 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 	{
 		elements = [this];
 	}
-	else if (this._elements[elementName] && "rootNode" in this._elements[elementName])
+	else if (this._options["elements"][elementName] && "rootNode" in this._options["elements"][elementName])
 	{
-		elements = this._element.querySelectorAll(this._elements[elementName]["rootNode"]);
+		elements = this._element.querySelectorAll(this._options["elements"][elementName]["rootNode"]);
 	}
 	else
 	{
@@ -727,7 +731,7 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 	}
 
 	// Set event handlers
-	let events = (this._elements[elementName]["events"] ? this._elements[elementName]["events"] : {});
+	let events = (this._options["elements"][elementName]["events"] ? this._options["elements"][elementName]["events"] : {});
 	for (let i = 0; i < elements.length; i++)
 	{
 		Object.keys(events).forEach((eventName) => {
@@ -757,18 +761,18 @@ Component.prototype.__initOnAppendTemplate = function()
 		let chain = Promise.resolve();
 
 		//  Add components
-		Object.keys(this._components).forEach((componentName) => {
-			if ("className" in this._components[componentName])
+		Object.keys(this._options["components"]).forEach((componentName) => {
+			if ("className" in this._options["components"][componentName])
 			{
 				chain = chain.then(() => {
-					return this.addComponent(componentName, this._components[componentName]);
+					return this.addComponent(componentName, this._options["components"][componentName]);
 				});
 			}
 		});
 
 		// Init HTML event handlers
 		chain.then(() => {
-			Object.keys(this._elements).forEach((elementName) => {
+			Object.keys(this._options["elements"]).forEach((elementName) => {
 				this._initHtmlEvents(elementName);
 			});
 
@@ -798,7 +802,7 @@ Component.prototype.__initOnOpen = function()
 	}
 
 	// Css
-	let css = (this._events["open"] && this._events["open"]["css"] ? this._events["open"]["css"] : undefined );
+	let css = (this._options["events"]["open"] && this._options["events"]["open"]["css"] ? this._options["events"]["open"]["css"] : undefined );
 	if (css)
 	{
 		Object.assign(this.style, css);
@@ -815,7 +819,7 @@ Component.prototype.__initOnClose = function()
 {
 
 	// Css
-	let css = (this._events && this._events["close"] && this._events["close"]["css"] ? this._events["close"]["css"] : undefined );
+	let css = (this._options["events"] && this._options["events"]["close"] && this._options["events"]["close"]["css"] ? this._options["events"]["close"]["css"] : undefined );
 	if (css)
 	{
 		Object.assign(this.style, css);

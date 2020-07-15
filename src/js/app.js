@@ -37,12 +37,11 @@ export default function App(settings)
 	}
 	let _this = Reflect.construct(Component, [options], this.constructor);
 
+	// Init variables
 	Globals["app"] = _this;
 	Globals["settings"] = Object.assign({}, settings);
 
-	// Init error listeners
 	_this.__initErrorListeners();
-
 	_this.trigger("_appInit", this, {"settings":settings});
 
 	return _this;
@@ -69,7 +68,7 @@ App.prototype.run = function()
 	let promise;
 
 	// Load spec
-	let specName = ( this._plugins["router"] ? this._plugins["router"].object.routeInfo["specName"] : "" );
+	let specName = ( this._plugins["router"] ? this._plugins["router"].routeInfo["specName"] : "" );
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
@@ -79,12 +78,12 @@ App.prototype.run = function()
 				// Add new routes
 				for(let i = 0; i < spec["routes"].length; i++)
 				{
-					this.router.addRoute(spec["routes"][i], true);
+					this._plugins["router"].addRoute(spec["routes"][i], true);
 				}
 
 				// Components
 				Object.keys(spec["components"]).forEach((key) => {
-					this._components[key] = spec["components"][key];
+					this._options["components"][key] = spec["components"][key];
 				});
 
 				resolve();
