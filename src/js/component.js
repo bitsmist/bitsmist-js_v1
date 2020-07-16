@@ -54,10 +54,9 @@ export default function Component(options)
 	_this._options["services"] = ( _this._options["services"] ? _this._options["services"] : {} );
 	_this._options["elements"] = ( _this._options["elements"] ? _this._options["elements"] : {} );
 
-	// Init event handlers
-	Object.keys(_this._options["events"]).forEach((eventName) => {
-		let handler = ( typeof _this._options["events"][eventName] === "object" ? _this._options["events"][eventName]["handler"] : _this._options["events"][eventName] );
-		_this.addEventHandler(_this, eventName, handler);
+	// Init plugins
+	Object.keys(_this._options["plugins"]).forEach((pluginName) => {
+		_this.addPlugin(pluginName, _this._options["plugins"][pluginName]);
 	});
 
 	// Init services
@@ -69,14 +68,12 @@ export default function Component(options)
 		}
 	});
 
-	// Init plugins
-	Object.keys(_this._options["plugins"]).forEach((pluginName) => {
-		_this.addPlugin(pluginName, _this._options["plugins"][pluginName]);
+	// Init event handlers
+	Object.keys(_this._options["events"]).forEach((eventName) => {
+		_this.addEventHandler(_this, eventName, _this._options["events"][eventName]);
 	});
 
-	_this.trigger("_initComponent", _this).then(() => {
-		return _this.trigger("initComponent", _this);
-	});
+	_this.trigger("initComponent", _this);
 
 	return _this;
 
@@ -212,13 +209,9 @@ Component.prototype.open = function(options)
 				return this.refresh();
 			}
 		}).then(() => {
-			return this.trigger("_beforeOpen", sender, {"options":options});
-		}).then(() => {
 			return this.trigger("beforeOpen", sender, {"options":options});
 		}).then(() => {
 			return this.trigger("open", sender, {"options":options});
-		}).then(() => {
-			return this.trigger("_open", sender, {"options":options});
 		}).then(() => {
 			this.__initOnOpen();
 			console.debug(`Component.open(): Opened component. name=${this.name}`);
@@ -275,13 +268,9 @@ Component.prototype.close = function(options)
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
-			return this.trigger("_beforeClose", sender);
-		}).then(() => {
 			return this.trigger("beforeClose", sender);
 		}).then(() => {
 			return this.trigger("close", sender);
-		}).then(() => {
-			return this.trigger("_close", sender);
 		}).then(() => {
 			console.debug(`Component.close(): Closed component. name=${this.name}`);
 			if (this._isModal)
@@ -313,8 +302,6 @@ Component.prototype.refresh = function(options)
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
-			return this.trigger("_beforeRefresh", sender);
-		}).then(() => {
 			return this.trigger("beforeRefresh", sender);
 		}).then(() => {
 			if (this.getOption("autoFill"))
@@ -323,8 +310,6 @@ Component.prototype.refresh = function(options)
 			}
 		}).then(() => {
 			return this.trigger("refresh", sender);
-		}).then(() => {
-			return this.trigger("_refresh", sender);
 		}).then(() => {
 			this.__autoFocus();
 			resolve();
@@ -359,11 +344,7 @@ Component.prototype.setup = function(options)
 		}).then(() => {
 			return this.trigger("validateSettings", sender,  options);
 		}).then(() => {
-			return this.trigger("_beforeSetup", sender, options);
-		}).then(() => {
 			return this.trigger("beforeSetup", sender, options);
-		}).then(() => {
-			return this.trigger("_setup", sender, options);
 		}).then(() => {
 			return this.trigger("setup", sender, options);
 		}).then(() => {
@@ -475,8 +456,7 @@ Component.prototype.addPlugin = function(pluginName, options)
 		this._plugins[pluginName] = plugin;
 
 		Object.keys(plugin["_events"]).forEach((eventName) => {
-			let handler = ( typeof plugin["_events"][eventName] === "object" ? plugin["_events"][eventName]["handler"] : plugin["_events"][eventName] );
-			this.addEventHandler(this, "_" + eventName, handler.bind(plugin));
+			this.addEventHandler(this, eventName, plugin["_events"][eventName], null, plugin);
 		});
 
 		if (options["expose"])
@@ -496,26 +476,52 @@ Component.prototype.addPlugin = function(pluginName, options)
  *
  * @param	{HTMLElement}	element					HTML element.
  * @param	{String}		eventName				Event name.
- * @param	{Function}		handler					Event handler.
+ * @param	{Object/String}	eventInfo				Event info.
  * @param	{Object}		options					Options passed to elements.
+ * @param	{Object}		bindTo					Object which binds to handler.
  */
-Component.prototype.addEventHandler = function(element, eventName, handler, options)
+Component.prototype.addEventHandler = function(element, eventName, eventInfo, options, bindTo)
 {
 
-	let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
+	//let handler = (typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo);
 
-	if (!element._bm_detail)
+	// Get handler
+	let handler;
+	let order = 0;
+	if ( typeof eventInfo === "object" )
 	{
-		element._bm_detail = { "component": this, "listeners": listeners };
+		handler = (typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo);
+		order = (eventInfo["order"] ? eventInfo["order"] : order);
+	}
+	else
+	{
+		handler = eventInfo;
 	}
 
+	// Get listeners
+	let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
+
+	// Init holder object for the element
+	if (!element._bm_detail)
+	{
+		element._bm_detail = { "component":this, "listeners":listeners };
+	}
+
+	// Add hook event handler
 	if (!listeners[eventName])
 	{
 		listeners[eventName] = [];
 		element.addEventListener(eventName, this.__callEventHandler);
 	}
 
-	listeners[eventName].push({"handler":handler, "options":options});
+	listeners[eventName].push({"handler":handler, "options":options, "bind":bindTo, "order":order});
+
+	// Stable sort
+	listeners[eventName].sort((a, b) => {
+		if (a.order == b.order)		return 0;
+		else if (a.order > b.order)	return 1;
+		else 						return -1
+	});
 
 }
 
@@ -735,11 +741,8 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 	for (let i = 0; i < elements.length; i++)
 	{
 		Object.keys(events).forEach((eventName) => {
-			// Merge options
 			options = Object.assign({}, events[eventName], options);
-
-			let handler = ( typeof events[eventName] === "object" ? events[eventName]["handler"] : events[eventName] );
-			this.addEventHandler(elements[i], eventName, handler, options);
+			this.addEventHandler(elements[i], eventName, events[eventName], options);
 		});
 	}
 
@@ -878,7 +881,14 @@ Component.prototype.__callEventHandler = function(e)
 
 			for (let i = 0; i < listeners.length; i++)
 			{
+				// Get handler
 				let handler = (typeof listeners[i]["handler"] === "string" ? component[listeners[i]["handler"]] : listeners[i]["handler"] );
+				if (listeners[i]["bind"])
+				{
+					handler = handler.bind(listeners[i]["bind"]);
+				}
+
+				// Execute handler
 				chain = chain.then((result) => {
 					if (result)
 					{
@@ -888,10 +898,7 @@ Component.prototype.__callEventHandler = function(e)
 					return handler.call(component, this, e, listeners[i]["options"]);
 				});
 
-				if (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"])
-				{
-					stopPropagation = true;
-				}
+				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
 			}
 		}
 
@@ -950,8 +957,6 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 					});
 				}
 			}).then(() => {
-				return this.trigger("_load", this);
-			}).then(() => {
 				return this.trigger("load", this);
 			}).then(() => {
 				return this.__appendTemplate(this.getOption("rootNode"), templateName);
@@ -960,11 +965,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 			}).then(() => {
 				return LoaderUtil.waitFor(this.getOption("waitFor"));
 			}).then(() => {
-				return this.trigger("_append", this);
-			}).then(() => {
 				return this.trigger("append", this);
-			}).then(() => {
-				return this.trigger("_init", this);
 			}).then(() => {
 				return this.trigger("init", this);
 			}).then(() => {

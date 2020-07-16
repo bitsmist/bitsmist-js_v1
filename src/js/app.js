@@ -42,7 +42,7 @@ export default function App(settings)
 	Globals["settings"] = Object.assign({}, settings);
 
 	_this.__initErrorListeners();
-	_this.trigger("_appInit", this, {"settings":settings});
+	_this.trigger("appInit", this, {"settings":settings});
 
 	return _this;
 
@@ -93,7 +93,7 @@ App.prototype.run = function()
 
 	// Open app
 	Promise.all([promise]).then(() => {
-		return this.trigger("_specLoad", this, {"spec":Globals["spec"]});
+		return this.trigger("specLoad", this, {"spec":Globals["spec"]});
 	}).then(() => {
 		return this.open();
 	});
@@ -218,6 +218,6 @@ App.prototype.__handleException = function(e)
 {
 
 	// Call plugins
-	this.trigger("_error", this, {"error":e});
+	this.trigger("error", this, {"error":e});
 
 }
