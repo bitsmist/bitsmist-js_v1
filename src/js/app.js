@@ -40,6 +40,7 @@ export default function App(settings)
 	// Init variables
 	Globals["app"] = _this;
 	_this._settings = Object.assign({}, settings);
+	_this._store = {};
 
 	_this.__initErrorListeners();
 	_this.trigger("appInit", _this, {"settings":_this._settings});
@@ -64,6 +65,21 @@ Object.defineProperty(Component.prototype, 'settings', {
 	get()
 	{
 		return this._settings;
+	},
+	configurable: true
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Store.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'store', {
+	get()
+	{
+		return this._store;
 	},
 	configurable: true
 })
