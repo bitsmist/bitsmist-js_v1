@@ -528,53 +528,6 @@ Component.prototype.addEventHandler = function(element, eventName, eventInfo, op
 // -----------------------------------------------------------------------------
 
 /**
- * Clone the component.
- *
- * @param	{String}		newId				Id for the cloned component.
- * @param	{String}		templateName		Template name.
- *
- * @return  {Object}		Cloned component.
- */
-/*
-Component.prototype.clone(newId, templateName)
-{
-
-	let clone;
-	let template = this._templates[templateName].template;
-
-	if (!template)
-	{
-		template = document.createElement('template');
-		template.innerHTML = this._templates[templateName].html;
-
-		this._templates[templateName].template = template;
-	}
-
-	if ( "content" in template )
-	{
-		clone = document.importNode(template.content, true);
-		if (newId)
-		{
-			clone.firstElementChild.id = newId;
-		}
-	}
-	else
-	{
-		clone = template.cloneNode(true).children[0];
-		if (newId)
-		{
-			clone.id = newId;
-		}
-	}
-
-	return clone;
-
-}
-*/
-
-// -----------------------------------------------------------------------------
-
-/**
  * Trigger the event.
  *
  * @param	{String}		eventName				Event name to trigger.
