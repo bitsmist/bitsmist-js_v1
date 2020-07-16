@@ -334,7 +334,7 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		let preferences = Globals["settings"]["preferences"];
+		let preferences = this.app.settings["preferences"];
 		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : preferences);
 		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : preferences );
 		let sender = ( options["sender"] ? options["sender"] : this );
@@ -461,7 +461,12 @@ Component.prototype.addPlugin = function(pluginName, options)
 
 		if (options["expose"])
 		{
-			this[pluginName] = plugin;
+			Object.defineProperty(Component.prototype, pluginName, {
+				get()
+				{
+					return plugin;
+				}
+			});
 		}
 
 		resolve(plugin);
@@ -482,8 +487,6 @@ Component.prototype.addPlugin = function(pluginName, options)
  */
 Component.prototype.addEventHandler = function(element, eventName, eventInfo, options, bindTo)
 {
-
-	//let handler = (typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo);
 
 	// Get handler
 	let handler;
@@ -899,7 +902,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
-						let base = ( Globals["settings"]["system"] && Globals["settings"]["system"]["templatePath"] ? Globals["settings"]["system"]["templatePath"] : "/components/");
+						let base = ( this.app.settings["system"] && this.app.settings["system"]["templatePath"] ? this.app.settings["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
 						LoaderUtil.loadTemplate(templateName, base + path).then((template) => {

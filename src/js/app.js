@@ -39,10 +39,10 @@ export default function App(settings)
 
 	// Init variables
 	Globals["app"] = _this;
-	Globals["settings"] = Object.assign({}, settings);
+	_this._settings = Object.assign({}, settings);
 
 	_this.__initErrorListeners();
-	_this.trigger("appInit", this, {"settings":settings});
+	_this.trigger("appInit", _this, {"settings":_this._settings});
 
 	return _this;
 
@@ -50,6 +50,23 @@ export default function App(settings)
 
 LoaderUtil.inherit(App, Component);
 customElements.define("bm-app", App);
+
+// -----------------------------------------------------------------------------
+//  Setter/Getter
+// -----------------------------------------------------------------------------
+
+/**
+ * Settings.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'settings', {
+	get()
+	{
+		return this._settings;
+	},
+	configurable: true
+})
 
 // -----------------------------------------------------------------------------
 //  Methods
@@ -72,8 +89,8 @@ App.prototype.run = function()
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
-			LoaderUtil.loadSpec(specName, Globals["settings"]).then((spec) => {
-				Globals["spec"] = spec;
+			LoaderUtil.loadSpec(specName, this._settings).then((spec) => {
+				this._spec = spec;
 
 				// Add new routes
 				for(let i = 0; i < spec["routes"].length; i++)
@@ -93,7 +110,7 @@ App.prototype.run = function()
 
 	// Open app
 	Promise.all([promise]).then(() => {
-		return this.trigger("specLoad", this, {"spec":Globals["spec"]});
+		return this.trigger("specLoad", this, {"spec":this._spec});
 	}).then(() => {
 		return this.open();
 	});
@@ -217,7 +234,6 @@ App.prototype.__getErrorName = function(error)
 App.prototype.__handleException = function(e)
 {
 
-	// Call plugins
 	this.trigger("error", this, {"error":e});
 
 }
