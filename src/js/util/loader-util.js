@@ -110,10 +110,11 @@ LoaderUtil.createObject = function(className, ...args)
  *
  * @param	{String}		componentName		Component name.
  * @param	{Object}		options				Options for the component.
+ * @param	{Object}		settings			System settings.
  *
  * @return  {Promise}		Promise.
  */
-LoaderUtil.createComponent = function(componentName, options)
+LoaderUtil.createComponent = function(componentName, options, settings)
 {
 
 	return new Promise((resolve, reject) => {
@@ -124,7 +125,7 @@ LoaderUtil.createComponent = function(componentName, options)
 		LoaderUtil.__autoloadComponent(className, options).then(() => {
 			let promise;
 
-			component = LoaderUtil.createObject(className, options);
+			component = LoaderUtil.createObject(className, options, settings);
 
 			Promise.all([promise]).then(() => {
 				resolve(component);
@@ -339,10 +340,11 @@ LoaderUtil.__isLoadedComponents = function(waitlist)
  *
  * @param	{String}		className			Component class name.
  * @param	{Object}		options				Options.
+ * @param	{Object}		settings			System settings.
  *
  * @return  {Promise}		Promise.
  */
-LoaderUtil.__autoloadComponent = function(className, options)
+LoaderUtil.__autoloadComponent = function(className, options, settings)
 {
 
 	console.debug(`Component.__autoLoadComponent(): Auto loading component. className=${className}`);
@@ -356,13 +358,13 @@ LoaderUtil.__autoloadComponent = function(className, options)
 		else
 		{
 			let path = "";
-			let base = ( Globals["settings"]["system"]["componentPath"] ? Globals["settings"]["system"]["componentPath"] : "/components/" );
+			let base = ( settings["componentPath"] ? settings["componentPath"] : "/components/" );
 			if (options && "path" in options)
 			{
 				path = options["path"];
 			}
 
-			this.__loadComponentScript(className, base + path).then(() => {
+			this.__loadComponentScript(className, base + path, settings).then(() => {
 				resolve();
 			});
 		}
@@ -377,10 +379,11 @@ LoaderUtil.__autoloadComponent = function(className, options)
 *
 * @param	{String}		componentName		Component name.
 * @param	{String}		path				Component path.
+ * @param	{Object}		settings			System settings.
 *
 * @return  {Promise}		Promise.
 */
-LoaderUtil.__loadComponentScript = function(componentName, path) {
+LoaderUtil.__loadComponentScript = function(componentName, path, settings) {
 
 	console.debug(`Component.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
 
@@ -389,7 +392,7 @@ LoaderUtil.__loadComponentScript = function(componentName, path) {
 		let url2 = path + "/" + componentName + ".js";
 
 		Promise.resolve().then(() => {
-			if (Globals["settings"]["system"]["splitComponent"])
+			if (settings["splitComponent"])
 			{
 				return AjaxUtil.loadScript(url1);
 			}

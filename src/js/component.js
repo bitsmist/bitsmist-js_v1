@@ -413,7 +413,7 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
-					LoaderUtil.createComponent(componentName, options).then((component) => {
+					LoaderUtil.createComponent(componentName, options, this.app.settings["system"]).then((component) => {
 						component._parent = this;
 						this._components[componentName] = component;
 						resolve();
