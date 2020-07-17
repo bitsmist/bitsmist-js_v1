@@ -122,7 +122,7 @@ LoaderUtil.createComponent = function(componentName, options, settings)
 		let className = ( "className" in options ? options["className"] : componentName );
 		let component = null;
 
-		LoaderUtil.__autoloadComponent(className, options).then(() => {
+		LoaderUtil.__autoloadComponent(className, options, settings).then(() => {
 			let promise;
 
 			component = LoaderUtil.createObject(className, options, settings);
