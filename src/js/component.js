@@ -839,6 +839,15 @@ Component.prototype.__callEventHandler = function(e)
 			{
 				// Get handler
 				let handler = (typeof listeners[i]["handler"] === "string" ? component[listeners[i]["handler"]] : listeners[i]["handler"] );
+
+				// Check handler
+				if (typeof handler !== "function")
+				{
+					let pluginName = (listeners[i]["bind"] ? listeners[i]["bind"]._options["className"] : "");
+					throw TypeError(`Event handler is not a function. componentName=${this.name}, pluginName=${pluginName}, eventName=${e.type}`);
+				}
+
+				// Bind handler
 				if (listeners[i]["bind"])
 				{
 					handler = handler.bind(listeners[i]["bind"]);
