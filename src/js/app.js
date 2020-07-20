@@ -41,8 +41,9 @@ export default function App(settings)
 	// Init variables
 	Globals["app"] = _this;
 	_this._settings = Object.assign({}, settings);
-	_this._store = {};
+	_this._preferences = Object.assign({}, _this._settings["preferences"]);
 	_this._router = new Router(this, _this._settings["router"]);
+	_this._store = {};
 
 	_this.__initErrorListeners();
 	_this.trigger("appInit", _this, {"settings":_this._settings});
@@ -82,6 +83,24 @@ Object.defineProperty(App.prototype, 'settings', {
 	get()
 	{
 		return this._settings;
+	},
+	configurable: true
+})
+// -----------------------------------------------------------------------------
+
+/**
+ * Preferences.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(App.prototype, 'preferences', {
+	get()
+	{
+		return this._preferences;
+	},
+	set(value)
+	{
+		this._preferences = value;
 	},
 	configurable: true
 })

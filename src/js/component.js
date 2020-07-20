@@ -334,9 +334,8 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		let preferences = this.app.settings["preferences"];
-		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : preferences);
-		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : preferences );
+		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.app.preferences);
+		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.app.preferences);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
