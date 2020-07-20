@@ -12,6 +12,7 @@ import AjaxUtil from './util/ajax-util';
 import Component from './component';
 import Globals from './globals';
 import LoaderUtil from './util/loader-util';
+import Router from './router';
 
 // =============================================================================
 //	App class
@@ -41,6 +42,7 @@ export default function App(settings)
 	Globals["app"] = _this;
 	_this._settings = Object.assign({}, settings);
 	_this._store = {};
+	_this._router = new Router(this, _this._settings["router"]);
 
 	_this.__initErrorListeners();
 	_this.trigger("appInit", _this, {"settings":_this._settings});
@@ -57,11 +59,26 @@ customElements.define("bm-app", App);
 // -----------------------------------------------------------------------------
 
 /**
+ * Router.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(App.prototype, 'router', {
+	get()
+	{
+		return this._router;
+	},
+	configurable: true
+})
+
+// -----------------------------------------------------------------------------
+
+/**
  * Settings.
  *
  * @type	{String}
  */
-Object.defineProperty(Component.prototype, 'settings', {
+Object.defineProperty(App.prototype, 'settings', {
 	get()
 	{
 		return this._settings;
@@ -76,7 +93,7 @@ Object.defineProperty(Component.prototype, 'settings', {
  *
  * @type	{String}
  */
-Object.defineProperty(Component.prototype, 'store', {
+Object.defineProperty(App.prototype, 'store', {
 	get()
 	{
 		return this._store;
@@ -101,7 +118,7 @@ App.prototype.run = function()
 	let promise;
 
 	// Load spec
-	let specName = ( this._plugins["router"] ? this._plugins["router"].routeInfo["specName"] : "" );
+	let specName = ( this._router ? this._router.routeInfo["specName"] : "" );
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
@@ -111,7 +128,7 @@ App.prototype.run = function()
 				// Add new routes
 				for(let i = 0; i < spec["routes"].length; i++)
 				{
-					this._plugins["router"].addRoute(spec["routes"][i], true);
+					this._router.addRoute(spec["routes"][i], true);
 				}
 
 				// Components
