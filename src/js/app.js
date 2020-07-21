@@ -46,7 +46,7 @@ export default function App(settings)
 	_this._store = {};
 
 	_this.__initErrorListeners();
-	_this.trigger("appInit", _this, {"settings":_this._settings});
+	_this.trigger("initApp", _this, {"settings":_this._settings, "preferences":_this._preferences});
 
 	return _this;
 
@@ -84,6 +84,10 @@ Object.defineProperty(App.prototype, 'settings', {
 	{
 		return this._settings;
 	},
+	set(value)
+	{
+		this._settings = value;
+	},
 	configurable: true
 })
 // -----------------------------------------------------------------------------
@@ -116,6 +120,10 @@ Object.defineProperty(App.prototype, 'store', {
 	get()
 	{
 		return this._store;
+	},
+	set(value)
+	{
+		this._store = value;
 	},
 	configurable: true
 })
