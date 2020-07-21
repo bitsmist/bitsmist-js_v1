@@ -13,6 +13,7 @@ import Component from './component';
 import Globals from './globals';
 import LoaderUtil from './util/loader-util';
 import Router from './router';
+import Store from './store';
 
 // =============================================================================
 //	App class
@@ -40,13 +41,24 @@ export default function App(settings)
 
 	// Init variables
 	Globals["app"] = _this;
-	_this._settings = Object.assign({}, settings);
-	_this._preferences = Object.assign({}, _this._settings["preferences"]);
-	_this._router = new Router(this, _this._settings["router"]);
-	_this._store = {};
+	_this._settings = new Store(_this, {"items":settings});
+	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":settings["preferences"]});
+	_this._store = new Store(_this);
 
+	// Init router
+	_this._router = new Router(_this, _this._settings.items["router"]);
+
+	// Init error listeners
 	_this.__initErrorListeners();
-	_this.trigger("initApp", _this, {"settings":_this._settings, "preferences":_this._preferences});
+
+	// Trigger events
+	Promise.resolve().then(() => {
+		return _this._preferences.load();
+	}).then((preferences) => {
+		return _this._preferences.merge(preferences);
+	}).then(() => {
+		return _this.trigger("initApp", _this, {"settings":_this._settings.items, "preferences":_this._preferences.items});
+	});
 
 	return _this;
 
@@ -84,12 +96,9 @@ Object.defineProperty(App.prototype, 'settings', {
 	{
 		return this._settings;
 	},
-	set(value)
-	{
-		this._settings = value;
-	},
 	configurable: true
 })
+
 // -----------------------------------------------------------------------------
 
 /**
@@ -101,10 +110,6 @@ Object.defineProperty(App.prototype, 'preferences', {
 	get()
 	{
 		return this._preferences;
-	},
-	set(value)
-	{
-		this._preferences = value;
 	},
 	configurable: true
 })
@@ -134,10 +139,6 @@ Object.defineProperty(App.prototype, 'store', {
 
 /**
  * Start application.
- *
- * @param	{Object}		settings			Settings.
- *
- * @return  {Array}			Promises.
  */
 App.prototype.run = function()
 {
@@ -149,7 +150,7 @@ App.prototype.run = function()
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
-			LoaderUtil.loadSpec(specName, this._settings).then((spec) => {
+			LoaderUtil.loadSpec(specName, this._settings.items).then((spec) => {
 				this._spec = spec;
 
 				// Add new routes
@@ -176,6 +177,38 @@ App.prototype.run = function()
 	});
 
 }
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Apply settings.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+App.prototype.setup = function(options)
+{
+
+	console.debug(`App.setup(): Setting up app.`);
+
+	return new Promise((resolve, reject) => {
+		options = Object.assign({}, options);
+		let sender = ( options["sender"] ? options["sender"] : this );
+
+		Component.prototype.setup.call(this, options).then(() => {
+			if (options["newPreferences"])
+			{
+				this._preferences.merge(options["newPreferences"]);
+				this._preferences.save();
+			}
+		}).then(() => {
+			resolve();
+		});
+	});
+
+}
+
 
 // -----------------------------------------------------------------------------
 //  Privates
