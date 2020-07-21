@@ -334,8 +334,8 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.app.preferences);
-		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.app.preferences);
+		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.app.preferences.items);
+		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.app.preferences.items);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
@@ -412,7 +412,7 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
-					LoaderUtil.createComponent(componentName, options, this.app.settings["system"]).then((component) => {
+					LoaderUtil.createComponent(componentName, options, this.app.settings.items["system"]).then((component) => {
 						component._parent = this;
 						this._components[componentName] = component;
 						resolve();
@@ -910,7 +910,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
-						let base = ( this.app.settings["system"] && this.app.settings["system"]["templatePath"] ? this.app.settings["system"]["templatePath"] : "/components/");
+						let base = ( this.app.settings.items["system"] && this.app.settings.items["system"]["templatePath"] ? this.app.settings.items["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
 						LoaderUtil.loadTemplate(templateName, base + path).then((template) => {
