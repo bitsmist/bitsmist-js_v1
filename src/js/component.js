@@ -931,8 +931,6 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 			}).then(() => {
 				return this.trigger("append", this);
 			}).then(() => {
-				return this.trigger("init", this);
-			}).then(() => {
 				resolve();
 			});
 		}
