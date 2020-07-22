@@ -9,6 +9,14 @@ window.BITSMIST.v1.App = App;
 import Component from './component';
 window.BITSMIST.v1.Component = Component;
 
+// Mixin
+import EventMixin from './mixin/event-mixin';
+import LoaderMixin from './mixin/loader-mixin';
+import WaitforMixin from './mixin/waitfor-mixin';
+window.BITSMIST.v1.EventMixin = EventMixin;
+window.BITSMIST.v1.LoaderMixin = LoaderMixin;
+window.BITSMIST.v1.WaitforMixin = WaitforMixin;
+
 // Router
 import Router from './router';
 window.BITSMIST.v1.Router = Router;
@@ -19,7 +27,7 @@ window.BITSMIST.v1.Store = Store;
 
 // Util
 import AjaxUtil from './util/ajax-util';
-import LoaderUtil from './util/loader-util';
+import ClassUtil from './util/class-util';
 window.BITSMIST.v1.AjaxUtil = AjaxUtil;
-window.BITSMIST.v1.LoaderUtil = LoaderUtil;
+window.BITSMIST.v1.ClassUtil = ClassUtil;
 
