@@ -8,9 +8,11 @@
  */
 // =============================================================================
 
-import EventUtil from './util/event-util';
+import ClassUtil from './util/class-util';
+import EventMixin from './mixin/event-mixin';
 import Globals from './globals';
-import LoaderUtil from './util/loader-util';
+import LoaderMixin from './mixin/loader-mixin';
+import WaitforMixin from './mixin/waitfor-mixin';
 
 // =============================================================================
 //	Component class
@@ -80,8 +82,10 @@ export default function Component(options)
 }
 
 // Inherit & Mixin
-LoaderUtil.inherit(Component, HTMLElement);
-Object.assign(Component.prototype, EventUtil);
+ClassUtil.inherit(Component, HTMLElement);
+Object.assign(Component.prototype, EventMixin);
+Object.assign(Component.prototype, LoaderMixin);
+Object.assign(Component.prototype, WaitforMixin);
 
 customElements.define("bm-component", Component);
 
@@ -415,7 +419,7 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
-					LoaderUtil.createComponent(componentName, options, this.app.settings.items["system"]).then((component) => {
+					this.createComponent(componentName, options, this.app.settings.items["system"]).then((component) => {
 						component._parent = this;
 						this._components[componentName] = component;
 						resolve();
@@ -454,7 +458,7 @@ Component.prototype.addPlugin = function(pluginName, options)
 		let className = ( "className" in options ? options["className"] : pluginName );
 		let plugin = null;
 
-		plugin = LoaderUtil.createObject(className, this, options);
+		plugin = this.createObject(className, this, options);
 		this._plugins[pluginName] = plugin;
 
 		Object.keys(plugin["_events"]).forEach((eventName) => {
@@ -487,7 +491,7 @@ Component.prototype.connectedCallback = function()
 {
 
 	this.open().then(() => {
-		LoaderUtil.registerComponent(this);
+		this.registerComponent(this);
 	});
 
 }
@@ -728,7 +732,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 						let base = ( this.app.settings.items["system"] && this.app.settings.items["system"]["templatePath"] ? this.app.settings.items["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
-						LoaderUtil.loadTemplate(templateName, base + path).then((template) => {
+						this.loadTemplate(templateName, base + path).then((template) => {
 							this._templates[templateName] = {};
 							this._templates[templateName]["html"] = template;
 							resolve();
@@ -742,7 +746,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 			}).then(() => {
 				return this.__initOnAppendTemplate();
 			}).then(() => {
-				return LoaderUtil.waitFor(this.getOption("waitFor"));
+				return this.waitFor(this.getOption("waitFor"));
 			}).then(() => {
 				return this.trigger("append", this);
 			}).then(() => {

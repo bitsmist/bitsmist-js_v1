@@ -9,9 +9,9 @@
 // =============================================================================
 
 import AjaxUtil from './util/ajax-util';
+import ClassUtil from './util/class-util';
 import Component from './component';
 import Globals from './globals';
-import LoaderUtil from './util/loader-util';
 import Router from './router';
 import Store from './store';
 
@@ -64,7 +64,7 @@ export default function App(settings)
 
 }
 
-LoaderUtil.inherit(App, Component);
+ClassUtil.inherit(App, Component);
 customElements.define("bm-app", App);
 
 // -----------------------------------------------------------------------------
@@ -150,7 +150,7 @@ App.prototype.run = function()
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
-			LoaderUtil.loadSpec(specName, this._settings.items).then((spec) => {
+			this.loadSpec(specName, this._settings.items).then((spec) => {
 				this._spec = spec;
 
 				// Add new routes
