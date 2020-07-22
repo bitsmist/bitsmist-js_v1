@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import LoaderUtil from './util/loader-util';
+
 // =============================================================================
 //	Store class
 // =============================================================================
@@ -117,7 +119,7 @@ export default class Store
 
 			for (let i = 0; i < items.length; i++)
 			{
-				this._items = Object.assign(this._items, items[i]);
+				LoaderUtil.deepMerge(this._items, items[i]);
 			}
 		}
 
