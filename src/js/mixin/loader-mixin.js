@@ -22,13 +22,13 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Instantiate the component.
-	*
-	* @param	{String}		className			Class name.
-	* @param	{Object}		options				Options for the component.
-	*
-	* @return  {Object}		Initaiated object.
-	*/
+	 * Instantiate the component.
+	 *
+	 * @param	{String}		className			Class name.
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Object}		Initaiated object.
+	 */
 	static createObject(className, ...args)
 	{
 
@@ -59,14 +59,14 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Create component.
-	*
-	* @param	{String}		componentName		Component name.
-	* @param	{Object}		options				Options for the component.
-	* @param	{Object}		settings			System settings.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Create component.
+	 *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
+	 * @param	{Object}		settings			System settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static createComponent(componentName, options, settings)
 	{
 
@@ -91,13 +91,13 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Load the spec file for this page.
-	*
-	* @param	{String}		specName			Spec name.
-	* @param	{Object}		settings			Application settings.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Load the spec file for this page.
+	 *
+	 * @param	{String}		specName			Spec name.
+	 * @param	{Object}		settings			Application settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static loadSpec(specName, settings)
 	{
 
@@ -140,12 +140,12 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Load the template html.
-	*
-	* @param	{String}		templateName		Template name.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Load the template html.
+	 *
+	 * @param	{String}		templateName		Template name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static loadTemplate(templateName, path)
 	{
 
@@ -168,12 +168,12 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Check if the class exists.
-	*
-	* @param	{String}		className			Class name.
-	*
-	* @return  {Bool}			True if exists.
-	*/
+	 * Check if the class exists.
+	 *
+	 * @param	{String}		className			Class name.
+	 *
+	 * @return  {Bool}			True if exists.
+	 */
 	static __isLoadedClass(className)
 	{
 
@@ -195,14 +195,14 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Load the component if not loaded yet.
-	*
-	* @param	{String}		className			Component class name.
-	* @param	{Object}		options				Options.
-	* @param	{Object}		settings			System settings.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Load the component if not loaded yet.
+	 *
+	 * @param	{String}		className			Component class name.
+	 * @param	{Object}		options				Options.
+	 * @param	{Object}		settings			System settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static __autoloadComponent(className, options, settings)
 	{
 
@@ -234,14 +234,14 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Load the component js files.
-	*
-	* @param	{String}		componentName		Component name.
-	* @param	{String}		path				Component path.
-	* @param	{Object}		settings			System settings.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Load the component js files.
+	 *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		path				Component path.
+	 * @param	{Object}		settings			System settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static __loadComponentScript(componentName, path, settings) {
 
 		console.debug(`Component.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
@@ -268,13 +268,13 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Load spec file.
-	*
-	* @param	{String}		url					Spec file url.
-	* @param	{String}		defaultResponse		Response when error.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Load spec file.
+	 *
+	 * @param	{String}		url					Spec file url.
+	 * @param	{String}		defaultResponse		Response when error.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static __loadSpecFile(url, defaultResponse)
 	{
 
@@ -298,13 +298,13 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Merge settings to spec.
-	*
-	* @param	{Object}		spec					Spec.
-	* @param	{Object}		settings				Settings.
-	*
-	* @return  {Object}		Merged array.
-	*/
+	 * Merge settings to spec.
+	 *
+	 * @param	{Object}		spec					Spec.
+	 * @param	{Object}		settings				Settings.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
 	static __mergeSettings(spec, settings)
 	{
 
@@ -324,13 +324,13 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Deep merge.
-	*
-	* @param	{Object}		arr1					Array1.
-	* @param	{Object}		arr2					Array2.
-	*
-	* @return  {Object}		Merged array.
-	*/
+	 * Deep merge.
+	 *
+	 * @param	{Object}		arr1					Array1.
+	 * @param	{Object}		arr2					Array2.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
 	static __deepMerge(arr1, arr2)
 	{
 

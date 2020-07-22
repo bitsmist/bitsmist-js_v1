@@ -20,14 +20,14 @@ export default class EventMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Add an event handler.
-	*
-	* @param	{HTMLElement}	element					HTML element.
-	* @param	{String}		eventName				Event name.
-	* @param	{Object/String}	eventInfo				Event info.
-	* @param	{Object}		options					Options passed to elements.
-	* @param	{Object}		bindTo					Object which binds to handler.
-	*/
+	 * Add an event handler.
+	 *
+	 * @param	{HTMLElement}	element					HTML element.
+	 * @param	{String}		eventName				Event name.
+	 * @param	{Object/String}	eventInfo				Event info.
+	 * @param	{Object}		options					Options passed to elements.
+	 * @param	{Object}		bindTo					Object which binds to handler.
+	 */
 	static addEventHandler(element, eventName, eventInfo, options, bindTo)
 	{
 
@@ -74,12 +74,12 @@ export default class EventMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Trigger the event.
-	*
-	* @param	{String}		eventName				Event name to trigger.
-	* @param	{Object}		sender					Object which triggered the event.
-	* @param	{Object}		options					Event parameter options.
-	*/
+	 * Trigger the event.
+	 *
+	 * @param	{String}		eventName				Event name to trigger.
+	 * @param	{Object}		sender					Object which triggered the event.
+	 * @param	{Object}		options					Event parameter options.
+	 */
 	static trigger(eventName, sender, options)
 	{
 
@@ -105,13 +105,13 @@ export default class EventMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Trigger the HTML event.
-	*
-	* @param	{HTMLElement}	element					Html element.
-	* @param	{String}		eventName				Event name to trigger.
-	* @param	{Object}		sender					Object which triggered the event.
-	* @param	{Object}		options					Event parameter options.
-	*/
+	 * Trigger the HTML event.
+	 *
+	 * @param	{HTMLElement}	element					Html element.
+	 * @param	{String}		eventName				Event name to trigger.
+	 * @param	{Object}		sender					Object which triggered the event.
+	 * @param	{Object}		options					Event parameter options.
+	 */
 	static triggerHtmlEvent(element, eventName, sender, options)
 	{
 
@@ -139,13 +139,13 @@ export default class EventMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Call event handler.
-	*
-	* This function is registered as event listener to element.addEventListner(),
-	* so "this" is HTML element which triggered the event.
-	*
-	* @param	{Object}		e						Event parameter.
-	*/
+	 * Call event handler.
+	 *
+	 * This function is registered as event listener to element.addEventListner(),
+	 * so "this" is HTML element which triggered the event.
+	 *
+	 * @param	{Object}		e						Event parameter.
+	 */
 	static __callEventHandler(e)
 	{
 

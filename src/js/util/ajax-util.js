@@ -20,12 +20,12 @@ export default class AjaxUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	* Make an ajax request.
-	*
-	* @param	{Object}		options				Request options.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Make an ajax request.
+	 *
+	 * @param	{Object}		options				Request options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static ajaxRequest(options)
 	{
 
@@ -81,12 +81,12 @@ export default class AjaxUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	* Load the javascript file.
-	*
-	* @param	{string}		url					Javascript url.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Load the javascript file.
+	 *
+	 * @param	{string}		url					Javascript url.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static loadScript(url) {
 
 		return new Promise((resolve, reject) => {
@@ -116,14 +116,14 @@ export default class AjaxUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	* Get option value. Return default value when specified key is not available.
-	*
-	* @param	{array}			options				Options for the component.
-	* @param	{string}		key					Key to get.
-	* @param	{object}		defaultValue		Value returned when key is not found.
-	*
-	* @return  {*}				Value.
-	*/
+	 * Get option value. Return default value when specified key is not available.
+	 *
+	 * @param	{array}			options				Options for the component.
+	 * @param	{string}		key					Key to get.
+	 * @param	{object}		defaultValue		Value returned when key is not found.
+	 *
+	 * @return  {*}				Value.
+	 */
 	static __getOption(options, key, defaultValue)
 	{
 

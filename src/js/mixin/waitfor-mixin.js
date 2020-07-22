@@ -20,12 +20,12 @@ export default class WaitforMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Wait for components to be loaded.
-	*
-	* @param	{Array}			waitlist			Components to wait.
-	*
-	* @return  {Array}			Promises.
-	*/
+	 * Wait for components to be loaded.
+	 *
+	 * @param	{Array}			waitlist			Components to wait.
+	 *
+	 * @return  {Array}			Promises.
+	 */
 	static waitFor(waitlist)
 	{
 
@@ -56,10 +56,9 @@ export default class WaitforMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Register component to loaded list.
-	*/
-	//static registerComponent(component)
-	static registerAsLoaded(component)
+	 * Register component to loaded list.
+	 */
+	static registerComponent(component)
 	{
 
 		this.__loadedList.push(component);
@@ -79,12 +78,12 @@ export default class WaitforMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	* Check if components are loaded.
-	*
-	* @param	{Array}			waitlist			Components to wait.
-	*
-	* @return  {Array}			Promises.
-	*/
+	 * Check if components are loaded.
+	 *
+	 * @param	{Array}			waitlist			Components to wait.
+	 *
+	 * @return  {Array}			Promises.
+	 */
 	static __isLoadedComponents(waitlist)
 	{
 

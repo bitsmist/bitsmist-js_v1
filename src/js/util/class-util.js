@@ -19,6 +19,15 @@ export default class ClassUtil
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Define new component in ES5 way.
+	 *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		settings			Component Settings.
+	 * @param	{Object}		superClass			Super class.
+	 * @param	{Function}		ctor				Constructor.
+	 * @param	{Object}		options				Options for constructor.
+	 */
 	static newComponent(componentName, settings, superClass, ctor, options)
 	{
 
@@ -46,11 +55,11 @@ export default class ClassUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	* Instantiate the component.
-	*
-	* @param	{Object}		subClass			Sub class.
-	* @param	{Object}		superClass			Super class.
-	*/
+	 * Instantiate the component.
+	 *
+	 * @param	{Object}		subClass			Sub class.
+	 * @param	{Object}		superClass			Super class.
+	 */
 	static inherit(subClass, superClass)
 	{
 
