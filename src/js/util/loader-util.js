@@ -175,7 +175,7 @@ LoaderUtil.loadSpec = function(specName, settings)
 			}
 
 			// Merge common spec, spec and settings
-			specMerged = LoaderUtil.__deepMerge(specCommon, spec);
+			specMerged = LoaderUtil.deepMerge(specCommon, spec);
 			specMerged = LoaderUtil.__mergeSettings(specMerged, settings);
 
 			resolve(specMerged);
@@ -263,6 +263,34 @@ LoaderUtil.registerComponent = function(component)
 			LoaderUtil.__waitingList[i].resolve();
 		}
 	}
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Deep merge.
+ *
+ * @param	{Object}		arr1					Array1.
+ * @param	{Object}		arr2					Array2.
+ *
+ * @return  {Object}		Merged array.
+ */
+LoaderUtil.deepMerge = function(arr1, arr2)
+{
+
+	Object.keys(arr2).forEach((key) => {
+		if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
+		{
+			this.deepMerge(arr1[key], arr2[key]);
+		}
+		else
+		{
+			arr1[key] = arr2[key];
+		}
+	});
+
+	return arr1;
 
 }
 
@@ -459,33 +487,5 @@ LoaderUtil.__mergeSettings = function(spec, settings)
 	});
 
 	return spec;
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Deep merge.
- *
- * @param	{Object}		arr1					Array1.
- * @param	{Object}		arr2					Array2.
- *
- * @return  {Object}		Merged array.
- */
-LoaderUtil.__deepMerge = function(arr1, arr2)
-{
-
-	Object.keys(arr2).forEach((key) => {
-		if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
-		{
-			this.__deepMerge(arr1[key], arr2[key]);
-		}
-		else
-		{
-			arr1[key] = arr2[key];
-		}
-	});
-
-	return arr1;
 
 }
