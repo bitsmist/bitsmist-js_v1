@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import ClassUtil from '../util/class-util';
 
 // =============================================================================
 //	Loader mixin class
@@ -19,43 +20,6 @@ export default class LoadeMixin
 
 	// -------------------------------------------------------------------------
 	//  Methods
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Instantiate the component.
-	 *
-	 * @param	{String}		className			Class name.
-	 * @param	{Object}		options				Options for the component.
-	 *
-	 * @return  {Object}		Initaiated object.
-	 */
-	static createObject(className, ...args)
-	{
-
-		let ret;
-
-		try
-		{
-			let c = Function("return (" + className + ")")();
-			ret = new c(...args);
-		}
-		catch(e)
-		{
-			let c = window;
-			className.split(".").forEach((value) => {
-				c = c[value];
-				if (!c)
-				{
-					throw new ReferenceError(`Class not found. className=${className}`);
-				}
-			});
-			ret = new c(...args);
-		}
-
-		return ret;
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -78,7 +42,7 @@ export default class LoadeMixin
 			this.__autoloadComponent(className, options, settings).then(() => {
 				let promise;
 
-				component = this.createObject(className, options, settings);
+				component = ClassUtil.createObject(className, options, settings);
 
 				Promise.all([promise]).then(() => {
 					resolve(component);
@@ -337,7 +301,7 @@ export default class LoadeMixin
 		Object.keys(arr2).forEach((key) => {
 			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
 			{
-				this.deepMerge(arr1[key], arr2[key]);
+				this.__deepMerge(arr1[key], arr2[key]);
 			}
 			else
 			{

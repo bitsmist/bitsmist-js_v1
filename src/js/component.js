@@ -458,7 +458,7 @@ Component.prototype.addPlugin = function(pluginName, options)
 		let className = ( "className" in options ? options["className"] : pluginName );
 		let plugin = null;
 
-		plugin = this.createObject(className, this, options);
+		plugin = ClassUtil.createObject(className, this, options);
 		this._plugins[pluginName] = plugin;
 
 		Object.keys(plugin["_events"]).forEach((eventName) => {

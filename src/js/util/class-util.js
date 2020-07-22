@@ -69,4 +69,41 @@ export default class ClassUtil
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Instantiate a component.
+	 *
+	 * @param	{String}		className			Class name.
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Object}		Initaiated object.
+	 */
+	static createObject(className, ...args)
+	{
+
+		let ret;
+
+		try
+		{
+			let c = Function("return (" + className + ")")();
+			ret = new c(...args);
+		}
+		catch(e)
+		{
+			let c = window;
+			className.split(".").forEach((value) => {
+				c = c[value];
+				if (!c)
+				{
+					throw new ReferenceError(`Class not found. className=${className}`);
+				}
+			});
+			ret = new c(...args);
+		}
+
+		return ret;
+
+	}
+
 }
