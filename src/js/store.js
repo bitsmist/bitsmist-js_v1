@@ -8,8 +8,6 @@
  */
 // =============================================================================
 
-import LoaderUtil from './util/loader-util';
-
 // =============================================================================
 //	Store class
 // =============================================================================
@@ -119,9 +117,37 @@ export default class Store
 
 			for (let i = 0; i < items.length; i++)
 			{
-				LoaderUtil.deepMerge(this._items, items[i]);
+				this.deepMerge(this._items, items[i]);
 			}
 		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	* Deep merge.
+	*
+	* @param	{Object}		arr1					Array1.
+	* @param	{Object}		arr2					Array2.
+	*
+	* @return  {Object}		Merged array.
+	*/
+	deepMerge(arr1, arr2)
+	{
+
+		Object.keys(arr2).forEach((key) => {
+			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
+			{
+				this.deepMerge(arr1[key], arr2[key]);
+			}
+			else
+			{
+				arr1[key] = arr2[key];
+			}
+		});
+
+		return arr1;
 
 	}
 
