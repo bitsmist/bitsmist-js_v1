@@ -17,12 +17,10 @@ window.BITSMIST.v1.EventMixin = EventMixin;
 window.BITSMIST.v1.LoaderMixin = LoaderMixin;
 window.BITSMIST.v1.WaitforMixin = WaitforMixin;
 
-// Router
-import Router from './router';
+// Plugin
+import Router from './plugin/router';
+import Store from './plugin/store';
 window.BITSMIST.v1.Router = Router;
-
-// Store
-import Store from './store';
 window.BITSMIST.v1.Store = Store;
 
 // Util

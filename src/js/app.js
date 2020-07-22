@@ -12,8 +12,8 @@ import AjaxUtil from './util/ajax-util';
 import ClassUtil from './util/class-util';
 import Component from './component';
 import Globals from './globals';
-import Router from './router';
-import Store from './store';
+import Router from './plugin/router';
+import Store from './plugin/store';
 
 // =============================================================================
 //	App class
