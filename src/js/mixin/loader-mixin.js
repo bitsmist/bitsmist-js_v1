@@ -116,11 +116,11 @@ export default class LoadeMixin
 		let basePath = (path ? path + "/" : "");
 		let url = basePath + templateName + ".html";
 
-		console.debug(`Component.__loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
+		console.debug(`LoaderMixin.loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
 
 		return new Promise((resolve, reject) => {
 			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`Component.__loadTemplate(): Loaded template. templateName=${templateName}`);
+				console.debug(`LoaderMixin.loadTemplate(): Loaded template. templateName=${templateName}`);
 				resolve(xhr.responseText);
 			});
 		});
@@ -170,12 +170,12 @@ export default class LoadeMixin
 	static __autoloadComponent(className, options, settings)
 	{
 
-		console.debug(`Component.__autoLoadComponent(): Auto loading component. className=${className}`);
+		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}`);
 
 		return new Promise((resolve, reject) => {
 			if (this.__isLoadedClass(className))
 			{
-				console.debug(`Component.__autoLoadComponent(): Component Already exists. className=${className}`, );
+				console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`, );
 				resolve();
 			}
 			else
@@ -208,7 +208,7 @@ export default class LoadeMixin
 	 */
 	static __loadComponentScript(componentName, path, settings) {
 
-		console.debug(`Component.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
+		console.debug(`LoaderMixin.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
 
 		return new Promise((resolve, reject) => {
 			let url1 = path + "/" + componentName + ".auto.js";
@@ -222,7 +222,7 @@ export default class LoadeMixin
 			}).then(() => {
 				return AjaxUtil.loadScript(url2);
 			}).then(() => {
-				console.debug(`Component.__loadComponentScript(): Loaded script. componentName=${componentName}`);
+				console.debug(`LoaderMixin.__loadComponentScript(): Loaded script. componentName=${componentName}`);
 				resolve();
 			});
 		});
