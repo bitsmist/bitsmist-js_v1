@@ -32,32 +32,30 @@ export default function App(settings)
 {
 
 	// super()
-	let options = {
-		"name": "App",
-		"templateName": "",
-		"plugins": ( settings["plugins"] ? settings["plugins"] : null ),
-	}
+	let options = Object.assign({"name":"App", "templateName":""}, settings);
 	let _this = Reflect.construct(Component, [options], this.constructor);
 
 	// Init variables
 	Globals["app"] = _this;
-	_this._settings = new Store(_this, {"items":settings});
-	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":settings["preferences"]});
-	_this._store = new Store(_this);
+
+	// Init stores
+	_this.settings.init(_this, {"items":settings});
+	_this.preferences.init(_this, {"items":settings["preferences"]});
+	_this.store.init(_this);
 
 	// Init router
-	_this._router = new Router(_this, _this._settings.items["router"]);
+	_this.router.init(_this, _this.settings.items["router"]);
 
 	// Init error listeners
 	_this.__initErrorListeners();
 
 	// Trigger events
 	Promise.resolve().then(() => {
-		return _this._preferences.load();
+		return _this.preferences.load();
 	}).then((preferences) => {
-		return _this._preferences.merge(preferences);
+		return _this.preferences.merge(preferences);
 	}).then(() => {
-		return _this.trigger("initApp", _this, {"settings":_this._settings.items, "preferences":_this._preferences.items});
+		return _this.trigger("initApp", _this, {"settings":_this.settings.items, "preferences":_this.preferences.items});
 	});
 
 	return _this;
@@ -66,72 +64,6 @@ export default function App(settings)
 
 ClassUtil.inherit(App, Component);
 customElements.define("bm-app", App);
-
-// -----------------------------------------------------------------------------
-//  Setter/Getter
-// -----------------------------------------------------------------------------
-
-/**
- * Router.
- *
- * @type	{String}
- */
-Object.defineProperty(App.prototype, 'router', {
-	get()
-	{
-		return this._router;
-	},
-	configurable: true
-})
-
-// -----------------------------------------------------------------------------
-
-/**
- * Settings.
- *
- * @type	{String}
- */
-Object.defineProperty(App.prototype, 'settings', {
-	get()
-	{
-		return this._settings;
-	},
-	configurable: true
-})
-
-// -----------------------------------------------------------------------------
-
-/**
- * Preferences.
- *
- * @type	{String}
- */
-Object.defineProperty(App.prototype, 'preferences', {
-	get()
-	{
-		return this._preferences;
-	},
-	configurable: true
-})
-
-// -----------------------------------------------------------------------------
-
-/**
- * Store.
- *
- * @type	{String}
- */
-Object.defineProperty(App.prototype, 'store', {
-	get()
-	{
-		return this._store;
-	},
-	set(value)
-	{
-		this._store = value;
-	},
-	configurable: true
-})
 
 // -----------------------------------------------------------------------------
 //  Methods
@@ -146,17 +78,17 @@ App.prototype.run = function()
 	let promise;
 
 	// Load spec
-	let specName = ( this._router ? this._router.routeInfo["specName"] : "" );
+	let specName = this.router.routeInfo["specName"];
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
-			this.loadSpec(specName, this._settings.items).then((spec) => {
+			this.loadSpec(specName, this.settings.items).then((spec) => {
 				this._spec = spec;
 
 				// Add new routes
 				for(let i = 0; i < spec["routes"].length; i++)
 				{
-					this._router.addRoute(spec["routes"][i], true);
+					this.router.addRoute(spec["routes"][i], true);
 				}
 
 				// Components
@@ -199,8 +131,8 @@ App.prototype.setup = function(options)
 		Component.prototype.setup.call(this, options).then(() => {
 			if (options["newPreferences"])
 			{
-				this._preferences.merge(options["newPreferences"]);
-				this._preferences.save();
+				this.preferences.merge(options["newPreferences"]);
+				this.preferences.save();
 			}
 		}).then(() => {
 			resolve();
@@ -209,6 +141,24 @@ App.prototype.setup = function(options)
 
 }
 
+// -----------------------------------------------------------------------------
+
+/**
+ * Add a plugin to app.
+ *
+ * @param	{String}		componentName		Component name.
+ * @param	{Object}		options				Options for the component.
+ *
+ * @return  {Promise}		Promise.
+ */
+App.prototype.addPlugin = function(pluginName, options)
+{
+
+	Component.prototype.addPlugin.call(this, pluginName, options).then(() => {
+		Globals["services"][pluginName] = this._plugins[pluginName];
+	});
+
+}
 
 // -----------------------------------------------------------------------------
 //  Privates
