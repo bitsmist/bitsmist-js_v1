@@ -62,7 +62,45 @@ export default class Store
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+	* Component.
+	*
+	* @type	{String}
+	*/
+	get component()
+	{
+
+		return this._component;
+
+	}
+
+	set component(value)
+	{
+
+		this._component = value;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Method
+	// -------------------------------------------------------------------------
+
+	/**
+     * Init class.
+     *
+	 * @param	{Object}		component			Component to attach.
+	 * @param	{Object}		options				Plugin options.
+     */
+	init(component, options)
+	{
+
+		this._options = Object.assign({}, this._options, options);
+		this._component = component
+		this._items = (this._options["items"] ? this._options["items"] : {});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
