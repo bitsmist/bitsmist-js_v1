@@ -41,7 +41,7 @@ export default class ClassUtil
 			}
 			return _this;
 		};
-		LoaderUtil.inherit(component, superClass);
+		ClassUtil.inherit(component, superClass);
 		customElements.define(componentName, component);
 
 		component.prototype._getOptions = function() {
