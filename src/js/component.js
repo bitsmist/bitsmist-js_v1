@@ -63,7 +63,7 @@ export default function Component(options)
 
 	// Init services
 	Object.keys(_this._options["services"]).forEach((serviceName) => {
-		let service = _this.app._plugins[serviceName];
+		let service = this.services[serviceName];
 		if (service && typeof service.register == "function")
 		{
 			service.register(_this, _this._options["services"][serviceName]);
@@ -145,6 +145,80 @@ Object.defineProperty(Component.prototype, 'app', {
 	{
 		return Globals["app"];
 	}
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Services (App's plugins).
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'services', {
+	get()
+	{
+		return Globals["services"];
+	}
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Router.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'router', {
+	get()
+	{
+		return Globals["services"]["router"];
+	},
+	configurable: true
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Settings.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'settings', {
+	get()
+	{
+		return Globals["services"]["settings"];
+	},
+	configurable: true
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Preferences.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'preferences', {
+	get()
+	{
+		return Globals["services"]["preferences"];
+	},
+	configurable: true
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Store.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'store', {
+	get()
+	{
+		return Globals["services"]["store"];
+	},
+	configurable: true
 })
 
 // -----------------------------------------------------------------------------
@@ -341,8 +415,8 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.app.preferences.items);
-		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.app.preferences.items);
+		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.preferences.items);
+		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.preferences.items);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
@@ -419,7 +493,7 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
-					this.createComponent(componentName, options, this.app.settings.items["system"]).then((component) => {
+					this.createComponent(componentName, options, this.settings.items["system"]).then((component) => {
 						component._parent = this;
 						this._components[componentName] = component;
 						resolve();
@@ -443,7 +517,7 @@ Component.prototype.addComponent = function(componentName, options)
 // -----------------------------------------------------------------------------
 
 /**
- * Add a plugin to the pad.
+ * Add a plugin to the component.
  *
  * @param	{String}		componentName		Component name.
  * @param	{Object}		options				Options for the component.
@@ -467,7 +541,7 @@ Component.prototype.addPlugin = function(pluginName, options)
 
 		if (options["expose"])
 		{
-			Object.defineProperty(Component.prototype, pluginName, {
+			Object.defineProperty(this.__proto__, pluginName, {
 				get()
 				{
 					return plugin;
@@ -729,7 +803,7 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
-						let base = ( this.app.settings.items["system"] && this.app.settings.items["system"]["templatePath"] ? this.app.settings.items["system"]["templatePath"] : "/components/");
+						let base = ( this.settings.items["system"] && this.settings.items["system"]["templatePath"] ? this.settings.items["system"]["templatePath"] : "/components/");
 						let path = ("path" in this._options ? this._options["path"] : "");
 
 						this.loadTemplate(templateName, base + path).then((template) => {
