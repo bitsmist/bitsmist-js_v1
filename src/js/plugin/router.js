@@ -9,12 +9,13 @@
 // =============================================================================
 
 import { pathToRegexp } from 'path-to-regexp';
+import Plugin from './plugin';
 
 // =============================================================================
 //	Default router class
 // =============================================================================
 
-export default class Router
+export default class Router extends Plugin
 {
 
 	// -------------------------------------------------------------------------
@@ -31,26 +32,9 @@ export default class Router
 	constructor(component, options)
 	{
 
-		// Init variables
-		this._component = component;
-		this._events = {};
-		this._options = Object.assign({}, options);
-		this._routes;
+		super(component, options);
 
-		/*
-		this.__initRoutes(this._options["routes"]);
-		this.__initPopState();
-		*/
-
-	}
-
-	init(component, options)
-	{
-
-		this._component = component;
-		this._options = Object.assign({}, options);
-		this.__initRoutes(this._options["routes"]);
-		this.__initPopState();
+		 this.__initPopState();
 
 	}
 
@@ -71,28 +55,26 @@ export default class Router
 	}
 
 	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
 
 	/**
-	 * Component.
-	 *
-	 * @type	{String}
-	 */
-	get component()
+     * Init class.
+     *
+	 * @param	{Object}		component			Component to attach.
+	 * @param	{Object}		options				Plugin options.
+     */
+	init(component, options)
 	{
 
-		return this._component;
+		super.init(component, options);
+
+		this._options["routes"] = ( this._options["routes"] ? this._options["routes"] : [] );
+
+		this.__initRoutes(this._options["routes"]);
 
 	}
 
-	set component(value)
-	{
-
-		this._component = value;
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
 	// -------------------------------------------------------------------------
 
 	/**

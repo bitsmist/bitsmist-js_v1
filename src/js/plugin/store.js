@@ -8,45 +8,24 @@
  */
 // =============================================================================
 
+import Plugin from './plugin';
+
 // =============================================================================
 //	Store class
 // =============================================================================
 
-//export default class Store extends BITSMIST.v1.Plugin
-export default class Store
+export default class Store extends Plugin
 {
-
-	// -------------------------------------------------------------------------
-	//  Constructor
-	// -------------------------------------------------------------------------
-
-	/**
-     * Constructor.
-     *
-	 * @param	{Object}		component			Component which the plugin
-	 * 												is attached to.
-	 * @param	{Object}		options				Options for the component.
-     */
-	constructor(component, options)
-	{
-
-//		super(component, options);
-
-		this._component = component;
-		this._options = Object.assign({}, options);
-		this._items= (this._options["items"] ? this._options["items"] : {});
-
-	}
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
 	// -------------------------------------------------------------------------
 
 	/**
-	* Items.
-	*
-	* @type	{String}
-	*/
+	 * Items.
+	 *
+	 * @type	{String}
+	 */
 	get items()
 	{
 
@@ -58,27 +37,6 @@ export default class Store
 	{
 
 		this._items= value;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	* Component.
-	*
-	* @type	{String}
-	*/
-	get component()
-	{
-
-		return this._component;
-
-	}
-
-	set component(value)
-	{
-
-		this._component = value;
 
 	}
 
@@ -95,8 +53,8 @@ export default class Store
 	init(component, options)
 	{
 
-		this._options = Object.assign({}, this._options, options);
-		this._component = component
+		super.init(component, options);
+
 		this._items = (this._options["items"] ? this._options["items"] : {});
 
 	}
@@ -104,12 +62,12 @@ export default class Store
 	// -------------------------------------------------------------------------
 
 	/**
-	* Load items.
-	*
-	* @param	{Object}		options				Options.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Load items.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	load(options)
 	{
 
@@ -122,12 +80,12 @@ export default class Store
 	// -------------------------------------------------------------------------
 
 	/**
-	* Save items.
-	*
-	* @param	{Object}		options				Options.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Save items.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	save(options)
 	{
 
@@ -140,12 +98,12 @@ export default class Store
 	// -------------------------------------------------------------------------
 
 	/**
-	* Merge items.
-	*
-	* @param	{Object}		newItems			Items to merge.
-	*
-	* @return	{Promise}		Promise.
-	*/
+	 * Merge items.
+	 *
+	 * @param	{Object}		newItems			Items to merge.
+	 *
+	 * @return	{Promise}		Promise.
+	 */
 	merge(newItems)
 	{
 
@@ -164,13 +122,13 @@ export default class Store
 	// -------------------------------------------------------------------------
 
 	/**
-	* Deep merge.
-	*
-	* @param	{Object}		arr1					Array1.
-	* @param	{Object}		arr2					Array2.
-	*
-	* @return  {Object}		Merged array.
-	*/
+	 * Deep merge.
+	 *
+	 * @param	{Object}		arr1					Array1.
+	 * @param	{Object}		arr2					Array2.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
 	deepMerge(arr1, arr2)
 	{
 
