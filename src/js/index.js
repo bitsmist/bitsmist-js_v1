@@ -18,8 +18,10 @@ window.BITSMIST.v1.LoaderMixin = LoaderMixin;
 window.BITSMIST.v1.WaitforMixin = WaitforMixin;
 
 // Plugin
+import Plugin from './plugin/plugin';
 import Router from './plugin/router';
 import Store from './plugin/store';
+window.BITSMIST.v1.Plugin = Plugin;
 window.BITSMIST.v1.Router = Router;
 window.BITSMIST.v1.Store = Store;
 
