@@ -10,6 +10,7 @@ let Globals = (function(){
 	globals["services"]["settings"] = new Store();
 	globals["services"]["preferences"] = new Store(null, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences"});
 	globals["services"]["store"] = new Store();
+	globals["components"] = [];
 
 	return globals;
 }());

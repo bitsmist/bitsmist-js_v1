@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import Globals from "../globals";
+
 // =============================================================================
 //	Waitfor mixin class
 // =============================================================================
@@ -61,7 +63,7 @@ export default class WaitforMixin
 	static registerComponent(component)
 	{
 
-		this.__loadedList.push(component);
+		Globals["components"].push(component);
 
 		for (let i = 0; i < this.__waitingList.length; i++)
 		{
@@ -93,9 +95,9 @@ export default class WaitforMixin
 		{
 			let match = false;
 
-			for (let j = 0; j < this.__loadedList.length; j++)
+			for (let j = 0; j < Globals["components"].length; j++)
 			{
-				if (this.__loadedList[j].name == waitlist[i]["componentName"])
+				if (Globals["components"][j].name == waitlist[i]["componentName"])
 				{
 					match = true;
 					break;
@@ -119,4 +121,3 @@ export default class WaitforMixin
 
 // static properties
 WaitforMixin.__waitingList = [];
-WaitforMixin.__loadedList = [];
