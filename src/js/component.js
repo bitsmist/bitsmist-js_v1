@@ -294,7 +294,6 @@ Component.prototype.open = function(options)
 		}).then(() => {
 			return this.trigger("open", sender, {"options":options});
 		}).then(() => {
-			this.__initOnOpen();
 			console.debug(`Component.open(): Opened component. name=${this.name}`);
 			this._isOpen = true;
 			resolve();
@@ -358,7 +357,6 @@ Component.prototype.close = function(options)
 			{
 				this._modalPromise.resolve(this._modalResult);
 			}
-			this.__initOnClose();
 			this._isOpen = false;
 			resolve();
 		});
@@ -392,7 +390,6 @@ Component.prototype.refresh = function(options)
 		}).then(() => {
 			return this.trigger("refresh", sender);
 		}).then(() => {
-			this.__autoFocus();
 			resolve();
 		});
 	});
@@ -701,77 +698,6 @@ Component.prototype.__initOnAppendTemplate = function()
 			resolve();
 		});
 	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Initialization of component on open().
- */
-Component.prototype.__initOnOpen = function()
-{
-
-	// Auto focus
-	if (this.getOption("autoFocus"))
-	{
-		let element = this._element.querySelector(this.getOption("autoFocus"));
-		if (element)
-		{
-			element.focus();
-		}
-
-	}
-
-	// Css
-	let css = (this._options["events"]["open"] && this._options["events"]["open"]["css"] ? this._options["events"]["open"]["css"] : undefined );
-	if (css)
-	{
-		Object.assign(this.style, css);
-	}
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Initialization of clone on close().
- */
-Component.prototype.__initOnClose = function()
-{
-
-	// Css
-	let css = (this._options["events"] && this._options["events"]["close"] && this._options["events"]["close"]["css"] ? this._options["events"]["close"]["css"] : undefined );
-	if (css)
-	{
-		Object.assign(this.style, css);
-	}
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
-* Focus to a element.
-*/
-Component.prototype.__autoFocus = function()
-{
-
-	if (this.getOption("autoFocus"))
-	{
-		let element = document.querySelector(this.getOption("autoFocus"));
-		if (element)
-		{
-			let scrollTop = ( document.scrollingElement ? document.scrollingElement.scrollTop : undefined );
-
-			element.focus({preventScroll:true});
-
-			if (scrollTop)
-			{
-				window.scrollTo(0, scrollTop); // workaround for safari
-			}
-		}
-	}
 
 }
 
