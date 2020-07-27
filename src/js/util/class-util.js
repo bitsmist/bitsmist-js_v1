@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+//import Plugin from './plugin';
+
 // =============================================================================
 //	Loader util class
 // =============================================================================
@@ -44,7 +46,7 @@ export default class ClassUtil
 		ClassUtil.inherit(component, superClass);
 		customElements.define(componentName, component);
 
-		component.prototype._getOptions = function() {
+		component.prototype._getSettings = function() {
 			return settings;
 		}
 

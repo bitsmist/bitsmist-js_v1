@@ -34,7 +34,7 @@ export default class Router extends Plugin
 
 		super(component, options);
 
-		 this.__initPopState();
+		this.__initPopState();
 
 	}
 
@@ -69,7 +69,7 @@ export default class Router extends Plugin
 
 		super.init(component, options);
 
-		this._options["routes"] = ( this._options["routes"] ? this._options["routes"] : [] );
+		this._options["routes"] = this.getOption("routes", []);
 
 		this.__initRoutes(this._options["routes"]);
 

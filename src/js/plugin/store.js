@@ -55,7 +55,7 @@ export default class Store extends Plugin
 
 		super.init(component, options);
 
-		this._items = (this._options["items"] ? this._options["items"] : {});
+		this._items = this.getOption("items", {});
 
 	}
 
@@ -144,6 +144,54 @@ export default class Store extends Plugin
 		});
 
 		return arr1;
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	* Get an value from store. Return default value when specified key is not available.
+	*
+	* @param	{String}		key					Key to get.
+	* @param	{Object}		defaultValue		Value returned when key is not found.
+	*
+	* @return  {*}				Value.
+	*/
+	get(key, defaultValue)
+	{
+
+		return this._safeGet(this._items, key, defaultValue);
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	* Set an value to store.
+	*
+	* @param	{String}		key					Key to store.
+	* @param	{Object}		value				Value to store.
+	*/
+	set(key, value)
+	{
+
+		this._safeSet(this._items, key, value);
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	* Check if the store has specified key.
+	*
+	* @param	{String}		key					Key to check.
+	*
+	* @return	{Boolean}		True:exists, False:not exists.
+	*/
+	has(key)
+	{
+
+		return this._safeHas(this._items, key);
 
 	}
 

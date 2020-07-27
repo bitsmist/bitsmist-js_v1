@@ -12,6 +12,7 @@ import ClassUtil from './util/class-util';
 import EventMixin from './mixin/event-mixin';
 import Globals from './globals';
 import LoaderMixin from './mixin/loader-mixin';
+import Store from './plugin/store';
 import WaitforMixin from './mixin/waitfor-mixin';
 
 // =============================================================================
@@ -27,7 +28,7 @@ import WaitforMixin from './mixin/waitfor-mixin';
  *
  * @param	{Object}		options				Options for the component.
  */
-export default function Component(options)
+export default function Component(settings)
 {
 
 	// super()
@@ -42,37 +43,45 @@ export default function Component(options)
 	_this._modalOptions;
 	_this._modalPromise;
 	_this._modalResult;
-	_this._options = Object.assign({}, options, this._getOptions());
 	_this._plugins = {};
 	_this._services = {};
 	_this._templates = {};
 	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 
+	// Init stores
+	settings = Object.assign({}, settings, _this._getSettings());
+	_this._settings = new Store(_this, {"items":settings});
+	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":settings["preferences"]});
+	_this._store = new Store(_this);
+
 	// Init options
-	_this._options["templateName"] = ( "templateName" in _this._options ? _this._options["templateName"] : _this.name );
-	_this._options["components"] = ( _this._options["components"] ? _this._options["components"] : {} );
-	_this._options["plugins"] = ( _this._options["plugins"] ? _this._options["plugins"] : {} );
-	_this._options["events"] = ( _this._options["events"] ? _this._options["events"] : {} );
-	_this._options["services"] = ( _this._options["services"] ? _this._options["services"] : {} );
-	_this._options["elements"] = ( _this._options["elements"] ? _this._options["elements"] : {} );
+	_this._settings.set("templateName", _this.settings.get("templateName", _this.name));
+	_this._settings.set("components", _this.settings.get("components", {}));
+	_this._settings.set("plugins", _this.settings.get("plugins", {}));
+	_this._settings.set("events", _this.settings.get("events", {}));
+	_this._settings.set("services", _this.settings.get("services", {}));
+	_this._settings.set("elements", _this.settings.get("elements", {}));
 
 	// Init plugins
-	Object.keys(_this._options["plugins"]).forEach((pluginName) => {
-		_this.addPlugin(pluginName, _this._options["plugins"][pluginName]);
+	let plugins = _this.settings.items["plugins"];
+	Object.keys(plugins).forEach((pluginName) => {
+		_this.addPlugin(pluginName, plugins[pluginName]);
 	});
 
 	// Init services
-	Object.keys(_this._options["services"]).forEach((serviceName) => {
+	let services = _this.settings.items["services"];
+	Object.keys(services).forEach((serviceName) => {
 		let service = this.services[serviceName];
 		if (service && typeof service.register == "function")
 		{
-			service.register(_this, _this._options["services"][serviceName]);
+			service.register(_this, services[serviceName]);
 		}
 	});
 
 	// Init event handlers
-	Object.keys(_this._options["events"]).forEach((eventName) => {
-		_this.addEventHandler(_this, eventName, _this._options["events"][eventName]);
+	let events = _this.settings.items["events"];
+	Object.keys(events).forEach((eventName) => {
+		_this.addEventHandler(_this, eventName, events[eventName]);
 	});
 
 	_this.trigger("initComponent", _this);
@@ -101,7 +110,7 @@ customElements.define("bm-component", Component);
 Object.defineProperty(Component.prototype, 'name', {
 	get()
 	{
-		return this.getOption("name");
+		return this._settings.get("name");
 	}
 })
 
@@ -143,7 +152,7 @@ Object.defineProperty(Component.prototype, 'uniqueId', {
 Object.defineProperty(Component.prototype, 'app', {
 	get()
 	{
-		return Globals["app"];
+		return ( Globals["app"] ? Globals["app"] : this );
 	}
 })
 
@@ -157,23 +166,8 @@ Object.defineProperty(Component.prototype, 'app', {
 Object.defineProperty(Component.prototype, 'services', {
 	get()
 	{
-		return Globals["services"];
+		return this.app._plugins;
 	}
-})
-
-// -----------------------------------------------------------------------------
-
-/**
- * Router.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'router', {
-	get()
-	{
-		return Globals["services"]["router"];
-	},
-	configurable: true
 })
 
 // -----------------------------------------------------------------------------
@@ -186,7 +180,7 @@ Object.defineProperty(Component.prototype, 'router', {
 Object.defineProperty(Component.prototype, 'settings', {
 	get()
 	{
-		return Globals["services"]["settings"];
+		return this._settings;
 	},
 	configurable: true
 })
@@ -201,7 +195,7 @@ Object.defineProperty(Component.prototype, 'settings', {
 Object.defineProperty(Component.prototype, 'preferences', {
 	get()
 	{
-		return Globals["services"]["preferences"];
+		return this._preferences;
 	},
 	configurable: true
 })
@@ -216,7 +210,7 @@ Object.defineProperty(Component.prototype, 'preferences', {
 Object.defineProperty(Component.prototype, 'store', {
 	get()
 	{
-		return Globals["services"]["store"];
+		return this._store;
 	},
 	configurable: true
 })
@@ -226,39 +220,51 @@ Object.defineProperty(Component.prototype, 'store', {
 // -----------------------------------------------------------------------------
 
 /**
- * Set option value.
- *
- * @param	{String}		key					Key to get.
- * @param	{Object}		value				Value  to set.
- */
-Component.prototype.setOption = function(key, value)
-{
-
-	this._options[key] = value;
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Get option value. Return default value when specified key is not available.
+ * Get a setting value. Return default value when specified key is not available.
  *
  * @param	{String}		key					Key to get.
  * @param	{Object}		defaultValue		Value returned when key is not found.
  *
  * @return  {*}				Value.
  */
-Component.prototype.getOption = function(key, defaultValue)
+Component.prototype.getSetting = function(key, defaultValue)
 {
 
-	let result = defaultValue;
+	return this._getStoreItem(this.app.settings, this.settings, key, defaultValue);
 
-	if (this._options && (key in this._options))
-	{
-		result = this._options[key];
-	}
+}
 
-	return result;
+// -----------------------------------------------------------------------------
+
+/**
+ * Get a preference value. Return default value when specified key is not available.
+ *
+ * @param	{String}		key					Key to get.
+ * @param	{Object}		defaultValue		Value returned when key is not found.
+ *
+ * @return  {*}				Value.
+ */
+Component.prototype.getPreference = function(key, defaultValue)
+{
+
+	return this._getStoreItem(this.app.preferences, this._preferences, key, defaultValue);
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Get a store value. Return default value when specified key is not available.
+ *
+ * @param	{String}		key					Key to get.
+ * @param	{Object}		defaultValue		Value returned when key is not found.
+ *
+ * @return  {*}				Value.
+ */
+Component.prototype.getStore = function(key, defaultValue)
+{
+
+	return this._getStoreItem(this.app.store, this._store, key, defaultValue);
 
 }
 
@@ -281,11 +287,11 @@ Component.prototype.open = function(options)
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
-			return this.__autoLoadTemplate(this.getOption("templateName"));
+			return this.__autoLoadTemplate(this.settings.get("templateName"));
 		}).then(() => {
 			return this.setup();
 		}).then(() => {
-			if (this.getOption("autoRefresh"))
+			if (this.settings.get("autoRefresh"))
 			{
 				return this.refresh();
 			}
@@ -318,7 +324,7 @@ Component.prototype.openModal = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		this._options = Object.assign(this._options, options);
+		this.settings.items = Object.assign(this.settings.items, options); //@@@fix
 		this._isModal = true;
 		this._modalResult = {"result":false};
 		this._modalOptions = options;
@@ -383,7 +389,7 @@ Component.prototype.refresh = function(options)
 		Promise.resolve().then(() => {
 			return this.trigger("beforeRefresh", sender);
 		}).then(() => {
-			if (this.getOption("autoFill"))
+			if (this.settings.get("autoFill"))
 			{
 				return this.fill(options);
 			}
@@ -412,8 +418,9 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : this.preferences.items);
-		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : this.preferences.items);
+		let defaultPreferences = Object.assign({}, this.app.preferences.items, this.preferences.items);
+		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : defaultPreferences);
+		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
@@ -460,7 +467,7 @@ Component.prototype.switchTemplate = function(templateName)
 
 	return new Promise((resolve, reject) => {
 		this.__autoLoadTemplate(templateName).then(() => {
-			this._options["templateName"] = templateName;
+			this.settings.set("templateName", templateName);
 			return this.trigger("templateChange", this);
 		}).then(() => {
 			resolve();
@@ -490,7 +497,7 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
-					this.createComponent(componentName, options, this.settings.items["system"]).then((component) => {
+					this.createComponent(componentName, options, this.getSetting("system")).then((component) => {
 						component._parent = this;
 						this._components[componentName] = component;
 						resolve();
@@ -500,7 +507,7 @@ Component.prototype.addComponent = function(componentName, options)
 		}).then(() => {
 			// Open
 			let component = this._components[componentName];
-			if (component.getOption("autoOpen"))
+			if (component.settings.get("autoOpen"))
 			{
 				return component.open();
 			}
@@ -576,10 +583,39 @@ Component.prototype.connectedCallback = function()
  *
  * @return  {Object}		Options.
  */
-Component.prototype._getOptions = function()
+Component.prototype._getSettings = function()
 {
 
 	return {};
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Get an value from stores. Return default value when specified key is not available.
+ * If both store1 and store2 has the key, store2 precedes store1.
+ *
+ * @param	{String}		key					Key to get.
+ * @param	{Object}		defaultValue		Value returned when key is not found.
+ *
+ * @return  {*}				Value.
+ */
+Component.prototype._getStoreItem = function(store1, store2, key, defaultValue)
+{
+
+	let result = defaultValue;
+
+	if (store2 && store2.has(key))
+	{
+		result = store2.get(key);
+	}
+	else if (store1 && store1.has(key))
+	{
+		result = store1.get(key);
+	}
+
+	return result;
 
 }
 
@@ -617,7 +653,7 @@ Component.prototype._isLoadedTemplate = function(templateName)
 Component.prototype._dupElement = function(templateName)
 {
 
-	templateName = ( templateName ? templateName : this.getOption("templateName") );
+	templateName = ( templateName ? templateName : this.settings.get("templateName") );
 
 	let ele = document.createElement("div");
 	ele.innerHTML = this._templates[templateName].html;
@@ -643,9 +679,9 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 	{
 		elements = [this];
 	}
-	else if (this._options["elements"][elementName] && "rootNode" in this._options["elements"][elementName])
+	else if (this.settings.has("elements." + elementName + ".rootNode"))
 	{
-		elements = this._element.querySelectorAll(this._options["elements"][elementName]["rootNode"]);
+		elements = this._element.querySelectorAll(this.settings.get("elements." + elementName + ".rootNode"));
 	}
 	else
 	{
@@ -653,7 +689,7 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 	}
 
 	// Set event handlers
-	let events = (this._options["elements"][elementName]["events"] ? this._options["elements"][elementName]["events"] : {});
+	let events = this.settings.get("elements." + elementName + ".events", {});
 	for (let i = 0; i < elements.length; i++)
 	{
 		Object.keys(events).forEach((eventName) => {
@@ -680,18 +716,16 @@ Component.prototype.__initOnAppendTemplate = function()
 		let chain = Promise.resolve();
 
 		//  Add components
-		Object.keys(this._options["components"]).forEach((componentName) => {
-			if ("className" in this._options["components"][componentName])
-			{
-				chain = chain.then(() => {
-					return this.addComponent(componentName, this._options["components"][componentName]);
-				});
-			}
+		let components = this._settings.items["components"];
+		Object.keys(components).forEach((componentName) => {
+			chain = chain.then(() => {
+				return this.addComponent(componentName, components[componentName]);
+			});
 		});
 
 		// Init HTML event handlers
 		chain.then(() => {
-			Object.keys(this._options["elements"]).forEach((elementName) => {
+			Object.keys(this.settings.items["elements"]).forEach((elementName) => {
 				this._initHtmlEvents(elementName);
 			});
 
@@ -729,8 +763,8 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
-						let base = ( this.settings.items["system"] && this.settings.items["system"]["templatePath"] ? this.settings.items["system"]["templatePath"] : "/components/");
-						let path = ("path" in this._options ? this._options["path"] : "");
+						let base = this.getSetting("system.templatePath", "/components/");
+						let path = this.settings.get("path", "");
 
 						this.loadTemplate(templateName, base + path).then((template) => {
 							this._templates[templateName] = {};
@@ -742,11 +776,11 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 			}).then(() => {
 				return this.trigger("load", this);
 			}).then(() => {
-				return this.__appendTemplate(this.getOption("rootNode"), templateName);
+				return this.__appendTemplate(this.settings.get("rootNode"), templateName);
 			}).then(() => {
 				return this.__initOnAppendTemplate();
 			}).then(() => {
-				return this.waitFor(this.getOption("waitFor"));
+				return this.waitFor(this.settings.get("waitFor"));
 			}).then(() => {
 				return this.trigger("append", this);
 			}).then(() => {
@@ -784,9 +818,9 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 	}
 	else
 	{
-		if (this._templates[this.getOption("templateName")])
+		if (this._templates[this.settings.get("templateName")])
 		{
-			this.innerHTML = this._templates[this.getOption("templateName")].html
+			this.innerHTML = this._templates[this.settings.get("templateName")].html
 		}
 	}
 

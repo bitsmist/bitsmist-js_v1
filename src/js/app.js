@@ -32,19 +32,24 @@ export default function App(settings)
 {
 
 	// super()
-	let options = Object.assign({"name":"App", "templateName":""}, settings);
-	let _this = Reflect.construct(Component, [options], this.constructor);
+	settings = Object.assign({}, {"name":"App", "templateName":""}, settings);
+	let _this = Reflect.construct(Component, [settings], this.constructor);
 
 	// Init variables
 	Globals["app"] = _this;
 
-	// Init stores
-	_this.settings.init(_this, {"items":settings});
-	_this.preferences.init(_this, {"items":settings["preferences"]});
-	_this.store.init(_this);
-
-	// Init router
-	_this.router.init(_this, _this.settings.items["router"]);
+	// Init default router only when no router plugin is installed
+	if (!_this.router)
+	{
+		_this.router = new Router(_this, _this.settings.get("router"));
+		Object.defineProperty(App.prototype, 'router', {
+			get()
+			{
+				return _this._router;
+			},
+			configurable: true
+		})
+	}
 
 	// Init error listeners
 	_this.__initErrorListeners();
@@ -93,7 +98,7 @@ App.prototype.run = function()
 
 				// Components
 				Object.keys(spec["components"]).forEach((key) => {
-					this._options["components"][key] = spec["components"][key];
+					this.settings.items["components"][key] = spec["components"][key];
 				});
 
 				resolve();
@@ -137,25 +142,6 @@ App.prototype.setup = function(options)
 		}).then(() => {
 			resolve();
 		});
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Add a plugin to app.
- *
- * @param	{String}		componentName		Component name.
- * @param	{Object}		options				Options for the component.
- *
- * @return  {Promise}		Promise.
- */
-App.prototype.addPlugin = function(pluginName, options)
-{
-
-	Component.prototype.addPlugin.call(this, pluginName, options).then(() => {
-		Globals["services"][pluginName] = this._plugins[pluginName];
 	});
 
 }
