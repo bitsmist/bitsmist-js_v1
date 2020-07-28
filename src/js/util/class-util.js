@@ -8,7 +8,7 @@
  */
 // =============================================================================
 
-//import Plugin from './plugin';
+import Plugin from '../plugin/plugin';
 
 // =============================================================================
 //	Loader util class
@@ -24,13 +24,13 @@ export default class ClassUtil
 	/**
 	 * Define new component in ES5 way.
 	 *
-	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		tagName				Tag name.
 	 * @param	{Object}		settings			Component Settings.
 	 * @param	{Object}		superClass			Super class.
 	 * @param	{Function}		ctor				Constructor.
 	 * @param	{Object}		options				Options for constructor.
 	 */
-	static newComponent(componentName, settings, superClass, ctor, options)
+	static newComponent(tagName, settings, superClass, ctor, options)
 	{
 
 		superClass = ( superClass ? superClass : BITSMIST.v1.Component );
@@ -44,13 +44,38 @@ export default class ClassUtil
 			return _this;
 		};
 		ClassUtil.inherit(component, superClass);
-		customElements.define(componentName, component);
+		customElements.define(tagName, component);
 
 		component.prototype._getSettings = function() {
 			return settings;
 		}
 
 		return component;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Define new plugin in ES5 way.
+	 *
+	 * @param	{Function}		ctor				Constructor.
+	 * @param	{Object}		options				Options for constructor.
+	 */
+	static newPlugin(ctor, options)
+	{
+
+		let plugin = function() {
+			let _this = Reflect.construct(Plugin, [], this.constructor);
+			if (ctor)
+			{
+				ctor.call(_this, [options]);
+			}
+			return _this;
+		};
+		ClassUtil.inherit(plugin, Plugin);
+
+		return plugin;
 
 	}
 
@@ -86,23 +111,15 @@ export default class ClassUtil
 
 		let ret;
 
-		try
-		{
-			let c = Function("return (" + className + ")")();
-			ret = new c(...args);
-		}
-		catch(e)
-		{
-			let c = window;
-			className.split(".").forEach((value) => {
-				c = c[value];
-				if (!c)
-				{
-					throw new ReferenceError(`Class not found. className=${className}`);
-				}
-			});
-			ret = new c(...args);
-		}
+		let c = window;
+		className.split(".").forEach((value) => {
+			c = c[value];
+			if (!c)
+			{
+				throw new ReferenceError(`Class not found. className=${className}`);
+			}
+		});
+		ret = new c(...args);
 
 		return ret;
 
