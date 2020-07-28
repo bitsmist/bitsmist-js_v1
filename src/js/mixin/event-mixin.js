@@ -171,20 +171,22 @@ export default class EventMixin
 						throw TypeError(`Event handler is not a function. componentName=${this.name}, pluginName=${pluginName}, eventName=${e.type}`);
 					}
 
-					// Bind handler
-					if (listeners[i]["bind"])
-					{
-						handler = handler.bind(listeners[i]["bind"]);
-					}
-
 					// Execute handler
 					chain = chain.then((result) => {
 						if (result)
 						{
 							results.push(result);
 						}
+
 						e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
-						return handler.call(component, this, e, listeners[i]["options"]);
+						if (listeners[i]["bind"])
+						{
+							return handler.call(listeners[i]["bind"], this, e);
+						}
+						else
+						{
+							return handler.call(component, this, e);
+						}
 					});
 
 					stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
