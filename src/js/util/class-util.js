@@ -111,15 +111,23 @@ export default class ClassUtil
 
 		let ret;
 
-		let c = window;
-		className.split(".").forEach((value) => {
-			c = c[value];
-			if (!c)
-			{
-				throw new ReferenceError(`Class not found. className=${className}`);
-			}
-		});
-		ret = new c(...args);
+		try
+		{
+			let c = Function("return (" + className + ")")();
+			ret = new c(...args);
+		}
+		catch(e)
+		{
+			let c = window;
+			className.split(".").forEach((value) => {
+				c = c[value];
+				if (!c)
+				{
+					throw new ReferenceError(`Class not found. className=${className}`);
+				}
+			});
+			ret = new c(...args);
+		}
 
 		return ret;
 
