@@ -71,11 +71,15 @@ export default function Component(settings)
 	// Init services
 	let services = _this.settings.items["services"];
 	Object.keys(services).forEach((serviceName) => {
-		let service = this.services[serviceName];
-		if (service && typeof service.register == "function")
-		{
-			service.register(_this, services[serviceName]);
-		}
+		Object.keys(services[serviceName]["events"]).forEach((eventName) => {
+			let feature = services[serviceName]["events"][eventName]["handler"];
+			let args = services[serviceName]["events"][eventName]["args"];
+			let service = _this.services[serviceName];
+			let func = function(){
+				service[feature].apply(service, args);
+			};
+			_this.addEventHandler(_this, eventName, func);
+		});
 	});
 
 	// Init event handlers
