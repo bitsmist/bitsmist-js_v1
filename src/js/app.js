@@ -32,7 +32,7 @@ export default function App(settings)
 {
 
 	// super()
-	settings = Object.assign({}, {"name":"App", "templateName":""}, settings);
+	settings = Object.assign({}, {"name":"App", "templateName":"", "autoSetup":false}, settings);
 	let _this = Reflect.construct(Component, [settings], this.constructor);
 
 	// Init variables
