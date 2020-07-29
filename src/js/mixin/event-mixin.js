@@ -50,7 +50,7 @@ export default class EventMixin
 		// Init holder object for the element
 		if (!element._bm_detail)
 		{
-			element._bm_detail = { "component":this, "listeners":listeners };
+			element._bm_detail = { "component":this, "listeners":listeners, "promises":{} };
 		}
 
 		// Add hook event handler
@@ -80,44 +80,13 @@ export default class EventMixin
 	 * @param	{Object}		sender					Object which triggered the event.
 	 * @param	{Object}		options					Event parameter options.
 	 */
-	static trigger(eventName, sender, options)
+	static trigger(eventName, sender, options, element)
 	{
 
 		options = Object.assign({}, options);
 		options["eventName"] = eventName;
 		options["sender"] = sender;
-		let e = null;
-
-		try
-		{
-			e = new CustomEvent(eventName, { detail: options });
-		}
-		catch(error)
-		{
-			e  = document.createEvent('CustomEvent');
-			e.initCustomEvent(eventName, false, false, options);
-		}
-
-		return this.__callEventHandler(e);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Trigger the HTML event.
-	 *
-	 * @param	{HTMLElement}	element					Html element.
-	 * @param	{String}		eventName				Event name to trigger.
-	 * @param	{Object}		sender					Object which triggered the event.
-	 * @param	{Object}		options					Event parameter options.
-	 */
-	static triggerHtmlEvent(element, eventName, sender, options)
-	{
-
-		options = Object.assign({}, options);
-		options["eventName"] = eventName;
-		options["sender"] = sender;
+		element = ( element ? element : this );
 		let e = null;
 
 		try
@@ -131,6 +100,14 @@ export default class EventMixin
 		}
 
 		element.dispatchEvent(e);
+		if (element._bm_detail && element._bm_detail["promises"] && element._bm_detail["promises"][eventName])
+		{
+			return element._bm_detail["promises"][eventName];
+		}
+		else
+		{
+			return Promise.resolve();
+		}
 
 	}
 
@@ -149,7 +126,7 @@ export default class EventMixin
 	static __callEventHandler(e)
 	{
 
-		return new Promise((resolve, reject) => {
+		let promise = new Promise((resolve, reject) => {
 			let listeners = ( this._bm_detail && this._bm_detail["listeners"] ? this._bm_detail["listeners"][e.type] : undefined );
 			let stopPropagation = false;
 			let chain = Promise.resolve();
@@ -207,6 +184,9 @@ export default class EventMixin
 			});
 		});
 
+		this._bm_detail["promises"][e.type] = promise;
+
 	}
+
 
 }
