@@ -546,13 +546,17 @@ Component.prototype.addPlugin = function(pluginName, options)
 		let className = ( "className" in options ? options["className"] : pluginName );
 		let plugin = null;
 
+		// CreatePlugin
 		plugin = ClassUtil.createObject(className, this, options);
 		this._plugins[pluginName] = plugin;
 
-		Object.keys(plugin["_events"]).forEach((eventName) => {
-			this.addEventHandler(this, eventName, plugin["_events"][eventName], null, plugin);
+		// Add event handlers
+		let events = plugin.getOption("events", {});
+		Object.keys(events).forEach((eventName) => {
+			this.addEventHandler(this, eventName, events[eventName], null, plugin);
 		});
 
+		// Expose plugin
 		if (options["expose"])
 		{
 			Object.defineProperty(this.__proto__, pluginName, {
