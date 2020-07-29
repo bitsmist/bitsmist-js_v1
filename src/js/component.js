@@ -49,7 +49,10 @@ export default function Component(settings)
 	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 
 	// Init stores
-	settings = Object.assign({}, settings, _this._getSettings());
+	let defaults = {
+		"autoSetup":true
+	};
+	settings = Object.assign({}, defaults, settings, _this._getSettings());
 	_this._settings = new Store(_this, {"items":settings});
 	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":settings["preferences"]});
 	_this._store = new Store(_this);
@@ -293,7 +296,10 @@ Component.prototype.open = function(options)
 		Promise.resolve().then(() => {
 			return this.__autoLoadTemplate(this.settings.get("templateName"));
 		}).then(() => {
-			return this.setup();
+			if (this.settings.get("autoSetup"))
+			{
+				return this.setup();
+			}
 		}).then(() => {
 			if (this.settings.get("autoRefresh"))
 			{
