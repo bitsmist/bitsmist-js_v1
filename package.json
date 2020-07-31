@@ -6,15 +6,16 @@
   "dependencies": {},
   "devDependencies": {
     "@rollup/plugin-buble": "^0.21.3",
-    "@rollup/plugin-commonjs": "^13.0.0",
-    "@rollup/plugin-node-resolve": "^8.1.0",
+    "@rollup/plugin-commonjs": "^13.0.2",
+    "@rollup/plugin-node-resolve": "^8.4.0",
     "path-to-regexp": "^6.1.0",
-    "rollup": "^2.18.0",
+    "rollup": "^2.23.0",
     "rollup-plugin-uglify": "^6.0.4"
   },
   "scripts": {
     "watch": "npx rollup -c -w --environment BUILD:dev",
     "dev": "npx rollup -c --environment BUILD:dev",
+    "test": "npx rollup -c --environment BUILD:dev",
     "prod": "npx rollup -c --environment BUILD:prod"
   }
 }
