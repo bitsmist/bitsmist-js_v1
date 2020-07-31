@@ -41,7 +41,7 @@ export default function App(settings)
 	// Init default router only when no router plugin is installed
 	if (!_this.router)
 	{
-		_this.router = new Router(_this, _this.settings.get("router"));
+		_this._router = new Router(_this, _this.settings.get("router"));
 		Object.defineProperty(App.prototype, 'router', {
 			get()
 			{
