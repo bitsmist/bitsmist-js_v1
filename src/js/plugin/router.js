@@ -312,6 +312,7 @@ export default class Router extends Plugin
 	{
 
 		history.replaceState(null, null, this.buildUrl(routeInfo));
+		this._routeInfo = this.__loadRouteInfo(window.location.href);
 
 	}
 
