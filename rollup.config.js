@@ -14,6 +14,6 @@ export default {
 		nodeResolve(),
 		commonjs(),
 		buble(),
-		( process.env.BUILD === 'prod' && uglify() ),
+		( process.env.BUILD === 'prod' && uglify({compress:{drop_console: true}}) ),
 	],
 }
