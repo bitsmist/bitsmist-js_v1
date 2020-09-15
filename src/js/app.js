@@ -94,7 +94,7 @@ App.prototype.run = function()
 				// Add new routes
 				for(let i = 0; i < spec["routes"].length; i++)
 				{
-					this.router.addRoute(spec["routes"][i], true);
+					this.router.addRoute(spec["routes"][i]);
 				}
 
 				// Components

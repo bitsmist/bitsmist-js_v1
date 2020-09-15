@@ -438,7 +438,8 @@ export default class Router extends Plugin
 		let specName;
 		let componentName;
 		let params = {};
-		for (let i = 0; i < this._routes.length ; i++)
+
+		for (let i = this._routes.length - 1; i >= 0; i--)
 		{
 			let result = this._routes[i].re.exec(parsedUrl.pathname);
 			if (result)
