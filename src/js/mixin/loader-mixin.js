@@ -26,12 +26,13 @@ export default class LoadeMixin
 	 * Create component.
 	 *
 	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Options for the component.
+	 * @param	{Object}		options				Component options.
+	 * @param	{String}		path				Path to component.
 	 * @param	{Object}		settings			System settings.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static createComponent(componentName, options, settings)
+	static createComponent(componentName, options, path, settings)
 	{
 
 		return new Promise((resolve, reject) => {
@@ -39,10 +40,10 @@ export default class LoadeMixin
 			let className = ( "className" in options ? options["className"] : componentName );
 			let component = null;
 
-			this.__autoloadComponent(className, options, settings).then(() => {
+			this.__autoloadComponent(className, options, path, settings).then(() => {
 				let promise;
 
-				component = ClassUtil.createObject(className, options, settings);
+				component = ClassUtil.createObject(className, options);
 
 				Promise.all([promise]).then(() => {
 					resolve(component);
@@ -58,16 +59,15 @@ export default class LoadeMixin
 	 * Load the spec file for this page.
 	 *
 	 * @param	{String}		specName			Spec name.
-	 * @param	{Object}		settings			Application settings.
+	 * @param	{String}		path				Path to spec.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadSpec(specName, settings)
+	static loadSpec(specName, path)
 	{
 
-		let basePath = ( settings["system"]["specPath"] ? settings["system"]["specPath"] : "/specs/");
-		let urlCommon = basePath + "/" + "common.js";
-		let url = basePath + "/" + specName + ".js";
+		let urlCommon = path + "common.js";
+		let url = path + specName + ".js";
 		let spec;
 		let specCommon;
 		let specMerged;
@@ -90,10 +90,7 @@ export default class LoadeMixin
 				{
 					throw new SyntaxError(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
 				}
-
-				// Merge common spec, spec and settings
 				specMerged = this.__deepMerge(specCommon, spec);
-				specMerged = this.__mergeSettings(specMerged, settings);
 
 				resolve(specMerged);
 			});
@@ -107,6 +104,7 @@ export default class LoadeMixin
 	 * Load the template html.
 	 *
 	 * @param	{String}		templateName		Template name.
+	 * @param	{String}		path				Path to template.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
@@ -163,11 +161,12 @@ export default class LoadeMixin
 	 *
 	 * @param	{String}		className			Component class name.
 	 * @param	{Object}		options				Options.
+	 * @param	{String}		path				Path to component.
 	 * @param	{Object}		settings			System settings.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __autoloadComponent(className, options, settings)
+	static __autoloadComponent(className, options, path, settings)
 	{
 
 		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}`);
@@ -180,14 +179,12 @@ export default class LoadeMixin
 			}
 			else
 			{
-				let path = "";
-				let base = ( settings["componentPath"] ? settings["componentPath"] : "/components/" );
 				if (options && "path" in options)
 				{
-					path = options["path"];
+					path = path + options["path"];
 				}
 
-				this.__loadComponentScript(className, base + path, settings).then(() => {
+				this.__loadComponentScript(className, path, settings).then(() => {
 					resolve();
 				});
 			}
@@ -201,7 +198,7 @@ export default class LoadeMixin
 	 * Load the component js files.
 	 *
 	 * @param	{String}		componentName		Component name.
-	 * @param	{String}		path				Component path.
+	 * @param	{String}		path				Path to component.
 	 * @param	{Object}		settings			System settings.
 	 *
 	 * @return  {Promise}		Promise.
@@ -269,6 +266,7 @@ export default class LoadeMixin
 	 *
 	 * @return  {Object}		Merged array.
 	 */
+	/*
 	static __mergeSettings(spec, settings)
 	{
 
@@ -284,6 +282,7 @@ export default class LoadeMixin
 		return spec;
 
 	}
+	*/
 
 	// -------------------------------------------------------------------------
 

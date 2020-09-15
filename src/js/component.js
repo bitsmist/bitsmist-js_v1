@@ -507,7 +507,8 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
-					this.createComponent(componentName, options, this.getSetting("system")).then((component) => {
+					let path = this.getSetting("system.appBaseUrl", "") + this.getSetting("system.componentPath", "/components/");
+					this.createComponent(componentName, options, path, this.getSetting("system")).then((component) => {
 						component._parent = this;
 						this._components[componentName] = component;
 						resolve();
@@ -777,9 +778,8 @@ Component.prototype.__autoLoadTemplate = function(templateName)
 				if (templateName)
 				{
 					return new Promise((resolve, reject) => {
-						let base = this.getSetting("system.templatePath", "/components/");
+						let base = this.getSetting("system.appBaseUrl", "") + this.getSetting("system.templatePath", "/components/");
 						let path = this.settings.get("path", "");
-
 						this.loadTemplate(templateName, base + path).then((template) => {
 							this._templates[templateName] = {};
 							this._templates[templateName]["html"] = template;

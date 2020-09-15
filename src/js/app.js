@@ -87,7 +87,8 @@ App.prototype.run = function()
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
-			this.loadSpec(specName, this.settings.items).then((spec) => {
+			let path = this.getSetting("system.appBaseUrl", "") + this.getSetting("system.specPath", "/specs/");
+			this.loadSpec(specName, path).then((spec) => {
 				this._spec = spec;
 
 				// Add new routes
@@ -235,7 +236,7 @@ App.prototype.__getErrorName = function(error)
 	else if (e instanceof TypeError)			name = "TypeError";
 	else if (e instanceof XMLHttpRequest)		name = "AjaxError";
 	else if (e instanceof EvalError)			name = "EvalError";
-	else if (e instanceof InternalError)		name = "InternalError";
+//	else if (e instanceof InternalError)		name = "InternalError";
 	else if (e instanceof RangeError)			name = "RangeError";
 	else if (e instanceof ReferenceError)		name = "ReferenceError";
 	else if (e instanceof SyntaxError)			name = "SyntaxError";
