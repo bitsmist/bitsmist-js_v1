@@ -34,6 +34,11 @@ export default class Router extends Plugin
 
 		super(component, options);
 
+		if (!this._routeInfo)
+		{
+			this._routeInfo = this.__loadRouteInfo(window.location.href);
+		}
+
 		this.__initPopState();
 
 	}
