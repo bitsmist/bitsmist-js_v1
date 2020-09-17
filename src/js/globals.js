@@ -5,7 +5,7 @@ let Globals = (function(){
 	let globals = {};
 
 	globals["app"];
-	globals["components"] = [];
+	globals["components"] = {};
 
 	return globals;
 }());

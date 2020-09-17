@@ -33,14 +33,13 @@ export default class WaitforMixin
 
 		let promise;
 
-		if (!waitlist || this.__isLoadedComponents(waitlist))
+		if (!waitlist || this.__isAllReady(waitlist))
 		{
 			promise = Promise.resolve();
 		}
 		else
 		{
-			let waitInfo = {};
-			waitInfo["waitlist"] = waitlist;
+			let waitInfo = {"waitlist":waitlist};
 
 			promise = new Promise((resolve, reject) => {
 				waitInfo["resolve"] = resolve;
@@ -58,16 +57,26 @@ export default class WaitforMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Register component to loaded list.
+	 * Register component to list.
+	 *
+	 * @param	{Object}		component			Component to register.
+	 * @param	{String}		status				Component status.
 	 */
-	static registerComponent(component)
+	static registerComponent(component, status)
 	{
 
-		Globals["components"].push(component);
+		if (Globals["components"][component.uniqueId])
+		{
+			Globals["components"][component.uniqueId]["status"] = status;
+		}
+		else
+		{
+			Globals["components"][component.uniqueId] = {"component":component, "status": status};
+		}
 
 		for (let i = 0; i < this.__waitingList.length; i++)
 		{
-			if (this.__isLoadedComponents(this.__waitingList[i]["waitlist"]))
+			if (this.__isAllReady(this.__waitingList[i]["waitlist"]))
 			{
 				this.__waitingList[i].resolve();
 			}
@@ -80,13 +89,13 @@ export default class WaitforMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if components are loaded.
+	 * Check if all components are ready.
 	 *
 	 * @param	{Array}			waitlist			Components to wait.
 	 *
-	 * @return  {Array}			Promises.
+	 * @return  {Boolean}		True if ready.
 	 */
-	static __isLoadedComponents(waitlist)
+	static __isAllReady(waitlist)
 	{
 
 		let result = true;
@@ -95,15 +104,15 @@ export default class WaitforMixin
 		{
 			let match = false;
 
-			for (let j = 0; j < Globals["components"].length; j++)
-			{
-				if (Globals["components"][j].name == waitlist[i]["componentName"])
+			// Check through all registered components
+			Object.keys(Globals["components"]).forEach((key) => {
+				if (this.__isReady(waitlist[i], Globals["components"][key]))
 				{
 					match = true;
-					break;
 				}
-			}
+			});
 
+			// If one fail all fail
 			if (!match)
 			{
 				result = false;
@@ -112,6 +121,43 @@ export default class WaitforMixin
 		}
 
 		return result;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if a component is ready.
+	 *
+	 * @param	{Object}		waitInfo			Wait info.
+	 * @param	{Object}		componentInfo		Registered component info.
+	 *
+	 * @return  {Boolean}		True if ready.
+	 */
+	static __isReady(waitInfo, componentInfo)
+	{
+
+		let isMatch = true;
+
+		// check name
+		if (waitInfo["componentName"] && componentInfo["component"].name != waitInfo["componentName"])
+		{
+			isMatch = false;
+		}
+
+		// check id
+		if (waitInfo["componentId"] && componentInfo["component"].id != waitInfo["componentId"])
+		{
+			isMatch = false;
+		}
+
+		// check status
+		if (waitInfo["componentStatus"] && componentInfo["status"] != waitInfo["componentStatus"])
+		{
+			isMatch = false;
+		}
+
+		return isMatch;
 
 	}
 
