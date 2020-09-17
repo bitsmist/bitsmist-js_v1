@@ -318,6 +318,7 @@ Component.prototype.open = function(options)
 			return this.trigger("open", sender, {"options":options});
 		}).then(() => {
 			console.debug(`Component.open(): Opened component. name=${this.name}`);
+			this.registerComponent(this);
 			this._isOpen = true;
 			resolve();
 		});
@@ -590,9 +591,7 @@ Component.prototype.addPlugin = function(pluginName, options)
 Component.prototype.connectedCallback = function()
 {
 
-	this.open().then(() => {
-		this.registerComponent(this);
-	});
+	this.open();
 
 }
 
