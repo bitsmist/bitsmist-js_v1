@@ -93,6 +93,7 @@ export default class Router extends Plugin
 
 		let keys = [];
 		let route = {
+			"origin": routeInfo["origin"],
 			"name": routeInfo["name"],
 			"path": routeInfo["path"],
 			"keys": keys,
@@ -415,12 +416,7 @@ export default class Router extends Plugin
 
 		for (let i = 0; i < routes.length; i++)
 		{
-			this.addRoute({
-				"name": routes[i]["name"],
-				"path": routes[i]["path"],
-				"specName": routes[i]["specName"],
-				"componentName": (routes[i]["componentName"] ? routes[i]["componentName"] : "" )
-			});
+			this.addRoute(routes[i]);
 		}
 
 	}
@@ -446,21 +442,26 @@ export default class Router extends Plugin
 
 		for (let i = this._routes.length - 1; i >= 0; i--)
 		{
-			let result = this._routes[i].re.exec(parsedUrl.pathname);
-			if (result)
+			// Check origin
+			if ( !this._routes[i]["origin"] || (this._routes[i]["origin"] && parsedUrl.origin == this._routes[i]["origin"]))
 			{
-				routeName = this._routes[i].name;
-				specName = ( this._routes[i].specName ? this._routes[i].specName : "" );
-				componentName = this._routes[i].componentName;
-				for (let j = 0; j < result.length - 1; j++)
+				// Check path
+				let result = ( !this._routes[i]["path"] ? [] : this._routes[i].re.exec(parsedUrl.pathname));
+				if (result)
 				{
-					params[this._routes[i].keys[j].name] = result[j + 1];
-					let keyName = this._routes[i].keys[j].name;
-					let value = result[j + 1];
-					specName = specName.replace("{{:" + keyName + "}}", value);
-				}
+					routeName = this._routes[i].name;
+					specName = ( this._routes[i].specName ? this._routes[i].specName : "" );
+					componentName = this._routes[i].componentName;
+					for (let j = 0; j < result.length - 1; j++)
+					{
+						params[this._routes[i].keys[j].name] = result[j + 1];
+						let keyName = this._routes[i].keys[j].name;
+						let value = result[j + 1];
+						specName = specName.replace("{{:" + keyName + "}}", value);
+					}
 
-				break;
+					break;
+				}
 			}
 		}
 
