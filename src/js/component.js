@@ -145,7 +145,14 @@ Object.defineProperty(Component.prototype, 'element', {
 Object.defineProperty(Component.prototype, 'uniqueId', {
 	get()
 	{
-		return this._uniqueId;
+		if (this.id)
+		{
+			return this.id;
+		}
+		else
+		{
+			return this._uniqueId;
+		}
 	}
 })
 
