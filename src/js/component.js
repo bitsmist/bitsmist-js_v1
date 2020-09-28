@@ -736,6 +736,15 @@ Component.prototype.__initOnAppendTemplate = function()
 	return new Promise((resolve, reject) => {
 		let chain = Promise.resolve();
 
+		// Get options from the attribute
+		let data-settings = this.getAttribute("data-settings");
+		if (data-settings) {
+			let settings = JSON.parse(data-settings);
+			Object.keys(settings).forEach((key) => {
+				this._settings.set(key, settings[key]);
+			});
+		}
+
 		//  Add components
 		let components = this._settings.items["components"];
 		Object.keys(components).forEach((componentName) => {
