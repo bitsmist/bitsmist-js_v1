@@ -737,9 +737,9 @@ Component.prototype.__initOnAppendTemplate = function()
 		let chain = Promise.resolve();
 
 		// Get options from the attribute
-		let data-settings = this.getAttribute("data-settings");
-		if (data-settings) {
-			let settings = JSON.parse(data-settings);
+		let dataSettings = this.getAttribute("data-settings");
+		if (dataSettings) {
+			let settings = JSON.parse(dataSettings);
 			Object.keys(settings).forEach((key) => {
 				this._settings.set(key, settings[key]);
 			});
