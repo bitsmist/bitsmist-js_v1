@@ -57,7 +57,7 @@ export default function Component(settings)
 	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":settings["preferences"]});
 	_this._store = new Store(_this);
 
-	// Init options
+	// Init settings
 	_this._settings.set("templateName", _this.settings.get("templateName", _this.name));
 	_this._settings.set("components", _this.settings.get("components", {}));
 	_this._settings.set("plugins", _this.settings.get("plugins", {}));
@@ -483,31 +483,30 @@ Component.prototype.fill = function(options)
 Component.prototype.switchTemplate = function(templateName)
 {
 
-	console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
-
 	return new Promise((resolve, reject) => {
 		let templateInfo = this.__getTemplateInfo(templateName);
-		let oldTemplateName = this.settings.get("templateName");
 
-		this.autoLoadTemplate(templateInfo).then(() => {
-			// Append template to the node
-			if (!templateInfo["isAppended"])
-			{
-				return this.__appendTemplate(this.settings.get("rootNode"), templateName);
-			}
+		if (templateInfo["isAppended"])
+		{
+			resolve();
+			return;
+		}
+
+		console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
+
+		this.__autoLoadTemplate(templateInfo).then(() => {
+			return this.__appendTemplate(this.settings.get("rootNode"), templateName);
 		}).then(() => {
-			if (!templateInfo["isAppended"])
-			{
-				return this.__initOnAppendTemplate();
-			}
+			return this.__initOnAppendTemplate();
 		}).then(() => {
 			return this.waitFor(this.settings.get("waitFor"));
 		}).then(() => {
 			return this.trigger("append", this);
 		}).then(() => {
-			this._templates[oldTemplateName]["isAppended"] = false;
+			this._templates[this.settings.get("templateName")]["isAppended"] = false;
 			this._templates[templateName]["isAppended"] = true;
 			this.settings.set("templateName", templateName);
+
 			resolve();
 		});
 	});
