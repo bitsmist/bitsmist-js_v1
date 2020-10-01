@@ -256,6 +256,8 @@ export default class LoadeMixin
 
 	}
 
+	// -------------------------------------------------------------------------
+
 	/**
 	 * Load the template html if not loaded yet.
 	 *
@@ -263,7 +265,7 @@ export default class LoadeMixin
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static autoLoadTemplate(templateInfo, path)
+	static __autoLoadTemplate(templateInfo, path)
 	{
 
 		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${this.name}, templateName=${templateInfo["name"]}`);
