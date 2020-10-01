@@ -256,6 +256,51 @@ export default class LoadeMixin
 
 	}
 
+	/**
+	 * Load the template html if not loaded yet.
+	 *
+	 * @param	{Object}		templateInfo		Template info.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static autoLoadTemplate(templateInfo, path)
+	{
+
+		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${this.name}, templateName=${templateInfo["name"]}`);
+
+		return new Promise((resolve, reject) => {
+			let promise;
+
+			if (!templateInfo["name"] || templateInfo["html"])
+			{
+				console.debug(`Mixin.autoLoadTemplate(): Template Already exists. name=${this.name}, templateName=${templateInfo["name"]}`, );
+			}
+			else
+			{
+				let base = this.getSetting("system.appBaseUrl", "") + this.getSetting("system.templatePath", "/components/");
+				let path = this.settings.get("path", "");
+
+				promise = new Promise((resolve, reject) => {
+					this.loadTemplate(templateInfo["name"], base + path).then((template) => {
+						templateInfo["html"] = template;
+						resolve();
+					});
+				});
+			}
+
+			Promise.all([promise]).then(() => {
+				if (!templateInfo["isLoaded"])
+				{
+					return this.trigger("load", this);
+				}
+			}).then(() => {
+				templateInfo["isLoaded"] = true;
+				resolve();
+			});
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
