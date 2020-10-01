@@ -65,6 +65,16 @@ export default function Component(settings)
 	_this._settings.set("services", _this.settings.get("services", {}));
 	_this._settings.set("elements", _this.settings.get("elements", {}));
 
+	// Init templates
+	let templates = _this._settings.get("templates");
+	if (templates)
+	{
+		Object.keys(templates).forEach((templateName) => {
+			let templateInfo = _this.__getTemplateInfo(templateName);
+			templateInfo["html"] = templates[templateName];
+		});
+	}
+
 	// Init plugins
 	let plugins = _this.settings.items["plugins"];
 	Object.keys(plugins).forEach((pluginName) => {
@@ -145,14 +155,7 @@ Object.defineProperty(Component.prototype, 'element', {
 Object.defineProperty(Component.prototype, 'uniqueId', {
 	get()
 	{
-		if (this.id)
-		{
-			return this.id;
-		}
-		else
-		{
-			return this._uniqueId;
-		}
+		return ( this.id ? this.id : this._uniqueId );
 	}
 })
 
@@ -192,8 +195,7 @@ Object.defineProperty(Component.prototype, 'services', {
  * @type	{String}
  */
 Object.defineProperty(Component.prototype, 'settings', {
-	get()
-	{
+	get() {
 		return this._settings;
 	},
 	configurable: true
@@ -301,7 +303,7 @@ Component.prototype.open = function(options)
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
-			return this.__autoLoadTemplate(this.settings.get("templateName"));
+			return this.switchTemplate(this.settings.get("templateName"));
 		}).then(() => {
 			if (this.settings.get("autoSetup"))
 			{
@@ -484,10 +486,28 @@ Component.prototype.switchTemplate = function(templateName)
 	console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
 
 	return new Promise((resolve, reject) => {
-		this.__autoLoadTemplate(templateName).then(() => {
-			this.settings.set("templateName", templateName);
-			return this.trigger("templateChange", this);
+		let templateInfo = this.__getTemplateInfo(templateName);
+		let oldTemplateName = this.settings.get("templateName");
+
+		this.__autoLoadTemplate(templateInfo).then(() => {
+			// Append template to the node
+			if (!templateInfo["isAppended"])
+			{
+				return this.__appendTemplate(this.settings.get("rootNode"), templateName);
+			}
 		}).then(() => {
+			if (!templateInfo["isAppended"])
+			{
+				return this.__initOnAppendTemplate();
+			}
+		}).then(() => {
+			return this.waitFor(this.settings.get("waitFor"));
+		}).then(() => {
+			return this.trigger("append", this);
+		}).then(() => {
+			this._templates[oldTemplateName]["isAppended"] = false;
+			this._templates[templateName]["isAppended"] = true;
+			this.settings.set("templateName", templateName);
 			resolve();
 		});
 	});
@@ -643,27 +663,6 @@ Component.prototype._getStoreItem = function(store1, store2, key, defaultValue)
 // -----------------------------------------------------------------------------
 
 /**
-* Check if the template is loaded.
-*
-* @return  {bool}			True if loaded.
-*/
-Component.prototype._isLoadedTemplate = function(templateName)
-{
-
-	let isLoaded = false;
-
-	if (templateName in this._templates && this._templates[templateName].html)
-	{
-		isLoaded = true;
-	}
-
-	return isLoaded
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
  * Duplicate the component element.
  *
  * @param	{String}		newId				Id for the cloned component.
@@ -726,6 +725,31 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 // -----------------------------------------------------------------------------
 
 /**
+ * Returns templateInfo for the specified templateName. Create one if not exists.
+ *
+ * @param	{String}		templateName		Template name.
+ *
+ * @return  {Object}		Template info.
+ */
+Component.prototype.__getTemplateInfo = function(templateName)
+{
+
+	if (!this._templates[templateName])
+	{
+		this._templates[templateName] = {};
+		this._templates[templateName]["name"] = templateName;
+		this._templates[templateName]["html"] = "";
+		this._templates[templateName]["isAppended"] = false;
+		this._templates[templateName]["isLoaded"] = false;
+	}
+
+	return this._templates[templateName];
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Init on append template.
  *
  * @return  {Promise}		Promise.
@@ -770,52 +794,44 @@ Component.prototype.__initOnAppendTemplate = function()
 /**
  * Load the template html if not loaded yet.
  *
- * @param	{String}		templateName		Template name.
+ * @param	{Object}		templateInfo		Template info.
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.__autoLoadTemplate = function(templateName)
+Component.prototype.__autoLoadTemplate = function(templateInfo)
 {
 
-	console.debug(`Component._autoLoadTemplate(): Auto loading template. name=${this.name}, templateName=${templateName}`);
+	console.debug(`Component._autoLoadTemplate(): Auto loading template. name=${this.name}, templateName=${templateInfo["name"]}`);
 
 	return new Promise((resolve, reject) => {
-		let rootNode;
+		let promise;
 
-		if (this._isLoadedTemplate(templateName))
+		if (!templateInfo["name"] || templateInfo["html"])
 		{
-			console.debug(`Component.__autoLoadTemplate(): Template Already exists. name=${this.name}, templateName=${templateName}`, );
-			resolve();
+			console.debug(`Component.__autoLoadTemplate(): Template Already exists. name=${this.name}, templateName=${templateInfo["name"]}`, );
 		}
 		else
 		{
-			Promise.resolve().then(() => {
-				if (templateName)
-				{
-					return new Promise((resolve, reject) => {
-						let base = this.getSetting("system.appBaseUrl", "") + this.getSetting("system.templatePath", "/components/");
-						let path = this.settings.get("path", "");
-						this.loadTemplate(templateName, base + path).then((template) => {
-							this._templates[templateName] = {};
-							this._templates[templateName]["html"] = template;
-							resolve();
-						});
-					});
-				}
-			}).then(() => {
-				return this.trigger("load", this);
-			}).then(() => {
-				return this.__appendTemplate(this.settings.get("rootNode"), templateName);
-			}).then(() => {
-				return this.__initOnAppendTemplate();
-			}).then(() => {
-				return this.waitFor(this.settings.get("waitFor"));
-			}).then(() => {
-				return this.trigger("append", this);
-			}).then(() => {
-				resolve();
+			let base = this.getSetting("system.appBaseUrl", "") + this.getSetting("system.templatePath", "/components/");
+			let path = this.settings.get("path", "");
+
+			promise = new Promise((resolve, reject) => {
+				this.loadTemplate(templateInfo["name"], base + path).then((template) => {
+					templateInfo["html"] = template;
+					resolve();
+				});
 			});
 		}
+
+		Promise.all([promise]).then(() => {
+			if (!templateInfo["isLoaded"])
+			{
+				return this.trigger("load", this);
+			}
+		}).then(() => {
+			templateInfo["isLoaded"] = true;
+			resolve();
+		});
 	});
 
 }
@@ -847,12 +863,14 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 	}
 	else
 	{
-		if (this._templates[this.settings.get("templateName")])
+		if (this._templates[templateName]["html"])
 		{
-			this.innerHTML = this._templates[this.settings.get("templateName")].html
+			this.innerHTML = this._templates[templateName].html
 		}
 	}
 
 	console.debug(`Component.__appendTemplate(): Appended. name=${this.name}, templateName=${templateName}`);
 
 }
+
+
