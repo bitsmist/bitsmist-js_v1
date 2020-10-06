@@ -407,14 +407,14 @@ Component.prototype.refresh = function(options)
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
-			return this.trigger("beforeRefresh", sender);
+			return this.trigger("beforeRefresh", sender, {"options":options});
 		}).then(() => {
 			if (this.settings.get("autoFill"))
 			{
 				return this.fill(options);
 			}
 		}).then(() => {
-			return this.trigger("refresh", sender);
+			return this.trigger("refresh", sender, {"options":options});
 		}).then(() => {
 			resolve();
 		});
