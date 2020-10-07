@@ -45,6 +45,7 @@ export default function Component(settings)
 	_this._modalResult;
 	_this._plugins = {};
 	_this._services = {};
+	_this._shadowRoot;
 	_this._templates = {};
 	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 
@@ -73,6 +74,13 @@ export default function Component(settings)
 			let templateInfo = _this.__getTemplateInfo(templateName);
 			templateInfo["html"] = templates[templateName];
 		});
+	}
+
+	// Init shadow
+	if (_this._settings.get("shadowMode"))
+	{
+		_this._shadowRoot = _this.attachShadow({"mode":_this._settings.get("shadowMode")});
+		_this._element = _this._shadowRoot;
 	}
 
 	// Init plugins
@@ -495,7 +503,7 @@ Component.prototype.switchTemplate = function(templateName)
 		console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
 
 		this.__autoLoadTemplate(templateInfo).then(() => {
-			return this.__appendTemplate(this.settings.get("rootNode"), templateName);
+			return this.__appendTemplate(this.settings.get("rootNode"), templateName, this.settings.get("templateNode"));
 		}).then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {
@@ -601,6 +609,35 @@ Component.prototype.addPlugin = function(pluginName, options)
 }
 
 // -----------------------------------------------------------------------------
+
+/**
+ * Clone the component.
+ *
+ * @param	{String}		templateName		Template name.
+ *
+ * @return  {Object}		Cloned component.
+ */
+Component.prototype.clone = function(templateName)
+{
+
+	let clone;
+
+	templateName = ( templateName ? templateName : this.settings.get("templateName") );
+
+	if (this._templates[templateName].node)
+	{
+		clone = document.importNode(this._templates[templateName].node, true);
+	}
+	else
+	{
+		clone = this._dupElement(templateName);
+	}
+
+	return clone;
+
+}
+
+// -----------------------------------------------------------------------------
 //  Callbacks
 // -----------------------------------------------------------------------------
 
@@ -664,7 +701,6 @@ Component.prototype._getStoreItem = function(store1, store2, key, defaultValue)
 /**
  * Duplicate the component element.
  *
- * @param	{String}		newId				Id for the cloned component.
  * @param	{String}		templateName		Template name.
  *
  * @return  {Object}		Cloned component.
@@ -798,9 +834,36 @@ Component.prototype.__initOnAppendTemplate = function()
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.__appendTemplate = function(rootNode, templateName)
+Component.prototype.__appendTemplate = function(rootNode, templateName, templateNode)
 {
 
+	if (!templateName)
+	{
+		return;
+	}
+
+	// Add template to template node
+	if (templateNode)
+	{
+		let root = document.querySelector(templateNode);
+		if (!root)
+		{
+			throw new ReferenceError(`Root node does not exist. name=${this.name}, templateNode=${templateNode}`);
+		}
+
+		root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+
+		if ('content' in root.children[0])
+		{
+			this._templates[templateName].node = root.children[0].content;
+		}
+		else
+		{
+			this._templates[templateName].node = root.children[0];
+		}
+	}
+
+	// Attach
 	if (rootNode)
 	{
 		let root = document.querySelector(rootNode);
@@ -810,19 +873,27 @@ Component.prototype.__appendTemplate = function(rootNode, templateName)
 		}
 
 		// Add template to root node
-		root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+		if (this._templates[templateName].node)
+		{
+			let clone = this.clone(templateName);
+			//root.prepend(this._templates[templateName].node);
+			root.insertBefore(clone, root.firstChild);
+		}
+		else
+		{
+			root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+		}
 		this._element = root.children[0];
 	}
-	else
+	else if (this._settings.get("shadowMode"))
 	{
-		if (this._templates[templateName]["html"])
-		{
-			this.innerHTML = this._templates[templateName].html
-		}
+		this._shadowRoot.innerHTML = this._templates[templateName].html;
+	}
+	else if (this._templates[templateName]["html"])
+	{
+		this.innerHTML = this._templates[templateName].html
 	}
 
 	console.debug(`Component.__appendTemplate(): Appended. name=${this.name}, templateName=${templateName}`);
 
 }
-
-
