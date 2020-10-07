@@ -503,7 +503,7 @@ Component.prototype.switchTemplate = function(templateName)
 		console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
 
 		this.__autoLoadTemplate(templateInfo).then(() => {
-			return this.__appendTemplate(this.settings.get("rootNode"), templateName, this.settings.get("templateNode"));
+			return this.__applyTemplate(this.settings.get("rootNode"), templateName, this.settings.get("templateNode"));
 		}).then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {
@@ -827,14 +827,49 @@ Component.prototype.__initOnAppendTemplate = function()
 // -----------------------------------------------------------------------------
 
 /**
- * Append the template html to its root node.
+ * Append the template to a root node.
+ *
+ * @param	{HTMLElement}	root				Root node to append.
+ * @param	{String}		templateName		Template name.
+ * @param	{String}		rootNode			Root node name to append (Just for debugging purpose).
+ *
+ * @return  {HTMLElement}	Appended element.
+ */
+Component.prototype.__appendToNode = function(root, templateName, rootNode)
+{
+
+	if (!root)
+	{
+		throw new ReferenceError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}, templateName=${templateName}`);
+	}
+
+	if (this._templates[templateName].node)
+	{
+		let clone = this.clone(templateName);
+		//root.prepend(this._templates[templateName].node);
+		root.insertBefore(clone, root.firstChild);
+	}
+	else
+	{
+		root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+	}
+
+	return root.children[0];
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Apply template.
  *
  * @param	{String}		rootNode			Root node to append.
  * @param	{String}		templateName		Template name.
+ * @param	{String}		templateNode		Template node.
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.__appendTemplate = function(rootNode, templateName, templateNode)
+Component.prototype.__applyTemplate = function(rootNode, templateName, templateNode)
 {
 
 	if (!templateName)
@@ -845,53 +880,25 @@ Component.prototype.__appendTemplate = function(rootNode, templateName, template
 	// Add template to template node
 	if (templateNode)
 	{
-		let root = document.querySelector(templateNode);
-		if (!root)
-		{
-			throw new ReferenceError(`Root node does not exist. name=${this.name}, templateNode=${templateNode}`);
-		}
-
-		root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
-
-		if ('content' in root.children[0])
-		{
-			this._templates[templateName].node = root.children[0].content;
-		}
-		else
-		{
-			this._templates[templateName].node = root.children[0];
-		}
+		let node = this.__appendToNode(document.querySelector(templateNode), templateName, templateNode);
+		this._templates[templateName].node = ('content' in node ? node.content : node);
 	}
 
-	// Attach
+	// Apply
 	if (rootNode)
 	{
-		let root = document.querySelector(rootNode);
-		if (!root)
-		{
-			throw new ReferenceError(`Root node does not exist. name=${this.name}, rootNode=${rootNode}`);
-		}
-
-		// Add template to root node
+		this._element = this.__appendToNode(document.querySelector(rootNode), templateName, rootNode);
+	}
+	else
+	{
 		if (this._templates[templateName].node)
 		{
-			let clone = this.clone(templateName);
-			//root.prepend(this._templates[templateName].node);
-			root.insertBefore(clone, root.firstChild);
+			this.__appendToNode(this._element, templateName, "this");
 		}
 		else
 		{
-			root.insertAdjacentHTML("afterbegin", this._templates[templateName].html);
+			this._element.innerHTML = this._templates[templateName].html
 		}
-		this._element = root.children[0];
-	}
-	else if (this._settings.get("shadowMode"))
-	{
-		this._shadowRoot.innerHTML = this._templates[templateName].html;
-	}
-	else if (this._templates[templateName]["html"])
-	{
-		this.innerHTML = this._templates[templateName].html
 	}
 
 	console.debug(`Component.__appendTemplate(): Appended. name=${this.name}, templateName=${templateName}`);
