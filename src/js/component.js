@@ -889,18 +889,15 @@ Component.prototype.__applyTemplate = function(rootNode, templateName, templateN
 	{
 		this._element = this.__appendToNode(document.querySelector(rootNode), templateName, rootNode);
 	}
+	else if (templateNode)
+	{
+		this.__appendToNode(this._element, templateName, "this");
+	}
 	else
 	{
-		if (this._templates[templateName].node)
-		{
-			this.__appendToNode(this._element, templateName, "this");
-		}
-		else
-		{
-			this._element.innerHTML = this._templates[templateName].html
-		}
+		this._element.innerHTML = this._templates[templateName].html
 	}
 
-	console.debug(`Component.__appendTemplate(): Appended. name=${this.name}, templateName=${templateName}`);
+	console.debug(`Component.__appendTemplate(): Appended. name=${this.name}, rootNode=${rootNode}, templateName=${templateName}`);
 
 }
