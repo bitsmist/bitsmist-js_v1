@@ -145,7 +145,7 @@ export default class EventMixin
 					if (typeof handler !== "function")
 					{
 						let pluginName = (listeners[i]["bind"] ? listeners[i]["bind"]._options["className"] : "");
-						throw TypeError(`Event handler is not a function. componentName=${this.name}, pluginName=${pluginName}, eventName=${e.type}`);
+						throw TypeError(`Event handler is not a function. componentName=${component.name}, pluginName=${pluginName}, eventName=${e.type}`);
 					}
 
 					// Execute handler
@@ -187,6 +187,5 @@ export default class EventMixin
 		this._bm_detail["promises"][e.type] = promise;
 
 	}
-
 
 }
