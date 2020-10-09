@@ -748,7 +748,7 @@ Component.prototype._initHtmlEvents = function(elementName, options)
 	for (let i = 0; i < elements.length; i++)
 	{
 		Object.keys(events).forEach((eventName) => {
-			options = Object.assign({}, events[eventName], options);
+			options = Object.assign({}, events[eventName]["options"], options);
 			this.addEventHandler(elements[i], eventName, events[eventName], options);
 		});
 	}
@@ -898,6 +898,6 @@ Component.prototype.__applyTemplate = function(rootNode, templateName, templateN
 		this._element.innerHTML = this._templates[templateName].html
 	}
 
-	console.debug(`Component.__appendTemplate(): Appended. name=${this.name}, rootNode=${rootNode}, templateName=${templateName}`);
+	console.debug(`Component.__applyTemplate(): Applied template. name=${this.name}, rootNode=${rootNode}, templateName=${templateName}`);
 
 }
