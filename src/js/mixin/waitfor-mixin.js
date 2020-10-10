@@ -146,7 +146,7 @@ export default class WaitforMixin
 		}
 
 		// check id
-		if (waitInfo["componentId"] && componentInfo["component"].id != waitInfo["componentId"])
+		if (waitInfo["componentId"] && componentInfo["component"].uniqueId != waitInfo["componentId"])
 		{
 			isMatch = false;
 		}
