@@ -150,7 +150,15 @@ export default class LoadeMixin
 
 		try
 		{
-			ClassUtil.createObject(className);
+			let c = window;
+
+			className.split(".").forEach((value) => {
+				c = c[value];
+				if (!c)
+				{
+					ret = false;
+				}
+			});
 
 			// Cache existence of the class
 			Globals["classes"][className] = true;
