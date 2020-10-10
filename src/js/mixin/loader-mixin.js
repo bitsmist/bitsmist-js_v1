@@ -10,6 +10,7 @@
 
 import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
+import Globals from './globals';
 
 // =============================================================================
 //	Loader mixin class
@@ -140,15 +141,24 @@ export default class LoadeMixin
 	{
 
 		let ret = true;
-		let c = window;
 
-		className.split(".").forEach((value) => {
-			c = c[value];
-			if (!c)
-			{
-				ret = false;
-			}
-		});
+		// Check existence from cache
+		if (Globals["classes"]["className"])
+		{
+			return ret;
+		}
+
+		try
+		{
+			ClassUtil.createObject(className);
+
+			// Cache existence of the class
+			Globals["classes"]["className"] = true;
+		}
+		catch(e)
+		{
+			ret = false;
+		}
 
 		return ret;
 

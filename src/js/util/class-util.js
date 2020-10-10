@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import Globals from './globals';
 import Plugin from '../plugin/plugin';
 
 // =============================================================================
@@ -128,6 +129,9 @@ export default class ClassUtil
 			});
 			ret = new c(...args);
 		}
+
+		// Cache existence of the class
+		Globals["classes"]["className"] = true;
 
 		return ret;
 

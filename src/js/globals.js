@@ -6,6 +6,7 @@ let Globals = (function(){
 
 	globals["app"];
 	globals["components"] = {};
+	globals["classes"] = {};
 
 	return globals;
 }());
