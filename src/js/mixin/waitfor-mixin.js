@@ -57,6 +57,17 @@ export default class WaitforMixin
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Clear waiting list.
+	 *
+	 */
+	static clearWaitingList()
+	{
+		this.__waitingList.splice(0);
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Register component to list.
 	 *
 	 * @param	{Object}		component			Component to register.
@@ -138,6 +149,12 @@ export default class WaitforMixin
 	{
 
 		let isMatch = true;
+
+		// check instance
+		if (waitInfo["component"] && componentInfo["component"] !== waitInfo["component"])
+		{
+			isMatch = false;
+		}
 
 		// check name
 		if (waitInfo["componentName"] && componentInfo["component"].name != waitInfo["componentName"])
