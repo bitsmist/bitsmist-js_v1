@@ -624,6 +624,11 @@ Component.prototype.clone = function(templateName)
 
 	templateName = ( templateName ? templateName : this.settings.get("templateName") );
 
+	if (!this._templates[templateName])
+	{
+		throw new Error(`Template not loaded. name=${this.name}, templateName=${templateName}`);
+	}
+
 	if (this._templates[templateName].node)
 	{
 		clone = document.importNode(this._templates[templateName].node, true);
@@ -718,44 +723,6 @@ Component.prototype._dupElement = function(templateName)
 }
 
 // -----------------------------------------------------------------------------
-
-/**
- * Init html element's event handler.
- *
- * @param	{String}		elementName			Element name.
- * @param	{Options}		options				Options.
- */
-Component.prototype._initHtmlEvents = function(elementName, options)
-{
-
-	// Get target elements
-	let elements;
-	if (elementName == "_self")
-	{
-		elements = [this];
-	}
-	else if (this.settings.has("elements." + elementName + ".rootNode"))
-	{
-		elements = this._element.querySelectorAll(this.settings.get("elements." + elementName + ".rootNode"));
-	}
-	else
-	{
-		elements = this._element.querySelectorAll("#" + elementName);
-	}
-
-	// Set event handlers
-	let events = this.settings.get("elements." + elementName + ".events", {});
-	for (let i = 0; i < elements.length; i++)
-	{
-		Object.keys(events).forEach((eventName) => {
-			options = Object.assign({}, events[eventName]["options"], options);
-			this.addEventHandler(elements[i], eventName, events[eventName], options);
-		});
-	}
-
-}
-
-// -----------------------------------------------------------------------------
 //  Privates
 // -----------------------------------------------------------------------------
 
@@ -815,7 +782,7 @@ Component.prototype.__initOnAppendTemplate = function()
 		// Init HTML event handlers
 		chain.then(() => {
 			Object.keys(this.settings.items["elements"]).forEach((elementName) => {
-				this._initHtmlEvents(elementName);
+				this.setHtmlEventHandlers(elementName);
 			});
 
 			resolve();
@@ -878,7 +845,7 @@ Component.prototype.__applyTemplate = function(rootNode, templateName, templateN
 	}
 
 	// Add template to template node
-	if (templateNode)
+	if (templateNode && !this._templates[templateName].node)
 	{
 		let node = this.__appendToNode(document.querySelector(templateNode), templateName, templateNode);
 		this._templates[templateName].node = ('content' in node ? node.content : node);
