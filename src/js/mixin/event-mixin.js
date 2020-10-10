@@ -102,6 +102,46 @@ export default class EventMixin
 	// -----------------------------------------------------------------------------
 
 	/**
+	 * Set html elements event handlers.
+	 *
+	 * @param	{String}		elementName			Element name.
+	 * @param	{Options}		options				Options.
+	 */
+	static setHtmlEventHandlers(elementName, options)
+	{
+
+		let elementInfo = this.settings.get("elements." + elementName);
+
+		// Get target elements
+		let elements;
+		if (elementName == "_self")
+		{
+			elements = [this];
+		}
+		else if (elementInfo["rootNode"])
+		{
+			elements = this._element.querySelectorAll(elementInfo["rootNode"]);
+		}
+		else
+		{
+			elements = this._element.querySelectorAll("#" + elementName);
+		}
+
+		// Set event handlers
+		let events = elementInfo["events"];
+		for (let i = 0; i < elements.length; i++)
+		{
+			Object.keys(events).forEach((eventName) => {
+				options = Object.assign({}, events[eventName]["options"], options);
+				this.addEventHandler(elements[i], eventName, events[eventName], options);
+			});
+		}
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
 	 * Get event handler from event info object.
 	 *
 	 * @param	{Object/String}	eventInfo				Event info.
