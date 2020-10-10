@@ -107,24 +107,25 @@ export default class EventMixin
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Options}		options				Options.
 	 */
-	static setHtmlEventHandlers(elementName, options)
+	static setHtmlEventHandlers(elementName, options, rootNode)
 	{
 
+		rootNode = ( rootNode ? rootNode : this._element );
 		let elementInfo = this.settings.get("elements." + elementName);
 
 		// Get target elements
 		let elements;
 		if (elementName == "_self")
 		{
-			elements = [this];
+			elements = [rootNode];
 		}
 		else if (elementInfo["rootNode"])
 		{
-			elements = this._element.querySelectorAll(elementInfo["rootNode"]);
+			elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
 		}
 		else
 		{
-			elements = this._element.querySelectorAll("#" + elementName);
+			elements = rootNode.querySelectorAll("#" + elementName);
 		}
 
 		// Set event handlers
