@@ -31,23 +31,11 @@ export default class EventMixin
 	static addEventHandler(element, eventName, eventInfo, options, bindTo)
 	{
 
-		// Get handler
-		let handler;
-		let order = 0;
-		if ( typeof eventInfo === "object" )
-		{
-			handler = (typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo);
-			order = (eventInfo["order"] ? eventInfo["order"] : order);
-		}
-		else
-		{
-			handler = eventInfo;
-		}
-
-		// Get listeners
+		let handler = this.getEventHandler(eventInfo);
+		let order = (typeof eventInfo === "object" && eventInfo["order"] ? eventInfo["order"] : order);
 		let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
 
-		// Init holder object for the element
+		// Init holder object for a element
 		if (!element._bm_detail)
 		{
 			element._bm_detail = { "component":this, "listeners":listeners, "promises":{} };
@@ -108,6 +96,31 @@ export default class EventMixin
 		{
 			return Promise.resolve();
 		}
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Get event handler from event info object.
+	 *
+	 * @param	{Object/String}	eventInfo				Event info.
+	 */
+	static getEventHandler(eventInfo)
+	{
+
+		let handler;
+
+		if ( typeof eventInfo === "object" )
+		{
+			handler = (typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo);
+		}
+		else
+		{
+			handler = eventInfo;
+		}
+
+		return handler;
 
 	}
 
