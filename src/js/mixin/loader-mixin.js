@@ -207,6 +207,8 @@ export default class LoadeMixin
 
 		console.debug(`LoaderMixin.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
 
+		settings = ( settings ? settings : {} );
+
 		return new Promise((resolve, reject) => {
 			let url1 = path + "/" + componentName + ".auto.js";
 			let url2 = path + "/" + componentName + ".js";
