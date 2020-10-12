@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+//import Component from '../component'; // Importing component breaks this class. So do not import.
 import Globals from '../globals';
 import Plugin from '../plugin/plugin';
 
@@ -25,58 +26,31 @@ export default class ClassUtil
 	/**
 	 * Define new component in ES5 way.
 	 *
-	 * @param	{String}		tagName				Tag name.
-	 * @param	{Object}		settings			Component Settings.
 	 * @param	{Object}		superClass			Super class.
-	 * @param	{Function}		ctor				Constructor.
-	 * @param	{Object}		options				Options for constructor.
+	 * @param	{Object}		settings			Component Settings.
+	 * @param	{String}		tagName				Tag name.
 	 */
-	static newComponent(tagName, settings, superClass, ctor, options)
+	static newComponent(superClass, settings, tagName)
 	{
 
+		//superClass = ( superClass ? superClass : Component );
 		superClass = ( superClass ? superClass : BITSMIST.v1.Component );
 
-		let component = function() {
-			let _this = Reflect.construct(superClass, [], this.constructor);
-			if (ctor)
-			{
-				ctor.call(_this, [options]);
-			}
-			return _this;
+		let component = function(options) {
+			return Reflect.construct(superClass, [options], this.constructor);
 		};
 		ClassUtil.inherit(component, superClass);
-		customElements.define(tagName, component);
+
+		if (tagName)
+		{
+			customElements.define(tagName, component);
+		}
 
 		component.prototype._getSettings = function() {
 			return settings;
 		}
 
 		return component;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Define new plugin in ES5 way.
-	 *
-	 * @param	{Function}		ctor				Constructor.
-	 * @param	{Object}		options				Options for constructor.
-	 */
-	static newPlugin(ctor, options)
-	{
-
-		let plugin = function() {
-			let _this = Reflect.construct(Plugin, [], this.constructor);
-			if (ctor)
-			{
-				ctor.call(_this, [options]);
-			}
-			return _this;
-		};
-		ClassUtil.inherit(plugin, Plugin);
-
-		return plugin;
 
 	}
 
