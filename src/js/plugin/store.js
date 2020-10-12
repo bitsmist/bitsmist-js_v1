@@ -9,6 +9,7 @@
 // =============================================================================
 
 import Plugin from './plugin';
+import Util from '../util/util';
 
 // =============================================================================
 //	Store class
@@ -160,7 +161,7 @@ export default class Store extends Plugin
 	get(key, defaultValue)
 	{
 
-		return this._safeGet(this._items, key, defaultValue);
+		return Util.safeGet(this._items, key, defaultValue);
 
 	}
 
@@ -175,7 +176,7 @@ export default class Store extends Plugin
 	set(key, value)
 	{
 
-		this._safeSet(this._items, key, value);
+		Util.safeSet(this._items, key, value);
 
 	}
 
@@ -191,7 +192,7 @@ export default class Store extends Plugin
 	has(key)
 	{
 
-		return this._safeHas(this._items, key);
+		return Util.safeHas(this._items, key);
 
 	}
 

@@ -28,6 +28,8 @@ window.BITSMIST.v1.Store = Store;
 // Util
 import AjaxUtil from './util/ajax-util';
 import ClassUtil from './util/class-util';
+import Util from './util/util';
 window.BITSMIST.v1.AjaxUtil = AjaxUtil;
 window.BITSMIST.v1.ClassUtil = ClassUtil;
+window.BITSMIST.v1.Util = Util;
 
