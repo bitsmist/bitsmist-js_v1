@@ -626,7 +626,7 @@ Component.prototype.clone = function(templateName)
 
 	if (!this._templates[templateName])
 	{
-		throw new Error(`Template not loaded. name=${this.name}, templateName=${templateName}`);
+		throw new ReferenceError(`Template not loaded. name=${this.name}, templateName=${templateName}`);
 	}
 
 	if (this._templates[templateName].node)
