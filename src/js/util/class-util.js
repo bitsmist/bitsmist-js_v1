@@ -41,13 +41,13 @@ export default class ClassUtil
 		};
 		ClassUtil.inherit(component, superClass);
 
+		component.prototype._getSettings = function() {
+			return settings;
+		}
+
 		if (tagName)
 		{
 			customElements.define(tagName, component);
-		}
-
-		component.prototype._getSettings = function() {
-			return settings;
 		}
 
 		return component;
