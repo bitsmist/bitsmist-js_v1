@@ -93,15 +93,22 @@ export default class ClassUtil
 		}
 		catch(e)
 		{
-			let c = window;
-			className.split(".").forEach((value) => {
-				c = c[value];
-				if (!c)
-				{
-					throw new ReferenceError(`Class not found. className=${className}`);
-				}
-			});
-			ret = new c(...args);
+			if (e instanceof TypeError)
+			{
+				let c = window;
+				className.split(".").forEach((value) => {
+					c = c[value];
+					if (!c)
+					{
+						throw new ReferenceError(`Class not found. className=${className}`);
+					}
+				});
+				ret = new c(...args);
+			}
+			else
+			{
+				throw e;
+			}
 		}
 
 		// Cache existence of the class
