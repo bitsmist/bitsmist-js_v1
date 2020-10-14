@@ -1,6 +1,9 @@
 window.BITSMIST = window.BITSMIST || {};
 window.BITSMIST.v1 = window.BITSMIST.v1 || {};
 
+// Auto loader
+import AutoLoader from './autoloader';
+
 // App
 import App from './app';
 window.BITSMIST.v1.App = App;
@@ -13,9 +16,6 @@ window.BITSMIST.v1.Component = Component;
 import EventMixin from './mixin/event-mixin';
 import LoaderMixin from './mixin/loader-mixin';
 import WaitforMixin from './mixin/waitfor-mixin';
-window.BITSMIST.v1.EventMixin = EventMixin;
-window.BITSMIST.v1.LoaderMixin = LoaderMixin;
-window.BITSMIST.v1.WaitforMixin = WaitforMixin;
 
 // Plugin
 import Plugin from './plugin/plugin';
