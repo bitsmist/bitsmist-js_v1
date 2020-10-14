@@ -59,12 +59,14 @@ export default function Component(settings)
 	_this._store = new Store(_this);
 
 	// Init settings
-	_this._settings.set("templateName", _this.settings.get("templateName", _this.name));
-	_this._settings.set("components", _this.settings.get("components", {}));
-	_this._settings.set("plugins", _this.settings.get("plugins", {}));
-	_this._settings.set("events", _this.settings.get("events", {}));
-	_this._settings.set("services", _this.settings.get("services", {}));
-	_this._settings.set("elements", _this.settings.get("elements", {}));
+	_this._settings.set("templateName", _this._settings.get("templateName", _this.name));
+	_this._settings.set("components", _this._settings.get("components", {}));
+	_this._settings.set("plugins", _this._settings.get("plugins", {}));
+	_this._settings.set("events", _this._settings.get("events", {}));
+	_this._settings.set("services", _this._settings.get("services", {}));
+	_this._settings.set("elements", _this._settings.get("elements", {}));
+	_this.__applySettingsFromAttribute();
+	_this._settings.set("name", _this._settings.get("name", _this.constructor.name));
 
 	// Init templates
 	let templates = _this._settings.get("templates");
@@ -652,6 +654,8 @@ Component.prototype.clone = function(templateName)
 Component.prototype.connectedCallback = function()
 {
 
+	this.__applySettingsFromAttribute();
+
 	this.open();
 
 }
@@ -762,15 +766,6 @@ Component.prototype.__initOnAppendTemplate = function()
 	return new Promise((resolve, reject) => {
 		let chain = Promise.resolve();
 
-		// Get options from the attribute
-		let dataSettings = this.getAttribute("data-settings");
-		if (dataSettings) {
-			let settings = JSON.parse(dataSettings);
-			Object.keys(settings).forEach((key) => {
-				this._settings.set(key, settings[key]);
-			});
-		}
-
 		//  Add components
 		let components = this._settings.items["components"];
 		Object.keys(components).forEach((componentName) => {
@@ -813,7 +808,6 @@ Component.prototype.__appendToNode = function(root, templateName, rootNode)
 	if (this._templates[templateName].node)
 	{
 		let clone = this.clone(templateName);
-		//root.prepend(this._templates[templateName].node);
 		root.insertBefore(clone, root.firstChild);
 	}
 	else
@@ -866,5 +860,28 @@ Component.prototype.__applyTemplate = function(rootNode, templateName, templateN
 	}
 
 	console.debug(`Component.__applyTemplate(): Applied template. name=${this.name}, rootNode=${rootNode}, templateName=${templateName}`);
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Apply settings from element's attribute.
+ */
+Component.prototype.__applySettingsFromAttribute = function()
+{
+
+	// Get options from the attribute
+	let dataSettings = ( this.settings.get("rootNode") ?
+		document.querySelector(this._settings.get("rootNode")).getAttribute("data-settings") :
+		this.getAttribute("data-settings")
+	);
+
+	if (dataSettings) {
+		let settings = JSON.parse(dataSettings);
+		Object.keys(settings).forEach((key) => {
+			this._settings.set(key, settings[key]);
+		});
+	}
 
 }
