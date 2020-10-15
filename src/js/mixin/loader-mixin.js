@@ -53,6 +53,25 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Load the template html.
+	 *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Component options.
+	 * @param	{String}		path				Path to component.
+	 * @param	{Object}		settings			System settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadComponent(componentName, options, path, settings)
+	{
+
+		return this.__autoloadComponent(componentName, options, path, settings);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Load the spec file for this page.
 	 *
 	 * @param	{String}		specName			Spec name.
@@ -227,16 +246,16 @@ export default class LoadeMixin
 		settings = ( settings ? settings : {} );
 
 		return new Promise((resolve, reject) => {
-			let url1 = path + "/" + componentName + ".auto.js";
-			let url2 = path + "/" + componentName + ".js";
+			let url1 = Util.concatPath([path, componentName + ".js"]);
+			let url2 = Util.concatPath([path, componentName + ".settings.js"]);
 
 			Promise.resolve().then(() => {
+				return AjaxUtil.loadScript(url1);
+			}).then(() => {
 				if (settings["splitComponent"])
 				{
-					return AjaxUtil.loadScript(url1);
+					return AjaxUtil.loadScript(url2);
 				}
-			}).then(() => {
-				return AjaxUtil.loadScript(url2);
 			}).then(() => {
 				console.debug(`LoaderMixin.__loadComponentScript(): Loaded script. componentName=${componentName}`);
 				resolve();
