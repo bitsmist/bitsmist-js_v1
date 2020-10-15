@@ -128,4 +128,70 @@ export default class Util
 
 	}
 
+	// -----------------------------------------------------------------------------
+
+	/**
+	* Concatenat path strings appending trainling "/" when needed.
+	*
+	* @param	{Array}			paths				Paths.
+	*
+	* @return	{String}		Concatenated paths
+	*/
+	static concatPath(paths)
+	{
+
+		let path = paths[0];
+
+		for (let i = 1; i < paths.length; i++)
+		{
+			if (paths[i])
+			{
+				if (path.slice(path.length - 1) == "/" && paths[i].slice(0, 1) == "/")
+				{
+					path += paths[i].slice(1);
+				}
+				else if (path.slice(path.length - 1) == "/" || paths[i].slice(0, 1) == "/")
+				{
+					path += paths[i];
+				}
+				else
+				{
+					path += "/" + paths[i];
+				}
+			}
+		}
+
+		return path;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Deep merge two arrays.
+	 *
+	 * @param	{Object}		arr1					Array1.
+	 * @param	{Object}		arr2					Array2.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
+	static deepMerge(arr1, arr2)
+	{
+
+		Object.keys(arr2).forEach((key) => {
+			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
+			{
+				this.__deepMerge(arr1[key], arr2[key]);
+			}
+			else
+			{
+				arr1[key] = arr2[key];
+			}
+		});
+
+		return arr1;
+
+	}
+
+
 }
