@@ -34,7 +34,7 @@ export default function AutoLoader(settings)
 	settings = Object.assign({}, {"name":"AutoLoader", "templateName":"", "autoSetup":false}, settings);
 	let _this = Reflect.construct(Component, [settings], this.constructor);
 
-	_this.loadAll();
+	document.addEventListener("DOMContentLoaded", _this.onDOMContentLoaded.bind(_this))
 
 	return _this;
 
@@ -42,6 +42,20 @@ export default function AutoLoader(settings)
 
 ClassUtil.inherit(AutoLoader, Component);
 customElements.define("bm-autoloader", AutoLoader);
+
+// -----------------------------------------------------------------------------
+//  Event handlers
+// -----------------------------------------------------------------------------
+
+/**
+ * DOMContentLoaded event handler.
+ */
+AutoLoader.prototype.onDOMContentLoaded = function()
+{
+
+	this.loadAll();
+
+}
 
 // -----------------------------------------------------------------------------
 //  Methods
