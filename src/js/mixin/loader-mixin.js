@@ -11,6 +11,7 @@
 import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
 import Globals from '../globals';
+import Util from '../util/util';
 
 // =============================================================================
 //	Loader mixin class
@@ -42,13 +43,8 @@ export default class LoadeMixin
 			let component = null;
 
 			this.__autoloadComponent(className, options, path, settings).then(() => {
-				let promise;
-
 				component = ClassUtil.createObject(className, options);
-
-				Promise.all([promise]).then(() => {
-					resolve(component);
-				});
+				resolve(component);
 			});
 		});
 
@@ -67,8 +63,8 @@ export default class LoadeMixin
 	static loadSpec(specName, path)
 	{
 
-		let urlCommon = path + "common.js";
-		let url = path + specName + ".js";
+		let urlCommon = Util.concatPath([path, "common.js"]);
+		let url = Util.concatPath([path, specName + ".js"]);
 		let spec;
 		let specCommon;
 		let specMerged;
@@ -91,7 +87,7 @@ export default class LoadeMixin
 				{
 					throw new SyntaxError(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
 				}
-				specMerged = this.__deepMerge(specCommon, spec);
+				specMerged = Util.deepMerge(specCommon, spec);
 
 				resolve(specMerged);
 			});
@@ -112,17 +108,7 @@ export default class LoadeMixin
 	static loadTemplate(templateName, path)
 	{
 
-		let basePath = (path ? path + "/" : "");
-		let url = basePath + templateName + ".html";
-
-		console.debug(`LoaderMixin.loadTemplate(): Loading template. templateName=${templateName}, path=${path}`);
-
-		return new Promise((resolve, reject) => {
-			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`LoaderMixin.loadTemplate(): Loaded template. templateName=${templateName}`);
-				resolve(xhr.responseText);
-			});
-		});
+		return this.__autoLoadTemplate(templateName, path);
 
 	}
 
@@ -142,11 +128,13 @@ export default class LoadeMixin
 
 		let ret = true;
 
+		/*
 		// Check existence from cache
-		if (Globals["classes"][className])
+		if (Globals["classes"][className] && Globals["classes"][className]["status"] == "loaded")
 		{
 			return ret;
 		}
+		*/
 
 		try
 		{
@@ -159,9 +147,6 @@ export default class LoadeMixin
 					ret = false;
 				}
 			});
-
-			// Cache existence of the class
-			Globals["classes"][className] = true;
 		}
 		catch(e)
 		{
@@ -189,24 +174,37 @@ export default class LoadeMixin
 
 		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}`);
 
-		return new Promise((resolve, reject) => {
-			if (this.__isLoadedClass(className))
-			{
-				console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`, );
-				resolve();
-			}
-			else
-			{
-				if (options && "path" in options)
-				{
-					path = path + options["path"];
-				}
+		let promise;
 
+		if (!Globals["classes"][className])
+		{
+			Globals["classes"][className] = {};
+		}
+
+		if (this.__isLoadedClass(className))
+		{
+			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`, );
+			promise = Promise.resolve();
+		}
+		else if (Globals["classes"][className]["status"] == "loading")
+		{
+			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already loading. className=${className}`, );
+			promise = Globals["classes"][className]["promise"];
+		}
+		else
+		{
+			Globals["classes"][className]["status"] = "loading";
+			promise = new Promise ((resolve, reject) => {
 				this.__loadComponentScript(className, path, settings).then(() => {
+					Globals["classes"][className]["status"] = "loaded";
 					resolve();
 				});
-			}
-		});
+			});
+		}
+
+		Globals["classes"][className]["promise"] = promise;
+
+		return promise;
 
 	}
 
@@ -221,7 +219,8 @@ export default class LoadeMixin
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __loadComponentScript(componentName, path, settings) {
+	static __loadComponentScript(componentName, path, settings)
+	{
 
 		console.debug(`LoaderMixin.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
 
@@ -299,11 +298,10 @@ export default class LoadeMixin
 			}
 			else
 			{
-				let base = this.getSetting("system.appBaseUrl", "") + this.getSetting("system.templatePath", "/components/");
-				let path = this.settings.get("path", "");
-
 				promise = new Promise((resolve, reject) => {
-					this.loadTemplate(templateInfo["name"], base + path).then((template) => {
+					let url = Util.concatPath([path, templateInfo["name"] + ".html"]);
+
+					this.__loadTemplateFile(url).then((template) => {
 						templateInfo["html"] = template;
 						resolve();
 					});
@@ -318,6 +316,29 @@ export default class LoadeMixin
 			}).then(() => {
 				templateInfo["isLoaded"] = true;
 				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the template html.
+	 *
+	 * @param	{String}		url					Template url.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static __loadTemplateFile(url)
+	{
+
+		console.debug(`LoaderMixin.loadTemplate(): Loading template. url=${url}`);
+
+		return new Promise((resolve, reject) => {
+			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+				console.debug(`LoaderMixin.loadTemplate(): Loaded template. url=${url}`);
+				resolve(xhr.responseText);
 			});
 		});
 
@@ -350,33 +371,5 @@ export default class LoadeMixin
 
 	}
 	*/
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Deep merge.
-	 *
-	 * @param	{Object}		arr1					Array1.
-	 * @param	{Object}		arr2					Array2.
-	 *
-	 * @return  {Object}		Merged array.
-	 */
-	static __deepMerge(arr1, arr2)
-	{
-
-		Object.keys(arr2).forEach((key) => {
-			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
-			{
-				this.__deepMerge(arr1[key], arr2[key]);
-			}
-			else
-			{
-				arr1[key] = arr2[key];
-			}
-		});
-
-		return arr1;
-
-	}
 
 }
