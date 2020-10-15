@@ -112,7 +112,7 @@ export default class ClassUtil
 		}
 
 		// Cache existence of the class
-		Globals["classes"][className] = true;
+		//Globals["classes"][className] = true;
 
 		return ret;
 
