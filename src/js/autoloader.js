@@ -12,6 +12,7 @@ import AjaxUtil from './util/ajax-util';
 import ClassUtil from './util/class-util';
 import Component from './component';
 import Globals from './globals';
+import Util from './util/util';
 
 // =============================================================================
 //	Auto loader class
@@ -64,7 +65,10 @@ AutoLoader.prototype.loadAll = function()
 		{
 			let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
 			let path = element.getAttribute("data-path");
-			this._settings.items["components"][className] = {"path":path};
+			path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), path]);
+			let options;
+			let splitComponent = this.getSetting("system.splitComponent", false);
+			this.loadComponent(className, options, path, {"splitComponent":splitComponent});
 		}
 	});
 
