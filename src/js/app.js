@@ -14,6 +14,7 @@ import Component from './component';
 import Globals from './globals';
 import Router from './plugin/router';
 import Store from './plugin/store';
+import Util from './util/util';
 
 // =============================================================================
 //	App class
@@ -87,7 +88,7 @@ App.prototype.run = function()
 	if (specName)
 	{
 		promise = new Promise((resolve, reject) => {
-			let path = this._settings.get("system.appBaseUrl", "") + this._settings.get("system.specPath", "/specs/");
+			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.specPath", "")]);
 			this.loadSpec(specName, path).then((spec) => {
 				this._spec = spec;
 

@@ -13,6 +13,7 @@ import EventMixin from './mixin/event-mixin';
 import Globals from './globals';
 import LoaderMixin from './mixin/loader-mixin';
 import Store from './plugin/store';
+import Util from './util/util';
 import WaitforMixin from './mixin/waitfor-mixin';
 
 // =============================================================================
@@ -504,7 +505,10 @@ Component.prototype.switchTemplate = function(templateName)
 
 		console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
 
-		this.__autoLoadTemplate(templateInfo).then(() => {
+		Promise.resolve().then(() => {
+			let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.templatePath", ""), this._settings.get("path", "")]);
+			return this.loadTemplate(templateInfo, path);
+		}).then(() => {
 			return this.__applyTemplate(this.settings.get("rootNode"), templateName, this.settings.get("templateNode"));
 		}).then(() => {
 			return this.__initOnAppendTemplate();
@@ -544,8 +548,9 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
-					let path = this.getSetting("system.appBaseUrl", "") + this.getSetting("system.componentPath", "/components/");
-					this.createComponent(componentName, options, path, this.getSetting("system")).then((component) => {
+					let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), ( "path" in options ? "/" + options["path"] : "")]);
+					let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : this.getSetting("system.splitComponent", false));
+					this.createComponent(componentName, options, path, {"splitComponent":splitComponent}).then((component) => {
 						component._parent = this;
 						this._components[componentName] = component;
 						resolve();
