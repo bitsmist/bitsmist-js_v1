@@ -313,6 +313,7 @@ Component.prototype.open = function(options)
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
+		this.registerComponent(this, "opening");
 		Promise.resolve().then(() => {
 			return this.switchTemplate(this.settings.get("templateName"));
 		}).then(() => {
@@ -331,7 +332,7 @@ Component.prototype.open = function(options)
 			return this.trigger("open", sender, {"options":options});
 		}).then(() => {
 			console.debug(`Component.open(): Opened component. name=${this.name}`);
-			this.registerComponent(this);
+			this.registerComponent(this, "opened");
 			this._isOpen = true;
 			resolve();
 		});
@@ -384,6 +385,7 @@ Component.prototype.close = function(options)
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
+		this.registerComponent(this, "closing");
 		Promise.resolve().then(() => {
 			return this.trigger("beforeClose", sender);
 		}).then(() => {
@@ -395,6 +397,7 @@ Component.prototype.close = function(options)
 				this._modalPromise.resolve(this._modalResult);
 			}
 			this._isOpen = false;
+			this.registerComponent(this, "closed");
 			resolve();
 		});
 	});
@@ -513,7 +516,10 @@ Component.prototype.switchTemplate = function(templateName)
 		}).then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {
-			return this.waitFor(this.settings.get("waitFor"));
+			if (this.settings.get("waitFor"))
+			{
+				return this.waitFor(this.settings.get("waitFor"));
+			}
 		}).then(() => {
 			return this.trigger("append", this);
 		}).then(() => {
