@@ -554,7 +554,7 @@ Component.prototype.addComponent = function(componentName, options)
 			if (!this._components[componentName])
 			{
 				return new Promise((resolve, reject) => {
-					let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), ( "path" in options ? "/" + options["path"] : "")]);
+					let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
 					let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : this.getSetting("system.splitComponent", false));
 					this.createComponent(componentName, options, path, {"splitComponent":splitComponent}).then((component) => {
 						component._parent = this;
