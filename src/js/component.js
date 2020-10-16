@@ -514,7 +514,9 @@ Component.prototype.switchTemplate = function(templateName)
 		}).then(() => {
 			return this.__applyTemplate(this.settings.get("rootNode"), templateName, this.settings.get("templateNode"));
 		}).then(() => {
-			this.loadTags(this._element);
+			let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", "")]);
+			let splitComponent = this.getSetting("system.splitComponent", false);
+			this.loadTags(this._element, path, {"splitComponent":splitComponent});
 		}).then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {

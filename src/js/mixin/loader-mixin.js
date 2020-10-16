@@ -56,16 +56,15 @@ export default class LoadeMixin
 	 * Load the template html.
 	 *
 	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Component options.
 	 * @param	{String}		path				Path to component.
 	 * @param	{Object}		settings			System settings.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadComponent(componentName, options, path, settings)
+	static loadComponent(componentName, path, settings)
 	{
 
-		return this.__autoloadComponent(componentName, options, path, settings);
+		return this.__autoloadComponent(componentName, null, path, settings);
 
 	}
 
@@ -120,8 +119,9 @@ export default class LoadeMixin
 	 * Load scripts for tags which has data-autoload attribute.
 	 *
 	 * @param	{HTMLElement}	rootNode			Target node.
+	 * @param	{String}		path				Base path prepend to each element's path.
 	 */
-	static loadTags(rootNode)
+	static loadTags(rootNode, basePath, settings)
 	{
 
 		rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
@@ -134,10 +134,9 @@ export default class LoadeMixin
 			{
 				let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
 				let path = element.getAttribute("data-path");
-				path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), path]);
-				let options;
-				let splitComponent = this.getSetting("system.splitComponent", false);
-				this.loadComponent(className, options, path, {"splitComponent":splitComponent});
+				path = Util.concatPath([basePath, path]);
+				settings["splitComponent"] = ( element.getAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+				this.loadComponent(className, path, settings);
 			}
 		});
 

@@ -59,7 +59,9 @@ TagLoader.prototype.onDOMContentLoaded = function()
 			return this.waitFor([{"name":"App", "status":"opened"}]);
 		}
 	}).then(() => {
-		this.loadTags(document);
+		let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", "")]);
+		let splitComponent = this.getSetting("system.splitComponent", false);
+		this.loadTags(document, path, {"splitComponent":splitComponent});
 	});
 
 }
