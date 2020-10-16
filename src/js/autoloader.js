@@ -59,7 +59,7 @@ AutoLoader.prototype.onDOMContentLoaded = function()
 			return this.waitFor([{"name":"App", "status":"opened"}]);
 		}
 	}).then(() => {
-		this.loadAll();
+		this.loadComponents(document);
 	});
 
 }
@@ -71,12 +71,12 @@ AutoLoader.prototype.onDOMContentLoaded = function()
 /**
  * Load scripts.
  *
- * @param	{Object}		settings			Options for the component.
+ * @param	{HTMLElement}	rootNode			Target node.
  */
-AutoLoader.prototype.loadAll = function()
+AutoLoader.prototype.loadComponents = function(rootNode)
 {
 
-	document.querySelectorAll("[data-autoload]").forEach((element) => {
+	rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
 		if (element.getAttribute("href"))
 		{
 			let url = element.getAttribute("href");
