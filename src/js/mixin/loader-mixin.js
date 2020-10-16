@@ -191,7 +191,7 @@ export default class LoadeMixin
 	static __autoloadComponent(className, options, path, settings)
 	{
 
-		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}`);
+		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
 
 		let promise;
 
