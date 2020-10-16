@@ -157,19 +157,19 @@ export default class WaitforMixin
 		}
 
 		// check name
-		if (waitInfo["componentName"] && componentInfo["component"].name != waitInfo["componentName"])
+		if (waitInfo["name"] && componentInfo["component"].name != waitInfo["name"])
 		{
 			isMatch = false;
 		}
 
 		// check id
-		if (waitInfo["componentId"] && componentInfo["component"].uniqueId != waitInfo["componentId"])
+		if (waitInfo["id"] && componentInfo["component"].uniqueId != waitInfo["id"])
 		{
 			isMatch = false;
 		}
 
 		// check status
-		if (waitInfo["componentStatus"] && componentInfo["status"] != waitInfo["componentStatus"])
+		if (waitInfo["status"] && componentInfo["status"] != waitInfo["status"])
 		{
 			isMatch = false;
 		}

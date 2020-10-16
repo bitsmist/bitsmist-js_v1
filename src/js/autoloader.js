@@ -56,7 +56,7 @@ AutoLoader.prototype.onDOMContentLoaded = function()
 	Promise.resolve().then(() => {
 		if (this.app != this)
 		{
-			return this.waitFor([{"componentName":"App", "componentStatus":"opened"}]);
+			return this.waitFor([{"name":"App", "status":"opened"}]);
 		}
 	}).then(() => {
 		this.loadAll();
