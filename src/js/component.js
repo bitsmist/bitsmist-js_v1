@@ -514,6 +514,8 @@ Component.prototype.switchTemplate = function(templateName)
 		}).then(() => {
 			return this.__applyTemplate(this.settings.get("rootNode"), templateName, this.settings.get("templateNode"));
 		}).then(() => {
+			this.loadTags(this._element);
+		}).then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {
 			if (this.settings.get("waitFor"))
