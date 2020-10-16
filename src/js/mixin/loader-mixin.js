@@ -114,6 +114,35 @@ export default class LoadeMixin
 
 	}
 
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Load scripts for tags which has data-autoload attribute.
+	 *
+	 * @param	{HTMLElement}	rootNode			Target node.
+	 */
+	static loadTags(rootNode)
+	{
+
+		rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
+			if (element.getAttribute("href"))
+			{
+				let url = element.getAttribute("href");
+				return AjaxUtil.loadScript(url);
+			}
+			else
+			{
+				let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
+				let path = element.getAttribute("data-path");
+				path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), path]);
+				let options;
+				let splitComponent = this.getSetting("system.splitComponent", false);
+				this.loadComponent(className, options, path, {"splitComponent":splitComponent});
+			}
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -365,6 +394,25 @@ export default class LoadeMixin
 				resolve(xhr.responseText);
 			});
 		});
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Get a class name from tag name.
+	 *
+	 * @param	{String}		tagName				Tag name.
+	 *
+	 * @return  {String}		Class name.
+	 */
+	static __getDefaultClassName(tagName)
+	{
+
+		let tag = tagName.split("-");
+		let className = tag[0].charAt(0).toUpperCase() + tag[0].slice(1).toLowerCase() + tag[1].charAt(0).toUpperCase() + tag[1].slice(1).toLowerCase();
+
+		return className;
 
 	}
 

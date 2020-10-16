@@ -1,8 +1,8 @@
 window.BITSMIST = window.BITSMIST || {};
 window.BITSMIST.v1 = window.BITSMIST.v1 || {};
 
-// Auto loader
-import AutoLoader from './autoloader';
+// Tag loader
+import TagLoader from './tagloader';
 
 // App
 import App from './app';
