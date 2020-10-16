@@ -25,13 +25,15 @@ export default class WaitforMixin
 	 * Wait for components to be loaded.
 	 *
 	 * @param	{Array}			waitlist			Components to wait.
+	 * @param	{integer}		timeout				Timeout in milliseconds.
 	 *
 	 * @return  {Array}			Promises.
 	 */
-	static waitFor(waitlist)
+	static waitFor(waitlist, timeout)
 	{
 
 		let promise;
+		timeout = ( timeout ? timeout : 10000 );
 
 		if (!waitlist || this.__isAllReady(waitlist))
 		{
@@ -44,6 +46,19 @@ export default class WaitforMixin
 			promise = new Promise((resolve, reject) => {
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
+				setTimeout(() => {
+					let debugInfo = "";
+					for (let i = 0; i < waitlist.length; i++)
+					{
+						debugInfo += (waitlist[i]["name"] ? waitlist[i]["name"] + "-" : "");
+						debugInfo += (waitlist[i]["id"] ? waitlist[i]["id"] + "-" : "");
+						debugInfo += (waitlist[i]["component"] ? waitlist[i]["component"]["name"] + "-" : "");
+						debugInfo += (waitlist[i]["status"] ? waitlist[i]["status"] + "-" : "");
+						debugInfo = debugInfo.slice(0, -1) + ",";
+					}
+					debugInfo = debugInfo.slice(0, -1);
+					reject(`${this.name}.waitFor() timed out after ${timeout} milliseconds waiting for ${debugInfo}.`);
+				}, timeout);
 			});
 			waitInfo["promise"] = promise;
 
