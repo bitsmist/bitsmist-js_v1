@@ -155,6 +155,11 @@ export default class LoadeMixin
 		}
 		*/
 
+		if (Globals["classes"][className]["status"] == "loaded")
+		{
+			return ret;
+		}
+
 		try
 		{
 			let c = window;
