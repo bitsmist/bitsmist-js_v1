@@ -53,7 +53,14 @@ customElements.define("bm-autoloader", AutoLoader);
 AutoLoader.prototype.onDOMContentLoaded = function()
 {
 
-	this.loadAll();
+	Promise.resolve().then(() => {
+		if (this.app != this)
+		{
+			return this.waitFor([{"componentName":"App", "componentStatus":"opened"}]);
+		}
+	}).then(() => {
+		this.loadAll();
+	});
 
 }
 
