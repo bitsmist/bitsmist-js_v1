@@ -59,58 +59,7 @@ export default function Component(settings)
 	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":settings["preferences"]});
 	_this._store = new Store(_this);
 
-	// Init settings
-	_this._settings.set("templateName", _this._settings.get("templateName", _this.name));
-	_this._settings.set("components", _this._settings.get("components", {}));
-	_this._settings.set("plugins", _this._settings.get("plugins", {}));
-	_this._settings.set("events", _this._settings.get("events", {}));
-	_this._settings.set("services", _this._settings.get("services", {}));
-	_this._settings.set("elements", _this._settings.get("elements", {}));
-	_this.__applySettingsFromAttribute();
-	_this._settings.set("name", _this._settings.get("name", _this.constructor.name));
-
-	// Init templates
-	let templates = _this._settings.get("templates");
-	if (templates)
-	{
-		Object.keys(templates).forEach((templateName) => {
-			let templateInfo = _this.__getTemplateInfo(templateName);
-			templateInfo["html"] = templates[templateName];
-		});
-	}
-
-	// Init shadow
-	if (_this._settings.get("shadowMode"))
-	{
-		_this._shadowRoot = _this.attachShadow({"mode":_this._settings.get("shadowMode")});
-		_this._element = _this._shadowRoot;
-	}
-
-	// Init plugins
-	let plugins = _this.settings.items["plugins"];
-	Object.keys(plugins).forEach((pluginName) => {
-		_this.addPlugin(pluginName, plugins[pluginName]);
-	});
-
-	// Init services
-	let services = _this.settings.items["services"];
-	Object.keys(services).forEach((serviceName) => {
-		Object.keys(services[serviceName]["events"]).forEach((eventName) => {
-			let feature = services[serviceName]["events"][eventName]["handler"];
-			let args = services[serviceName]["events"][eventName]["args"];
-			let service = _this.services[serviceName];
-			let func = function(){
-				service[feature].apply(service, args);
-			};
-			_this.addEventHandler(_this, eventName, func);
-		});
-	});
-
-	// Init event handlers
-	let events = _this.settings.items["events"];
-	Object.keys(events).forEach((eventName) => {
-		_this.addEventHandler(_this, eventName, events[eventName]);
-	});
+	_this._init();
 
 	_this.trigger("initComponent", _this);
 
@@ -738,6 +687,69 @@ Component.prototype._dupElement = function(templateName)
 	ele.innerHTML = this._templates[templateName].html;
 
 	return ele.firstElementChild;
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Init.
+ */
+Component.prototype._init = function()
+{
+
+	// Init settings
+	this._settings.set("templateName", this._settings.get("templateName", this.name));
+	this._settings.set("components", this._settings.get("components", {}));
+	this._settings.set("plugins", this._settings.get("plugins", {}));
+	this._settings.set("events", this._settings.get("events", {}));
+	this._settings.set("services", this._settings.get("services", {}));
+	this._settings.set("elements", this._settings.get("elements", {}));
+	this.__applySettingsFromAttribute();
+	this._settings.set("name", this._settings.get("name", this.constructor.name));
+
+	// Init templates
+	let templates = this._settings.get("templates");
+	if (templates)
+	{
+		Object.keys(templates).forEach((templateName) => {
+			let templateInfo = this.__getTemplateInfo(templateName);
+			templateInfo["html"] = templates[templateName];
+		});
+	}
+
+	// Init shadow
+	if (this._settings.get("shadowMode"))
+	{
+		this._shadowRoot = this.attachShadow({"mode":this._settings.get("shadowMode")});
+		this._element = this._shadowRoot;
+	}
+
+	// Init plugins
+	let plugins = this._settings.items["plugins"];
+	Object.keys(plugins).forEach((pluginName) => {
+		this.addPlugin(pluginName, plugins[pluginName]);
+	});
+
+	// Init services
+	let services = this._settings.items["services"];
+	Object.keys(services).forEach((serviceName) => {
+		Object.keys(services[serviceName]["events"]).forEach((eventName) => {
+			let feature = services[serviceName]["events"][eventName]["handler"];
+			let args = services[serviceName]["events"][eventName]["args"];
+			let service = this.services[serviceName];
+			let func = function(){
+				service[feature].apply(service, args);
+			};
+			this.addEventHandler(this, eventName, func);
+		});
+	});
+
+	// Init event handlers
+	let events = this._settings.items["events"];
+	Object.keys(events).forEach((eventName) => {
+		this.addEventHandler(this, eventName, events[eventName]);
+	});
 
 }
 
