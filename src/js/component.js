@@ -625,12 +625,52 @@ Component.prototype.clone = function(templateName)
 Component.prototype.connectedCallback = function()
 {
 
-	this.__applySettingsFromAttribute();
-
-	if (this._settings.get("autoOpen"))
-	{
-		this.open();
-	}
+	Promise.resolve().then(() => {
+		// Load settings
+		if (this._element.getAttribute("data-settingsname") || this._element.getAttribute("data-settingspath"))
+		{
+			let settingsName = ( this._element.getAttribute("data-settingsname") ? this._element.getAttribute("data-settingsname") : "settings" );
+			let settingsPath = ( this._element.getAttribute("data-settingspath") ? this._element.getAttribute("data-settingspath") : "" );
+			return this.loadSettings(settingsName, settingsPath);
+		}
+	}).then((newSettings) => {
+		if (newSettings)
+		{
+			this._init(newSettings);
+			this._settings.merge(newSettings);
+		}
+	}).then(() => {
+		// Load spec
+		if (this._element.getAttribute("data-specname") || this._element.getAttribute("data-specpath"))
+		{
+			let specName = ( this._element.getAttribute("data-specname") ? this._element.getAttribute("data-specname") : "spec" );
+			let specPath = ( this._element.getAttribute("data-specpath") ? this._element.getAttribute("data-specpath") : "" );
+			return this.loadSpec(specName, specPath);
+		}
+	}).then((newSpec) => {
+		if (newSpec)
+		{
+			this._init(newSpec);
+			this._settings.merge(newSpec);
+		}
+	}).then(() => {
+		// Get settings from attributes
+		let attrSettings = this.__getSettingsFromAttribute();
+		if (attrSettings)
+		{
+			this._init(attrSettings);
+			this._settings.merge(attrSettings);
+		}
+	}).then(() => {
+		// Trigger an event
+		return this.trigger("connected", this);
+	}).then(() => {
+		// Open
+		if (this._settings.get("autoOpen"))
+		{
+			this.open();
+		}
+	});
 
 }
 
@@ -904,9 +944,9 @@ Component.prototype.__applyTemplate = function(rootNode, templateName, templateN
 // -----------------------------------------------------------------------------
 
 /**
- * Apply settings from element's attribute.
+ * Get settings from element's attribute.
  */
-Component.prototype.__applySettingsFromAttribute = function()
+Component.prototype.__getSettingsFromAttribute = function()
 {
 
 	// Get options from the attribute
