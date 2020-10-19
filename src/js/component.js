@@ -511,28 +511,24 @@ Component.prototype.addComponent = function(componentName, options)
 {
 
 	return new Promise((resolve, reject) => {
-		options = Object.assign({}, options);
+		let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
+		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : this.getSetting("system.splitComponent", false) );
+		let className = ( "className" in options ? options["className"] : componentName );
 
 		Promise.resolve().then(() => {
-			// Create component
-			if (!this._components[componentName])
-			{
-				return new Promise((resolve, reject) => {
-					let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
-					let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : this.getSetting("system.splitComponent", false));
-					this.createComponent(componentName, options, path, {"splitComponent":splitComponent}).then((component) => {
-						component._parent = this;
-						this._components[componentName] = component;
-						resolve();
-					});
-				});
-			}
+			// Load component
+			return this.loadComponent(className, path, {"splitComponent":splitComponent});
 		}).then(() => {
-			// Open
-			let component = this._components[componentName];
-			if (component.settings.get("autoOpen"))
+			// Insert tag
+			if (options["rootNode"] && !this._components[componentName])
 			{
-				return component.open();
+				let root = document.querySelector(options["rootNode"]);
+				if (!root)
+				{
+					throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${this.name}`);
+				}
+				root.insertAdjacentHTML("afterbegin", options["tag"]);
+				this._components[componentName] = root.children[0];
 			}
 		}).then(() => {
 			resolve();
