@@ -71,6 +71,39 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Load settings file.
+	 *
+	 * @param	{String}		settingName			Setting name.
+	 * @param	{String}		path				Path to setting file.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadSettings(settingName, path)
+	{
+
+		return new Promise((resolve, reject) => {
+			let url = Util.concatPath([path, settingName + ".js"]);
+			let settings;
+
+			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+				console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}`);
+				try
+				{
+					settings = JSON.parse(xhr.responseText);
+				}
+				catch(e)
+				{
+					throw new SyntaxError(`Illegal json string. url=${url}`);
+				}
+				resolve(settings);
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Load the spec file for this page.
 	 *
 	 * @param	{String}		specName			Spec name.
@@ -81,33 +114,36 @@ export default class LoadeMixin
 	static loadSpec(specName, path)
 	{
 
-		let urlCommon = Util.concatPath([path, "common.js"]);
+//		let urlCommon = Util.concatPath([path, "common.js"]);
 		let url = Util.concatPath([path, specName + ".js"]);
 		let spec;
-		let specCommon;
+//		let specCommon;
 		let specMerged;
 
 		return new Promise((resolve, reject) => {
 			let promises = [];
 
 			// Load specs
-			promises.push(this.__loadSpecFile(urlCommon, "{}"));
+//			promises.push(this.__loadSpecFile(urlCommon, "{}"));
 			promises.push(this.__loadSpecFile(url));
 
 			Promise.all(promises).then((result) => {
 				// Convert to json
 				try
 				{
-					specCommon = JSON.parse(result[0]);
-					spec = JSON.parse(result[1]);
+//					specCommon = JSON.parse(result[0]);
+//					spec = JSON.parse(result[1]);
+					spec = JSON.parse(result[0]);
 				}
 				catch(e)
 				{
-					throw new SyntaxError(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
+					//throw new SyntaxError(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
+					throw new SyntaxError(`Illegal json string. url=${url}`);
 				}
-				specMerged = Util.deepMerge(specCommon, spec);
+//				specMerged = Util.deepMerge(specCommon, spec);
 
-				resolve(specMerged);
+				//resolve(specMerged);
+				resolve(spec);
 			});
 		});
 
@@ -133,7 +169,7 @@ export default class LoadeMixin
 			else
 			{
 				let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
-				let path = element.getAttribute("data-path");
+				let path = element.getAttribute("data-classpath");
 				path = Util.concatPath([basePath, path]);
 				settings["splitComponent"] = ( element.getAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
 				this.loadComponent(className, path, settings);
