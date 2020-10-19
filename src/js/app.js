@@ -55,14 +55,8 @@ export default function App(settings)
 	// Init error listeners
 	_this.__initErrorListeners();
 
-	// Trigger events
-	Promise.resolve().then(() => {
-		return _this.preferences.load();
-	}).then((preferences) => {
-		return _this.preferences.merge(preferences);
-	}).then(() => {
-		return _this.trigger("initApp", _this, {"settings":_this.settings.items, "preferences":_this.preferences.items});
-	});
+	// Init when connected
+	_this.addEventHandler(_this, "connected", _this.onConnected);
 
 	return _this;
 
@@ -70,6 +64,23 @@ export default function App(settings)
 
 ClassUtil.inherit(App, Component);
 customElements.define("bm-app", App);
+
+// -----------------------------------------------------------------------------
+//  Callbacks
+// -----------------------------------------------------------------------------
+
+/**
+ * Connected event handler.
+ *
+ * @param	{Object}		sender				Sender.
+ * @param	{Object}		e					Event info.
+ */
+App.prototype.onConnected = function(sender, e)
+{
+
+	this.run();
+
+}
 
 // -----------------------------------------------------------------------------
 //  Methods
@@ -81,37 +92,16 @@ customElements.define("bm-app", App);
 App.prototype.run = function()
 {
 
-	let promise;
-
-	// Load spec
-	let specName = this.router.routeInfo["specName"];
-	if (specName)
-	{
-		promise = new Promise((resolve, reject) => {
-			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.specPath", "")]);
-			this.loadSpec(specName, path).then((spec) => {
-				this._spec = spec;
-
-				// Add new routes
-				for(let i = 0; i < spec["routes"].length; i++)
-				{
-					this.router.addRoute(spec["routes"][i]);
-				}
-
-				// Components
-				Object.keys(spec["components"]).forEach((key) => {
-					this.settings.items["components"][key] = spec["components"][key];
-				});
-
-				resolve();
-			});
-		});
-	}
-
-	// Open app
-	Promise.all([promise]).then(() => {
+	Promise.resolve().then(() => {
+		// Load spec
+		return this.__initSpec();
+	}).then(() => {
 		return this.trigger("specLoad", this, {"spec":this._spec});
 	}).then(() => {
+		// Load preference
+		return this.__initPreference();
+	}).then(() => {
+		// Open app
 		return this.open();
 	});
 
@@ -150,6 +140,63 @@ App.prototype.setup = function(options)
 
 // -----------------------------------------------------------------------------
 //  Privates
+// -----------------------------------------------------------------------------
+
+App.prototype.__initSpec = function()
+{
+
+	// Load spec
+	return new Promise((resolve, reject) => {
+		let specName = this.router.routeInfo["specName"];
+		if (specName)
+		{
+			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.specPath", "")]);
+
+			this.loadSpec(specName, path).then((spec) => {
+				this._spec = spec;
+
+				// Add new routes
+				for(let i = 0; i < spec["routes"].length; i++)
+				{
+					this.router.addRoute(spec["routes"][i]);
+				}
+
+				// Components
+				Object.keys(spec["components"]).forEach((key) => {
+					this.settings.items["components"][key] = spec["components"][key];
+				});
+
+				resolve();
+			});
+		}
+		else
+		{
+			resolve();
+		}
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Init error handling listeners.
+ */
+App.prototype.__initPreference = function()
+{
+
+	return new Promise((resolve, reject) => {
+		Promise.resolve().then(() => {
+			return this.preferences.load();
+		}).then((preferences) => {
+			return this.preferences.merge(preferences);
+		}).then(() => {
+			resolve();
+		});
+	});
+
+}
+
 // -----------------------------------------------------------------------------
 
 /**
