@@ -27,7 +27,7 @@ import WaitforMixin from './mixin/waitfor-mixin';
 /**
  * Constructor.
  *
- * @param	{Object}		options				Options for the component.
+ * @param	{Object}		settings			Settings.
  */
 export default function Component(settings)
 {
@@ -52,14 +52,25 @@ export default function Component(settings)
 
 	// Init stores
 	let defaults = {
+		"autoOpen": true,
 		"autoSetup":true
 	};
 	settings = Object.assign({}, defaults, settings, _this._getSettings());
 	_this._settings = new Store(_this, {"items":settings});
-	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":settings["preferences"]});
+	let preferences = Object.assign({}, settings["preferences"]);
+	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":preferences});
 	_this._store = new Store(_this);
 
-	_this._init();
+	// Init settings
+	_this._settings.set("name", _this._settings.get("name", _this.constructor.name));
+	_this._settings.set("templateName", _this._settings.get("templateName", _this.name));
+	_this._settings.set("components", _this._settings.get("components", {}));
+	_this._settings.set("plugins", _this._settings.get("plugins", {}));
+	_this._settings.set("events", _this._settings.get("events", {}));
+	_this._settings.set("services", _this._settings.get("services", {}));
+	_this._settings.set("elements", _this._settings.get("elements", {}));
+
+	_this._init(_this.settings.items);
 
 	_this.trigger("initComponent", _this);
 
@@ -620,7 +631,10 @@ Component.prototype.connectedCallback = function()
 
 	this.__applySettingsFromAttribute();
 
-	this.open();
+	if (this._settings.get("autoOpen"))
+	{
+		this.open();
+	}
 
 }
 
@@ -694,22 +708,14 @@ Component.prototype._dupElement = function(templateName)
 
 /**
  * Init.
+ *
+ * @param	{Object}		settings			Settings.
  */
-Component.prototype._init = function()
+Component.prototype._init = function(settings)
 {
 
-	// Init settings
-	this._settings.set("templateName", this._settings.get("templateName", this.name));
-	this._settings.set("components", this._settings.get("components", {}));
-	this._settings.set("plugins", this._settings.get("plugins", {}));
-	this._settings.set("events", this._settings.get("events", {}));
-	this._settings.set("services", this._settings.get("services", {}));
-	this._settings.set("elements", this._settings.get("elements", {}));
-	this.__applySettingsFromAttribute();
-	this._settings.set("name", this._settings.get("name", this.constructor.name));
-
 	// Init templates
-	let templates = this._settings.get("templates");
+	let templates = settings["templates"];
 	if (templates)
 	{
 		Object.keys(templates).forEach((templateName) => {
@@ -719,37 +725,46 @@ Component.prototype._init = function()
 	}
 
 	// Init shadow
-	if (this._settings.get("shadowMode"))
+	if (settings["shadowMode"])
 	{
-		this._shadowRoot = this.attachShadow({"mode":this._settings.get("shadowMode")});
+		this._shadowRoot = this.attachShadow({"mode":settings["shadowMode"]});
 		this._element = this._shadowRoot;
 	}
 
 	// Init plugins
-	let plugins = this._settings.items["plugins"];
-	Object.keys(plugins).forEach((pluginName) => {
-		this.addPlugin(pluginName, plugins[pluginName]);
-	});
+	let plugins = settings["plugins"];
+	if (plugins)
+	{
+		Object.keys(plugins).forEach((pluginName) => {
+			this.addPlugin(pluginName, plugins[pluginName]);
+		});
+	}
 
 	// Init services
-	let services = this._settings.items["services"];
-	Object.keys(services).forEach((serviceName) => {
-		Object.keys(services[serviceName]["events"]).forEach((eventName) => {
-			let feature = services[serviceName]["events"][eventName]["handler"];
-			let args = services[serviceName]["events"][eventName]["args"];
-			let service = this.services[serviceName];
-			let func = function(){
-				service[feature].apply(service, args);
-			};
-			this.addEventHandler(this, eventName, func);
+	let services = settings["services"];
+	if (services)
+	{
+		Object.keys(services).forEach((serviceName) => {
+			Object.keys(services[serviceName]["events"]).forEach((eventName) => {
+				let feature = services[serviceName]["events"][eventName]["handler"];
+				let args = services[serviceName]["events"][eventName]["args"];
+				let service = this.services[serviceName];
+				let func = function(){
+					service[feature].apply(service, args);
+				};
+				this.addEventHandler(this, eventName, func);
+			});
 		});
-	});
+	}
 
 	// Init event handlers
-	let events = this._settings.items["events"];
-	Object.keys(events).forEach((eventName) => {
-		this.addEventHandler(this, eventName, events[eventName]);
-	});
+	let events = settings["events"];
+	if (events)
+	{
+		Object.keys(events).forEach((eventName) => {
+			this.addEventHandler(this, eventName, events[eventName]);
+		});
+	}
 
 }
 
