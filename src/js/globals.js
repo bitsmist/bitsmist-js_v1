@@ -1,6 +1,3 @@
-import Router from "./plugin/router";
-import Store from "./plugin/store";
-
 let Globals = (function(){
 	let globals = {};
 
