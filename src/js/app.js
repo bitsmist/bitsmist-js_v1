@@ -8,13 +8,9 @@
  */
 // =============================================================================
 
-import AjaxUtil from './util/ajax-util';
 import ClassUtil from './util/class-util';
 import Component from './component';
 import Globals from './globals';
-import Router from './plugin/router';
-import Store from './plugin/store';
-import Util from './util/util';
 
 // =============================================================================
 //	App class
@@ -39,19 +35,6 @@ export default function App(settings)
 	// Init variables
 	Globals["app"] = _this;
 
-	// Init default router only when no router plugin is installed
-	if (!_this.router)
-	{
-		_this._router = new Router(_this, _this.settings.get("router"));
-		Object.defineProperty(App.prototype, 'router', {
-			get()
-			{
-				return _this._router;
-			},
-			configurable: true
-		})
-	}
-
 	// Init error listeners
 	_this.__initErrorListeners();
 
@@ -66,7 +49,7 @@ ClassUtil.inherit(App, Component);
 customElements.define("bm-app", App);
 
 // -----------------------------------------------------------------------------
-//  Callbacks
+//	Event handlers
 // -----------------------------------------------------------------------------
 
 /**
@@ -93,11 +76,6 @@ App.prototype.run = function()
 {
 
 	Promise.resolve().then(() => {
-		// Load spec
-		return this.__initSpec();
-	}).then(() => {
-		return this.trigger("specLoad", this, {"spec":this._spec});
-	}).then(() => {
 		// Load preference
 		return this.__initPreference();
 	}).then(() => {
@@ -140,43 +118,6 @@ App.prototype.setup = function(options)
 
 // -----------------------------------------------------------------------------
 //  Privates
-// -----------------------------------------------------------------------------
-
-App.prototype.__initSpec = function()
-{
-
-	// Load spec
-	return new Promise((resolve, reject) => {
-		let specName = this.router.routeInfo["specName"];
-		if (specName)
-		{
-			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.specPath", "")]);
-
-			this.loadSpec(specName, path).then((spec) => {
-				this._spec = spec;
-
-				// Add new routes
-				for(let i = 0; i < spec["routes"].length; i++)
-				{
-					this.router.addRoute(spec["routes"][i]);
-				}
-
-				// Components
-				Object.keys(spec["components"]).forEach((key) => {
-					this.settings.items["components"][key] = spec["components"][key];
-				});
-
-				resolve();
-			});
-		}
-		else
-		{
-			resolve();
-		}
-	});
-
-}
-
 // -----------------------------------------------------------------------------
 
 /**

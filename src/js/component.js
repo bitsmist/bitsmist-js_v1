@@ -640,20 +640,6 @@ Component.prototype.connectedCallback = function()
 			this._settings.merge(newSettings);
 		}
 	}).then(() => {
-		// Load spec
-		if (this._element.getAttribute("data-specname") || this._element.getAttribute("data-specpath"))
-		{
-			let specName = ( this._element.getAttribute("data-specname") ? this._element.getAttribute("data-specname") : "spec" );
-			let specPath = ( this._element.getAttribute("data-specpath") ? this._element.getAttribute("data-specpath") : "" );
-			return this.loadSpec(specName, specPath);
-		}
-	}).then((newSpec) => {
-		if (newSpec)
-		{
-			this._init(newSpec);
-			this._settings.merge(newSpec);
-		}
-	}).then(() => {
 		// Get settings from attributes
 		let attrSettings = this.__getSettingsFromAttribute();
 		if (attrSettings)
