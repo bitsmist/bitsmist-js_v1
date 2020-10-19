@@ -12,6 +12,10 @@ window.BITSMIST.v1.App = App;
 import Component from './component';
 window.BITSMIST.v1.Component = Component;
 
+// Router
+import Router from './router';
+window.BITSMIST.v1.Router = Router;
+
 // Mixin
 import EventMixin from './mixin/event-mixin';
 import LoaderMixin from './mixin/loader-mixin';
@@ -19,10 +23,8 @@ import WaitforMixin from './mixin/waitfor-mixin';
 
 // Plugin
 import Plugin from './plugin/plugin';
-import Router from './plugin/router';
 import Store from './plugin/store';
 window.BITSMIST.v1.Plugin = Plugin;
-window.BITSMIST.v1.Router = Router;
 window.BITSMIST.v1.Store = Store;
 
 // Util
