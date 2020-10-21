@@ -57,7 +57,7 @@ export default class WaitforMixin
 						debugInfo = debugInfo.slice(0, -1) + ",";
 					}
 					debugInfo = debugInfo.slice(0, -1);
-					reject(`${this.name}.waitFor() timed out after ${timeout} milliseconds waiting for ${debugInfo}.`);
+					reject(`${this.name}.waitFor() timed out after ${timeout} milliseconds waiting for ${debugInfo}, name=${this.name}.`);
 				}, timeout);
 			});
 			waitInfo["promise"] = promise;
@@ -77,7 +77,9 @@ export default class WaitforMixin
 	 */
 	static clearWaitingList()
 	{
+
 		this.__waitingList.splice(0);
+
 	}
 
 	// -------------------------------------------------------------------------
