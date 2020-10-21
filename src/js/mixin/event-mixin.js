@@ -24,16 +24,23 @@ export default class EventMixin
 	 *
 	 * @param	{HTMLElement}	element					HTML element.
 	 * @param	{String}		eventName				Event name.
-	 * @param	{Object/String}	eventInfo				Event info.
+	 * @param	{Object/Function/String}	eventInfo	Event info.
 	 * @param	{Object}		options					Options passed to elements.
 	 * @param	{Object}		bindTo					Object which binds to handler.
 	 */
 	static addEventHandler(element, eventName, eventInfo, options, bindTo)
 	{
 
-		let handler = this.getEventHandler(eventInfo);
 		let order = (typeof eventInfo === "object" && eventInfo["order"] ? eventInfo["order"] : order);
 		let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
+
+		// Get handler
+		let handler = this.getEventHandler(eventInfo, bindTo);
+		if (typeof handler !== "function")
+		{
+			let pluginName = ( bindTo ? bindTo.name : "" );
+			throw TypeError(`Event handler is not a function. componentName=${this._bm_detail["component"].name}, pluginName=${pluginName}, eventName=${eventNae}`);
+		}
 
 		// Init holder object for a element
 		if (!element._bm_detail)
@@ -145,20 +152,39 @@ export default class EventMixin
 	/**
 	 * Get event handler from event info object.
 	 *
-	 * @param	{Object/String}	eventInfo				Event info.
+	 * @param	{Object/Function/String}	eventInfo	Event info.
+	 * @param	{Object}		bindTo					Object which binds to handler.
 	 */
-	static getEventHandler(eventInfo)
+	static getEventHandler(eventInfo, bindTo, eventName)
 	{
 
+		bindTo = bindTo || this;
 		let handler;
 
 		if ( typeof eventInfo === "object" )
 		{
-			handler = (typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo);
+			handler = eventInfo["handler"];
 		}
 		else
 		{
 			handler = eventInfo;
+		}
+
+		if ( typeof handler === "string" )
+		{
+			if (bindTo)
+			{
+				handler = bindTo[handler];
+			}
+			else
+			{
+				handler = this[handler];
+			}
+		}
+
+		if (handler)
+		{
+			handler = handler.bind(bindTo);
 		}
 
 		return handler;
@@ -181,47 +207,28 @@ export default class EventMixin
 	{
 
 		let promise = new Promise((resolve, reject) => {
-			let listeners = ( this._bm_detail && this._bm_detail["listeners"] ? this._bm_detail["listeners"][e.type] : undefined );
+			let listeners = ( this._bm_detail && this._bm_detail["listeners"] ? this._bm_detail["listeners"][e.type] : [] );
+			let sender = e.detail.sender || this;
 			let stopPropagation = false;
 			let chain = Promise.resolve();
 			let results = [];
 
-			if (listeners)
+			for (let i = 0; i < listeners.length; i++)
 			{
-				let component = this._bm_detail["component"];
+				// Options set on addEventHandler()
+				e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
 
-				for (let i = 0; i < listeners.length; i++)
-				{
-					// Get handler
-					let handler = (typeof listeners[i]["handler"] === "string" ? component[listeners[i]["handler"]] : listeners[i]["handler"] );
-
-					// Check handler
-					if (typeof handler !== "function")
+				// Execute handler
+				chain = chain.then((result) => {
+					if (result)
 					{
-						let pluginName = (listeners[i]["bind"] ? listeners[i]["bind"]._options["className"] : "");
-						throw TypeError(`Event handler is not a function. componentName=${component.name}, pluginName=${pluginName}, eventName=${e.type}`);
+						results.push(result);
 					}
 
-					// Execute handler
-					chain = chain.then((result) => {
-						if (result)
-						{
-							results.push(result);
-						}
+					return listeners[i]["handler"](sender, e);
+				});
 
-						e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
-						if (listeners[i]["bind"])
-						{
-							return handler.call(listeners[i]["bind"], this, e);
-						}
-						else
-						{
-							return handler.call(component, this, e);
-						}
-					});
-
-					stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
-				}
+				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
 			}
 
 			if (stopPropagation)
