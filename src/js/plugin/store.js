@@ -56,7 +56,23 @@ export default class Store extends Plugin
 
 		super.init(component, options);
 
+		this._chain;
 		this._items = this.getOption("items", {});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Chain another store.
+     *
+	 * @param	{Object}		component			Component to attach.
+	 * @param	{Object}		options				Plugin options.
+     */
+	chain(store)
+	{
+
+		this._chain = store;
 
 	}
 
@@ -152,6 +168,7 @@ export default class Store extends Plugin
 
 	/**
 	* Get an value from store. Return default value when specified key is not available.
+	* If chained, chained store is also considiered.
 	*
 	* @param	{String}		key					Key to get.
 	* @param	{Object}		defaultValue		Value returned when key is not found.
@@ -161,7 +178,7 @@ export default class Store extends Plugin
 	get(key, defaultValue)
 	{
 
-		return Util.safeGet(this._items, key, defaultValue);
+		return this._getChainedItem(this._chain, this, key, defaultValue);
 
 	}
 
@@ -193,6 +210,55 @@ export default class Store extends Plugin
 	{
 
 		return Util.safeHas(this._items, key);
+
+	}
+
+	// -------------------------------------------------------------------------
+	// 	Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	* Get an value from store. Return default value when specified key is not available.
+	* Ignore chain.
+	*
+	* @param	{String}		key					Key to get.
+	* @param	{Object}		defaultValue		Value returned when key is not found.
+	*
+	* @return  {*}				Value.
+	*/
+	_getLocal(key, defaultValue)
+	{
+
+		return Util.safeGet(this._items, key, defaultValue);
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	* Get an value from stores. Return default value when specified key is not available.
+	* If both store1 and store2 has the key, store2 precedes store1.
+	*
+	* @param	{String}		key					Key to get.
+	* @param	{Object}		defaultValue		Value returned when key is not found.
+	*
+	* @return  {*}				Value.
+	*/
+	_getChainedItem(store1, store2, key, defaultValue)
+	{
+
+		let result = defaultValue;
+
+		if (store2 && store2.has(key))
+		{
+			result = store2._getLocal(key);
+		}
+		else if (store1 && store1.has(key))
+		{
+			result = store1.get(key);
+		}
+
+		return result;
 
 	}
 
