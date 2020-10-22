@@ -70,7 +70,7 @@ export default function Component(settings)
 	_this._settings.set("services", _this._settings.get("services", {}));
 	_this._settings.set("elements", _this._settings.get("elements", {}));
 
-	_this._init(_this.settings.items);
+	_this._init(_this._settings.items);
 
 	_this.trigger("initComponent", _this);
 
@@ -217,7 +217,7 @@ Object.defineProperty(Component.prototype, 'store', {
 Component.prototype.getSetting = function(key, defaultValue)
 {
 
-	return this._getStoreItem(this.app.settings, this.settings, key, defaultValue);
+	return this._getStoreItem(this.app.settings, this._settings, key, defaultValue);
 
 }
 
@@ -275,14 +275,14 @@ Component.prototype.open = function(options)
 
 		this.registerComponent(this, "opening");
 		Promise.resolve().then(() => {
-			return this.switchTemplate(this.settings.get("templateName"));
+			return this.switchTemplate(this._settings.get("templateName"));
 		}).then(() => {
-			if (this.settings.get("autoSetup"))
+			if (this._settings.get("autoSetup"))
 			{
 				return this.setup();
 			}
 		}).then(() => {
-			if (this.settings.get("autoRefresh"))
+			if (this._settings.get("autoRefresh"))
 			{
 				return this.refresh();
 			}
@@ -316,7 +316,7 @@ Component.prototype.openModal = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		this.settings.items = Object.assign(this.settings.items, options); //@@@fix
+		this._settings.items = Object.assign(this._settings.items, options); //@@@fix
 		this._isModal = true;
 		this._modalResult = {"result":false};
 		this._modalOptions = options;
@@ -383,7 +383,7 @@ Component.prototype.refresh = function(options)
 		Promise.resolve().then(() => {
 			return this.trigger("beforeRefresh", sender, {"options":options});
 		}).then(() => {
-			if (this.settings.get("autoFill"))
+			if (this._settings.get("autoFill"))
 			{
 				return this.fill(options);
 			}
@@ -472,7 +472,7 @@ Component.prototype.switchTemplate = function(templateName)
 			let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.templatePath", ""), this._settings.get("path", "")]);
 			return this.loadTemplate(templateInfo, path);
 		}).then(() => {
-			return this.__applyTemplate(this.settings.get("rootNode"), templateName, this.settings.get("templateNode"));
+			return this.__applyTemplate(this._settings.get("rootNode"), templateName, this._settings.get("templateNode"));
 		}).then(() => {
 			let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", "")]);
 			let splitComponent = this.getSetting("system.splitComponent", false);
@@ -480,16 +480,16 @@ Component.prototype.switchTemplate = function(templateName)
 		}).then(() => {
 			return this.__initOnAppendTemplate();
 		}).then(() => {
-			if (this.settings.get("waitFor"))
+			if (this._settings.get("waitFor"))
 			{
-				return this.waitFor(this.settings.get("waitFor"));
+				return this.waitFor(this._settings.get("waitFor"));
 			}
 		}).then(() => {
 			return this.trigger("append", this);
 		}).then(() => {
-			this._templates[this.settings.get("templateName")]["isAppended"] = false;
+			this._templates[this._settings.get("templateName")]["isAppended"] = false;
 			this._templates[templateName]["isAppended"] = true;
-			this.settings.set("templateName", templateName);
+			this._settings.set("templateName", templateName);
 
 			resolve();
 		});
@@ -595,7 +595,7 @@ Component.prototype.clone = function(templateName)
 
 	let clone;
 
-	templateName = ( templateName ? templateName : this.settings.get("templateName") );
+	templateName = ( templateName ? templateName : this._settings.get("templateName") );
 
 	if (!this._templates[templateName])
 	{
@@ -650,6 +650,9 @@ Component.prototype.connectedCallback = function()
 	}).then(() => {
 		// Trigger an event
 		return this.trigger("connected", this);
+	}).then(() => {
+		// Register as connected
+		this.registerComponent(this, "connected");
 	}).then(() => {
 		// Open
 		if (this._settings.get("autoOpen"))
@@ -717,7 +720,7 @@ Component.prototype._getStoreItem = function(store1, store2, key, defaultValue)
 Component.prototype._dupElement = function(templateName)
 {
 
-	templateName = ( templateName ? templateName : this.settings.get("templateName") );
+	templateName = ( templateName ? templateName : this._settings.get("templateName") );
 
 	let ele = document.createElement("div");
 	ele.innerHTML = this._templates[templateName].html;
@@ -840,7 +843,7 @@ Component.prototype.__initOnAppendTemplate = function()
 
 		// Init HTML event handlers
 		chain.then(() => {
-			Object.keys(this.settings.items["elements"]).forEach((elementName) => {
+			Object.keys(this._settings.items["elements"]).forEach((elementName) => {
 				this.setHtmlEventHandlers(elementName);
 			});
 
@@ -936,7 +939,7 @@ Component.prototype.__getSettingsFromAttribute = function()
 {
 
 	// Get options from the attribute
-	let dataSettings = ( this.settings.get("rootNode") ?
+	let dataSettings = ( this._settings.get("rootNode") ?
 		document.querySelector(this._settings.get("rootNode")).getAttribute("data-settings") :
 		this.getAttribute("data-settings")
 	);
