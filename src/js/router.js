@@ -32,6 +32,9 @@ export default function Router(settings)
 	settings = Object.assign({}, {"name":"Router", "templateName":"", "autoSetup":false}, settings);
 	let _this = Reflect.construct(Component, [settings], this.constructor);
 
+	// Init vars
+	this._spec;
+
 	// Init when connected
 	_this.addEventHandler(_this, "connected", _this.onConnected);
 
@@ -71,12 +74,18 @@ Object.defineProperty(Router.prototype, 'routeInfo', {
 Router.prototype.onConnected = function(sender, e)
 {
 
-	this._settings.set("routes", this._settings.get("routes", []));
-	this.__initRoutes(this._settings.get("routes"));
-	this._routeInfo = this.__loadRouteInfo(window.location.href);
-	this.__initPopState();
+	return new Promise((resolve, reject) => {
+		this._settings.set("routes", this._settings.get("routes", []));
+		this.__initRoutes(this._settings.get("routes"));
+		this._routeInfo = this.__loadRouteInfo(window.location.href);
+		this.__initPopState();
 
-	return this.__initSpec();
+		this.__initSpec().then(() => {
+			return this.trigger("specLoad", this, {"spec":this._spec});
+		}).then(() => {
+			resolve();
+		});
+	});
 
 }
 
@@ -532,12 +541,22 @@ Router.prototype.__initSpec = function()
 					this.addRoute(spec["routes"][i]);
 				}
 
-				// Components
-				Object.keys(spec["components"]).forEach((key) => {
-					this._settings.items["components"][key] = spec["components"][key];
+				// Add new Plugins
+				Object.keys(spec["plugins"]).forEach((pluginName) => {
+					this.addPlugin(pluginName, spec["plugins"][pluginName]);
 				});
 
-				resolve();
+				// Add new Components
+				let chain = Promise.resolved();
+				Object.keys(spec["components"]).forEach((componentName) => {
+					chain = chain.then(() => {
+						return this.addComponent(componentName, spec["components"][componentName]);
+					});
+				});
+
+				chain.then((() => {
+					resolve();
+				});
 			});
 		}
 		else
