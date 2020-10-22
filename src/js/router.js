@@ -536,25 +536,34 @@ Router.prototype.__initSpec = function()
 				this._spec = spec;
 
 				// Add new routes
-				for(let i = 0; i < spec["routes"].length; i++)
+				if (spec["routes"])
 				{
-					this.addRoute(spec["routes"][i]);
+					for(let i = 0; i < spec["routes"].length; i++)
+					{
+						this.addRoute(spec["routes"][i]);
+					}
 				}
 
 				// Add new Plugins
-				Object.keys(spec["plugins"]).forEach((pluginName) => {
-					this.addPlugin(pluginName, spec["plugins"][pluginName]);
-				});
+				if (spec["plugins"])
+				{
+					Object.keys(spec["plugins"]).forEach((pluginName) => {
+						this.addPlugin(pluginName, spec["plugins"][pluginName]);
+					});
+				}
 
 				// Add new Components
-				let chain = Promise.resolved();
-				Object.keys(spec["components"]).forEach((componentName) => {
-					chain = chain.then(() => {
-						return this.addComponent(componentName, spec["components"][componentName]);
+				let chain = Promise.resolve();
+				if (spec["components"])
+				{
+					Object.keys(spec["components"]).forEach((componentName) => {
+						chain = chain.then(() => {
+							return this.addComponent(componentName, spec["components"][componentName]);
+						});
 					});
-				});
+				}
 
-				chain.then((() => {
+				chain.then(() => {
 					resolve();
 				});
 			});
