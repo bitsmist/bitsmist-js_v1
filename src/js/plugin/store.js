@@ -130,37 +130,9 @@ export default class Store extends Plugin
 
 			for (let i = 0; i < items.length; i++)
 			{
-				this.deepMerge(this._items, items[i]);
+				Util.deepMerge(this._items, items[i]);
 			}
 		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Deep merge.
-	 *
-	 * @param	{Object}		arr1					Array1.
-	 * @param	{Object}		arr2					Array2.
-	 *
-	 * @return  {Object}		Merged array.
-	 */
-	deepMerge(arr1, arr2)
-	{
-
-		Object.keys(arr2).forEach((key) => {
-			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
-			{
-				this.deepMerge(arr1[key], arr2[key]);
-			}
-			else
-			{
-				arr1[key] = arr2[key];
-			}
-		});
-
-		return arr1;
 
 	}
 
@@ -255,7 +227,7 @@ export default class Store extends Plugin
 		}
 		else if (store1 && store1.has(key))
 		{
-			result = store1.get(key);
+			result = store1._getLocal(key);
 		}
 
 		return result;
