@@ -34,7 +34,7 @@ export default function TagLoader(settings)
 	settings = Object.assign({}, {"name":"TagLoader", "templateName":"", "autoSetup":false}, settings);
 	let _this = Reflect.construct(Component, [settings], this.constructor);
 
-	document.addEventListener("DOMContentLoaded", _this.onDOMContentLoaded.bind(_this))
+	_this.addEventHandler(_this, "append", _this.onAppend);
 
 	return _this;
 
@@ -48,20 +48,27 @@ customElements.define("bm-tagloader", TagLoader);
 // -----------------------------------------------------------------------------
 
 /**
- * DOMContentLoaded event handler.
+ * Append event handler.
+ *
+ * @param	{Object}		sender				Sender.
+ * @param	{Object}		e					Event info.
  */
-TagLoader.prototype.onDOMContentLoaded = function()
+TagLoader.prototype.onAppend = function(sender, e)
 {
 
-	Promise.resolve().then(() => {
-		if (this.app != this)
-		{
-			return this.waitFor([{"name":"App", "status":"opened"}]);
-		}
-	}).then(() => {
-		let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", "")]);
-		let splitComponent = this.getSetting("system.splitComponent", false);
-		this.loadTags(document, path, {"splitComponent":splitComponent});
+	return new Promise((resolve, reject) => {
+		Promise.resolve().then(() => {
+			if (this.app != this)
+			{
+				return this.waitFor([{"name":"App", "status":"opened"}]);
+			}
+		}).then(() => {
+			let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", "")]);
+			let splitComponent = this.getSetting("system.splitComponent", false);
+			return this.loadTags(document, path, {"splitComponent":splitComponent});
+		}).then(() => {
+			resolve();
+		});
 	});
 
 }
