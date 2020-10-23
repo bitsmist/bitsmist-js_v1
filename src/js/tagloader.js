@@ -65,8 +65,8 @@ TagLoader.prototype.onAppend = function(sender, e)
 				return this.waitFor([{"name":"App", "status":"opened"}]);
 			}
 		}).then(() => {
-			let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", "")]);
-			let splitComponent = this.getSetting("system.splitComponent", false);
+			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
+			let splitComponent = this._settings.get("system.splitComponent", false);
 			return this.loadTags(document, path, {"splitComponent":splitComponent});
 		}).then(() => {
 			resolve();
