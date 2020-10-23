@@ -39,10 +39,10 @@ export default class EventMixin
 		if (typeof handler !== "function")
 		{
 			let pluginName = ( bindTo ? bindTo.name : "" );
-			throw TypeError(`Event handler is not a function. componentName=${this._bm_detail["component"].name}, pluginName=${pluginName}, eventName=${eventNae}`);
+			throw TypeError(`Event handler is not a function. componentName=${this.name}, pluginName=${pluginName}, eventName=${eventName}`);
 		}
 
-		// Init holder object for a element
+		// Init holder object for the element
 		if (!element._bm_detail)
 		{
 			element._bm_detail = { "component":this, "listeners":listeners, "promises":{} };

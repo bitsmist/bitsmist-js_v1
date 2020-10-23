@@ -50,11 +50,12 @@ export default class WaitforMixin
 					let debugInfo = "";
 					for (let i = 0; i < waitlist.length; i++)
 					{
-						debugInfo += (waitlist[i]["name"] ? waitlist[i]["name"] + "-" : "");
-						debugInfo += (waitlist[i]["id"] ? waitlist[i]["id"] + "-" : "");
-						debugInfo += (waitlist[i]["component"] ? waitlist[i]["component"]["name"] + "-" : "");
-						debugInfo += (waitlist[i]["status"] ? waitlist[i]["status"] + "-" : "");
-						debugInfo = debugInfo.slice(0, -1) + ",";
+						debugInfo += (waitlist[i]["rootNode"] ? waitlist[i]["rootNode"] : "");
+						debugInfo += (waitlist[i]["name"] ? waitlist[i]["name"] : "");
+						debugInfo += (waitlist[i]["id"] ? waitlist[i]["id"] : "");
+						debugInfo += (waitlist[i]["component"] ? waitlist[i]["component"]["name"] : "");
+						debugInfo += (waitlist[i]["status"] ? "(" + waitlist[i]["status"] + ")" : "");
+						debugInfo += ",";
 					}
 					debugInfo = debugInfo.slice(0, -1);
 					reject(`${this.name}.waitFor() timed out after ${timeout} milliseconds waiting for ${debugInfo}, name=${this.name}.`);
@@ -110,6 +111,8 @@ export default class WaitforMixin
 			}
 		}
 
+		component.status = status;
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -162,6 +165,43 @@ export default class WaitforMixin
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
+	/*
+	static __isReady(waitInfo, componentInfo)
+	{
+
+		let isMatch = false;
+
+		// check instance
+		if (waitInfo["component"])
+		{
+			isMatch = ( componentInfo["component"] === waitInfo["component"] ? true : false );
+		}
+
+		// check name
+		if (waitInfo["name"])
+		{
+			isMatch = ( componentInfo["component"].name === waitInfo["name"] ? true : false );
+		}
+
+		// check id
+		if (waitInfo["id"])
+		{
+			console.log("@@@");
+			isMatch = ( componentInfo["component"].uniqueId === waitInfo["id"] ? true : false );
+			console.log(isMatch);
+		}
+
+		// check status
+		if (waitInfo["status"])
+		{
+			isMatch = ( componentInfo["status"] === waitInfo["status"] ? true : false );
+		}
+
+		return isMatch;
+
+	}
+	*/
+
 	static __isReady(waitInfo, componentInfo)
 	{
 
@@ -190,6 +230,25 @@ export default class WaitforMixin
 		{
 			isMatch = false;
 		}
+
+		// check status
+		if (waitInfo["rootNode"])
+		{
+			let element = document.querySelector(waitInfo["rootNode"]);
+			if (element)
+			{
+				if (waitInfo["status"] && element.status != waitInfo["status"])
+				{
+					isMatch = false;
+				}
+			}
+			else
+			{
+				isMatch = false;
+			}
+		}
+
+//		console.log("@@@", isMatch, waitInfo, componentInfo);
 
 		return isMatch;
 

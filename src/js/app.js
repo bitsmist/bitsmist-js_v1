@@ -121,7 +121,7 @@ App.prototype.setup = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Init error handling listeners.
+ * Init preferences.
  */
 App.prototype.__initPreference = function()
 {
