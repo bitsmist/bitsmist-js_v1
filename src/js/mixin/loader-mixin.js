@@ -156,24 +156,34 @@ export default class LoadeMixin
 	 *
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 * @param	{String}		path				Base path prepend to each element's path.
+	 *
+	 * @return  {Promise}		Promise.
 	 */
 	static loadTags(rootNode, basePath, settings)
 	{
 
-		rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
-			if (element.getAttribute("href"))
-			{
-				let url = element.getAttribute("href");
-				return AjaxUtil.loadScript(url);
-			}
-			else
-			{
-				let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
-				let path = element.getAttribute("data-classpath");
-				path = Util.concatPath([basePath, path]);
-				settings["splitComponent"] = ( element.getAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
-				this.loadComponent(className, path, settings);
-			}
+		return new Promise((resolve, reject) => {
+			let promises = [];
+
+			rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
+				if (element.getAttribute("href"))
+				{
+					let url = element.getAttribute("href");
+					promises.push(AjaxUtil.loadScript(url));
+				}
+				else
+				{
+					let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
+					let path = element.getAttribute("data-classpath");
+					path = Util.concatPath([basePath, path]);
+					settings["splitComponent"] = ( element.getAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+					promises.push(this.loadComponent(className, path, settings));
+				}
+			});
+
+			Promise.all(promises).then(() => {
+				resolve();
+			});
 		});
 
 	}
