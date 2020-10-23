@@ -4,6 +4,8 @@ let Globals = (function(){
 	globals["app"];
 	globals["components"] = {};
 	globals["classes"] = {};
+	globals["settings"];
+	globals["preferences"];
 
 	return globals;
 }());

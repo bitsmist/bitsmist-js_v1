@@ -32,8 +32,10 @@ export default function App(settings)
 	settings = Object.assign({}, {"name":"App", "templateName":"", "autoSetup":false}, settings);
 	let _this = Reflect.construct(Component, [settings], this.constructor);
 
-	// Init variables
+	// Init globals
 	Globals["app"] = _this;
+	Globals["settings"] = _this._settings;
+	Globals["preferences"] = _this._preferences;;
 
 	// Init error listeners
 	_this.__initErrorListeners();
