@@ -208,7 +208,7 @@ export default class EventMixin
 
 		let promise = new Promise((resolve, reject) => {
 			let listeners = ( this._bm_detail && this._bm_detail["listeners"] ? this._bm_detail["listeners"][e.type] : [] );
-			let sender = e.detail.sender || this;
+			let sender = ( e.detail && e.detail.sender ? e.detail.sender : this );
 			let stopPropagation = false;
 			let chain = Promise.resolve();
 			let results = [];
