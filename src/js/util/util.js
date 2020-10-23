@@ -181,7 +181,7 @@ export default class Util
 		Object.keys(arr2).forEach((key) => {
 			if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object' && !(arr1[key] instanceof Array))
 			{
-				this.__deepMerge(arr1[key], arr2[key]);
+				this.deepMerge(arr1[key], arr2[key]);
 			}
 			else
 			{
