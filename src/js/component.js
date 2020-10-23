@@ -47,6 +47,7 @@ export default function Component(settings)
 	_this._plugins = {};
 	_this._services = {};
 	_this._shadowRoot;
+	_this._status = "";
 	_this._templates = {};
 	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 
@@ -57,18 +58,20 @@ export default function Component(settings)
 	};
 	settings = Object.assign({}, defaults, settings, _this._getSettings());
 	_this._settings = new Store(_this, {"items":settings});
+	_this._settings.chain(Globals["settings"]);
 	let preferences = Object.assign({}, settings["preferences"]);
 	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":preferences});
+	_this._preferences.chain(Globals["preferences"]);
 	_this._store = new Store(_this);
 
 	// Init settings
-	_this._settings.set("name", _this._settings.get("name", _this.constructor.name));
-	_this._settings.set("templateName", _this._settings.get("templateName", _this.name));
-	_this._settings.set("components", _this._settings.get("components", {}));
-	_this._settings.set("plugins", _this._settings.get("plugins", {}));
-	_this._settings.set("events", _this._settings.get("events", {}));
-	_this._settings.set("services", _this._settings.get("services", {}));
-	_this._settings.set("elements", _this._settings.get("elements", {}));
+	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
+	_this._settings.set("templateName", Util.safeGet(settings, "templateName", _this.name));
+	_this._settings.set("components", Util.safeGet(settings, "components", {}));
+	_this._settings.set("plugins", Util.safeGet(settings, "plugins", {}));
+	_this._settings.set("events", Util.safeGet(settings, "events", {}));
+	_this._settings.set("services", Util.safeGet(settings, "services", {}));
+	_this._settings.set("elements", Util.safeGet(settings, "elements", {}));
 
 	_this._init(_this._settings.items);
 
@@ -127,6 +130,24 @@ Object.defineProperty(Component.prototype, 'uniqueId', {
 	get()
 	{
 		return ( this.id ? this.id : this._uniqueId );
+	}
+})
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Status.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'status', {
+	get()
+	{
+		return this._status;
+	},
+	set(value)
+	{
+		this._status = value;
 	}
 })
 
@@ -204,57 +225,6 @@ Object.defineProperty(Component.prototype, 'store', {
 
 // -----------------------------------------------------------------------------
 //  Methods
-// -----------------------------------------------------------------------------
-
-/**
- * Get a setting value. Return default value when specified key is not available.
- *
- * @param	{String}		key					Key to get.
- * @param	{Object}		defaultValue		Value returned when key is not found.
- *
- * @return  {*}				Value.
- */
-Component.prototype.getSetting = function(key, defaultValue)
-{
-
-	return this._getStoreItem(this.app.settings, this._settings, key, defaultValue);
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Get a preference value. Return default value when specified key is not available.
- *
- * @param	{String}		key					Key to get.
- * @param	{Object}		defaultValue		Value returned when key is not found.
- *
- * @return  {*}				Value.
- */
-Component.prototype.getPreference = function(key, defaultValue)
-{
-
-	return this._getStoreItem(this.app.preferences, this._preferences, key, defaultValue);
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Get a store value. Return default value when specified key is not available.
- *
- * @param	{String}		key					Key to get.
- * @param	{Object}		defaultValue		Value returned when key is not found.
- *
- * @return  {*}				Value.
- */
-Component.prototype.getStore = function(key, defaultValue)
-{
-
-	return this._getStoreItem(this.app.store, this._store, key, defaultValue);
-
-}
-
 // -----------------------------------------------------------------------------
 
 /**
@@ -469,13 +439,13 @@ Component.prototype.switchTemplate = function(templateName)
 		console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
 
 		Promise.resolve().then(() => {
-			let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.templatePath", ""), this._settings.get("path", "")]);
+			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.templatePath", ""), this._settings.get("path", "")]);
 			return this.loadTemplate(templateInfo, path);
 		}).then(() => {
 			return this.__applyTemplate(this._settings.get("rootNode"), templateName, this._settings.get("templateNode"));
 		}).then(() => {
-			let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", "")]);
-			let splitComponent = this.getSetting("system.splitComponent", false);
+			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
+			let splitComponent = this._settings.get("system.splitComponent", false);
 			this.loadTags(this._element, path, {"splitComponent":splitComponent});
 		}).then(() => {
 			return this.__initOnAppendTemplate();
@@ -511,8 +481,8 @@ Component.prototype.addComponent = function(componentName, options)
 {
 
 	return new Promise((resolve, reject) => {
-		let path = Util.concatPath([this.getSetting("system.appBaseUrl", ""), this.getSetting("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
-		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : this.getSetting("system.splitComponent", false) );
+		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
+		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : this._settings.get("system.splitComponent", false) );
 		let className = ( "className" in options ? options["className"] : componentName );
 
 		Promise.resolve().then(() => {
@@ -676,35 +646,6 @@ Component.prototype._getSettings = function()
 {
 
 	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Get an value from stores. Return default value when specified key is not available.
- * If both store1 and store2 has the key, store2 precedes store1.
- *
- * @param	{String}		key					Key to get.
- * @param	{Object}		defaultValue		Value returned when key is not found.
- *
- * @return  {*}				Value.
- */
-Component.prototype._getStoreItem = function(store1, store2, key, defaultValue)
-{
-
-	let result = defaultValue;
-
-	if (store2 && store2.has(key))
-	{
-		result = store2.get(key);
-	}
-	else if (store1 && store1.has(key))
-	{
-		result = store1.get(key);
-	}
-
-	return result;
 
 }
 
