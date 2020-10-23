@@ -23,6 +23,27 @@ export default class Store extends Plugin
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Component.
+	 *
+	 * @type	{Component}
+	 */
+	get component()
+	{
+
+		return this._component;
+
+	}
+
+	set component(value)
+	{
+
+		this._component = value;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Items.
 	 *
 	 * @type	{String}
