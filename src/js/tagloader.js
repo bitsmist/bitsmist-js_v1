@@ -52,6 +52,8 @@ customElements.define("bm-tagloader", TagLoader);
  *
  * @param	{Object}		sender				Sender.
  * @param	{Object}		e					Event info.
+ *
+ * @return  {Promise}		Promise.
  */
 TagLoader.prototype.onAppend = function(sender, e)
 {
