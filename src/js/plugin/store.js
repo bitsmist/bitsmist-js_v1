@@ -51,7 +51,18 @@ export default class Store extends Plugin
 	get items()
 	{
 
-		return this._items;
+		let items;
+
+		if (this._chain)
+		{
+			items = Object.assign({}, this._chain._items, this._items);
+		}
+		else
+		{
+			items = Object.assign({}, this._items);
+		}
+
+		return items;
 
 	}
 
