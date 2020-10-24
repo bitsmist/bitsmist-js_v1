@@ -158,12 +158,14 @@ Object.defineProperty(Component.prototype, 'status', {
  *
  * @type	{String}
  */
+/*
 Object.defineProperty(Component.prototype, 'app', {
 	get()
 	{
 		return ( Globals["app"] ? Globals["app"] : this );
 	}
 })
+*/
 
 // -----------------------------------------------------------------------------
 
@@ -172,12 +174,14 @@ Object.defineProperty(Component.prototype, 'app', {
  *
  * @type	{String}
  */
+/*
 Object.defineProperty(Component.prototype, 'services', {
 	get()
 	{
 		return this.app._plugins;
 	}
 })
+*/
 
 // -----------------------------------------------------------------------------
 
@@ -382,7 +386,7 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		let defaultPreferences = Object.assign({}, this.app.preferences.items, this.preferences.items);
+		let defaultPreferences = Object.assign({}, this._preferences.items);
 		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : defaultPreferences);
 		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
 		let sender = ( options["sender"] ? options["sender"] : this );
@@ -714,8 +718,9 @@ Component.prototype._init = function(settings)
 			Object.keys(services[serviceName]["events"]).forEach((eventName) => {
 				let feature = services[serviceName]["events"][eventName]["handler"];
 				let args = services[serviceName]["events"][eventName]["args"];
-				let service = this.services[serviceName];
+				//let service = this.services[serviceName];
 				let func = function(){
+					let service = document.querySelector(services[serviceName]["rootNode"]);
 					service[feature].apply(service, args);
 				};
 				this.addEventHandler(this, eventName, func);
