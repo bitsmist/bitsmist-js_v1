@@ -34,8 +34,10 @@ export default function App(settings)
 
 	// Init globals
 	Globals["app"] = _this;
-	Globals["settings"] = _this._settings;
-	Globals["preferences"] = _this._preferences;;
+	Globals["settings"].component = _this;
+	Globals["settings"].items = _this._settings.items;
+	Globals["preferences"].component = _this;
+	Globals["preferences"].items = _this._preferences.items;
 
 	// Init error listeners
 	_this.__initErrorListeners();
