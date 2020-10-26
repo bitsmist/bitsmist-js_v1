@@ -33,7 +33,6 @@ export default function App(settings)
 	let _this = Reflect.construct(Component, [settings], this.constructor);
 
 	// Init globals
-	Globals["app"] = _this;
 	Globals["settings"].component = _this;
 	Globals["settings"].items = _this._settings.items;
 	Globals["preferences"].component = _this;

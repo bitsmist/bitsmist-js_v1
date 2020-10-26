@@ -155,38 +155,6 @@ Object.defineProperty(Component.prototype, 'status', {
 // -----------------------------------------------------------------------------
 
 /**
- * App instance.
- *
- * @type	{String}
- */
-/*
-Object.defineProperty(Component.prototype, 'app', {
-	get()
-	{
-		return ( Globals["app"] ? Globals["app"] : this );
-	}
-})
-*/
-
-// -----------------------------------------------------------------------------
-
-/**
- * Services (App's plugins).
- *
- * @type	{String}
- */
-/*
-Object.defineProperty(Component.prototype, 'services', {
-	get()
-	{
-		return this.app._plugins;
-	}
-})
-*/
-
-// -----------------------------------------------------------------------------
-
-/**
  * Settings.
  *
  * @type	{String}
