@@ -67,6 +67,7 @@ export default function Component(settings)
 	// Init settings
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
 	_this._settings.set("templateName", Util.safeGet(settings, "templateName", _this.name));
+
 	_this._settings.set("components", Util.safeGet(settings, "components", {}));
 	_this._settings.set("plugins", Util.safeGet(settings, "plugins", {}));
 	_this._settings.set("events", Util.safeGet(settings, "events", {}));
@@ -718,10 +719,15 @@ Component.prototype._init = function(settings)
 			Object.keys(services[serviceName]["events"]).forEach((eventName) => {
 				let feature = services[serviceName]["events"][eventName]["handler"];
 				let args = services[serviceName]["events"][eventName]["args"];
-				//let service = this.services[serviceName];
 				let func = function(){
-					let service = document.querySelector(services[serviceName]["rootNode"]);
-					service[feature].apply(service, args);
+					let waitInfo = {};
+					if (services[serviceName]["className"]) waitInfo["name"] = services[serviceName]["name"];
+					if (services[serviceName]["rootNode"]) waitInfo["rootNode"] = services[serviceName]["rootNode"];
+					waitInfo["status"] = "opened";
+					this.waitFor([waitInfo]).then(() => {
+						let service = document.querySelector(services[serviceName]["rootNode"]);
+						service[feature].apply(service, args);
+					});
 				};
 				this.addEventHandler(this, eventName, func);
 			});
