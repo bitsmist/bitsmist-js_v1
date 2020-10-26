@@ -8,11 +8,8 @@
  */
 // =============================================================================
 
-import AjaxUtil from './util/ajax-util';
 import ClassUtil from './util/class-util';
 import Component from './component';
-import Globals from './globals';
-import Util from './util/util';
 
 // =============================================================================
 //	Tag loader class
