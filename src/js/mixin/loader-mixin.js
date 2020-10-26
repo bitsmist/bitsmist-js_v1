@@ -86,7 +86,7 @@ export default class LoadeMixin
 			let settings;
 
 			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}`);
+				console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}, name=${this.name}`);
 				try
 				{
 					settings = JSON.parse(xhr.responseText);
