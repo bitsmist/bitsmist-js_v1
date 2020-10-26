@@ -12,7 +12,7 @@ import ClassUtil from './util/class-util';
 import EventMixin from './mixin/event-mixin';
 import Globals from './globals';
 import LoaderMixin from './mixin/loader-mixin';
-import Store from './plugin/store';
+import Store from './store';
 import Util from './util/util';
 import WaitforMixin from './mixin/waitfor-mixin';
 
@@ -57,12 +57,12 @@ export default function Component(settings)
 		"autoSetup":true
 	};
 	settings = Object.assign({}, defaults, settings, _this._getSettings());
-	_this._settings = new Store(_this, {"items":settings});
+	_this._settings = new Store({"items":settings});
 	_this._settings.chain(Globals["settings"]);
 	let preferences = Object.assign({}, settings["preferences"]);
-	_this._preferences = new Store(_this, {"loadEvent":"loadPreferences", "saveEvent":"savePreferences", "items":preferences});
+	_this._preferences = new Store({"items":preferences});
 	_this._preferences.chain(Globals["preferences"]);
-	_this._store = new Store(_this);
+	_this._store = new Store();
 
 	// Init settings
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));

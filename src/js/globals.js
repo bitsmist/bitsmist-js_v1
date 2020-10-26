@@ -1,4 +1,4 @@
-import Store from './plugin/store';
+import Store from './store';
 
 let Globals = (function(){
 	let globals = {};
