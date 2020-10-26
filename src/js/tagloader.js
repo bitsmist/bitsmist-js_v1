@@ -34,7 +34,7 @@ export default function TagLoader(settings)
 	settings = Object.assign({}, {"name":"TagLoader", "templateName":"", "autoSetup":false}, settings);
 	let _this = Reflect.construct(Component, [settings], this.constructor);
 
-	_this.addEventHandler(_this, "append", _this.onAppend);
+	window.addEventListener('DOMContentLoaded', _this.onDOMContentLoaded.bind(_this));
 
 	return _this;
 
@@ -55,14 +55,15 @@ customElements.define("bm-tagloader", TagLoader);
  *
  * @return  {Promise}		Promise.
  */
-TagLoader.prototype.onAppend = function(sender, e)
+TagLoader.prototype.onDOMContentLoaded= function(sender, e)
 {
 
 	return new Promise((resolve, reject) => {
 		Promise.resolve().then(() => {
-			if (this.app != this)
+			if (document.querySelector("bm-setting"))
 			{
-				return this.waitFor([{"name":"App", "status":"opened"}]);
+				return this.waitFor([{"name":"SettingManager", "status":"opened"}]);
+				//return this.waitFor([{"rootNode":"bm-setting", "status":"opened"}]); //@@@fix this does not work.
 			}
 		}).then(() => {
 			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
