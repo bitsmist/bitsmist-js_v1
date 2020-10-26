@@ -35,7 +35,7 @@ export default function Router(settings)
 	// Init vars
 	this._spec;
 
-	// Init when connected
+	// Event handlers
 	_this.addEventHandler(_this, "connected", _this.onConnected);
 
 	return _this;
