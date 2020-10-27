@@ -1,6 +1,6 @@
 // =============================================================================
 /**
- * Bitsmist WebView - Javascript Web Client Framework
+ * BitsmistJS - Javascript Web Client Framework
  *
  * @copyright		Masaki Yasutake
  * @link			https://bitsmist.com/
