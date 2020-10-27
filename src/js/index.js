@@ -9,6 +9,10 @@ window.BITSMIST.v1.Globals = Globals;
 import Component from './component';
 window.BITSMIST.v1.Component = Component;
 
+// Pad
+import Pad from './pad';
+window.BITSMIST.v1.Pad = Pad;
+
 // Mixin
 import EventMixin from './mixin/event-mixin';
 import LoaderMixin from './mixin/loader-mixin';
