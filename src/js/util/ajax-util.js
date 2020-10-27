@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import Util from './util';
+
 // =============================================================================
 //	Ajax util class
 // =============================================================================
@@ -30,11 +32,11 @@ export default class AjaxUtil
 	{
 
 		return new Promise((resolve, reject) => {
-			let url = AjaxUtil.__getOption(options, "url");
-			let method = AjaxUtil.__getOption(options, "method");
-			let data = AjaxUtil.__getOption(options, "data", "");
-			let headers = AjaxUtil.__getOption(options, "headers");
-			let xhrOptions = AjaxUtil.__getOption(options, "options");
+			let url = Util.safeGet(options, "url");
+			let method = Util.safeGet(options, "method");
+			let data = Util.safeGet(options, "data", "");
+			let headers = Util.safeGet(options, "headers");
+			let xhrOptions = Util.safeGet(options, "options");
 
 			let xhr = new XMLHttpRequest();
 			xhr.open(method, url, true);
@@ -108,33 +110,6 @@ export default class AjaxUtil
 			script.src = source;
 			prior.parentNode.insertBefore(script, prior);
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Privates
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get option value. Return default value when specified key is not available.
-	 *
-	 * @param	{array}			options				Options for the component.
-	 * @param	{string}		key					Key to get.
-	 * @param	{object}		defaultValue		Value returned when key is not found.
-	 *
-	 * @return  {*}				Value.
-	 */
-	static __getOption(options, key, defaultValue)
-	{
-
-		let result = defaultValue;
-
-		if (options && (key in options))
-		{
-			result = options[key];
-		}
-
-		return result;
 
 	}
 
