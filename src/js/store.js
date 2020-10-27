@@ -24,8 +24,8 @@ export default class Store
 	/**
      * Constructor.
      *
-	 * @param	{Object}		component			Component to attach.
 	 * @param	{Object}		options				Options.
+	 * @param	{Store}			chain				Store Component to chain.
      */
 	constructor(options, chain)
 	{
