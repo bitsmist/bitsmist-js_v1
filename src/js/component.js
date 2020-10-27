@@ -1,6 +1,6 @@
 // =============================================================================
 /**
- * Bitsmist WebView - Javascript Web Client Framework
+ * BitsmistJS - Javascript Web Client Framework
  *
  * @copyright		Masaki Yasutake
  * @link			https://bitsmist.com/
@@ -45,7 +45,6 @@ export default function Component(settings)
 	_this._modalPromise;
 	_this._modalResult;
 	_this._plugins = {};
-	_this._services = {};
 	_this._shadowRoot;
 	_this._status = "";
 	_this._templates = {};
@@ -569,11 +568,12 @@ Component.prototype.connectedCallback = function()
 {
 
 	Promise.resolve().then(() => {
-		// Load settings
-		if (this._element.getAttribute("data-settingsname") || this._element.getAttribute("data-settingspath"))
+		// Load extra settings
+		let arr = this.__getPathFromAttribute();
+		let settingsPath = arr[0];
+		let settingsName = arr[1];
+		if (settingsName || settingsPath)
 		{
-			let settingsName = ( this._element.getAttribute("data-settingsname") ? this._element.getAttribute("data-settingsname") : "settings" );
-			let settingsPath = ( this._element.getAttribute("data-settingspath") ? this._element.getAttribute("data-settingspath") : "" );
 			return this.loadSettings(settingsName, settingsPath);
 		}
 	}).then((newSettings) => {
@@ -689,11 +689,24 @@ Component.prototype._init = function(settings)
 				let args = services[serviceName]["events"][eventName]["args"];
 				let func = function(){
 					let waitInfo = {};
-					if (services[serviceName]["className"]) waitInfo["name"] = services[serviceName]["name"];
+					if (services[serviceName]["className"]) waitInfo["name"] = services[serviceName]["className"];
 					if (services[serviceName]["rootNode"]) waitInfo["rootNode"] = services[serviceName]["rootNode"];
 					waitInfo["status"] = "opened";
 					this.waitFor([waitInfo]).then(() => {
-						let service = document.querySelector(services[serviceName]["rootNode"]);
+						let service;
+						if (services[serviceName]["className"])
+						{
+							Object.keys(Globals["components"]).forEach((key) => {
+								if (Globals["components"][key].component.name == services[serviceName]["className"])
+								{
+									service = Globals["components"][key].component;
+								}
+							});
+						}
+						else
+						{
+							service = document.querySelector(services[serviceName]["rootNode"]);
+						}
 						service[feature].apply(service, args);
 					});
 				};
@@ -847,6 +860,37 @@ Component.prototype.__applyTemplate = function(rootNode, templateName, templateN
 	}
 
 	console.debug(`Component.__applyTemplate(): Applied template. name=${this.name}, rootNode=${rootNode}, templateName=${templateName}`);
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Get settings path and name from attribute.
+ */
+Component.prototype.__getPathFromAttribute = function(attrName)
+{
+
+	let name, path;
+	attrName = attrName || "settings";
+
+	let href = ( this._element.getAttribute("data-" + attrName + "href") ? this._element.getAttribute("data-" + attrName + "href") : "" );
+	if (href)
+	{
+		name = href.slice(0, -3);
+		path = "";
+	}
+	else
+	{
+		path = ( this._element.getAttribute("data-" + attrName + "path") ? this._element.getAttribute("data-" + attrName + "path") : "" );
+		name = ( this._element.getAttribute("data-" + attrName + "name") ? this._element.getAttribute("data-" + attrName + "name") : "" );
+		if (path && !name)
+		{
+			name = "settings";
+		}
+	}
+
+	return [path, name];
 
 }
 
