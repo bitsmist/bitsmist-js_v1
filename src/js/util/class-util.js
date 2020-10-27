@@ -1,6 +1,6 @@
 // =============================================================================
 /**
- * Bitsmist WebView - Javascript Web Client Framework
+ * BitsmistJS - Javascript Web Client Framework
  *
  * @copyright		Masaki Yasutake
  * @link			https://bitsmist.com/
@@ -10,7 +10,6 @@
 
 //import Component from '../component'; // Importing component breaks this class. So do not import.
 import Globals from '../globals';
-import Plugin from '../plugin/plugin';
 
 // =============================================================================
 //	Loader util class
