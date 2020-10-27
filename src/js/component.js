@@ -436,7 +436,7 @@ Component.prototype.connectedCallback = function()
 		let settingsName = arr[1];
 		if (settingsName || settingsPath)
 		{
-			return this.loadSettings(settingsName, settingsPath);
+			return this.loadSetting(settingsName, settingsPath);
 		}
 	}).then((newSettings) => {
 		if (newSettings)
@@ -561,7 +561,7 @@ Component.prototype.__getPathFromAttribute = function(attrName)
 {
 
 	let name, path;
-	attrName = attrName || "settings";
+	attrName = attrName || "setting";
 
 	let href = ( this._element.getAttribute("data-" + attrName + "href") ? this._element.getAttribute("data-" + attrName + "href") : "" );
 	if (href)

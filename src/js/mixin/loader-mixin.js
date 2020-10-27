@@ -71,14 +71,14 @@ export default class LoadeMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load settings file.
+	 * Load setting file.
 	 *
 	 * @param	{String}		settingName			Setting name.
 	 * @param	{String}		path				Path to setting file.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadSettings(settingName, path)
+	static loadSetting(settingName, path)
 	{
 
 		return new Promise((resolve, reject) => {
