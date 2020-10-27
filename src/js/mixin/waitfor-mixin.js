@@ -206,6 +206,7 @@ export default class WaitforMixin
 	{
 
 		let isMatch = true;
+		waitInfo["status"] = waitInfo["status"] || "opened"; // Status defaults to "opened" when not specified.
 
 		// check instance
 		if (waitInfo["component"] && componentInfo["component"] !== waitInfo["component"])
