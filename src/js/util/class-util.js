@@ -9,7 +9,7 @@
 // =============================================================================
 
 //import Component from '../component'; // Importing component breaks this class. So do not import.
-import Globals from '../globals';
+//import Globals from '../globals';
 
 // =============================================================================
 //	Loader util class
