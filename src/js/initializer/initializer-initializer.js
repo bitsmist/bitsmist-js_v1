@@ -19,18 +19,32 @@ export default class InitializerInitializer
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Init.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
 	static init(component, settings)
 	{
 
-		// Init event handlers
 		if (settings)
 		{
 			Object.keys(settings).forEach((key) => {
-				Component.addInitializer(settings[key], key);
+				InitializerInitializer.addInitializer(settings[key], key);
 			});
 		}
 
 		return Promise.resolve();
+
+	}
+
+	static addInitializer(initializerClass, target)
+	{
+
+		Globals["initializers"][target] = initializerClass;
 
 	}
 

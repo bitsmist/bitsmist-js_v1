@@ -19,6 +19,14 @@ export default class EventInitializer
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Init.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
 	static init(component, settings)
 	{
 
