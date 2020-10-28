@@ -50,13 +50,13 @@ export default class ComponentInitializer
 	// -------------------------------------------------------------------------
 
 	/**
-	* Add a component to the pad.
-	*
-	* @param	{String}		componentName		Component name.
-	* @param	{Object}		options				Options for the component.
-	*
-	* @return  {Promise}		Promise.
-	*/
+	 * Add a component to the pad.
+	 *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
 	static addComponent(component, componentName, options)
 	{
 
