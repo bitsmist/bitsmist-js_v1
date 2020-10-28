@@ -19,6 +19,18 @@ window.BITSMIST.v1.Globals = Globals;
 import Component from './component';
 window.BITSMIST.v1.Component = Component;
 
+// Initializer
+import ComponentInitializer from './initializer/component-initializer';
+import ElementInitializer from './initializer/element-initializer';
+import EventInitializer from './initializer/event-initializer';
+import InitializerInitializer from './initializer/initializer-initializer';
+import ServiceInitializer from './initializer/service-initializer';
+Component.addInitializer(ComponentInitializer, "components");
+Component.addInitializer(ElementInitializer, "elements");
+Component.addInitializer(EventInitializer, "events");
+Component.addInitializer(InitializerInitializer, "initializers");
+Component.addInitializer(ServiceInitializer, "services");
+
 // Pad
 import Pad from './pad';
 window.BITSMIST.v1.Pad = Pad;

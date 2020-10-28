@@ -17,6 +17,7 @@ let Globals = (function(){
 	globals["classes"] = {};
 	globals["settings"] = new Store();
 	globals["preferences"] = new Store();
+	globals["initializers"] = {};
 
 	return globals;
 }());
