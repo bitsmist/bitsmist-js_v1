@@ -41,19 +41,4 @@ export default class InitializerInitializer
 
 	}
 
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add a initializer to Globals.
-	 *
-	 * @param	{Object}		initializerClass	Initializer class.
-	 * @param	{Object}		target				Setting key name.
-	 */
-	static addInitializer(initializerClass, target)
-	{
-
-		Globals["initializers"][target] = initializerClass;
-
-	}
-
 }

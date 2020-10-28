@@ -19,6 +19,19 @@ let Globals = (function(){
 	globals["preferences"] = new Store();
 	globals["initializers"] = {};
 
+	/**
+	* Add a initializer to Globals.
+	*
+	* @param	{Object}		initializerClass	Initializer class.
+	* @param	{Object}		target				Setting key name.
+	*/
+	globals["addInitializer"] = function(initializerClass, target)
+	{
+
+		Globals["initializers"][target] = initializerClass;
+
+	}
+
 	return globals;
 }());
 
