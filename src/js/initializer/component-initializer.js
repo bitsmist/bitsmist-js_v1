@@ -34,13 +34,6 @@ export default class ComponentInitializer
 
 		let chain = Promise.resolve();
 
-		if (!component._components)
-		{
-			component._components = {};
-		}
-
-		component._settings.set("components", settings);
-
 		if (settings)
 		{
 			Object.keys(settings).forEach((componentName) => {
@@ -80,8 +73,9 @@ export default class ComponentInitializer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Add a component to the pad.
+	 * Add a component to parent component.
 	 *
+	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
 	 *
@@ -89,6 +83,11 @@ export default class ComponentInitializer
 	 */
 	static addComponent(component, componentName, options)
 	{
+
+		if (!component._components)
+		{
+			component._components = {};
+		}
 
 		return new Promise((resolve, reject) => {
 			let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);

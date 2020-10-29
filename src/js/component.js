@@ -9,6 +9,7 @@
 // =============================================================================
 
 import ClassUtil from './util/class-util';
+import ComponentInitializer from './initializer/component-initializer';
 import EventMixin from './mixin/event-mixin';
 import Globals from './globals';
 import InitializerMixin from './mixin/initializer-mixin';
@@ -340,35 +341,7 @@ Component.prototype.setup = function(options)
 Component.prototype.addComponent = function(componentName, options)
 {
 
-	if (!this._components)
-	{
-		this._components = {};
-	}
-
-	return new Promise((resolve, reject) => {
-		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
-		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : this._settings.get("system.splitComponent", false) );
-		let className = ( "className" in options ? options["className"] : componentName );
-
-		Promise.resolve().then(() => {
-			// Load component
-			return this.loadComponent(className, path, {"splitComponent":splitComponent});
-		}).then(() => {
-			// Insert tag
-			if (options["rootNode"] && !this._components[componentName])
-			{
-				let root = document.querySelector(options["rootNode"]);
-				if (!root)
-				{
-					throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${this.name}`);
-				}
-				root.insertAdjacentHTML("afterbegin", options["tag"]);
-				this._components[componentName] = root.children[0];
-			}
-		}).then(() => {
-			resolve();
-		});
-	});
+	return ComponentInitializer.addComponent(this, componentName, options);
 
 }
 
