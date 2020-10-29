@@ -182,19 +182,6 @@ Pad.prototype.switchTemplate = function(templateName)
 // -----------------------------------------------------------------------------
 
 /**
- * Fill.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.fill = function(options)
-{
-}
-
-// -----------------------------------------------------------------------------
-
-/**
  * Clone the component.
  *
  * @param	{String}		templateName		Template name.

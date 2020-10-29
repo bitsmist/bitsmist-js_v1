@@ -295,6 +295,19 @@ Component.prototype.refresh = function(options)
 // -----------------------------------------------------------------------------
 
 /**
+ * Fill.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.fill = function(options)
+{
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Apply settings.
  *
  * @param	{Object}		options				Options.
