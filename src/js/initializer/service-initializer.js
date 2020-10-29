@@ -70,4 +70,27 @@ export default class ServiceInitializer
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if event is target.
+	 *
+	 * @param	{String}		eventName			Event name.
+	 *
+	 * @return 	{Boolean}		True if it is target.
+	 */
+	static isTarget(eventName)
+	{
+
+		let ret = false;
+
+		if (eventName == "initComponent" || eventName == "connected")
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
 }

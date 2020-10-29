@@ -41,4 +41,27 @@ export default class ElementInitializer
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if event is target.
+	 *
+	 * @param	{String}		eventName			Event name.
+	 *
+	 * @return 	{Boolean}		True if it is target.
+	 */
+	static isTarget(eventName)
+	{
+
+		let ret = false;
+
+		if (eventName == "append" || eventName == "spec")
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
 }

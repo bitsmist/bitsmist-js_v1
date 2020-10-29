@@ -30,7 +30,6 @@ export default class EventInitializer
 	static init(component, settings)
 	{
 
-		// Init event handlers
 		if (settings)
 		{
 			Object.keys(settings).forEach((eventName) => {
@@ -39,6 +38,29 @@ export default class EventInitializer
 		}
 
 		return Promise.resolve();
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if event is target.
+	 *
+	 * @param	{String}		eventName			Event name.
+	 *
+	 * @return 	{Boolean}		True if it is target.
+	 */
+	static isTarget(eventName)
+	{
+
+		let ret = false;
+
+		if (eventName == "initComponent" || eventName == "connected")
+		{
+			ret = true;
+		}
+
+		return ret;
 
 	}
 
