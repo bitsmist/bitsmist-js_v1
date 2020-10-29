@@ -25,11 +25,13 @@ import ElementInitializer from './initializer/element-initializer';
 import EventInitializer from './initializer/event-initializer';
 import InitializerInitializer from './initializer/initializer-initializer';
 import ServiceInitializer from './initializer/service-initializer';
+import TemplateInitializer from './initializer/template-initializer';
 Globals.addInitializer(ComponentInitializer, "components");
 Globals.addInitializer(ElementInitializer, "elements");
 Globals.addInitializer(EventInitializer, "events");
 Globals.addInitializer(InitializerInitializer, "initializers");
 Globals.addInitializer(ServiceInitializer, "services");
+Globals.addInitializer(TemplateInitializer, "templates");
 
 // Pad
 import Pad from './pad';

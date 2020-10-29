@@ -40,7 +40,7 @@ export default function Pad(settings)
 	_this._modalPromise;
 	_this._modalResult;
 	_this._shadowRoot;
-	_this._templates = {};
+	_this._templates = _this._templates || {};
 
 	_this.trigger("initPad", _this);
 
