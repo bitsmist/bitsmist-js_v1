@@ -34,14 +34,11 @@ export default class InitializerMixin
 		Object.keys(settings).forEach((key) => {
 			if (key in Globals["initializers"])
 			{
-				let initializer = Globals["initializers"][key];
+				let initializer = InitializerMixin.getInitializer.call(this, key);
 
 				if (initializer.isTarget(eventName))
 				{
-					// if (typeof initializer == "function")
-					// {
-						initializer.init(this, settings[key]);
-					// }
+					initializer.init(this, settings[key]);
 				}
 			}
 		});
@@ -67,16 +64,13 @@ export default class InitializerMixin
 			Object.keys(settings).forEach((key) => {
 				if (key in Globals["initializers"])
 				{
-					let initializer = Globals["initializers"][key];
+					let initializer = InitializerMixin.getInitializer.call(this, key);
 
 					if (initializer.isTarget(eventName))
 					{
-						// if (typeof initializer == "function")
-						// {
-							chain = chain.then(() => {
-								return initializer.init(this, settings[key]);
-							});
-						// }
+						chain = chain.then(() => {
+							return initializer.init(this, settings[key]);
+						});
 					}
 				}
 			});
@@ -85,6 +79,29 @@ export default class InitializerMixin
 				resolve();
 			});
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get an initializer. Throws an error if it is not a function.
+	 *
+	 * @param	{String}		type				Initializer type.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static getInitializer(type)
+	{
+
+		let initializer = Globals["initializers"][type];
+
+		if (typeof initializer != "function" || typeof initializer.init != "function")
+		{
+			throw TypeError(`Initializer is not a function. componentName=${this.name}, type=${type}`);
+		}
+
+		return initializer;
 
 	}
 
