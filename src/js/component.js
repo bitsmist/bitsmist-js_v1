@@ -11,6 +11,7 @@
 import ClassUtil from './util/class-util';
 import EventMixin from './mixin/event-mixin';
 import Globals from './globals';
+import InitializerMixin from './mixin/initializer-mixin';
 import LoaderMixin from './mixin/loader-mixin';
 import Store from './store';
 import Util from './util/util';
@@ -36,10 +37,7 @@ export default function Component(settings)
 	let _this = Reflect.construct(HTMLElement, [], this.constructor);
 
 	// Init variables
-	_this._components = {};
 	_this._element = _this;
-	_this._events = {};
-	_this._plugins = {};
 	_this._status = "";
 	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 
@@ -59,14 +57,7 @@ export default function Component(settings)
 	// Init settings
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
 
-	_this._settings.set("components", Util.safeGet(settings, "components", {}));
-	_this._settings.set("plugins", Util.safeGet(settings, "plugins", {}));
-	_this._settings.set("events", Util.safeGet(settings, "events", {}));
-	_this._settings.set("services", Util.safeGet(settings, "services", {}));
-	_this._settings.set("elements", Util.safeGet(settings, "elements", {}));
-
-	_this._init(_this._settings.items);
-
+	_this.applyInitializerSync(_this._settings.items, "initComponent");
 	_this.trigger("initComponent", _this);
 
 	return _this;
@@ -76,6 +67,7 @@ export default function Component(settings)
 // Inherit & Mixin
 ClassUtil.inherit(Component, HTMLElement);
 Object.assign(Component.prototype, EventMixin);
+Object.assign(Component.prototype, InitializerMixin);
 Object.assign(Component.prototype, LoaderMixin);
 Object.assign(Component.prototype, WaitforMixin);
 
@@ -338,7 +330,7 @@ Component.prototype.setup = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Add a component to the pad.
+ * Add a component.
  *
  * @param	{String}		componentName		Component name.
  * @param	{Object}		options				Options for the component.
@@ -347,6 +339,11 @@ Component.prototype.setup = function(options)
  */
 Component.prototype.addComponent = function(componentName, options)
 {
+
+	if (!this._components)
+	{
+		this._components = {};
+	}
 
 	return new Promise((resolve, reject) => {
 		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
@@ -376,50 +373,6 @@ Component.prototype.addComponent = function(componentName, options)
 }
 
 // -----------------------------------------------------------------------------
-
-/**
- * Add a plugin to the component.
- *
- * @param	{String}		componentName		Component name.
- * @param	{Object}		options				Options for the component.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.addPlugin = function(pluginName, options)
-{
-
-	return new Promise((resolve, reject) => {
-		options = Object.assign({}, options);
-		let className = ( "className" in options ? options["className"] : pluginName );
-		let plugin = null;
-
-		// CreatePlugin
-		plugin = ClassUtil.createObject(className, this, options);
-		this._plugins[pluginName] = plugin;
-
-		// Add event handlers
-		let events = plugin.getOption("events", {});
-		Object.keys(events).forEach((eventName) => {
-			this.addEventHandler(this, eventName, events[eventName], null, plugin);
-		});
-
-		// Expose plugin
-		if (options["expose"])
-		{
-			Object.defineProperty(this.__proto__, pluginName, {
-				get()
-				{
-					return plugin;
-				}
-			});
-		}
-
-		resolve(plugin);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
 //  Callbacks
 // -----------------------------------------------------------------------------
 
@@ -428,6 +381,8 @@ Component.prototype.addPlugin = function(pluginName, options)
  */
 Component.prototype.connectedCallback = function()
 {
+
+	console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}`);
 
 	Promise.resolve().then(() => {
 		// Load extra settings
@@ -441,16 +396,16 @@ Component.prototype.connectedCallback = function()
 	}).then((newSettings) => {
 		if (newSettings)
 		{
-			this._init(newSettings);
 			this._settings.merge(newSettings);
+			return this.applyInitializer(newSettings, "connected");
 		}
 	}).then(() => {
 		// Get settings from attributes
 		let attrSettings = this.__getSettingsFromAttribute();
 		if (attrSettings)
 		{
-			this._init(attrSettings);
 			this._settings.merge(attrSettings);
+			return this.applyInitializer(attrSettings, "connected");
 		}
 	}).then(() => {
 		// Trigger an event
@@ -481,72 +436,6 @@ Component.prototype._getSettings = function()
 {
 
 	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Init.
- *
- * @param	{Object}		settings			Settings.
- */
-Component.prototype._init = function(settings)
-{
-
-	// Init plugins
-	let plugins = settings["plugins"];
-	if (plugins)
-	{
-		Object.keys(plugins).forEach((pluginName) => {
-			this.addPlugin(pluginName, plugins[pluginName]);
-		});
-	}
-
-	// Init services
-	let services = settings["services"];
-	if (services)
-	{
-		Object.keys(services).forEach((serviceName) => {
-			Object.keys(services[serviceName]["events"]).forEach((eventName) => {
-				let feature = services[serviceName]["events"][eventName]["handler"];
-				let args = services[serviceName]["events"][eventName]["args"];
-				let func = function(){
-					let waitInfo = {};
-					if (services[serviceName]["className"]) waitInfo["name"] = services[serviceName]["className"];
-					if (services[serviceName]["rootNode"]) waitInfo["rootNode"] = services[serviceName]["rootNode"];
-					waitInfo["status"] = "opened";
-					this.waitFor([waitInfo]).then(() => {
-						let service;
-						if (services[serviceName]["className"])
-						{
-							Object.keys(Globals["components"]).forEach((key) => {
-								if (Globals["components"][key].component.name == services[serviceName]["className"])
-								{
-									service = Globals["components"][key].component;
-								}
-							});
-						}
-						else
-						{
-							service = document.querySelector(services[serviceName]["rootNode"]);
-						}
-						service[feature].apply(service, args);
-					});
-				};
-				this.addEventHandler(this, eventName, func);
-			});
-		});
-	}
-
-	// Init event handlers
-	let events = settings["events"];
-	if (events)
-	{
-		Object.keys(events).forEach((eventName) => {
-			this.addEventHandler(this, eventName, events[eventName]);
-		});
-	}
 
 }
 

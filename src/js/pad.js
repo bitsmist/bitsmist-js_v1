@@ -166,7 +166,10 @@ Pad.prototype.switchTemplate = function(templateName)
 		}).then(() => {
 			return this.trigger("append", this);
 		}).then(() => {
-			this._templates[this._settings.get("templateName")]["isAppended"] = false;
+			if (this._templates[this._settings.get("templateName")])
+			{
+				this._templates[this._settings.get("templateName")]["isAppended"] = false;
+			}
 			this._templates[templateName]["isAppended"] = true;
 			this._settings.set("templateName", templateName);
 
@@ -284,22 +287,7 @@ Pad.prototype.__initOnAppendTemplate = function()
 {
 
 	return new Promise((resolve, reject) => {
-		let chain = Promise.resolve();
-
-		//  Add components
-		let components = this._settings.items["components"];
-		Object.keys(components).forEach((componentName) => {
-			chain = chain.then(() => {
-				return this.addComponent(componentName, components[componentName]);
-			});
-		});
-
-		// Init HTML event handlers
-		chain.then(() => {
-			Object.keys(this._settings.items["elements"]).forEach((elementName) => {
-				this.setHtmlEventHandlers(elementName);
-			});
-
+		this.applyInitializer(this._settings.items, "append").then(() => {
 			resolve();
 		});
 	});
