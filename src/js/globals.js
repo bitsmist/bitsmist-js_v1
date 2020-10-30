@@ -10,29 +10,138 @@
 
 import Store from './store';
 
-let Globals = (function(){
-	let globals = {};
+// =============================================================================
+//	Global class
+// =============================================================================
 
-	globals["components"] = {};
-	globals["classes"] = {};
-	globals["settings"] = new Store();
-	globals["preferences"] = new Store();
-	globals["initializers"] = {};
+class Globals
+{
+
+	// -------------------------------------------------------------------------
+	//  Constructor
+	// -------------------------------------------------------------------------
 
 	/**
-	* Add a initializer to Globals.
-	*
-	* @param	{Object}		initializerClass	Initializer class.
-	* @param	{Object}		target				Setting key name.
-	*/
-	globals["addInitializer"] = function(initializerClass, target)
+     * Constructor.
+     *
+	 * @param	{Object}		options				Options.
+	 * @param	{Store}			chain				Store Component to chain.
+     */
+	constructor()
 	{
 
-		Globals["initializers"][target] = initializerClass;
+		this._components = {};
+		this._classes = {};
+		this._initializers = {};
+		this._settings = new Store();
+		this._preferences = new Store();
 
 	}
 
-	return globals;
-}());
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
 
-export default Globals;
+	/**
+	 * Components.
+	 *
+	 * @type	{Object}
+	 */
+	get components()
+	{
+
+		return this._components;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Classes.
+	 *
+	 * @type	{Object}
+	 */
+	get classes()
+	{
+
+		return this._classes;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Initializers.
+	 *
+	 * @type	{Object}
+	 */
+	get initializers()
+	{
+
+		return this._initializers;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Settings.
+	 *
+	 * @type	{Object}
+	 */
+	get settings()
+	{
+
+		return this._settings;
+
+	}
+
+	set settings(value)
+	{
+
+		this._settings = value;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Preferences.
+	 *
+	 * @type	{Object}
+	 */
+	get preferences()
+	{
+
+		return this._preferences;
+
+	}
+
+	set preferences(value)
+	{
+
+		this._preferences = value;
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Method
+	// -------------------------------------------------------------------------
+
+	/**
+     * Add an initializer.
+     *
+	 * @param	{Object}		initializerClass	Initializer class.
+	 * @param	{Object}		target				Target.
+     */
+	addInitializer(initializerClass, target)
+	{
+
+		this._initializers[target] = initializerClass;
+
+	}
+
+}
+
+let globals = new Globals();
+export default globals;
