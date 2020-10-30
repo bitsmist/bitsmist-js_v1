@@ -11,10 +11,10 @@
 import Util from '../util/util';
 
 // =============================================================================
-//	Component initializer class
+//	Component organizer class
 // =============================================================================
 
-export default class ComponentInitializer
+export default class ComponentOrganizer
 {
 
 	// -------------------------------------------------------------------------
@@ -38,7 +38,7 @@ export default class ComponentInitializer
 		{
 			Object.keys(settings).forEach((componentName) => {
 				chain = chain.then(() => {
-					return ComponentInitializer.addComponent(component, componentName, settings[componentName]);
+					return ComponentOrganizer.addComponent(component, componentName, settings[componentName]);
 				});
 			});
 		}

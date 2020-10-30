@@ -12,10 +12,10 @@ import Globals from '../globals';
 import Util from '../util/util';
 
 // =============================================================================
-//	Initializer mixin class
+//	Organizer mixin class
 // =============================================================================
 
-export default class InitializerMixin
+export default class OrganizerMixin
 {
 
 	// -------------------------------------------------------------------------
@@ -23,22 +23,22 @@ export default class InitializerMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Apply initializer synchronously.
+	 * Apply organizer synchronously.
 	 *
 	 * @param	{Object}		settings			Settings.
 	 * @param	{String}		eventName			Event name.
 	 */
-	static applyInitializerSync(settings, eventName)
+	static organizeSync(settings, eventName)
 	{
 
 		Object.keys(settings).forEach((key) => {
-			if (key in Globals["initializers"])
+			if (key in Globals["organizers"])
 			{
-				let initializer = InitializerMixin.getInitializer.call(this, key);
+				let organizer = OrganizerMixin.getOrganizer.call(this, key);
 
-				if (initializer.isTarget(eventName))
+				if (organizer.isTarget(eventName))
 				{
-					initializer.init(this, settings[key]);
+					organizer.init(this, settings[key]);
 				}
 			}
 		});
@@ -48,28 +48,28 @@ export default class InitializerMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Apply initializer asynchronously.
+	 * Apply organizer asynchronously.
 	 *
 	 * @param	{Object}		settings			Settings.
 	 * @param	{String}		eventName			Event name.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static applyInitializer(settings, eventName)
+	static organize(settings, eventName)
 	{
 
 		return new Promise((resolve, reject) => {
 			let chain = Promise.resolve();
 
 			Object.keys(settings).forEach((key) => {
-				if (key in Globals["initializers"])
+				if (key in Globals["organizers"])
 				{
-					let initializer = InitializerMixin.getInitializer.call(this, key);
+					let organizer = OrganizerMixin.getOrganizer.call(this, key);
 
-					if (initializer.isTarget(eventName))
+					if (organizer.isTarget(eventName))
 					{
 						chain = chain.then(() => {
-							return initializer.init(this, settings[key]);
+							return organizer.init(this, settings[key]);
 						});
 					}
 				}
@@ -85,23 +85,23 @@ export default class InitializerMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get an initializer. Throws an error if it is not a function.
+	 * Get an organizer. Throws an error if it is not a function.
 	 *
-	 * @param	{String}		type				Initializer type.
+	 * @param	{String}		type				Organizer type.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static getInitializer(type)
+	static getOrganizer(type)
 	{
 
-		let initializer = Globals["initializers"][type];
+		let organizer = Globals["organizers"][type];
 
-		if (typeof initializer != "function" || typeof initializer.init != "function")
+		if (typeof organizer != "function" || typeof organizer.init != "function")
 		{
-			throw TypeError(`Initializer is not a function. componentName=${this.name}, type=${type}`);
+			throw TypeError(`Organizer is not a function. componentName=${this.name}, type=${type}`);
 		}
 
-		return initializer;
+		return organizer;
 
 	}
 

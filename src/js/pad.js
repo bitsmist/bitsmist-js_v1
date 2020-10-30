@@ -144,7 +144,7 @@ Pad.prototype.switchTemplate = function(templateName)
 			let splitComponent = this._settings.get("system.splitComponent", false);
 			this.loadTags(this._element, path, {"splitComponent":splitComponent});
 		}).then(() => {
-			return this.applyInitializer(this._settings.items, "append");
+			return this.organize(this._settings.items, "append");
 		}).then(() => {
 			if (this._settings.get("waitFor"))
 			{

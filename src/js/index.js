@@ -19,21 +19,21 @@ window.BITSMIST.v1.Globals = Globals;
 import Component from './component';
 window.BITSMIST.v1.Component = Component;
 
-// Initializer
-import AttrInitializer from './initializer/attr-initializer';
-import ComponentInitializer from './initializer/component-initializer';
-import ElementInitializer from './initializer/element-initializer';
-import EventInitializer from './initializer/event-initializer';
-import InitializerInitializer from './initializer/initializer-initializer';
-import ServiceInitializer from './initializer/service-initializer';
-import TemplateInitializer from './initializer/template-initializer';
-Globals.addInitializer(AttrInitializer, "attrs");
-Globals.addInitializer(ComponentInitializer, "components");
-Globals.addInitializer(ElementInitializer, "elements");
-Globals.addInitializer(EventInitializer, "events");
-Globals.addInitializer(InitializerInitializer, "initializers");
-Globals.addInitializer(ServiceInitializer, "services");
-Globals.addInitializer(TemplateInitializer, "templates");
+// Organizer
+import AttrOrganizer from './organizer/attr-organizer';
+import ComponentOrganizer from './organizer/component-organizer';
+import ElementOrganizer from './organizer/element-organizer';
+import EventOrganizer from './organizer/event-organizer';
+import OrganizerOrganizer from './organizer/organizer-organizer';
+import ServiceOrganizer from './organizer/service-organizer';
+import TemplateOrganizer from './organizer/template-organizer';
+Globals.addOrganizer(AttrOrganizer, "attrs");
+Globals.addOrganizer(ComponentOrganizer, "components");
+Globals.addOrganizer(ElementOrganizer, "elements");
+Globals.addOrganizer(EventOrganizer, "events");
+Globals.addOrganizer(OrganizerOrganizer, "organizers");
+Globals.addOrganizer(ServiceOrganizer, "services");
+Globals.addOrganizer(TemplateOrganizer, "templates");
 
 // Pad
 import Pad from './pad';

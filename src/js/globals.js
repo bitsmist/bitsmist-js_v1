@@ -32,7 +32,7 @@ class Globals
 
 		this._components = {};
 		this._classes = {};
-		this._initializers = {};
+		this._organizers = {};
 		this._settings = new Store();
 		this._preferences = new Store();
 
@@ -71,14 +71,14 @@ class Globals
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Initializers.
+	 * Organizers.
 	 *
 	 * @type	{Object}
 	 */
-	get initializers()
+	get organizers()
 	{
 
-		return this._initializers;
+		return this._organizers;
 
 	}
 
@@ -129,15 +129,15 @@ class Globals
 	// -------------------------------------------------------------------------
 
 	/**
-     * Add an initializer.
+     * Add an organizer.
      *
-	 * @param	{Object}		initializerClass	Initializer class.
+	 * @param	{Object}		organizerClass		Organizer class.
 	 * @param	{Object}		target				Target.
      */
-	addInitializer(initializerClass, target)
+	addOrganizer(organizerClass, target)
 	{
 
-		this._initializers[target] = initializerClass;
+		this._organizers[target] = organizerClass;
 
 	}
 

@@ -9,10 +9,10 @@
 // =============================================================================
 
 // =============================================================================
-//	Template initializer class
+//	Event organizer class
 // =============================================================================
 
-export default class TemplateInitializer
+export default class EventOrganizer
 {
 
 	// -------------------------------------------------------------------------
@@ -30,13 +30,10 @@ export default class TemplateInitializer
 	static init(component, settings)
 	{
 
-		component._templates = component._templates || {};
-
 		if (settings)
 		{
-			Object.keys(settings).forEach((key) => {
-				let templateInfo = component.__getTemplateInfo(key);
-				templateInfo["html"] = settings[key];
+			Object.keys(settings).forEach((eventName) => {
+				component.addEventHandler(component, eventName, settings[eventName]);
 			});
 		}
 

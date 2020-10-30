@@ -9,10 +9,10 @@
 // =============================================================================
 
 // =============================================================================
-//	Attribute initializer class
+//	Element organizer class
 // =============================================================================
 
-export default class AttrInitializer
+export default class ElementOrganizer
 {
 
 	// -------------------------------------------------------------------------
@@ -32,9 +32,8 @@ export default class AttrInitializer
 
 		if (settings)
 		{
-			Object.keys(settings).forEach((key) => {
-				console.log("@@@", component.name, key, settings[key]);
-				component.setAttribute(key, settings[key]);
+			Object.keys(settings).forEach((elementName) => {
+				component.setHtmlEventHandlers(elementName);
 			});
 		}
 
@@ -56,7 +55,7 @@ export default class AttrInitializer
 
 		let ret = false;
 
-		if (eventName == "initComponent" || eventName == "connected")
+		if (eventName == "append" || eventName == "spec")
 		{
 			ret = true;
 		}

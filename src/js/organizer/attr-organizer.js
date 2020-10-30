@@ -9,10 +9,10 @@
 // =============================================================================
 
 // =============================================================================
-//	Event initializer class
+//	Attribute organizer class
 // =============================================================================
 
-export default class EventInitializer
+export default class AttrOrganizer
 {
 
 	// -------------------------------------------------------------------------
@@ -32,8 +32,8 @@ export default class EventInitializer
 
 		if (settings)
 		{
-			Object.keys(settings).forEach((eventName) => {
-				component.addEventHandler(component, eventName, settings[eventName]);
+			Object.keys(settings).forEach((key) => {
+				component.setAttribute(key, settings[key]);
 			});
 		}
 

@@ -9,10 +9,10 @@
 // =============================================================================
 
 // =============================================================================
-//	Element initializer class
+//	Template organizer class
 // =============================================================================
 
-export default class ElementInitializer
+export default class TemplateOrganizer
 {
 
 	// -------------------------------------------------------------------------
@@ -30,10 +30,13 @@ export default class ElementInitializer
 	static init(component, settings)
 	{
 
+		component._templates = component._templates || {};
+
 		if (settings)
 		{
-			Object.keys(settings).forEach((elementName) => {
-				component.setHtmlEventHandlers(elementName);
+			Object.keys(settings).forEach((key) => {
+				let templateInfo = component.__getTemplateInfo(key);
+				templateInfo["html"] = settings[key];
 			});
 		}
 
@@ -55,7 +58,7 @@ export default class ElementInitializer
 
 		let ret = false;
 
-		if (eventName == "append" || eventName == "spec")
+		if (eventName == "initComponent" || eventName == "connected")
 		{
 			ret = true;
 		}

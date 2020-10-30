@@ -9,10 +9,10 @@
 // =============================================================================
 
 import ClassUtil from './util/class-util';
-import ComponentInitializer from './initializer/component-initializer';
+import ComponentOrganizer from './organizer/component-organizer';
 import EventMixin from './mixin/event-mixin';
 import Globals from './globals';
-import InitializerMixin from './mixin/initializer-mixin';
+import OrganizerMixin from './mixin/organizer-mixin';
 import LoaderMixin from './mixin/loader-mixin';
 import Store from './store';
 import Util from './util/util';
@@ -54,7 +54,7 @@ export default function Component(settings)
 	// Init settings
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
 
-	_this.applyInitializerSync(_this._settings.items, "initComponent");
+	_this.organizeSync(_this._settings.items, "initComponent");
 	_this.trigger("initComponent", _this);
 
 	return _this;
@@ -64,7 +64,7 @@ export default function Component(settings)
 // Inherit & Mixin
 ClassUtil.inherit(Component, HTMLElement);
 Object.assign(Component.prototype, EventMixin);
-Object.assign(Component.prototype, InitializerMixin);
+Object.assign(Component.prototype, OrganizerMixin);
 Object.assign(Component.prototype, LoaderMixin);
 Object.assign(Component.prototype, WaitforMixin);
 
@@ -320,7 +320,7 @@ Component.prototype.setup = function(options)
 Component.prototype.addComponent = function(componentName, options)
 {
 
-	return ComponentInitializer.addComponent(this, componentName, options);
+	return ComponentOrganizer.addComponent(this, componentName, options);
 
 }
 
@@ -349,7 +349,7 @@ Component.prototype.connectedCallback = function()
 		if (newSettings)
 		{
 			this._settings.merge(newSettings);
-			return this.applyInitializer(newSettings, "connected");
+			return this.organize(newSettings, "connected");
 		}
 	}).then(() => {
 		// Get settings from attributes
@@ -357,7 +357,7 @@ Component.prototype.connectedCallback = function()
 		if (attrSettings)
 		{
 			this._settings.merge(attrSettings);
-			return this.applyInitializer(attrSettings, "connected");
+			return this.organize(attrSettings, "connected");
 		}
 	}).then(() => {
 		// Trigger an event
