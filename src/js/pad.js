@@ -77,25 +77,8 @@ Pad.prototype.open = function(options)
 		Promise.resolve().then(() => {
 			return this.switchTemplate(this._settings.get("templateName"));
 		}).then(() => {
-			if (this._settings.get("autoSetup"))
-			{
-				let defaultPreferences = Object.assign({}, Globals["preferences"].items);
-				options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : defaultPreferences);
-				options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
-				return this.setup(options);
-			}
+			return Component.prototype.open.call(this, options);
 		}).then(() => {
-			if (this._settings.get("autoRefresh"))
-			{
-				return this.refresh();
-			}
-		}).then(() => {
-			return this.trigger("beforeOpen", sender, {"options":options});
-		}).then(() => {
-			return this.trigger("open", sender, {"options":options});
-		}).then(() => {
-			console.debug(`Pad.open(): Opened pad. name=${this.name}`);
-			this.registerComponent(this, "opened");
 			resolve();
 		});
 	});
@@ -161,7 +144,7 @@ Pad.prototype.switchTemplate = function(templateName)
 			let splitComponent = this._settings.get("system.splitComponent", false);
 			this.loadTags(this._element, path, {"splitComponent":splitComponent});
 		}).then(() => {
-			return this.__initOnAppendTemplate();
+			return this.applyInitializer(this._settings.items, "append");
 		}).then(() => {
 			if (this._settings.get("waitFor"))
 			{
@@ -264,24 +247,6 @@ Pad.prototype.__getTemplateInfo = function(templateName)
 	}
 
 	return this._templates[templateName];
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Init on append template.
- *
- * @return  {Promise}		Promise.
- */
-Pad.prototype.__initOnAppendTemplate = function()
-{
-
-	return new Promise((resolve, reject) => {
-		this.applyInitializer(this._settings.items, "append").then(() => {
-			resolve();
-		});
-	});
 
 }
 
