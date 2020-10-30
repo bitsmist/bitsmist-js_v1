@@ -106,7 +106,14 @@ export default class ComponentInitializer
 					{
 						throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
 					}
-					root.insertAdjacentHTML("afterbegin", options["tag"]);
+
+					let tag = ( options["tag"] ? options["tag"] : ( options["tagName"] ? "<" + options["tagName"] + "></" + options["tagName"] + ">" : "") );
+					if (!tag)
+					{
+						throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
+					}
+
+					root.insertAdjacentHTML("afterbegin", tag);
 					component._components[componentName] = root.children[0];
 				}
 			}).then(() => {
