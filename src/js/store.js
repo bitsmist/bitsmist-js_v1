@@ -113,7 +113,7 @@ export default class Store
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Get an value from store. Return default value when specified key is not available.
+	* Get a value from store. Return default value when specified key is not available.
 	* If chained, chained store is also considiered.
 	*
 	* @param	{String}		key					Key to get.
@@ -131,7 +131,7 @@ export default class Store
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Set an value to store.
+	* Set a value to store.
 	*
 	* @param	{String}		key					Key to store.
 	* @param	{Object}		value				Value to store.
