@@ -20,12 +20,14 @@ import Component from './component';
 window.BITSMIST.v1.Component = Component;
 
 // Initializer
+import AttrInitializer from './initializer/attr-initializer';
 import ComponentInitializer from './initializer/component-initializer';
 import ElementInitializer from './initializer/element-initializer';
 import EventInitializer from './initializer/event-initializer';
 import InitializerInitializer from './initializer/initializer-initializer';
 import ServiceInitializer from './initializer/service-initializer';
 import TemplateInitializer from './initializer/template-initializer';
+Globals.addInitializer(AttrInitializer, "attrs");
 Globals.addInitializer(ComponentInitializer, "components");
 Globals.addInitializer(ElementInitializer, "elements");
 Globals.addInitializer(EventInitializer, "events");
