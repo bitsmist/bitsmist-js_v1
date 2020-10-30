@@ -50,10 +50,6 @@ export default function Component(settings)
 	settings = Object.assign({}, defaults, settings, _this._getSettings());
 	_this._settings = new Store({"items":settings});
 	_this._settings.chain(Globals["settings"]);
-	let preferences = Object.assign({}, settings["preferences"]);
-	_this._preferences = new Store({"items":preferences});
-	_this._preferences.chain(Globals["preferences"]);
-	_this._store = new Store();
 
 	// Init settings
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
@@ -151,36 +147,6 @@ Object.defineProperty(Component.prototype, 'settings', {
 })
 
 // -----------------------------------------------------------------------------
-
-/**
- * Preferences.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'preferences', {
-	get()
-	{
-		return this._preferences;
-	},
-	configurable: true
-})
-
-// -----------------------------------------------------------------------------
-
-/**
- * Store.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'store', {
-	get()
-	{
-		return this._store;
-	},
-	configurable: true
-})
-
-// -----------------------------------------------------------------------------
 //  Methods
 // -----------------------------------------------------------------------------
 
@@ -204,7 +170,10 @@ Component.prototype.open = function(options)
 		Promise.resolve().then(() => {
 			if (this._settings.get("autoSetup"))
 			{
-				return this.setup();
+				let defaultPreferences = Object.assign({}, Globals["preferences"].items);
+				options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : defaultPreferences);
+				options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
+				return this.setup(options);
 			}
 		}).then(() => {
 			if (this._settings.get("autoRefresh"))
@@ -321,9 +290,6 @@ Component.prototype.setup = function(options)
 
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
-		let defaultPreferences = Object.assign({}, this._preferences.items);
-		options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : defaultPreferences);
-		options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {

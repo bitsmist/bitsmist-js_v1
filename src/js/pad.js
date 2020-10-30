@@ -10,6 +10,7 @@
 
 import ClassUtil from './util/class-util';
 import Component from './component';
+import Globals from './globals';
 import Util from './util/util';
 
 // =============================================================================
@@ -78,7 +79,10 @@ Pad.prototype.open = function(options)
 		}).then(() => {
 			if (this._settings.get("autoSetup"))
 			{
-				return this.setup();
+				let defaultPreferences = Object.assign({}, Globals["preferences"].items);
+				options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : defaultPreferences);
+				options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
+				return this.setup(options);
 			}
 		}).then(() => {
 			if (this._settings.get("autoRefresh"))
