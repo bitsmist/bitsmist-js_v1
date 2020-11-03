@@ -85,6 +85,23 @@ export default class OrganizerMixin
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Clear organizers.
+	 */
+	static clearOrganizers()
+	{
+
+		Object.keys(Globals["organizers"]).forEach((key) => {
+			if (typeof Globals["organizers"][key].clear == "function")
+			{
+				Globals["organizers"][key].clear(this);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Get an organizer. Throws an error if it is not a function.
 	 *
 	 * @param	{String}		type				Organizer type.
