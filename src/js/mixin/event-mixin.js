@@ -31,7 +31,7 @@ export default class EventMixin
 	static addEventHandler(element, eventName, eventInfo, options, bindTo)
 	{
 
-		let order = (typeof eventInfo === "object" && eventInfo["order"] ? eventInfo["order"] : order);
+		let order = (typeof eventInfo === "object" && eventInfo["order"] ? eventInfo["order"] : 0);
 		let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
 
 		// Get handler
