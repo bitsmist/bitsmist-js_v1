@@ -171,7 +171,6 @@ Component.prototype.open = function(options)
 			if (this._settings.get("autoSetup"))
 			{
 				let defaultPreferences = Object.assign({}, Globals["preferences"].items);
-				options["currentPreferences"] = ( options["currentPreferences"] ? options["currentPreferences"] : defaultPreferences);
 				options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
 				return this.setup(options);
 			}
@@ -325,6 +324,30 @@ Component.prototype.addComponent = function(componentName, options)
 }
 
 // -----------------------------------------------------------------------------
+
+/**
+ * Detroy component.
+ *
+ * @param	{Object}		options				Options for the component.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.destroy = function(options)
+{
+
+	console.debug(`Component.destroy(): Destroying component. name=${this.name}`);
+
+	return new Promise((resolve, reject) => {
+		Promise.resolve().then(() => {
+			return this.trigger("beforeDestroy", this);
+		}).then(() => {
+			return this.trigger("destroy", this);
+		});
+	});
+
+}
+
+// -----------------------------------------------------------------------------
 //  Callbacks
 // -----------------------------------------------------------------------------
 
@@ -372,6 +395,18 @@ Component.prototype.connectedCallback = function()
 			this.open();
 		}
 	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Disconnected callback.
+ */
+Component.prototype.disconnectedCallback = function()
+{
+
+	this.destroy();
 
 }
 
