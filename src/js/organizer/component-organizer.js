@@ -50,6 +50,26 @@ export default class ComponentOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Clear.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static clear(component)
+	{
+
+		Object.keys(component._components).forEach((key) => {
+			component._components[key].parentNode.removeChild(component._components[key]);
+		});
+
+		component._components = {};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Check if event is target.
 	 *
 	 * @param	{String}		eventName			Event name.
