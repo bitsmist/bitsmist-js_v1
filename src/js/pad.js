@@ -142,7 +142,7 @@ Pad.prototype.switchTemplate = function(templateName)
 		}).then(() => {
 			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
 			let splitComponent = this._settings.get("system.splitComponent", false);
-			this.loadTags(this._element, path, {"splitComponent":splitComponent});
+			this.loadTags(this, path, {"splitComponent":splitComponent});
 		}).then(() => {
 			return this.organize(this._settings.items, "append");
 		}).then(() => {
@@ -312,11 +312,11 @@ Pad.prototype.__applyTemplate = function(rootNode, templateName, templateNode)
 	// Apply
 	if (templateNode)
 	{
-		this.__appendToNode(this._element, templateName, "this");
+		this.__appendToNode(this, templateName, "this");
 	}
 	else
 	{
-		this._element.innerHTML = this._templates[templateName].html
+		this.innerHTML = this._templates[templateName].html
 	}
 
 	console.debug(`Pad.__applyTemplate(): Applied template. name=${this.name}, rootNode=${rootNode}, templateName=${templateName}`);

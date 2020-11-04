@@ -38,7 +38,6 @@ export default function Component(settings)
 	let _this = Reflect.construct(HTMLElement, [], this.constructor);
 
 	// Init variables
-	_this._element = _this;
 	_this._status = "";
 	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 
@@ -83,20 +82,6 @@ Object.defineProperty(Component.prototype, 'name', {
 	get()
 	{
 		return this._settings.get("name");
-	}
-})
-
-// -----------------------------------------------------------------------------
-
-/**
- * Element.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'element', {
-	get()
-	{
-		return this._element;
 	}
 })
 
@@ -439,7 +424,7 @@ Component.prototype.__getPathFromAttribute = function(attrName)
 	let name, path;
 	attrName = attrName || "setting";
 
-	let href = ( this._element.getAttribute("data-" + attrName + "href") ? this._element.getAttribute("data-" + attrName + "href") : "" );
+	let href = ( this.getAttribute("data-" + attrName + "href") ? this.getAttribute("data-" + attrName + "href") : "" );
 	if (href)
 	{
 		name = href.slice(0, -3);
@@ -447,8 +432,8 @@ Component.prototype.__getPathFromAttribute = function(attrName)
 	}
 	else
 	{
-		path = ( this._element.getAttribute("data-" + attrName + "path") ? this._element.getAttribute("data-" + attrName + "path") : "" );
-		name = ( this._element.getAttribute("data-" + attrName + "name") ? this._element.getAttribute("data-" + attrName + "name") : "" );
+		path = ( this.getAttribute("data-" + attrName + "path") ? this.getAttribute("data-" + attrName + "path") : "" );
+		name = ( this.getAttribute("data-" + attrName + "name") ? this.getAttribute("data-" + attrName + "name") : "" );
 		if (path && !name)
 		{
 			name = "settings";

@@ -117,7 +117,7 @@ export default class EventMixin
 	static setHtmlEventHandlers(elementName, options, rootNode)
 	{
 
-		rootNode = ( rootNode ? rootNode : this._element );
+		rootNode = ( rootNode ? rootNode : this );
 		let elementInfo = this.settings.get("elements." + elementName);
 
 		// Get target elements
