@@ -43,7 +43,7 @@ export default function Pad(settings)
 	_this._shadowRoot;
 	_this._templates = _this._templates || {};
 
-	_this.trigger("initPad", _this);
+	_this.trigger("afterInitPad", _this);
 
 	return _this;
 
@@ -151,7 +151,7 @@ Pad.prototype.switchTemplate = function(templateName)
 				return this.waitFor(this._settings.get("waitFor"));
 			}
 		}).then(() => {
-			return this.trigger("append", this);
+			return this.trigger("afterAppend", this);
 		}).then(() => {
 			if (this._templates[this._settings.get("templateName")])
 			{

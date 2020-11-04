@@ -54,7 +54,7 @@ export default function Component(settings)
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
 
 	_this.organizeSync(_this._settings.items, "initComponent");
-	_this.trigger("initComponent", _this);
+	_this.trigger("afterInitComponent", _this);
 
 	return _this;
 
@@ -167,7 +167,7 @@ Component.prototype.open = function(options)
 		}).then(() => {
 			return this.trigger("beforeOpen", sender, {"options":options});
 		}).then(() => {
-			return this.trigger("open", sender, {"options":options});
+			return this.trigger("afterOpen", sender, {"options":options});
 		}).then(() => {
 			console.debug(`Component.open(): Opened component. name=${this.name}`);
 			this.registerComponent(this, "opened");
@@ -199,7 +199,7 @@ Component.prototype.close = function(options)
 		Promise.resolve().then(() => {
 			return this.trigger("beforeClose", sender);
 		}).then(() => {
-			return this.trigger("close", sender);
+			return this.trigger("afterClose", sender);
 		}).then(() => {
 			console.debug(`Component.close(): Closed component. name=${this.name}`);
 			if (this._isModal)
@@ -237,7 +237,9 @@ Component.prototype.refresh = function(options)
 				return this.fill(options);
 			}
 		}).then(() => {
-			return this.trigger("refresh", sender, {"options":options});
+			return this.trigger("doRefresh", sender, {"options":options});
+		}).then(() => {
+			return this.trigger("afterRefresh", sender, {"options":options});
 		}).then(() => {
 			resolve();
 		});
@@ -277,13 +279,11 @@ Component.prototype.setup = function(options)
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
-			return this.trigger("formatSettings", sender, options);
-		}).then(() => {
-			return this.trigger("validateSettings", sender,  options);
-		}).then(() => {
 			return this.trigger("beforeSetup", sender, options);
 		}).then(() => {
-			return this.trigger("setup", sender, options);
+			return this.trigger("doSetup", sender, options);
+		}).then(() => {
+			return this.trigger("afterSetup", sender, options);
 		}).then(() => {
 			resolve();
 		});
@@ -326,7 +326,7 @@ Component.prototype.destroy = function(options)
 		Promise.resolve().then(() => {
 			return this.trigger("beforeDestroy", this);
 		}).then(() => {
-			return this.trigger("destroy", this);
+			return this.trigger("afterDestroy", this);
 		});
 	});
 
@@ -369,7 +369,7 @@ Component.prototype.connectedCallback = function()
 		}
 	}).then(() => {
 		// Trigger an event
-		return this.trigger("connected", this);
+		return this.trigger("afterConnect", this);
 	}).then(() => {
 		// Register as connected
 		this.registerComponent(this, "connected");
