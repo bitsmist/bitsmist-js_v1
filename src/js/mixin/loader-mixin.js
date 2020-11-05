@@ -193,15 +193,15 @@ export default class LoadeMixin
 	/**
 	 * Load the template html.
 	 *
-	 * @param	{String}		templateName		Template name.
+	 * @param	{Object}		templateInfo		Template info.
 	 * @param	{String}		path				Path to template.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadTemplate(templateName, path)
+	static loadTemplate(templateInfo, path)
 	{
 
-		return this.__autoLoadTemplate(templateName, path);
+		return this.__autoLoadTemplate(templateInfo, path);
 
 	}
 
