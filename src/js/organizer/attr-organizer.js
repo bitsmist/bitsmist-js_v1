@@ -55,7 +55,7 @@ export default class AttrOrganizer
 
 		let ret = false;
 
-		if (eventName == "initComponent" || eventName == "connected")
+		if (eventName == "append" || eventName == "spec")
 		{
 			ret = true;
 		}
