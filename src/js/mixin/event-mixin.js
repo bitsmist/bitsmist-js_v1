@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import Util from '../util/util';
+
 // =============================================================================
 //	Event mixin class
 // =============================================================================
@@ -45,7 +47,7 @@ export default class EventMixin
 		// Init holder object for the element
 		if (!element._bm_detail)
 		{
-			element._bm_detail = { "component":this, "listeners":listeners, "promises":{} };
+			element._bm_detail = { "component":this, "listeners":listeners, "promises":{}, "statuses":{} };
 		}
 
 		// Add hook event handler
@@ -95,14 +97,28 @@ export default class EventMixin
 		}
 
 		element.dispatchEvent(e);
-		if (element._bm_detail && element._bm_detail["promises"] && element._bm_detail["promises"][eventName])
-		{
-			return element._bm_detail["promises"][eventName];
-		}
-		else
-		{
-			return Promise.resolve();
-		}
+
+		// return the promise if exists
+		return Util.safeGet(element, "_bm_detail.promises." + eventName) || Promise.resolve();
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Trigger the event synchronously.
+	 *
+	 * @param	{String}		eventName				Event name to trigger.
+	 * @param	{Object}		sender					Object which triggered the event.
+	 * @param	{Object}		options					Event parameter options.
+	 */
+	static triggerSync(eventName, sender, options, element)
+	{
+
+		options = options || {};
+		options["async"] = false;
+
+		return EventMixin.trigger.call(this, eventName, sender, options, element);
 
 	}
 
@@ -118,15 +134,11 @@ export default class EventMixin
 	{
 
 		rootNode = ( rootNode ? rootNode : this );
-		let elementInfo = this.settings.get("elements." + elementName);
+		let elementInfo = this._settings.get("elements." + elementName);
+		let elements;
 
 		// Get target elements
-		let elements;
-		if (elementName == "_self")
-		{
-			elements = [rootNode];
-		}
-		else if (elementInfo["rootNode"])
+		if (elementInfo["rootNode"])
 		{
 			elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
 		}
@@ -159,27 +171,11 @@ export default class EventMixin
 	{
 
 		bindTo = bindTo || this;
-		let handler;
-
-		if ( typeof eventInfo === "object" )
-		{
-			handler = eventInfo["handler"];
-		}
-		else
-		{
-			handler = eventInfo;
-		}
+		let handler = ( typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo );
 
 		if ( typeof handler === "string" )
 		{
-			if (bindTo)
-			{
-				handler = bindTo[handler];
-			}
-			else
-			{
-				handler = this[handler];
-			}
+			handler = ( bindTo ? bindTo[handler] : this[handler] );
 		}
 
 		if (handler)
@@ -196,9 +192,9 @@ export default class EventMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Call event handler.
+	 * Call event handlers.
 	 *
-	 * This function is registered as event listener to element.addEventListner(),
+	 * This function is registered as event listener by element.addEventListner(),
 	 * so "this" is HTML element which triggered the event.
 	 *
 	 * @param	{Object}		e						Event parameter.
@@ -206,12 +202,53 @@ export default class EventMixin
 	static __callEventHandler(e)
 	{
 
-		let promise = new Promise((resolve, reject) => {
-			let listeners = ( this._bm_detail && this._bm_detail["listeners"] ? this._bm_detail["listeners"][e.type] : [] );
-			let sender = ( e.detail && e.detail.sender ? e.detail.sender : this );
-			let stopPropagation = false;
+		let listeners = Util.safeGet(this, "_bm_detail.listeners." + e.type);
+		let sender = Util.safeGet(e, "detail.sender", this);
+
+		// Check if handler is already running
+		if (Util.safeGet(this, "_bm_detail.statuses." + e.type) == "handling")
+		{
+			throw new Error(`Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
+			return;
+		}
+
+		Util.safeSet(this, "_bm_detail.statuses." + e.type, "handling");
+
+		if (Util.safeGet(e, "detail.async", true))
+		{
+			// call asynchronously
+			this._bm_detail["promises"][e.type] = EventMixin.__handleAsync(e, sender, listeners);
+			this._bm_detail["promises"][e.type].then(() => {
+				Util.safeSet(this, "_bm_detail.promises." + e.type, null);
+				Util.safeSet(this, "_bm_detail.statuses." + e.type, "");
+			});
+		}
+		else
+		{
+			// call synchronously
+			this._bm_detail["promises"][e.type] = EventMixin.__handleSync(e, sender, listeners);
+			Util.safeSet(this, "_bm_detail.promises." + e.type, null);
+			Util.safeSet(this, "_bm_detail.statuses." + e.type, "");
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Call event handlers asynchronously.
+	 *
+	 * @param	{Object}		e						Event parameter.
+	 * @param	{Object}		sender					Sender object.
+	 * @param	{Object}		listener				Listers info.
+	 */
+	static __handleAsync(e, sender, listeners)
+	{
+
+		return new Promise((resolve, reject) => {
 			let chain = Promise.resolve();
 			let results = [];
+			let stopPropagation = false;
 
 			for (let i = 0; i < listeners.length; i++)
 			{
@@ -245,7 +282,39 @@ export default class EventMixin
 			});
 		});
 
-		this._bm_detail["promises"][e.type] = promise;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Call event handlers synchronously.
+	 *
+	 * @param	{Object}		e						Event parameter.
+	 * @param	{Object}		sender					Sender object.
+	 * @param	{Object}		listener				Listers info.
+	 */
+	static __handleSync(e, sender, listeners)
+	{
+
+		let stopPropagation = false;
+
+		for (let i = 0; i < listeners.length; i++)
+		{
+			// Options set on addEventHandler()
+			e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
+
+			// Execute handler
+			listeners[i]["handler"](sender, e);
+
+			stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
+		}
+
+		if (stopPropagation)
+		{
+			e.stopPropagation();
+		}
+
+		return Promise.resolve();
 
 	}
 
