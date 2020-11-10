@@ -148,15 +148,27 @@ export default class Util
 			{
 				if (path.slice(path.length - 1) == "/" && paths[i].slice(0, 1) == "/")
 				{
+					// "---/" and "/---"
+					// Remove an extra slash
 					path += paths[i].slice(1);
 				}
 				else if (path.slice(path.length - 1) == "/" || paths[i].slice(0, 1) == "/")
 				{
+					// "---/" or "/---"
+					// Just concat
 					path += paths[i];
+				}
+				else if (path)
+				{
+					// "---" + "---"
+					// Add an slash between
+					path += "/" + paths[i];
 				}
 				else
 				{
-					path += "/" + paths[i];
+					// "" + "---"
+					// First word, just accept
+					path = paths[i];
 				}
 			}
 		}
