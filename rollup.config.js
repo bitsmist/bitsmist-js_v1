@@ -6,7 +6,7 @@ import {uglify} from 'rollup-plugin-uglify';
 export default {
 	input: 'src/js/index.js',
 	output: {
-		file: 'dist/bitsmist-js_v1.bundle.js',
+		file: 'dist/bitsmist-js_v1.min.js',
 		format: 'iife',
 		sourcemap: ( process.env.BUILD === 'prod' ? false : true )
 	},
