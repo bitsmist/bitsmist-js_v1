@@ -10,7 +10,7 @@
 
 import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
-import Globals from '../globals';
+//import Globals from '../globals';
 import Util from '../util/util';
 
 // =============================================================================
@@ -221,15 +221,7 @@ export default class LoadeMixin
 
 		let ret = true;
 
-		/*
-		// Check existence from cache
-		if (Globals["classes"][className] && Globals["classes"][className]["status"] == "loaded")
-		{
-			return ret;
-		}
-		*/
-
-		if (Globals["classes"][className]["status"] == "loaded")
+		if (BITSMIST.v1.Globals["classes"][className]["status"] == "loaded")
 		{
 			return ret;
 		}
@@ -274,9 +266,9 @@ export default class LoadeMixin
 
 		let promise;
 
-		if (!Globals["classes"][className])
+		if (!BITSMIST.v1.Globals["classes"][className])
 		{
-			Globals["classes"][className] = {};
+			BITSMIST.v1.Globals["classes"][className] = {};
 		}
 
 		if (this.__isLoadedClass(className))
@@ -284,23 +276,23 @@ export default class LoadeMixin
 			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`, );
 			promise = Promise.resolve();
 		}
-		else if (Globals["classes"][className]["status"] == "loading")
+		else if (BITSMIST.v1.Globals["classes"][className]["status"] == "loading")
 		{
 			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already loading. className=${className}`, );
-			promise = Globals["classes"][className]["promise"];
+			promise = BITSMIST.v1.Globals["classes"][className]["promise"];
 		}
 		else
 		{
-			Globals["classes"][className]["status"] = "loading";
+			BITSMIST.v1.Globals["classes"][className]["status"] = "loading";
 			promise = new Promise ((resolve, reject) => {
 				this.__loadComponentScript(className, path, settings).then(() => {
-					Globals["classes"][className]["status"] = "loaded";
+					BITSMIST.v1.Globals["classes"][className]["status"] = "loaded";
 					resolve();
 				});
 			});
 		}
 
-		Globals["classes"][className]["promise"] = promise;
+		BITSMIST.v1.Globals["classes"][className]["promise"] = promise;
 
 		return promise;
 
