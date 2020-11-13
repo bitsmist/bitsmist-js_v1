@@ -33,9 +33,6 @@ export default class EventMixin
 	static addEventHandler(element, eventName, eventInfo, options, bindTo)
 	{
 
-		let order = (typeof eventInfo === "object" && eventInfo["order"] ? eventInfo["order"] : 0);
-		let listeners = ( element._bm_detail && element._bm_detail.listeners ? element._bm_detail.listeners : {} );
-
 		// Get handler
 		let handler = this.getEventHandler(eventInfo, bindTo);
 		if (typeof handler !== "function")
@@ -47,10 +44,11 @@ export default class EventMixin
 		// Init holder object for the element
 		if (!element._bm_detail)
 		{
-			element._bm_detail = { "component":this, "listeners":listeners, "promises":{}, "statuses":{} };
+			element._bm_detail = { "component":this, "listeners":{}, "promises":{}, "statuses":{} };
 		}
 
 		// Add hook event handler
+		let listeners = element._bm_detail.listeners;
 		if (!listeners[eventName])
 		{
 			listeners[eventName] = [];
@@ -59,7 +57,8 @@ export default class EventMixin
 
 		listeners[eventName].push({"handler":handler, "options":options, "bind":bindTo, "order":order});
 
-		// Stable sort
+		// Stable sort by order
+		let order = (typeof eventInfo === "object" && eventInfo["order"] ? eventInfo["order"] : 0);
 		listeners[eventName].sort((a, b) => {
 			if (a.order == b.order)		return 0;
 			else if (a.order > b.order)	return 1;
@@ -204,6 +203,7 @@ export default class EventMixin
 
 		let listeners = Util.safeGet(this, "_bm_detail.listeners." + e.type);
 		let sender = Util.safeGet(e, "detail.sender", this);
+		let target = Util.safeGet(this, "_bm_detail.component");
 
 		// Check if handler is already running
 		if (Util.safeGet(this, "_bm_detail.statuses." + e.type) == "handling")
@@ -217,7 +217,7 @@ export default class EventMixin
 		if (Util.safeGet(e, "detail.async", true))
 		{
 			// call asynchronously
-			this._bm_detail["promises"][e.type] = EventMixin.__handleAsync(e, sender, listeners);
+			this._bm_detail["promises"][e.type] = EventMixin.__handleAsync(e, sender, target, listeners);
 			this._bm_detail["promises"][e.type].then(() => {
 				Util.safeSet(this, "_bm_detail.promises." + e.type, null);
 				Util.safeSet(this, "_bm_detail.statuses." + e.type, "");
@@ -226,7 +226,7 @@ export default class EventMixin
 		else
 		{
 			// call synchronously
-			this._bm_detail["promises"][e.type] = EventMixin.__handleSync(e, sender, listeners);
+			this._bm_detail["promises"][e.type] = EventMixin.__handleSync(e, sender, target, listeners);
 			Util.safeSet(this, "_bm_detail.promises." + e.type, null);
 			Util.safeSet(this, "_bm_detail.statuses." + e.type, "");
 		}
@@ -240,9 +240,10 @@ export default class EventMixin
 	 *
 	 * @param	{Object}		e						Event parameter.
 	 * @param	{Object}		sender					Sender object.
+	 * @param	{Object}		target					Target component.
 	 * @param	{Object}		listener				Listers info.
 	 */
-	static __handleAsync(e, sender, listeners)
+	static __handleAsync(e, sender, target, listeners)
 	{
 
 		return new Promise((resolve, reject) => {
@@ -253,7 +254,10 @@ export default class EventMixin
 			for (let i = 0; i < listeners.length; i++)
 			{
 				// Options set on addEventHandler()
-				e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
+				let ex = {
+					"target": target,
+					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
+				}
 
 				// Execute handler
 				chain = chain.then((result) => {
@@ -262,7 +266,7 @@ export default class EventMixin
 						results.push(result);
 					}
 
-					return listeners[i]["handler"](sender, e);
+					return listeners[i]["handler"](sender, e, ex);
 				});
 
 				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
@@ -291,9 +295,10 @@ export default class EventMixin
 	 *
 	 * @param	{Object}		e						Event parameter.
 	 * @param	{Object}		sender					Sender object.
+	 * @param	{Object}		target					Target component.
 	 * @param	{Object}		listener				Listers info.
 	 */
-	static __handleSync(e, sender, listeners)
+	static __handleSync(e, sender, target, listeners)
 	{
 
 		let stopPropagation = false;
@@ -301,10 +306,13 @@ export default class EventMixin
 		for (let i = 0; i < listeners.length; i++)
 		{
 			// Options set on addEventHandler()
-			e.extraDetail = ( listeners[i]["options"] ? listeners[i]["options"] : {} );
+			let ex = {
+				"target": target,
+				"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
+			}
 
 			// Execute handler
-			listeners[i]["handler"](sender, e);
+			listeners[i]["handler"](sender, e, ex);
 
 			stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
 		}
