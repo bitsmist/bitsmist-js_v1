@@ -20,14 +20,14 @@ export default class TemplateOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init.
+	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(component, settings)
+	static organize(component, settings)
 	{
 
 		component._templates = component._templates || {};
@@ -58,7 +58,7 @@ export default class TemplateOrganizer
 
 		let ret = false;
 
-		if (eventName == "initComponent" || eventName == "connected")
+		if (eventName == "afterInitComponent" || eventName == "afterConnect")
 		{
 			ret = true;
 		}

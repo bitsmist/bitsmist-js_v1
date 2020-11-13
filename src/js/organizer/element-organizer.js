@@ -20,14 +20,14 @@ export default class ElementOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init.
+	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(component, settings)
+	static organize(component, settings)
 	{
 
 		if (settings)
@@ -55,7 +55,7 @@ export default class ElementOrganizer
 
 		let ret = false;
 
-		if (eventName == "append" || eventName == "spec")
+		if (eventName == "afterAppend" || eventName == "afterSpecLoad")
 		{
 			ret = true;
 		}

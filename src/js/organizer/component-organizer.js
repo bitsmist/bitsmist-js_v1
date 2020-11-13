@@ -22,14 +22,14 @@ export default class ComponentOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init.
+	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(component, settings)
+	static organize(component, settings)
 	{
 
 		let chain = Promise.resolve();
@@ -38,7 +38,7 @@ export default class ComponentOrganizer
 		{
 			Object.keys(settings).forEach((componentName) => {
 				chain = chain.then(() => {
-					return ComponentOrganizer.addComponent(component, componentName, settings[componentName]);
+					return BITSMIST.v1.Globals.addComponent(component, componentName, settings[componentName]);
 				});
 			});
 		}
@@ -81,65 +81,12 @@ export default class ComponentOrganizer
 
 		let ret = false;
 
-		if (eventName == "append" || eventName == "spec")
+		if (eventName == "afterAppend" || eventName == "afterSpecLoad")
 		{
 			ret = true;
 		}
 
 		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add a component to parent component.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Options for the component.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static addComponent(component, componentName, options)
-	{
-
-		if (!component._components)
-		{
-			component._components = {};
-		}
-
-		return new Promise((resolve, reject) => {
-			let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
-			let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
-			let className = ( "className" in options ? options["className"] : componentName );
-
-			Promise.resolve().then(() => {
-				// Load component
-				return component.loadComponent(className, path, {"splitComponent":splitComponent});
-			}).then(() => {
-				// Insert tag
-				if (options["rootNode"] && !component._components[componentName])
-				{
-					let root = document.querySelector(options["rootNode"]);
-					if (!root)
-					{
-						throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
-					}
-
-					let tag = ( options["tag"] ? options["tag"] : ( options["tagName"] ? "<" + options["tagName"] + "></" + options["tagName"] + ">" : "") );
-					if (!tag)
-					{
-						throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
-					}
-
-					root.insertAdjacentHTML("afterbegin", tag);
-					component._components[componentName] = root.children[0];
-				}
-			}).then(() => {
-				resolve();
-			});
-		});
 
 	}
 

@@ -25,20 +25,20 @@ export default class OrganizerMixin
 	/**
 	 * Apply organizer synchronously.
 	 *
-	 * @param	{Object}		settings			Settings.
 	 * @param	{String}		eventName			Event name.
+	 * @param	{Object}		settings			Settings.
 	 */
-	static organizeSync(settings, eventName)
+	static organizeSync(eventName, settings)
 	{
 
 		Object.keys(settings).forEach((key) => {
 			if (key in Globals["organizers"])
 			{
-				let organizer = OrganizerMixin.getOrganizer.call(this, key);
+				let organizer = BITSMIST.v1.Globals.getOrganizer(key);
 
 				if (organizer.isTarget(eventName))
 				{
-					organizer.init(this, settings[key]);
+					organizer.organize(this, settings[key]);
 				}
 			}
 		});
@@ -50,12 +50,12 @@ export default class OrganizerMixin
 	/**
 	 * Apply organizer asynchronously.
 	 *
-	 * @param	{Object}		settings			Settings.
 	 * @param	{String}		eventName			Event name.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(settings, eventName)
+	static organize(eventName, settings)
 	{
 
 		return new Promise((resolve, reject) => {
@@ -64,12 +64,12 @@ export default class OrganizerMixin
 			Object.keys(settings).forEach((key) => {
 				if (key in Globals["organizers"])
 				{
-					let organizer = OrganizerMixin.getOrganizer.call(this, key);
+					let organizer = BITSMIST.v1.Globals.getOrganizer(key);
 
 					if (organizer.isTarget(eventName))
 					{
 						chain = chain.then(() => {
-							return organizer.init(this, settings[key]);
+							return organizer.organize(this, settings[key]);
 						});
 					}
 				}
@@ -79,46 +79,6 @@ export default class OrganizerMixin
 				resolve();
 			});
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear organizers.
-	 */
-	static clearOrganizers()
-	{
-
-		Object.keys(Globals["organizers"]).forEach((key) => {
-			if (typeof Globals["organizers"][key].clear == "function")
-			{
-				Globals["organizers"][key].clear(this);
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get an organizer. Throws an error if it is not a function.
-	 *
-	 * @param	{String}		type				Organizer type.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static getOrganizer(type)
-	{
-
-		let organizer = Globals["organizers"][type];
-
-		if (typeof organizer != "function" || typeof organizer.init != "function")
-		{
-			throw TypeError(`Organizer is not a function. componentName=${this.name}, type=${type}`);
-		}
-
-		return organizer;
 
 	}
 

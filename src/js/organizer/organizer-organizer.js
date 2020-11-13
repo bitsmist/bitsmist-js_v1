@@ -20,14 +20,14 @@ export default class OrganizerOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init.
+	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(component, settings)
+	static organize(component, settings)
 	{
 
 		if (settings)
@@ -55,7 +55,7 @@ export default class OrganizerOrganizer
 
 		let ret = false;
 
-		if (eventName == "initComponent" || eventName == "connected")
+		if (eventName == "afterInitComponent" || eventName == "afterConnect")
 		{
 			ret = true;
 		}

@@ -53,8 +53,9 @@ export default function Component(settings)
 	// Init settings
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
 
-	_this.organizeSync(_this._settings.items, "initComponent");
-	_this.trigger("afterInitComponent", _this);
+	_this.organizeSync("afterInitComponent", _this._settings.items);
+	_this.triggerSync("afterInitComponent", _this);
+
 
 	return _this;
 
@@ -304,7 +305,7 @@ Component.prototype.setup = function(options)
 Component.prototype.addComponent = function(componentName, options)
 {
 
-	return ComponentOrganizer.addComponent(this, componentName, options);
+	return BITSMIST.v1.Globals.addComponent(this, componentName, options);
 
 }
 
@@ -357,7 +358,7 @@ Component.prototype.connectedCallback = function()
 		if (newSettings)
 		{
 			this._settings.merge(newSettings);
-			return this.organize(newSettings, "connected");
+			return this.organize("afterConnect", newSettings);
 		}
 	}).then(() => {
 		// Get settings from attributes
@@ -365,7 +366,7 @@ Component.prototype.connectedCallback = function()
 		if (attrSettings)
 		{
 			this._settings.merge(attrSettings);
-			return this.organize(attrSettings, "connected");
+			return this.organize("afterConnect", attrSettings);
 		}
 	}).then(() => {
 		// Trigger an event
