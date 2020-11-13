@@ -8,7 +8,9 @@
  */
 // =============================================================================
 
+import LoaderMixin from './mixin/loader-mixin';
 import Store from './store';
+import Util from './util/util';
 
 // =============================================================================
 //	Global class
@@ -141,7 +143,103 @@ class Globals
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clear organizers.
+	 */
+	clearOrganizers()
+	{
+
+		Object.keys(this._organizers).forEach((key) => {
+			if (typeof this._organizers[key].clear == "function")
+			{
+				this._organizers[key].clear(this);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get an organizer. Throws an error if it is not a function.
+	 *
+	 * @param	{String}		type				Organizer type.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	getOrganizer(type)
+	{
+
+		let organizer = this._organizers[type];
+
+		if (typeof organizer != "function" || typeof organizer.organize!= "function")
+		{
+			throw TypeError(`Organizer is not a function. type=${type}`);
+		}
+
+		return organizer;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Add a component to parent component.
+	 *
+	 * @param	{Component}		component			Parent component.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	addComponent(component, componentName, options)
+	{
+
+		if (!component._components)
+		{
+			component._components = {};
+		}
+
+		return new Promise((resolve, reject) => {
+			let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
+			let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
+			let className = ( "className" in options ? options["className"] : componentName );
+
+			Promise.resolve().then(() => {
+				// Load component
+				return this.loadComponent(className, path, {"splitComponent":splitComponent});
+			}).then(() => {
+				// Insert tag
+				if (options["rootNode"] && !component._components[componentName])
+				{
+					let root = document.querySelector(options["rootNode"]);
+					if (!root)
+					{
+						throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
+					}
+
+					let tag = ( options["tag"] ? options["tag"] : ( options["tagName"] ? "<" + options["tagName"] + "></" + options["tagName"] + ">" : "") );
+					if (!tag)
+					{
+						throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
+					}
+
+					root.insertAdjacentHTML("afterbegin", tag);
+					component._components[componentName] = root.children[0];
+				}
+			}).then(() => {
+				resolve();
+			});
+		});
+
+	}
+
 }
+
+// Mixin
+Object.assign(Globals.prototype, LoaderMixin);
 
 let globals = new Globals();
 export default globals;
