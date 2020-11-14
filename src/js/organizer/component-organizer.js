@@ -58,7 +58,6 @@ export default class ComponentOrganizer
 	{
 
 		Object.keys(component._components).forEach((key) => {
-			console.log("@@@clear", key, component.name, component._components[key],component._components[key].parentNode);
 			component._components[key].parentNode.removeChild(component._components[key]);
 		});
 
