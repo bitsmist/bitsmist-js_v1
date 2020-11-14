@@ -222,7 +222,7 @@ class Globals
 					}
 
 					// Get tag
-					let tagName = ( options["tagName"] ? options["tagName"] : BITSMIST.v1.Globals.classes[className]["object"].tagName );
+					let tagName = ( options["tagName"] ? options["tagName"] : BITSMIST.v1.ClassUtil.getClass(className).tagName );
 					let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + "></" + tagName + ">" : "") );
 					if (!tag)
 					{

@@ -83,37 +83,25 @@ export default class ClassUtil
 	static createObject(className, ...args)
 	{
 
-		let ret;
+		let c = ClassUtil.getClass(className);
 
-		try
-		{
-			let c = Function("return (" + className + ")")();
-			ret = new c(...args);
-		}
-		catch(e)
-		{
-			if (e instanceof TypeError)
-			{
-				let c = window;
-				className.split(".").forEach((value) => {
-					c = c[value];
-					if (!c)
-					{
-						throw new ReferenceError(`Class not found. className=${className}`);
-					}
-				});
-				ret = new c(...args);
-			}
-			else
-			{
-				throw e;
-			}
-		}
+		return  new c(...args);
 
-		// Cache existence of the class
-		//Globals["classes"][className] = true;
+	}
 
-		return ret;
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get a class.
+	 *
+	 * @param	{String}		className			Class name.
+	 *
+	 * @return  {Object}		Class object.
+	 */
+	static getClass(className)
+	{
+
+		return Function("return (" + className + ")")();
 
 	}
 
