@@ -38,7 +38,7 @@ export default class ComponentOrganizer
 		{
 			Object.keys(settings).forEach((componentName) => {
 				chain = chain.then(() => {
-					return BITSMIST.v1.Globals.addComponent(component, componentName, settings[componentName]);
+					return component.addComponent(componentName, settings[componentName]);
 				});
 			});
 		}
@@ -58,6 +58,7 @@ export default class ComponentOrganizer
 	{
 
 		Object.keys(component._components).forEach((key) => {
+			console.log("@@@clear", key, component.name, component._components[key],component._components[key].parentNode);
 			component._components[key].parentNode.removeChild(component._components[key]);
 		});
 
