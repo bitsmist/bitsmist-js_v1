@@ -287,6 +287,7 @@ export default class LoadeMixin
 			promise = new Promise ((resolve, reject) => {
 				this.__loadComponentScript(className, path, settings).then(() => {
 					BITSMIST.v1.Globals["classes"][className]["status"] = "loaded";
+					BITSMIST.v1.Globals["classes"][className]["object"] = Function("return (" + className + ")")();
 					resolve();
 				});
 			});
