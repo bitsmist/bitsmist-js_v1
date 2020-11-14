@@ -148,13 +148,13 @@ class Globals
 	/**
 	 * Clear organizers.
 	 */
-	clearOrganizers()
+	clearOrganizers(component)
 	{
 
 		Object.keys(this._organizers).forEach((key) => {
 			if (typeof this._organizers[key].clear == "function")
 			{
-				this._organizers[key].clear(this);
+				this._organizers[key].clear(component);
 			}
 		});
 
@@ -214,18 +214,22 @@ class Globals
 				// Insert tag
 				if (options["rootNode"] && !component._components[componentName])
 				{
+					// Check root node
 					let root = document.querySelector(options["rootNode"]);
 					if (!root)
 					{
 						throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
 					}
 
-					let tag = ( options["tag"] ? options["tag"] : ( options["tagName"] ? "<" + options["tagName"] + "></" + options["tagName"] + ">" : "") );
+					// Get tag
+					let tagName = ( options["tagName"] ? options["tagName"] : BITSMIST.v1.Globals.classes[className]["object"].tagName );
+					let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + "></" + tagName + ">" : "") );
 					if (!tag)
 					{
 						throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
 					}
 
+					// Insert tag
 					root.insertAdjacentHTML("afterbegin", tag);
 					component._components[componentName] = root.children[0];
 				}
