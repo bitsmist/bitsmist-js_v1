@@ -228,19 +228,18 @@ export default class LoadeMixin
 
 		try
 		{
-			let c = window;
-
-			className.split(".").forEach((value) => {
-				c = c[value];
-				if (!c)
-				{
-					ret = false;
-				}
-			});
+			ClassUtil.getClass(className);
 		}
 		catch(e)
 		{
-			ret = false;
+			if (e instanceof ReferenceError)
+			{
+				ret = false;
+			}
+			else
+			{
+				throw e;
+			}
 		}
 
 		return ret;
@@ -274,6 +273,7 @@ export default class LoadeMixin
 		if (this.__isLoadedClass(className))
 		{
 			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`, );
+			BITSMIST.v1.Globals["classes"][className]["status"] = "loaded";
 			promise = Promise.resolve();
 		}
 		else if (BITSMIST.v1.Globals["classes"][className]["status"] == "loading")
