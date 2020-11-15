@@ -52,14 +52,15 @@ export default class AttrOrganizer
 	{
 
 		let events = {
-				"afterInitComponent": AttrOrganizer.onDoOrganize,
-				"afterAppend": AttrOrganizer.onDoOrganize,
-				"afterSpecLoad": AttrOrganizer.onDoOrganize,
-				"beforeOpen": AttrOrganizer.onDoOrganize,
-				"afterOpen": AttrOrganizer.onDoOrganize,
-				"beforeClose": AttrOrganizer.onDoOrganize,
-				"afterClose": AttrOrganizer.onDoOrganize,
-				"doRefresh": AttrOrganizer.onDoOrganize,
+//			"afterInitComponent": AttrOrganizer.onDoOrganize, // throws an error on iOS10
+			"afterConnect": AttrOrganizer.onDoOrganize,
+			"afterAppend": AttrOrganizer.onDoOrganize,
+			"afterSpecLoad": AttrOrganizer.onDoOrganize,
+			"beforeOpen": AttrOrganizer.onDoOrganize,
+			"afterOpen": AttrOrganizer.onDoOrganize,
+			"beforeClose": AttrOrganizer.onDoOrganize,
+			"afterClose": AttrOrganizer.onDoOrganize,
+			"doRefresh": AttrOrganizer.onDoOrganize,
 		};
 
 		Object.keys(settings).forEach((eventName) => {
