@@ -8,7 +8,7 @@
  */
 // =============================================================================
 
-//import Component from '../component'; // Importing component breaks this class. So do not import.
+//import Component from '../component'; // Importing component breaks this class. Do not import.
 //import Globals from '../globals';
 
 // =============================================================================
@@ -46,6 +46,7 @@ export default class ClassUtil
 
 		if (tagName)
 		{
+			component.tagName = tagName;
 			customElements.define(tagName, component);
 		}
 
