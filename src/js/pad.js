@@ -68,20 +68,18 @@ Pad.prototype.open = function(options)
 {
 
 	return new Promise((resolve, reject) => {
-		this.waitFor([{"id":this._uniqueId, "status":"connected"}]).then(() => {
-			console.debug(`Pad.open(): Opening pad. name=${this.name}`);
+		console.debug(`Pad.open(): Opening pad. name=${this.name}`);
 
-			options = Object.assign({}, options);
-			let sender = ( options["sender"] ? options["sender"] : this );
+		options = Object.assign({}, options);
+		let sender = ( options["sender"] ? options["sender"] : this );
 
-			this.registerComponent(this, "opening");
-			Promise.resolve().then(() => {
-				return this.switchTemplate(this._settings.get("templateName"));
-			}).then(() => {
-				return Component.prototype.open.call(this, options);
-			}).then(() => {
-				resolve();
-			});
+		this.registerComponent(this, "opening");
+		Promise.resolve().then(() => {
+			return this.switchTemplate(this._settings.get("templateName"));
+		}).then(() => {
+			return Component.prototype.open.call(this, options);
+		}).then(() => {
+			resolve();
 		});
 	});
 
