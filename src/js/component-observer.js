@@ -53,7 +53,7 @@ export default class ComponentObserver
 	/**
 	 * observers.
 	 *
-	 * @type	{String}
+	 * @type	{Object}
 	 */
 	get observers()
 	{
@@ -65,7 +65,10 @@ export default class ComponentObserver
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Before setup event handler.
+	 * Notify to observers asynchronously.
+	 *
+	 * @param	{Object}		conditions			Current conditions.
+	 * @param	{Object}		...args				Arguments to callback function.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
@@ -73,20 +76,40 @@ export default class ComponentObserver
 	{
 
 		return new Promise((resolve, reject) => {
-			let promises = [];
+			let chain = Promise.resolve();
 
 			Object.keys(this._observers).forEach((componentId) => {
-				console.log("@@@observer checking target", conditions, this._observers[componentId].object.name);
-				if (this._targeter(conditions, this._observers[componentId].targets))
-				{
-					console.log("@@@observer notifying", conditions, this._observers[componentId].object.name);
-					promises.push(this._observers[componentId].callback.call(this._observers[componentId].object, ...args));
-				}
+				chain = chain.then(() => {
+					if (this._targeter(conditions, this._observers[componentId].targets))
+					{
+						return this._observers[componentId].callback.call(this._observers[componentId].object, ...args);
+					}
+				});
 			});
 
-			Promise.all(promises).then(() => {
+			chain.then(() => {
 				resolve();
 			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Notify to observers synchronously.
+	 *
+	 * @param	{Object}		conditions			Current conditions.
+	 * @param	{Object}		...args				Arguments to callback function.
+	 */
+	notifySync(conditions, ...args)
+	{
+
+		Object.keys(this._observers).forEach((componentId) => {
+			if (this._targeter(conditions, this._observers[componentId].targets))
+			{
+				this._observers[componentId].callback.call(this._observers[componentId].object, ...args);
+			}
 		});
 
 	}
@@ -97,7 +120,7 @@ export default class ComponentObserver
 	 * Register target component.
 	 *
 	 * @param	{Component}		component			Component to notify.
-	 * @param	{Object}		targets				Targets.
+	 * @param	{Object}		targets				Target conditions.
 	 * @param	{Function}		callback			Callback function.
 	 *
 	 * @return  {Promise}		Promise.
@@ -105,7 +128,6 @@ export default class ComponentObserver
 	register(component, targets, callback)
 	{
 
-		console.log("@@@observer registering", component.name, targets);
 		this._observers[component.uniqueId] = {"object":component, "targets":targets, "callback":callback};
 
 	}
