@@ -80,9 +80,9 @@ export default class ComponentObserver
 
 			Object.keys(this._observers).forEach((componentId) => {
 				chain = chain.then(() => {
-					if (this._targeter(conditions, this._observers[componentId].targets))
+					if (this._targeter(conditions, this._observers[componentId].targets, this._observers[componentId].component))
 					{
-						return this._observers[componentId].callback.call(this._observers[componentId].object, ...args);
+						return this._observers[componentId].callback.call(this._observers[componentId].component, ...args);
 					}
 				});
 			});
@@ -106,9 +106,9 @@ export default class ComponentObserver
 	{
 
 		Object.keys(this._observers).forEach((componentId) => {
-			if (this._targeter(conditions, this._observers[componentId].targets))
+			if (this._targeter(conditions, this._observers[componentId].targets, this._observers[componentId].component))
 			{
-				this._observers[componentId].callback.call(this._observers[componentId].object, ...args);
+				this._observers[componentId].callback.call(this._observers[componentId].component, ...args);
 			}
 		});
 
@@ -128,7 +128,8 @@ export default class ComponentObserver
 	register(component, targets, callback)
 	{
 
-		this._observers[component.uniqueId] = {"object":component, "targets":targets, "callback":callback};
+		let id = component.uniqueId || component.name || new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+		this._observers[id] = {"component":component, "targets":targets, "callback":callback};
 
 	}
 
