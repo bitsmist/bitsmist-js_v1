@@ -58,3 +58,6 @@ window.BITSMIST.v1.ClassUtil = ClassUtil;
 import Util from './util/util';
 window.BITSMIST.v1.Util = Util;
 
+import ComponentObserver from './component-observer';
+window.BITSMIST.v1.ComponentObserver = ComponentObserver;
+
