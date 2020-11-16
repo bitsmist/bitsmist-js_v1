@@ -67,19 +67,21 @@ customElements.define("bm-pad", Pad);
 Pad.prototype.open = function(options)
 {
 
-	console.debug(`Pad.open(): Opening pad. name=${this.name}`);
-
 	return new Promise((resolve, reject) => {
-		options = Object.assign({}, options);
-		let sender = ( options["sender"] ? options["sender"] : this );
+		this.waitFor([{"id":this._uniqueId, "status":"connected"}]).then(() => {
+			console.debug(`Pad.open(): Opening pad. name=${this.name}`);
 
-		this.registerComponent(this, "opening");
-		Promise.resolve().then(() => {
-			return this.switchTemplate(this._settings.get("templateName"));
-		}).then(() => {
-			return Component.prototype.open.call(this, options);
-		}).then(() => {
-			resolve();
+			options = Object.assign({}, options);
+			let sender = ( options["sender"] ? options["sender"] : this );
+
+			this.registerComponent(this, "opening");
+			Promise.resolve().then(() => {
+				return this.switchTemplate(this._settings.get("templateName"));
+			}).then(() => {
+				return Component.prototype.open.call(this, options);
+			}).then(() => {
+				resolve();
+			});
 		});
 	});
 
@@ -106,7 +108,9 @@ Pad.prototype.openModal = function(options)
 		this._modalResult = {"result":false};
 		this._modalOptions = options;
 		this._modalPromise = { "resolve": resolve, "reject": reject };
-		this.open();
+		this.open().then(() => {
+			resolve();
+		});
 	});
 
 }
