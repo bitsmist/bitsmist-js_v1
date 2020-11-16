@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import ComponentObserver from './component-observer';
 import LoaderMixin from './mixin/loader-mixin';
 import Store from './store';
 import Util from './util/util';
@@ -34,7 +35,9 @@ class Globals
 
 		this._components = {};
 		this._classes = {};
-		this._organizers = {};
+		this._organizers = new ComponentObserver({"targeter": (condition, target, organizer) => {
+			return organizer.isTarget(condition);
+		}});
 		this._settings = new Store();
 		this._preferences = new Store();
 
@@ -128,61 +131,6 @@ class Globals
 
 	// -------------------------------------------------------------------------
 	//  Method
-	// -------------------------------------------------------------------------
-
-	/**
-     * Add an organizer.
-     *
-	 * @param	{Object}		organizerClass		Organizer class.
-	 * @param	{Object}		target				Target.
-     */
-	addOrganizer(organizerClass, target)
-	{
-
-		this._organizers[target] = organizerClass;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear organizers.
-	 */
-	clearOrganizers(component)
-	{
-
-		Object.keys(this._organizers).forEach((key) => {
-			if (typeof this._organizers[key].clear == "function")
-			{
-				this._organizers[key].clear(component);
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get an organizer. Throws an error if it is not a function.
-	 *
-	 * @param	{String}		type				Organizer type.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	getOrganizer(type)
-	{
-
-		let organizer = this._organizers[type];
-
-		if (typeof organizer != "function" || typeof organizer.organize!= "function")
-		{
-			throw TypeError(`Organizer is not a function. type=${type}`);
-		}
-
-		return organizer;
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**

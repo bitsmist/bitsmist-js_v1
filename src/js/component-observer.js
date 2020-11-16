@@ -67,30 +67,34 @@ export default class ComponentObserver
 	/**
 	 * Notify to observers asynchronously.
 	 *
+	 * @param	{String}		type				Notification type(=methodname).
 	 * @param	{Object}		conditions			Current conditions.
 	 * @param	{Object}		...args				Arguments to callback function.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	notify(conditions, ...args)
+	notify(type, conditions, ...args)
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
+		let chain = Promise.resolve();
 
-			Object.keys(this._observers).forEach((componentId) => {
-				chain = chain.then(() => {
-					if (this._targeter(conditions, this._observers[componentId].targets, this._observers[componentId].component))
+		Object.keys(this._observers).forEach((componentId) => {
+			chain = chain.then(() => {
+				if (this._targeter(conditions, this._observers[componentId].targets, this._observers[componentId].component))
+				{
+					if (typeof this._observers[componentId].component[type] === "function")
 					{
-						return this._observers[componentId].callback.call(this._observers[componentId].component, ...args);
+						return this._observers[componentId].component[type].call(this._observers[componentId].component, ...args);
 					}
-				});
-			});
-
-			chain.then(() => {
-				resolve();
+					else
+					{
+						throw TypeError(`Notification handler is not a function. componentName=${this._observers[componentId].component.name}, type=${type}`);
+					}
+				}
 			});
 		});
+
+		return chain;
 
 	}
 
@@ -99,16 +103,24 @@ export default class ComponentObserver
 	/**
 	 * Notify to observers synchronously.
 	 *
+	 * @param	{String}		type				Notification type(=methodname).
 	 * @param	{Object}		conditions			Current conditions.
 	 * @param	{Object}		...args				Arguments to callback function.
 	 */
-	notifySync(conditions, ...args)
+	notifySync(type, conditions, ...args)
 	{
 
 		Object.keys(this._observers).forEach((componentId) => {
 			if (this._targeter(conditions, this._observers[componentId].targets, this._observers[componentId].component))
 			{
-				this._observers[componentId].callback.call(this._observers[componentId].component, ...args);
+				if (typeof this._observers[componentId].component[type] === "function")
+				{
+					this._observers[componentId].component[type].call(this._observers[componentId].component, ...args);
+				}
+				else
+				{
+					throw TypeError(`Notification handler is not a function. componentName=${this._observers[componentId].component.name}, type=${type}`);
+				}
 			}
 		});
 
@@ -121,15 +133,14 @@ export default class ComponentObserver
 	 *
 	 * @param	{Component}		component			Component to notify.
 	 * @param	{Object}		targets				Target conditions.
-	 * @param	{Function}		callback			Callback function.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	register(component, targets, callback)
+	register(component, targets)
 	{
 
 		let id = component.uniqueId || component.name || new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-		this._observers[id] = {"component":component, "targets":targets, "callback":callback};
+		this._observers[id] = {"component":component, "targets":targets};
 
 	}
 

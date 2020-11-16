@@ -32,23 +32,24 @@ export default class ServiceOrganizer
 	static organize(component, settings)
 	{
 
-		if (settings)
+		let services = settings["services"];
+		if (services)
 		{
-			Object.keys(settings).forEach((serviceName) => {
-				Object.keys(settings[serviceName]["events"]).forEach((eventName) => {
-					let feature = settings[serviceName]["events"][eventName]["handler"];
-					let args = settings[serviceName]["events"][eventName]["args"];
+			Object.keys(services).forEach((serviceName) => {
+				Object.keys(services[serviceName]["events"]).forEach((eventName) => {
+					let feature = services[serviceName]["events"][eventName]["handler"];
+					let args = services[serviceName]["events"][eventName]["args"];
 					let func = function(){
 						let waitInfo = {};
-						if (settings[serviceName]["className"]) waitInfo["name"] = settings[serviceName]["className"];
-						if (settings[serviceName]["rootNode"]) waitInfo["rootNode"] = settings[serviceName]["rootNode"];
+						if (services[serviceName]["className"]) waitInfo["name"] = services[serviceName]["className"];
+						if (services[serviceName]["rootNode"]) waitInfo["rootNode"] = services[serviceName]["rootNode"];
 						waitInfo["status"] = "opened";
 						component.waitFor([waitInfo]).then(() => {
 							let service;
-							if (settings[serviceName]["className"])
+							if (services[serviceName]["className"])
 							{
 								Object.keys(Globals["components"]).forEach((key) => {
-									if (Globals["components"][key].component.name == settings[serviceName]["className"])
+									if (Globals["components"][key].component.name == services[serviceName]["className"])
 									{
 										service = Globals["components"][key].component;
 									}
@@ -56,7 +57,7 @@ export default class ServiceOrganizer
 							}
 							else
 							{
-								service = document.querySelector(settings[serviceName]["rootNode"]);
+								service = document.querySelector(services[serviceName]["rootNode"]);
 							}
 							service[feature].apply(service, args);
 						});
@@ -84,7 +85,7 @@ export default class ServiceOrganizer
 
 		let ret = false;
 
-		if (eventName == "afterInitComponent" || eventName == "afterConnect")
+		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterConnect")
 		{
 			ret = true;
 		}

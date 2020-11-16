@@ -34,11 +34,12 @@ export default class ComponentOrganizer
 
 		let chain = Promise.resolve();
 
-		if (settings)
+		let components = settings["components"];
+		if (components)
 		{
-			Object.keys(settings).forEach((componentName) => {
+			Object.keys(components).forEach((componentName) => {
 				chain = chain.then(() => {
-					return component.addComponent(componentName, settings[componentName]);
+					return component.addComponent(componentName, components[componentName]);
 				});
 			});
 		}
@@ -81,7 +82,7 @@ export default class ComponentOrganizer
 
 		let ret = false;
 
-		if (eventName == "afterAppend" || eventName == "afterSpecLoad")
+		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
 		{
 			ret = true;
 		}

@@ -63,12 +63,16 @@ export default class AttrOrganizer
 			"doRefresh": AttrOrganizer.onDoOrganize,
 		};
 
-		Object.keys(settings).forEach((eventName) => {
-			if (events[eventName])
-			{
-				component.addEventHandler(component, eventName, events[eventName], {"attrs":settings[eventName]}, component);
-			}
-		});
+		let attrs = settings["attrs"];
+		if (attrs)
+		{
+			Object.keys(attrs).forEach((eventName) => {
+				if (events[eventName])
+				{
+					component.addEventHandler(component, eventName, events[eventName], {"attrs":attrs[eventName]}, component);
+				}
+			});
+		}
 
 		return Promise.resolve();
 
@@ -137,7 +141,7 @@ export default class AttrOrganizer
 
 		let ret = false;
 
-		if (eventName == "afterInitComponent" || eventName == "afterSpecLoad")
+		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterSpecLoad")
 		{
 			ret = true;
 		}

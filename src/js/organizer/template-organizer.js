@@ -32,11 +32,12 @@ export default class TemplateOrganizer
 
 		component._templates = component._templates || {};
 
-		if (settings)
+		let templates = settings["templates"];
+		if (templates)
 		{
-			Object.keys(settings).forEach((key) => {
+			Object.keys(templates).forEach((key) => {
 				let templateInfo = component.__getTemplateInfo(key);
-				templateInfo["html"] = settings[key];
+				templateInfo["html"] = templates[key];
 			});
 		}
 
@@ -58,7 +59,7 @@ export default class TemplateOrganizer
 
 		let ret = false;
 
-		if (eventName == "afterInitComponent" || eventName == "afterConnect")
+		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterConnect")
 		{
 			ret = true;
 		}

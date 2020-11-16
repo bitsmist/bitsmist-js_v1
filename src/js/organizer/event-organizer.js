@@ -30,10 +30,11 @@ export default class EventOrganizer
 	static organize(component, settings)
 	{
 
-		if (settings)
+		let events = settings["events"];
+		if (events)
 		{
-			Object.keys(settings).forEach((eventName) => {
-				component.addEventHandler(component, eventName, settings[eventName]);
+			Object.keys(events).forEach((eventName) => {
+				component.addEventHandler(component, eventName, events[eventName]);
 			});
 		}
 
@@ -55,7 +56,7 @@ export default class EventOrganizer
 
 		let ret = false;
 
-		if (eventName == "afterInitComponent" || eventName == "afterConnect")
+		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterConnect")
 		{
 			ret = true;
 		}

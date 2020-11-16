@@ -12,7 +12,6 @@ import ClassUtil from './util/class-util';
 import ComponentOrganizer from './organizer/component-organizer';
 import EventMixin from './mixin/event-mixin';
 import Globals from './globals';
-import OrganizerMixin from './mixin/organizer-mixin';
 import LoaderMixin from './mixin/loader-mixin';
 import Store from './store';
 import Util from './util/util';
@@ -53,7 +52,7 @@ export default function Component(settings)
 	// Init settings
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
 
-	_this.organizeSync("afterInitComponent", _this._settings.items);
+	BITSMIST.v1.Globals.organizers.notifySync("organize", "afterInitComponent", _this, _this._settings.items);
 	_this.triggerSync("afterInitComponent", _this);
 
 	_this.registerComponent(_this, "instantiated");
@@ -65,7 +64,6 @@ export default function Component(settings)
 // Inherit & Mixin
 ClassUtil.inherit(Component, HTMLElement);
 Object.assign(Component.prototype, EventMixin);
-Object.assign(Component.prototype, OrganizerMixin);
 Object.assign(Component.prototype, LoaderMixin);
 Object.assign(Component.prototype, WaitforMixin);
 
@@ -363,7 +361,7 @@ Component.prototype.connectedCallback = function()
 		if (newSettings)
 		{
 			this._settings.merge(newSettings);
-			return this.organize("afterConnect", newSettings);
+			return BITSMIST.v1.Globals.organizers.notify("organize", "afterConnect", this, newSettings);
 		}
 	}).then(() => {
 		// Get settings from attributes
@@ -371,7 +369,7 @@ Component.prototype.connectedCallback = function()
 		if (attrSettings)
 		{
 			this._settings.merge(attrSettings);
-			return this.organize("afterConnect", attrSettings);
+			return BITSMIST.v1.Globals.organizers.notify("organize", "afterConnect", this, attrSettings);
 		}
 	}).then(() => {
 		// Trigger an event

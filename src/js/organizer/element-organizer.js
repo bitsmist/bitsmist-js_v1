@@ -30,9 +30,10 @@ export default class ElementOrganizer
 	static organize(component, settings)
 	{
 
-		if (settings)
+		let elements = settings["elements"];
+		if (elements)
 		{
-			Object.keys(settings).forEach((elementName) => {
+			Object.keys(elements).forEach((elementName) => {
 				component.setHtmlEventHandlers(elementName);
 			});
 		}
@@ -55,7 +56,7 @@ export default class ElementOrganizer
 
 		let ret = false;
 
-		if (eventName == "afterAppend" || eventName == "afterSpecLoad")
+		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
 		{
 			ret = true;
 		}

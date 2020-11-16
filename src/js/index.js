@@ -24,16 +24,14 @@ import AttrOrganizer from './organizer/attr-organizer';
 import ComponentOrganizer from './organizer/component-organizer';
 import ElementOrganizer from './organizer/element-organizer';
 import EventOrganizer from './organizer/event-organizer';
-import OrganizerOrganizer from './organizer/organizer-organizer';
 import ServiceOrganizer from './organizer/service-organizer';
 import TemplateOrganizer from './organizer/template-organizer';
-Globals.addOrganizer(AttrOrganizer, "attrs");
-Globals.addOrganizer(ComponentOrganizer, "components");
-Globals.addOrganizer(ElementOrganizer, "elements");
-Globals.addOrganizer(EventOrganizer, "events");
-Globals.addOrganizer(OrganizerOrganizer, "organizers");
-Globals.addOrganizer(ServiceOrganizer, "services");
-Globals.addOrganizer(TemplateOrganizer, "templates");
+Globals.organizers.register(AttrOrganizer, "attrs");
+Globals.organizers.register(ComponentOrganizer, "components");
+Globals.organizers.register(ElementOrganizer, "elements");
+Globals.organizers.register(EventOrganizer, "events");
+Globals.organizers.register(ServiceOrganizer, "services");
+Globals.organizers.register(TemplateOrganizer, "templates");
 
 // Pad
 import Pad from './pad';
