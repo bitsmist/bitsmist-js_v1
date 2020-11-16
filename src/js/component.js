@@ -56,6 +56,7 @@ export default function Component(settings)
 	_this.organizeSync("afterInitComponent", _this._settings.items);
 	_this.triggerSync("afterInitComponent", _this);
 
+	_this.registerComponent(_this, "instantiated");
 
 	return _this;
 
@@ -96,7 +97,7 @@ Object.defineProperty(Component.prototype, 'name', {
 Object.defineProperty(Component.prototype, 'uniqueId', {
 	get()
 	{
-		return ( this.id ? this.id : this._uniqueId );
+		return this._uniqueId;
 	}
 })
 
@@ -325,9 +326,13 @@ Component.prototype.destroy = function(options)
 
 	return new Promise((resolve, reject) => {
 		Promise.resolve().then(() => {
+			this.registerComponent(this, "destroying");
+		}).then(() => {
 			return this.trigger("beforeDestroy", this);
 		}).then(() => {
 			return this.trigger("afterDestroy", this);
+		}).then(() => {
+			this.registerComponent(this, "destroyed");
 		});
 	});
 
