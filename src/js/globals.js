@@ -35,7 +35,7 @@ class Globals
 		// Init vars
 		this._classes = new Observer();
 		this._components = new Observer();
-		this._organizers = new Observer({"targeter": (condition, info) => {
+		this._organizers = new Observer({"filter": (condition, info) => {
 			return info["object"].isTarget(condition);
 		}});
 		this._preferences = new Store();

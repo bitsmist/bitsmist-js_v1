@@ -30,19 +30,11 @@ export default class Observer
 	{
 
 		// Init vars
+		this._filter;
 		this._items = {};
-		this._targeter = () => { return true; };
 
-		// Init targeter
-		if (options && options["targeter"])
-		{
-			if (typeof options["targeter"] != "function")
-			{
-				throw TypeError(`Targeter is not a function. targeter=${options["targeter"]}`);
-			}
-
-			this._targeter = options["targeter"];
-		}
+		// Init filter function
+		this.filter = ( options && options["filter"] ? options["filter"] : () => { return true; } );
 
 	}
 
@@ -59,6 +51,32 @@ export default class Observer
 	{
 
 		return this._items;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Filter function.
+	 *
+	 * @type	{Function}
+	 */
+	get filter()
+	{
+
+		this._filter;
+
+	}
+
+	set filter(value)
+	{
+
+		if (typeof value != "function")
+		{
+			throw TypeError(`Filter is not a function. filter=${value}`);
+		}
+
+		this._filter = value;
 
 	}
 
@@ -178,7 +196,7 @@ export default class Observer
 	__callHandler(type, conditions, observerInfo, ...args)
 	{
 
-		if (this._targeter(conditions, observerInfo))
+		if (this._filter(conditions, observerInfo))
 		{
 			if (typeof observerInfo["object"][type] === "function")
 			{
