@@ -45,6 +45,17 @@ export default class EventOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Clear.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static clear(component)
+	{
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Check if event is target.
 	 *
 	 * @param	{String}		eventName			Event name.

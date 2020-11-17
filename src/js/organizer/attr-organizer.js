@@ -41,7 +41,7 @@ export default class AttrOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init.
+	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
@@ -81,7 +81,18 @@ export default class AttrOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init.
+	 * Clear.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static clear(component)
+	{
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init attributes.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
