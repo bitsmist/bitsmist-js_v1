@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import ClassUtil from '../util/class-util';
 import Util from '../util/util';
 
 // =============================================================================
@@ -39,7 +40,7 @@ export default class ComponentOrganizer
 		{
 			Object.keys(components).forEach((componentName) => {
 				chain = chain.then(() => {
-					return component.addComponent(componentName, components[componentName]);
+					return ComponentOrganizer.addComponent(component, componentName, components[componentName]);
 				});
 			});
 		}
@@ -67,8 +68,6 @@ export default class ComponentOrganizer
 	}
 
 	// -------------------------------------------------------------------------
-	//  Privates
-	// -------------------------------------------------------------------------
 
 	/**
 	 * Check if event is target.
@@ -88,6 +87,63 @@ export default class ComponentOrganizer
 		}
 
 		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Add a component to parent component.
+	 *
+	 * @param	{Component}		component			Parent component.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static addComponent(component, componentName, options)
+	{
+
+		if (!component._components)
+		{
+			component._components = {};
+		}
+
+		return new Promise((resolve, reject) => {
+			let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
+			let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
+			let className = ( "className" in options ? options["className"] : componentName );
+
+			Promise.resolve().then(() => {
+				// Load component
+				return component.loadComponent(className, path, {"splitComponent":splitComponent});
+			}).then(() => {
+				// Insert tag
+				if (options["rootNode"] && !component._components[componentName])
+				{
+					// Check root node
+					let root = document.querySelector(options["rootNode"]);
+					if (!root)
+					{
+						throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
+					}
+
+					// Get tag
+					let tagName = ( options["tagName"] ? options["tagName"] : ClassUtil.getClass(className).tagName );
+					let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + "></" + tagName + ">" : "") );
+					if (!tag)
+					{
+						throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
+					}
+
+					// Insert tag
+					root.insertAdjacentHTML("afterbegin", tag);
+					component._components[componentName] = root.children[0];
+				}
+			}).then(() => {
+				resolve();
+			});
+		});
 
 	}
 

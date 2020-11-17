@@ -304,7 +304,7 @@ Component.prototype.setup = function(options)
 Component.prototype.addComponent = function(componentName, options)
 {
 
-	return BITSMIST.v1.Globals.addComponent(this, componentName, options);
+	return ComponentOrganizer.addComponent(this, componentName, options);
 
 }
 
