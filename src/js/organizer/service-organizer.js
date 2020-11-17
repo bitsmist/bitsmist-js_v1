@@ -18,6 +18,60 @@ export default class ServiceOrganizer
 {
 
 	// -------------------------------------------------------------------------
+	//	Event handlers
+	// -------------------------------------------------------------------------
+
+	/**
+	* Init service event handler.
+	*
+	* @param	{Object}		sender				Sender.
+	* @param	{Object}		e					Event info.
+	* @param	{Object}		ex					Extra event info.
+	*/
+	static onInitService(sender, e, ex)
+	{
+
+		let settings = ex.options["settings"];
+		let component = ex.options["component"];
+		let handler = settings["events"][e.type]["handler"];
+		let args = settings["events"][e.type]["args"];
+
+		// Init wait info
+		let waitInfo = {};
+		if (settings["className"])
+		{
+			waitInfo["name"] = settings["className"];
+		}
+		else if (settings["rootNode"])
+		{
+			waitInfo["rootNode"] = settings["rootNode"];
+		}
+		waitInfo["status"] = "opened";
+
+		component.waitFor([waitInfo]).then(() => {
+			// Get component
+			let service;
+			if (settings["className"])
+			{
+				Object.keys(Globals["components"]).forEach((key) => {
+					if (Globals["components"][key].component.name == settings["className"])
+					{
+						service = Globals["components"][key].component;
+					}
+				});
+			}
+			else
+			{
+				service = document.querySelector(services[serviceName]["rootNode"]);
+			}
+
+			// Call method
+			service[handler].apply(service, args);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -37,38 +91,24 @@ export default class ServiceOrganizer
 		{
 			Object.keys(services).forEach((serviceName) => {
 				Object.keys(services[serviceName]["events"]).forEach((eventName) => {
-					let feature = services[serviceName]["events"][eventName]["handler"];
-					let args = services[serviceName]["events"][eventName]["args"];
-					let func = function(){
-						let waitInfo = {};
-						if (services[serviceName]["className"]) waitInfo["name"] = services[serviceName]["className"];
-						if (services[serviceName]["rootNode"]) waitInfo["rootNode"] = services[serviceName]["rootNode"];
-						waitInfo["status"] = "opened";
-						component.waitFor([waitInfo]).then(() => {
-							let service;
-							if (services[serviceName]["className"])
-							{
-								Object.keys(Globals["components"]).forEach((key) => {
-									if (Globals["components"][key].component.name == services[serviceName]["className"])
-									{
-										service = Globals["components"][key].component;
-									}
-								});
-							}
-							else
-							{
-								service = document.querySelector(services[serviceName]["rootNode"]);
-							}
-							service[feature].apply(service, args);
-						});
-					};
-					component.addEventHandler(component, eventName, func);
+					component.addEventHandler(component, eventName, this.onInitService, {"component":component, "settings":services[serviceName]});
 				});
 			});
 		}
 
 		return Promise.resolve();
 
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clear.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static clear(component)
+	{
 	}
 
 	// -------------------------------------------------------------------------
