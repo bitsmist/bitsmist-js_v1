@@ -73,7 +73,7 @@ Pad.prototype.open = function(options)
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
-		this.registerComponent(this, "opening");
+		this.registerStatus("opening");
 		Promise.resolve().then(() => {
 			return this.switchTemplate(this._settings.get("templateName"));
 		}).then(() => {
@@ -145,11 +145,6 @@ Pad.prototype.switchTemplate = function(templateName)
 			this.loadTags(this, path, {"splitComponent":splitComponent});
 		}).then(() => {
 			return BITSMIST.v1.Globals.organizers.notify("organize", "afterAppend", this, this._settings.items);
-		}).then(() => {
-			if (this._settings.get("waitFor"))
-			{
-				return this.waitFor(this._settings.get("waitFor"));
-			}
 		}).then(() => {
 			return this.trigger("afterAppend", this);
 		}).then(() => {

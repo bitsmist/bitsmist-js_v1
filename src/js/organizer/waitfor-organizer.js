@@ -8,17 +8,77 @@
  */
 // =============================================================================
 
-import Globals from "../globals";
-
 // =============================================================================
-//	Waitfor mixin class
+//	Waitfor organizer class
 // =============================================================================
 
-export default class WaitforMixin
+export default class WaitforOrganizer
 {
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Organize.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static organize(component, settings)
+	{
+
+		let promise = Promise.resolve();
+
+		let waitFor = settings["waitFor"];
+		if (waitFor)
+		{
+			promise = WaitforOrganizer.waitFor(component, waitFor);
+		}
+
+		return promise;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clear.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static clear(component)
+	{
+
+		this.__waitingList.splice(0);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if event is target.
+	 *
+	 * @param	{String}		eventName			Event name.
+	 *
+	 * @return 	{Boolean}		True if it is target.
+	 */
+	static isTarget(eventName)
+	{
+
+		let ret = false;
+
+		if (eventName == "*" || eventName == "afterAppend")
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -29,13 +89,13 @@ export default class WaitforMixin
 	 *
 	 * @return  {Array}			Promises.
 	 */
-	static waitFor(waitlist, timeout)
+	static waitFor(component, waitlist, timeout)
 	{
 
 		let promise;
 		timeout = ( timeout ? timeout : 10000 );
 
-		if (!waitlist || this.__isAllReady(waitlist))
+		if (!waitlist || WaitforOrganizer.__isAllReady(waitlist))
 		{
 			promise = Promise.resolve();
 		}
@@ -47,23 +107,12 @@ export default class WaitforMixin
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
 				setTimeout(() => {
-					let debugInfo = "";
-					for (let i = 0; i < waitlist.length; i++)
-					{
-						debugInfo += (waitlist[i]["rootNode"] ? waitlist[i]["rootNode"] : "");
-						debugInfo += (waitlist[i]["name"] ? waitlist[i]["name"] : "");
-						debugInfo += (waitlist[i]["id"] ? waitlist[i]["id"] : "");
-						debugInfo += (waitlist[i]["component"] ? waitlist[i]["component"]["name"] : "");
-						debugInfo += (waitlist[i]["status"] ? "(" + waitlist[i]["status"] + ")" : "");
-						debugInfo += ",";
-					}
-					debugInfo = debugInfo.slice(0, -1);
-					reject(`waitFor() timed out after ${timeout} milliseconds waiting for ${debugInfo}, name=${this.name}.`);
+					reject(`waitFor() timed out after ${timeout} milliseconds waiting for ${JSON.stringify(waitlist)}, name=${component.name}.`);
 				}, timeout);
 			});
 			waitInfo["promise"] = promise;
 
-			this.__waitingList.push(waitInfo);
+			WaitforOrganizer.__waitingList.push(waitInfo);
 		}
 
 		return promise;
@@ -73,45 +122,25 @@ export default class WaitforMixin
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Clear waiting list.
-	 *
-	 */
-	static clearWaitingList()
-	{
-
-		this.__waitingList.splice(0);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Register component to list.
+	 * Register component status and check waiting list.
 	 *
 	 * @param	{Object}		component			Component to register.
 	 * @param	{String}		status				Component status.
 	 */
-	static registerComponent(component, status)
+	static registerStatus(component, status)
 	{
 
-		if (Globals["components"][component.uniqueId])
-		{
-			Globals["components"][component.uniqueId]["status"] = status;
-		}
-		else
-		{
-			Globals["components"][component.uniqueId] = {"component":component, "status": status};
-		}
+		component.status = status;
+		BITSMIST.v1.Globals.components.register(component.uniqueId, {"object":component, "status":status});
 
-		for (let i = 0; i < this.__waitingList.length; i++)
+		// Check waiting list
+		for (let i = 0; i < WaitforOrganizer.__waitingList.length; i++)
 		{
-			if (this.__isAllReady(this.__waitingList[i]["waitlist"]))
+			if (WaitforOrganizer.__isAllReady(WaitforOrganizer.__waitingList[i]["waitlist"]))
 			{
-				this.__waitingList[i].resolve();
+				WaitforOrganizer.__waitingList[i].resolve();
 			}
 		}
-
-		component.status = status;
 
 	}
 
@@ -136,8 +165,8 @@ export default class WaitforMixin
 			let match = false;
 
 			// Check through all registered components
-			Object.keys(Globals["components"]).forEach((key) => {
-				if (this.__isReady(waitlist[i], Globals["components"][key]))
+			Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
+				if (WaitforOrganizer.__isReady(waitlist[i], BITSMIST.v1.Globals.components.items[key]))
 				{
 					match = true;
 				}
@@ -165,43 +194,6 @@ export default class WaitforMixin
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
-	/*
-	static __isReady(waitInfo, componentInfo)
-	{
-
-		let isMatch = false;
-
-		// check instance
-		if (waitInfo["component"])
-		{
-			isMatch = ( componentInfo["component"] === waitInfo["component"] ? true : false );
-		}
-
-		// check name
-		if (waitInfo["name"])
-		{
-			isMatch = ( componentInfo["component"].name === waitInfo["name"] ? true : false );
-		}
-
-		// check id
-		if (waitInfo["id"])
-		{
-			console.log("@@@");
-			isMatch = ( componentInfo["component"].uniqueId === waitInfo["id"] ? true : false );
-			console.log(isMatch);
-		}
-
-		// check status
-		if (waitInfo["status"])
-		{
-			isMatch = ( componentInfo["status"] === waitInfo["status"] ? true : false );
-		}
-
-		return isMatch;
-
-	}
-	*/
-
 	static __isReady(waitInfo, componentInfo)
 	{
 
@@ -209,19 +201,19 @@ export default class WaitforMixin
 		waitInfo["status"] = waitInfo["status"] || "opened"; // Status defaults to "opened" when not specified.
 
 		// check instance
-		if (waitInfo["component"] && componentInfo["component"] !== waitInfo["component"])
+		if (waitInfo["component"] && componentInfo["object"] !== waitInfo["component"])
 		{
 			isMatch = false;
 		}
 
 		// check name
-		if (waitInfo["name"] && componentInfo["component"].name != waitInfo["name"])
+		if (waitInfo["name"] && componentInfo["object"].name != waitInfo["name"])
 		{
 			isMatch = false;
 		}
 
 		// check id
-		if (waitInfo["id"] && componentInfo["component"].uniqueId != waitInfo["id"])
+		if (waitInfo["id"] && componentInfo["object"].uniqueId != waitInfo["id"])
 		{
 			isMatch = false;
 		}
@@ -249,15 +241,12 @@ export default class WaitforMixin
 			}
 		}
 
-//		console.log("@@@", isMatch, waitInfo, componentInfo);
-
 		return isMatch;
 
 	}
 
 }
 
-// -----------------------------------------------------------------------------
-
 // static properties
-WaitforMixin.__waitingList = [];
+WaitforOrganizer.__waitingList = [];
+

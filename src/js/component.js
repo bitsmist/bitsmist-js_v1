@@ -11,11 +11,10 @@
 import ClassUtil from './util/class-util';
 import ComponentOrganizer from './organizer/component-organizer';
 import EventMixin from './mixin/event-mixin';
-import Globals from './globals';
 import LoaderMixin from './mixin/loader-mixin';
 import Store from './store';
 import Util from './util/util';
-import WaitforMixin from './mixin/waitfor-mixin';
+import WaitforOrganizer from './organizer/waitfor-organizer';
 
 // =============================================================================
 //	Component class
@@ -47,7 +46,7 @@ export default function Component(settings)
 	};
 	settings = Object.assign({}, defaults, settings, _this._getSettings());
 	_this._settings = new Store({"items":settings});
-	_this._settings.chain(Globals["settings"]);
+	_this._settings.chain(BITSMIST.v1.Globals["settings"]);
 
 	// Init settings
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
@@ -55,7 +54,7 @@ export default function Component(settings)
 	BITSMIST.v1.Globals.organizers.notifySync("organize", "afterInitComponent", _this, _this._settings.items);
 	_this.triggerSync("afterInitComponent", _this);
 
-	_this.registerComponent(_this, "instantiated");
+	_this.registerStatus("instantiated");
 
 	return _this;
 
@@ -65,7 +64,6 @@ export default function Component(settings)
 ClassUtil.inherit(Component, HTMLElement);
 Object.assign(Component.prototype, EventMixin);
 Object.assign(Component.prototype, LoaderMixin);
-Object.assign(Component.prototype, WaitforMixin);
 
 customElements.define("bm-component", Component);
 
@@ -151,11 +149,11 @@ Component.prototype.open = function(options)
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
-		this.registerComponent(this, "opening");
+		this.registerStatus("opening");
 		Promise.resolve().then(() => {
 			if (this._settings.get("autoSetup"))
 			{
-				let defaultPreferences = Object.assign({}, Globals["preferences"].items);
+				let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
 				options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
 				return this.setup(options);
 			}
@@ -170,7 +168,7 @@ Component.prototype.open = function(options)
 			return this.trigger("afterOpen", sender, {"options":options});
 		}).then(() => {
 			console.debug(`Component.open(): Opened component. name=${this.name}`);
-			this.registerComponent(this, "opened");
+			this.registerStatus("opened");
 			resolve();
 		});
 	});
@@ -195,7 +193,7 @@ Component.prototype.close = function(options)
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
-		this.registerComponent(this, "closing");
+		this.registerStatus("closing");
 		Promise.resolve().then(() => {
 			return this.trigger("beforeClose", sender);
 		}).then(() => {
@@ -206,7 +204,7 @@ Component.prototype.close = function(options)
 			{
 				this._modalPromise.resolve(this._modalResult);
 			}
-			this.registerComponent(this, "closed");
+			this.registerStatus("closed");
 			resolve();
 		});
 	});
@@ -294,6 +292,34 @@ Component.prototype.setup = function(options)
 // -----------------------------------------------------------------------------
 
 /**
+ * Detroy component.
+ *
+ * @param	{Object}		options				Options for the component.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.destroy = function(options)
+{
+
+	console.debug(`Component.destroy(): Destroying component. name=${this.name}`);
+
+	return new Promise((resolve, reject) => {
+		Promise.resolve().then(() => {
+			this.registerStatus("destroying");
+		}).then(() => {
+			return this.trigger("beforeDestroy", this);
+		}).then(() => {
+			return this.trigger("afterDestroy", this);
+		}).then(() => {
+			this.registerStatus("destroyed");
+		});
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Add a component.
  *
  * @param	{String}		componentName		Component name.
@@ -311,28 +337,31 @@ Component.prototype.addComponent = function(componentName, options)
 // -----------------------------------------------------------------------------
 
 /**
- * Detroy component.
+ * Wait for components to be loaded.
  *
- * @param	{Object}		options				Options for the component.
+ * @param	{Array}			waitlist			Components to wait.
+ * @param	{integer}		timeout				Timeout in milliseconds.
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.destroy = function(options)
+Component.prototype.waitFor = function(waitlist, timeout)
 {
 
-	console.debug(`Component.destroy(): Destroying component. name=${this.name}`);
+	return WaitforOrganizer.waitFor(this, waitlist, timeout);
 
-	return new Promise((resolve, reject) => {
-		Promise.resolve().then(() => {
-			this.registerComponent(this, "destroying");
-		}).then(() => {
-			return this.trigger("beforeDestroy", this);
-		}).then(() => {
-			return this.trigger("afterDestroy", this);
-		}).then(() => {
-			this.registerComponent(this, "destroyed");
-		});
-	});
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Register component status.
+ *
+ * @param	{String}		status				Component status.
+ */
+Component.prototype.registerStatus = function(status)
+{
+
+	return WaitforOrganizer.registerStatus(this, status);
 
 }
 
@@ -376,7 +405,7 @@ Component.prototype.connectedCallback = function()
 		return this.trigger("afterConnect", this);
 	}).then(() => {
 		// Register as connected
-		this.registerComponent(this, "connected");
+		this.registerStatus("connected");
 	}).then(() => {
 		// Open
 		if (this._settings.get("autoOpen"))
