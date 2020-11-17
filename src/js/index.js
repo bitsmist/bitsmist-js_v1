@@ -25,7 +25,6 @@ window.BITSMIST.v1.Component = Component;
 
 import EventMixin from './mixin/event-mixin';
 import LoaderMixin from './mixin/loader-mixin';
-import WaitforMixin from './mixin/waitfor-mixin';
 
 // Organizer
 
