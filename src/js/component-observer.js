@@ -149,9 +149,7 @@ export default class ComponentObserver
 	/**
 	 * Deregister target component.
 	 *
-	 * @param	{Component}		component			Component to notify.
-	 *
-	 * @return  {Promise}		Promise.
+	 * @param	{Component}		component			Component to remove.
 	 */
 	deregister(component)
 	{
