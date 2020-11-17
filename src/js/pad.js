@@ -106,9 +106,7 @@ Pad.prototype.openModal = function(options)
 		this._modalResult = {"result":false};
 		this._modalOptions = options;
 		this._modalPromise = { "resolve": resolve, "reject": reject };
-		this.open().then(() => {
-			resolve();
-		});
+		this.open();
 	});
 
 }
