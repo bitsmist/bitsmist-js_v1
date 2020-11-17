@@ -8,8 +8,6 @@
  */
 // =============================================================================
 
-import Globals from '../globals';
-
 // =============================================================================
 //	Service organizer class
 // =============================================================================
@@ -53,10 +51,10 @@ export default class ServiceOrganizer
 			let service;
 			if (settings["className"])
 			{
-				Object.keys(Globals["components"]).forEach((key) => {
-					if (Globals["components"][key].component.name == settings["className"])
+				Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
+					if (BITSMIST.v1.Globals.components.items[key].object.name == settings["className"])
 					{
-						service = Globals["components"][key].component;
+						service = BITSMIST.v1.Globals.components.items[key].object;
 					}
 				});
 			}

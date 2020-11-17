@@ -8,7 +8,7 @@
  */
 // =============================================================================
 
-import ComponentObserver from './component-observer';
+import Observer from './observer';
 import Store from './store';
 import Util from './util/util';
 
@@ -32,13 +32,14 @@ class Globals
 	constructor()
 	{
 
-		this._components = {};
-		this._classes = {};
-		this._organizers = new ComponentObserver({"targeter": (condition, target, organizer) => {
-			return organizer.isTarget(condition);
+		// Init vars
+		this._classes = new Observer();
+		this._components = new Observer();
+		this._organizers = new Observer({"targeter": (condition, info) => {
+			return info["object"].isTarget(condition);
 		}});
-		this._settings = new Store();
 		this._preferences = new Store();
+		this._settings = new Store();
 
 	}
 
