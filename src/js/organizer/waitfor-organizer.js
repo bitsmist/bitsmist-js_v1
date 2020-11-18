@@ -122,18 +122,83 @@ export default class WaitforOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Register component status and check waiting list.
+	 * Change component status and check waiting list.
 	 *
-	 * @param	{Object}		component			Component to register.
+	 * @param	{Component}		component			Component to register.
 	 * @param	{String}		status				Component status.
+	 *
+	 * @return  {Promise}		Promise.
 	 */
-	static registerStatus(component, status)
+	static changeStatus(component, status)
+	{
+
+		return new Promise((resolve, reject) => {
+			Promise.resolve().then(() => {
+				return WaitforOrganizer.__waitStatus(component, component.status, status);
+			}).then(() => {
+				WaitforOrganizer.changeStatusSync(component, status);
+				resolve();
+			});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Change component status and check waiting list synchronously.
+	 *
+	 * @param	{Component}		component			Component to register.
+	 * @param	{String}		status				Component status.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static changeStatusSync(component, status)
 	{
 
 		component.status = status;
 		BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "status":status});
 
-		// Check waiting list
+		WaitforOrganizer.__processWaitingList();
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Wait for component to become an status.
+	 *
+	 * @param	{Object}		component			Component to register.
+	 * @param	{String}		currentStatus		Current status.
+	 * @param	{String}		newStatus			New status.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static __waitStatus(component, currentStatus, newStatus)
+	{
+
+		if (newStatus == "opening")
+		{
+			return component.waitFor([{"id":component.uniqueId, "status":"connected"}]);
+		}
+
+		if (newStatus == "connecting")
+		{
+			return component.waitFor([{"id":component.uniqueId, "status":"instantiated"}]);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check wait list and resolve() if components are ready.
+	 */
+		static __processWaitingList()
+	{
+
 		for (let i = 0; i < WaitforOrganizer.__waitingList.length; i++)
 		{
 			if (WaitforOrganizer.__isAllReady(WaitforOrganizer.__waitingList[i]["waitlist"]))
@@ -144,8 +209,6 @@ export default class WaitforOrganizer
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**

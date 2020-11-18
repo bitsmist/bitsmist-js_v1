@@ -42,6 +42,7 @@ export default function Component(settings)
 	// Init stores
 	let defaults = {
 		"autoOpen": true,
+		"autoClose": true,
 		"autoSetup":true
 	};
 	settings = Object.assign({}, defaults, settings, _this._getSettings());
@@ -54,7 +55,7 @@ export default function Component(settings)
 	BITSMIST.v1.Globals.organizers.notifySync("organize", "afterInitComponent", _this, _this._settings.items);
 	_this.triggerSync("afterInitComponent", _this);
 
-	_this.registerStatus("instantiated");
+	WaitforOrganizer.changeStatusSync(_this, "instantiated");
 
 	return _this;
 
@@ -143,14 +144,14 @@ Object.defineProperty(Component.prototype, 'settings', {
 Component.prototype.open = function(options)
 {
 
-	console.debug(`Component.open(): Opening component. name=${this.name}`);
-
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
-		this.registerStatus("opening");
 		Promise.resolve().then(() => {
+			return this.changeStatus("opening");
+		}).then(() => {
+			console.debug(`Component.open(): Opening component. name=${this.name}`);
 			if (this._settings.get("autoSetup"))
 			{
 				let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
@@ -168,7 +169,8 @@ Component.prototype.open = function(options)
 			return this.trigger("afterOpen", sender, {"options":options});
 		}).then(() => {
 			console.debug(`Component.open(): Opened component. name=${this.name}`);
-			this.registerStatus("opened");
+			return this.changeStatus("opened");
+		}).then(() => {
 			resolve();
 		});
 	});
@@ -193,8 +195,9 @@ Component.prototype.close = function(options)
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
 
-		this.registerStatus("closing");
 		Promise.resolve().then(() => {
+			return this.changeStatus("closing");
+		}).then(() => {
 			return this.trigger("beforeClose", sender);
 		}).then(() => {
 			return this.trigger("afterClose", sender);
@@ -204,7 +207,8 @@ Component.prototype.close = function(options)
 			{
 				this._modalPromise.resolve(this._modalResult);
 			}
-			this.registerStatus("closed");
+			return this.changeStatus("closed");
+		}).then(() => {
 			resolve();
 		});
 	});
@@ -301,17 +305,21 @@ Component.prototype.setup = function(options)
 Component.prototype.destroy = function(options)
 {
 
-	console.debug(`Component.destroy(): Destroying component. name=${this.name}`);
-
 	return new Promise((resolve, reject) => {
 		Promise.resolve().then(() => {
-			this.registerStatus("destroying");
+			return this.changeStatus("destroying");
 		}).then(() => {
+			console.debug(`Component.destroy(): Destroying component. name=${this.name}`);
 			return this.trigger("beforeDestroy", this);
+		}).then(() => {
+			if (this._settings.get("autoClose"))
+			{
+				return this.close();
+			}
 		}).then(() => {
 			return this.trigger("afterDestroy", this);
 		}).then(() => {
-			this.registerStatus("destroyed");
+			return this.changeStatus("instantiated");
 		});
 	});
 
@@ -351,17 +359,19 @@ Component.prototype.waitFor = function(waitlist, timeout)
 
 }
 
-// -----------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 /**
- * Register component status.
+ * Change status.
  *
  * @param	{String}		status				Component status.
+ *
+ * @return  {Promise}		Promise.
  */
-Component.prototype.registerStatus = function(status)
+Component.prototype.changeStatus = function(status)
 {
 
-	return WaitforOrganizer.registerStatus(this, status);
+	return WaitforOrganizer.changeStatus(this, status);
 
 }
 
@@ -375,9 +385,10 @@ Component.prototype.registerStatus = function(status)
 Component.prototype.connectedCallback = function()
 {
 
-	console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}`);
-
 	Promise.resolve().then(() => {
+		return this.changeStatus("connecting");
+	}).then(() => {
+		console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}`);
 		// Load extra settings
 		let arr = this.__getPathFromAttribute();
 		let settingsPath = arr[0];
@@ -405,7 +416,7 @@ Component.prototype.connectedCallback = function()
 		return this.trigger("afterConnect", this);
 	}).then(() => {
 		// Register as connected
-		this.registerStatus("connected");
+		return this.changeStatus("connected");
 	}).then(() => {
 		// Open
 		if (this._settings.get("autoOpen"))

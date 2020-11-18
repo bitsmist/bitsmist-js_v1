@@ -68,13 +68,11 @@ Pad.prototype.open = function(options)
 {
 
 	return new Promise((resolve, reject) => {
-		console.debug(`Pad.open(): Opening pad. name=${this.name}`);
+		Promise.resolve(() => {
+			return this.changeStatus("opening");
+		}).then(() => {
+			console.debug(`Pad.open(): Opening pad. name=${this.name}`);
 
-		options = Object.assign({}, options);
-		let sender = ( options["sender"] ? options["sender"] : this );
-
-		this.registerStatus("opening");
-		Promise.resolve().then(() => {
 			return this.switchTemplate(this._settings.get("templateName"));
 		}).then(() => {
 			return Component.prototype.open.call(this, options);
@@ -128,6 +126,7 @@ Pad.prototype.switchTemplate = function(templateName)
 
 		if (templateInfo["isAppended"])
 		{
+			console.debug(`Pad.switchTemplate(): Template already appended. name=${this.name}, templateName=${templateName}`);
 			resolve();
 			return;
 		}
