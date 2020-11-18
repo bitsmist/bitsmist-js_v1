@@ -29,35 +29,30 @@ import LoaderMixin from './mixin/loader-mixin';
 // Organizer
 
 import AttrOrganizer from './organizer/attr-organizer';
-Globals.organizers.register("AttrOrganizer", {"object":AttrOrganizer, "targets":"attrs"});
+Globals.organizers.set("AttrOrganizer", {"object":AttrOrganizer, "targets":"attrs"});
 
 import ComponentOrganizer from './organizer/component-organizer';
-Globals.organizers.register("ComponentOrganizer", {"object":ComponentOrganizer, "targets":"components"});
+Globals.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targets":"components"});
 
 import ElementOrganizer from './organizer/element-organizer';
-Globals.organizers.register("ElementOrganizer", {"object":ElementOrganizer, "targets":"elements"});
+Globals.organizers.set("ElementOrganizer", {"object":ElementOrganizer, "targets":"elements"});
 
 import EventOrganizer from './organizer/event-organizer';
-Globals.organizers.register("EventOrganizer", {"object":EventOrganizer, "targets":"events"});
+Globals.organizers.set("EventOrganizer", {"object":EventOrganizer, "targets":"events"});
 
 import ServiceOrganizer from './organizer/service-organizer';
-Globals.organizers.register("ServiceOrganizer", {"object":ServiceOrganizer, "targets":"services"});
+Globals.organizers.set("ServiceOrganizer", {"object":ServiceOrganizer, "targets":"services"});
 
 import TemplateOrganizer from './organizer/template-organizer';
-Globals.organizers.register("TemplateOrganizer", {"object":TemplateOrganizer, "targets":"templates"});
+Globals.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targets":"templates"});
 
 import WaitforOrganizer from './organizer/waitfor-organizer';
-Globals.organizers.register("WaitforOrganizer", {"object":WaitforOrganizer, "targets":"waitFor"});
+Globals.organizers.set("WaitforOrganizer", {"object":WaitforOrganizer, "targets":"waitFor"});
 
 // Pad
 
 import Pad from './pad';
 window.BITSMIST.v1.Pad = Pad;
-
-// Observer
-
-import Observer from './observer';
-window.BITSMIST.v1.Observer = Observer;
 
 // Store
 

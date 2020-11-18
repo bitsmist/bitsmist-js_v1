@@ -30,8 +30,13 @@ export default class Store
 	constructor(options, chain)
 	{
 
+		// Init vars
 		this._chain = Util.safeGet(options, "chain");
+		this._filter;
 		this._items = Util.safeGet(options, "items", {});
+
+		// Init filter function
+		this.filter = ( options && options["filter"] ? options["filter"] : () => { return true; } );
 
 	}
 
@@ -66,6 +71,32 @@ export default class Store
 	{
 
 		this._items= value;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Filter function.
+	 *
+	 * @type	{Function}
+	 */
+	get filter()
+	{
+
+		this._filter;
+
+	}
+
+	set filter(value)
+	{
+
+		if (typeof value != "function")
+		{
+			throw TypeError(`Filter is not a function. filter=${value}`);
+		}
+
+		this._filter = value;
 
 	}
 
@@ -113,14 +144,14 @@ export default class Store
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Get a value from store. Return default value when specified key is not available.
-	* If chained, chained store is also considiered.
-	*
-	* @param	{String}		key					Key to get.
-	* @param	{Object}		defaultValue		Value returned when key is not found.
-	*
-	* @return  {*}				Value.
-	*/
+	 * Get a value from store. Return default value when specified key is not available.
+	 * If chained, chained store is also considiered.
+	 *
+	 * @param	{String}		key					Key to get.
+	 * @param	{Object}		defaultValue		Value returned when key is not found.
+	 *
+	 * @return  {*}				Value.
+	 */
 	get(key, defaultValue)
 	{
 
@@ -131,11 +162,11 @@ export default class Store
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Set a value to store.
-	*
-	* @param	{String}		key					Key to store.
-	* @param	{Object}		value				Value to store.
-	*/
+	 * Set a value to store.
+	 *
+	 * @param	{String}		key					Key to store.
+	 * @param	{Object}		value				Value to store.
+	 */
 	set(key, value)
 	{
 
@@ -143,19 +174,102 @@ export default class Store
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Set a value to store. Unlike set(), this merges with an existing value
+	 * if the existing value is object, otherwise overwrites.
+	 *
+	 * @param	{String}		key					Key to store.
+	 * @param	{Object}		value				Value to store.
+	 */
+	mergeSet(key, value)
+	{
+
+		let holder = this._getLocal(key);
+
+		if (typeof holder == "object")
+		{
+			Object.assign(holder, value);
+		}
+		else
+		{
+			this.set(key, value);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Remove from the list.
+	 *
+	 * @param	{String}		key					Key to store.
+	 */
+	remove(key)
+	{
+
+		delete this._items[key];
+
+	}
+
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Check if the store has specified key.
-	*
-	* @param	{String}		key					Key to check.
-	*
-	* @return	{Boolean}		True:exists, False:not exists.
-	*/
+	 * Check if the store has specified key.
+	 *
+	 * @param	{String}		key					Key to check.
+	 *
+	 * @return	{Boolean}		True:exists, False:not exists.
+	 */
 	has(key)
 	{
 
 		return Util.safeHas(this._items, key);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Notify observers asynchronously.
+	 *
+	 * @param	{String}		type				Notification type(=methodname).
+	 * @param	{Object}		conditions			Current conditions.
+	 * @param	{Object}		...args				Arguments to callback function.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	notify(type, conditions, ...args)
+	{
+
+		let chain = Promise.resolve();
+
+		Object.keys(this._items).forEach((id) => {
+			chain = chain.then(() => {
+				return this._callHandler(type, conditions, this._items[id], ...args);
+			});
+		});
+
+		return chain;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Notify observers synchronously.
+	 *
+	 * @param	{String}		type				Notification type(=methodname).
+	 * @param	{Object}		conditions			Current conditions.
+	 * @param	{Object}		...args				Arguments to callback function.
+	 */
+	notifySync(type, conditions, ...args)
+	{
+
+		Object.keys(this._items).forEach((id) => {
+			this._callHandler(type, conditions, this._items[id], ...args);
+		});
 
 	}
 
@@ -205,6 +319,35 @@ export default class Store
 		}
 
 		return result;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Call handler.
+	 *
+	 * @param	{String}		type				Notification type(=methodname).
+	 * @param	{Object}		conditions			Current conditions.
+	 * @param	{Object}		observerInfo		Observer info.
+	 * @param	{Object}		...args				Arguments to callback function.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	_callHandler(type, conditions, observerInfo, ...args)
+	{
+
+		if (this._filter(conditions, observerInfo))
+		{
+			if (typeof observerInfo["object"][type] === "function")
+			{
+				return observerInfo["object"][type].call(observerInfo["object"], ...args);
+			}
+			else
+			{
+				throw TypeError(`Notification handler is not a function. name=${observerInfo["object"].name}, type=${type}`);
+			}
+		}
 
 	}
 

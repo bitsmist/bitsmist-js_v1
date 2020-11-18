@@ -131,7 +131,7 @@ export default class WaitforOrganizer
 	{
 
 		component.status = status;
-		BITSMIST.v1.Globals.components.register(component.uniqueId, {"object":component, "status":status});
+		BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "status":status});
 
 		// Check waiting list
 		for (let i = 0; i < WaitforOrganizer.__waitingList.length; i++)
