@@ -120,6 +120,20 @@ export default class Store
 	// -------------------------------------------------------------------------
 
 	/**
+     * Clear.
+     *
+	 * @param	{Object}		component			Component to attach.
+	 * @param	{Object}		options				Plugin options.
+     */
+	clear()
+	{
+
+		this._items = {};
+
+	}
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Merge items.
 	 *
 	 * @param	{Object}		newItems			Items to merge.
