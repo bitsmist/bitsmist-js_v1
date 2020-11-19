@@ -68,7 +68,7 @@ Pad.prototype.open = function(options)
 {
 
 	return new Promise((resolve, reject) => {
-		Promise.resolve(() => {
+		Promise.resolve().then(() => {
 			return this.changeStatus("opening");
 		}).then(() => {
 			console.debug(`Pad.open(): Opening pad. name=${this.name}`);
