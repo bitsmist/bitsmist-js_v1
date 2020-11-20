@@ -168,9 +168,9 @@ Component.prototype.open = function(options)
 		}).then(() => {
 			return this.trigger("afterOpen", sender, {"options":options});
 		}).then(() => {
-			console.debug(`Component.open(): Opened component. name=${this.name}`);
 			return this.changeStatus("opened");
 		}).then(() => {
+			console.debug(`Component.open(): Opened component. name=${this.name}`);
 			resolve();
 		});
 	});
@@ -189,8 +189,6 @@ Component.prototype.open = function(options)
 Component.prototype.close = function(options)
 {
 
-	console.debug(`Component.close(): Closing component. name=${this.name}`);
-
 	return new Promise((resolve, reject) => {
 		options = Object.assign({}, options);
 		let sender = ( options["sender"] ? options["sender"] : this );
@@ -198,17 +196,18 @@ Component.prototype.close = function(options)
 		Promise.resolve().then(() => {
 			return this.changeStatus("closing");
 		}).then(() => {
+			console.debug(`Component.close(): Closing component. name=${this.name}`);
 			return this.trigger("beforeClose", sender);
 		}).then(() => {
 			return this.trigger("afterClose", sender);
 		}).then(() => {
-			console.debug(`Component.close(): Closed component. name=${this.name}`);
 			if (this._isModal)
 			{
 				this._modalPromise.resolve(this._modalResult);
 			}
 			return this.changeStatus("closed");
 		}).then(() => {
+			console.debug(`Component.close(): Closed component. name=${this.name}`);
 			resolve();
 		});
 	});
@@ -296,20 +295,78 @@ Component.prototype.setup = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Detroy component.
+ * Connect component.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.connect = function()
+{
+
+	return new Promise((resolve, reject) => {
+		Promise.resolve().then(() => {
+			return this.changeStatus("connecting");
+		}).then(() => {
+			console.debug(`Component.connect(): Connecting component. name=${this.name}`);
+
+			// Load extra settings
+			let arr = this.__getPathFromAttribute();
+			let settingsPath = arr[0];
+			let settingsName = arr[1];
+			if (settingsName || settingsPath)
+			{
+				return this.loadSetting(settingsName, settingsPath);
+			}
+		}).then((newSettings) => {
+			if (newSettings)
+			{
+				this._settings.merge(newSettings);
+				return BITSMIST.v1.Globals.organizers.notify("organize", "afterConnect", this, newSettings);
+			}
+		}).then(() => {
+			// Get settings from attributes
+			let attrSettings = this.__getSettingsFromAttribute();
+			if (attrSettings)
+			{
+				this._settings.merge(attrSettings);
+				return BITSMIST.v1.Globals.organizers.notify("organize", "afterConnect", this, attrSettings);
+			}
+		}).then(() => {
+			// Trigger an event
+			return this.trigger("afterConnect", this);
+		}).then(() => {
+			// Register as connected
+			return this.changeStatus("connected");
+		}).then(() => {
+			console.debug(`Component.connect(): Component connected. name=${this.name}`);
+			// Open
+			if (this._settings.get("autoOpen"))
+			{
+				return this.open();
+			}
+		}).then(() => {
+			resolve();
+		});
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Disconnect component.
  *
  * @param	{Object}		options				Options for the component.
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.destroy = function(options)
+Component.prototype.disconnect = function(options)
 {
 
 	return new Promise((resolve, reject) => {
 		Promise.resolve().then(() => {
-			return this.changeStatus("destroying");
+			return this.changeStatus("disconnecting");
 		}).then(() => {
-			console.debug(`Component.destroy(): Destroying component. name=${this.name}`);
+			console.debug(`Component.desconnect(): Disconnecing component. name=${this.name}`);
 			return this.trigger("beforeDestroy", this);
 		}).then(() => {
 			if (this._settings.get("autoClose"))
@@ -320,6 +377,9 @@ Component.prototype.destroy = function(options)
 			return this.trigger("afterDestroy", this);
 		}).then(() => {
 			return this.changeStatus("instantiated");
+		}).then(() => {
+			console.debug(`Component.desconnect(): Disconnected component. name=${this.name}`);
+			resolve();
 		});
 	});
 
@@ -385,45 +445,7 @@ Component.prototype.changeStatus = function(status)
 Component.prototype.connectedCallback = function()
 {
 
-	Promise.resolve().then(() => {
-		return this.changeStatus("connecting");
-	}).then(() => {
-		console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}`);
-		// Load extra settings
-		let arr = this.__getPathFromAttribute();
-		let settingsPath = arr[0];
-		let settingsName = arr[1];
-		if (settingsName || settingsPath)
-		{
-			return this.loadSetting(settingsName, settingsPath);
-		}
-	}).then((newSettings) => {
-		if (newSettings)
-		{
-			this._settings.merge(newSettings);
-			return BITSMIST.v1.Globals.organizers.notify("organize", "afterConnect", this, newSettings);
-		}
-	}).then(() => {
-		// Get settings from attributes
-		let attrSettings = this.__getSettingsFromAttribute();
-		if (attrSettings)
-		{
-			this._settings.merge(attrSettings);
-			return BITSMIST.v1.Globals.organizers.notify("organize", "afterConnect", this, attrSettings);
-		}
-	}).then(() => {
-		// Trigger an event
-		return this.trigger("afterConnect", this);
-	}).then(() => {
-		// Register as connected
-		return this.changeStatus("connected");
-	}).then(() => {
-		// Open
-		if (this._settings.get("autoOpen"))
-		{
-			this.open();
-		}
-	});
+	return this.connect();
 
 }
 
@@ -435,8 +457,26 @@ Component.prototype.connectedCallback = function()
 Component.prototype.disconnectedCallback = function()
 {
 
-	this.destroy();
+	return this.disconnect();
 
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Adopted callback.
+ */
+Component.prototype.adoptedCallback = function()
+{
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Attribute changed callback.
+ */
+Component.prototype.attributeChangedCallback = function()
+{
 }
 
 // -----------------------------------------------------------------------------
