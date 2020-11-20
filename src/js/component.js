@@ -55,7 +55,7 @@ export default function Component(settings)
 	BITSMIST.v1.Globals.organizers.notifySync("organize", "afterInitComponent", _this, _this._settings.items);
 	_this.triggerSync("afterInitComponent", _this);
 
-	WaitforOrganizer.changeStatusSync(_this, "instantiated");
+	WaitforOrganizer.changeStatus(_this, "instantiated");
 
 	return _this;
 
