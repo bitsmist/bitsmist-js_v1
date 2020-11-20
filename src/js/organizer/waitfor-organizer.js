@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import Store from '../store';
+
 // =============================================================================
 //	Waitfor organizer class
 // =============================================================================
@@ -46,13 +48,11 @@ export default class WaitforOrganizer
 
 	/**
 	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
 	 */
-	static clear(component)
+	static clear()
 	{
 
-		this.__waitingList.splice(0);
+		this.__waitingList.clear();
 
 	}
 
@@ -95,14 +95,14 @@ export default class WaitforOrganizer
 		let promise;
 		timeout = ( timeout ? timeout : 10000 );
 
-		if (!waitlist || WaitforOrganizer.__isAllReady(waitlist))
+		let waitInfo = {"waiter":component, "waitlist":waitlist, "status":"pending"};
+
+		if (!waitlist || WaitforOrganizer.__isAllReady(waitInfo, "waitFor", ""))
 		{
 			promise = Promise.resolve();
 		}
 		else
 		{
-			let waitInfo = {"waitlist":waitlist};
-
 			promise = new Promise((resolve, reject) => {
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
@@ -112,10 +112,42 @@ export default class WaitforOrganizer
 			});
 			waitInfo["promise"] = promise;
 
-			WaitforOrganizer.__waitingList.push(waitInfo);
+			let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+			WaitforOrganizer.__waitingList.set(id, waitInfo);
 		}
 
 		return promise;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Wait for component to become an transitionable status.
+	 *
+	 * @param	{Object}		component			Component to register.
+	 * @param	{String}		currentStatus		Current status.
+	 * @param	{String}		newStatus			New status.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static waitForTransitionableStatus(component, currentStatus, newStatus)
+	{
+
+		if (newStatus == "opening")
+		{
+			return component.waitFor([{"id":component.uniqueId, "status":"connected"}]);
+		}
+
+		if (newStatus == "connecting")
+		{
+			return component.waitFor([{"id":component.uniqueId, "status":"instantiated"}]);
+		}
+
+		if (newStatus == "destroying")
+		{
+			return component.waitFor([{"id":component.uniqueId, "status":"instantiated"}]);
+		}
 
 	}
 
@@ -132,34 +164,17 @@ export default class WaitforOrganizer
 	static changeStatus(component, status)
 	{
 
-		return new Promise((resolve, reject) => {
-			Promise.resolve().then(() => {
-				return WaitforOrganizer.__waitStatus(component, component.status, status);
-			}).then(() => {
-				WaitforOrganizer.changeStatusSync(component, status);
-				resolve();
-			});
-		});
+		if (WaitforOrganizer.__isTransitionable(component.status, status))
+		{
+			component.status = status;
+			BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "status":status});
 
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Change component status and check waiting list synchronously.
-	 *
-	 * @param	{Component}		component			Component to register.
-	 * @param	{String}		status				Component status.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static changeStatusSync(component, status)
-	{
-
-		component.status = status;
-		BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "status":status});
-
-		WaitforOrganizer.__processWaitingList();
+			WaitforOrganizer.__processWaitingList(component, status);
+		}
+		else
+		{
+			throw Error(`Already in transition. name=${component.name}, fromStatus=${component.status}, toStatus=${status}`);
+		}
 
 	}
 
@@ -168,26 +183,34 @@ export default class WaitforOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for component to become an status.
+	 * Check whether changing curren status to new status is allowed.
 	 *
-	 * @param	{Object}		component			Component to register.
 	 * @param	{String}		currentStatus		Current status.
 	 * @param	{String}		newStatus			New status.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __waitStatus(component, currentStatus, newStatus)
+	static __isTransitionable(currentStatus, newStatus)
 	{
 
-		if (newStatus == "opening")
+		let ret = true;
+
+		if (currentStatus && currentStatus.slice(-3) == "ing")
 		{
-			return component.waitFor([{"id":component.uniqueId, "status":"connected"}]);
+			if(
+				( currentStatus == "" && newStatus != "instantiated") ||
+				( currentStatus == "destroying" && newStatus != "instantiated") ||
+				( currentStatus == "connecting" && newStatus != "connected") ||
+				( currentStatus == "opening" && (newStatus != "opened" && newStatus != "opening") ) ||
+				( currentStatus == "closeing" && newStatus != "closed") ||
+				( currentStatus == "disconnecting" && (newStatus != "instantiated" && newStatus != "closing") )
+			)
+			{
+				ret = false;
+			}
 		}
 
-		if (newStatus == "connecting")
-		{
-			return component.waitFor([{"id":component.uniqueId, "status":"instantiated"}]);
-		}
+		return ret;
 
 	}
 
@@ -196,16 +219,16 @@ export default class WaitforOrganizer
 	/**
 	 * Check wait list and resolve() if components are ready.
 	 */
-		static __processWaitingList()
+	static __processWaitingList(component, status)
 	{
 
-		for (let i = 0; i < WaitforOrganizer.__waitingList.length; i++)
-		{
-			if (WaitforOrganizer.__isAllReady(WaitforOrganizer.__waitingList[i]["waitlist"]))
+		Object.keys(WaitforOrganizer.__waitingList.items).forEach((id) => {
+			if (WaitforOrganizer.__isAllReady(WaitforOrganizer.__waitingList.get(id), component.name, status))
 			{
-				WaitforOrganizer.__waitingList[i].resolve();
+				WaitforOrganizer.__waitingList.get(id).resolve();
+				WaitforOrganizer.__waitingList.remove(id);
 			}
-		}
+		});
 
 	}
 
@@ -218,22 +241,28 @@ export default class WaitforOrganizer
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
-	static __isAllReady(waitlist)
+	static __isAllReady(waitInfo, name, status)
 	{
 
 		let result = true;
 
+		if (waitInfo.status == "done")
+		{
+			return;
+		}
+
+		let waitlist = waitInfo["waitlist"];
 		for (let i = 0; i < waitlist.length; i++)
 		{
 			let match = false;
-
-			// Check through all registered components
-			Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
-				if (WaitforOrganizer.__isReady(waitlist[i], BITSMIST.v1.Globals.components.items[key]))
+			let component = this.__getComponentInfo(waitlist[i]);
+			if (component)
+			{
+				if (WaitforOrganizer.__isReady(waitlist[i], component))
 				{
 					match = true;
 				}
-			});
+			}
 
 			// If one fail all fail
 			if (!match)
@@ -243,7 +272,49 @@ export default class WaitforOrganizer
 			}
 		}
 
+		if (result)
+		{
+			waitInfo.status = "done";
+		}
+
 		return result;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get component info from wait info.
+	 *
+	 * @param	{Object}		waitInfo			Wait info.
+	 *
+	 * @return  {Boolean}		True if ready.
+	 */
+	static __getComponentInfo(waitInfo)
+	{
+
+		let componentInfo;
+
+		if (waitInfo["id"])
+		{
+			componentInfo = BITSMIST.v1.Globals.components.get(waitInfo["id"]);
+		}
+		else if (waitInfo["name"])
+		{
+			Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
+				if (waitInfo["name"] == BITSMIST.v1.Globals.components.get(key).object.name)
+				{
+					componentInfo = BITSMIST.v1.Globals.components.get(key);
+				}
+			});
+		}
+		else if (waitInfo["rootNode"])
+		{
+			let element = document.querySelector(waitInfo["rootNode"]);
+			componentInfo = BITSMIST.v1.Globals.components.get(element.uniqueId);
+		}
+
+		return componentInfo;
 
 	}
 
@@ -282,9 +353,35 @@ export default class WaitforOrganizer
 		}
 
 		// check status
-		if (waitInfo["status"] && componentInfo["status"] != waitInfo["status"])
+		if (waitInfo["status"])
 		{
-			isMatch = false;
+			switch (waitInfo["status"])
+			{
+				case "instantiated":
+					if (
+						componentInfo["status"] != "instantiated" &&
+						componentInfo["status"] != "connected" &&
+						componentInfo["status"] != "opened" &&
+						componentInfo["status"] != "closed"
+					)
+						isMatch = false;
+					break;
+				case "connected":
+					if (
+						componentInfo["status"] != "connected" &&
+						componentInfo["status"] != "opening" &&
+						componentInfo["status"] != "opened" &&
+						componentInfo["status"] != "closed"
+					)
+						isMatch = false;
+					break;
+				default:
+					if (componentInfo["status"] != waitInfo["status"])
+					{
+						isMatch = false;
+					}
+					break;
+			}
 		}
 
 		// check status
@@ -311,5 +408,4 @@ export default class WaitforOrganizer
 }
 
 // static properties
-WaitforOrganizer.__waitingList = [];
-
+WaitforOrganizer.__waitingList = new Store();
