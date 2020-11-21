@@ -5,6 +5,6 @@ BitsmistJS uses standard technologies.  Does not use bleeding edge high performa
 
 Bitsmist is
 - For the people who want to 
- - concentrate on clients’  needs, like selling more products with lesser budgets for systems
+ - focus on clients’ needs, like selling more products with lesser budgets for systemsl
 - Not for the people who want to
- - show yourself “Ain’t I cool?”
+ - show yourself “Ain’t I cool?”.
