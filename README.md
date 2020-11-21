@@ -7,4 +7,4 @@ Bitsmist is
 - For the people who want to 
        - focus on clients’ needs, like selling more products with lesser budgets for systems.
 - Not for the people who want to
-       - show yourself “Ain’t I cool?”.
+       - show yourself “Ain’t I cool am I?”.
