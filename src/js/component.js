@@ -149,6 +149,8 @@ Component.prototype.open = function(options)
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
+//			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "opening")
+//		}).then(() => {
 			return this.changeStatus("opening");
 		}).then(() => {
 			console.debug(`Component.open(): Opening component. name=${this.name}`);
@@ -194,6 +196,8 @@ Component.prototype.close = function(options)
 		let sender = ( options["sender"] ? options["sender"] : this );
 
 		Promise.resolve().then(() => {
+//			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "closing")
+//		}).then(() => {
 			return this.changeStatus("closing");
 		}).then(() => {
 			console.debug(`Component.close(): Closing component. name=${this.name}`);
@@ -304,6 +308,8 @@ Component.prototype.connect = function()
 
 	return new Promise((resolve, reject) => {
 		Promise.resolve().then(() => {
+//			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "connecting")
+//		}).then(() => {
 			return this.changeStatus("connecting");
 		}).then(() => {
 			console.debug(`Component.connect(): Connecting component. name=${this.name}`);
@@ -364,6 +370,8 @@ Component.prototype.disconnect = function(options)
 
 	return new Promise((resolve, reject) => {
 		Promise.resolve().then(() => {
+//			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "disconnecting")
+//		}).then(() => {
 			return this.changeStatus("disconnecting");
 		}).then(() => {
 			console.debug(`Component.desconnect(): Disconnecing component. name=${this.name}`);
@@ -405,7 +413,7 @@ Component.prototype.addComponent = function(componentName, options)
 // -----------------------------------------------------------------------------
 
 /**
- * Wait for components to be loaded.
+ * Wait for components to become specific statuses.
  *
  * @param	{Array}			waitlist			Components to wait.
  * @param	{integer}		timeout				Timeout in milliseconds.
