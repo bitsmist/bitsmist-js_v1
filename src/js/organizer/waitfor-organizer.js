@@ -163,19 +163,19 @@ export default class WaitforOrganizer
 	static waitForTransitionableStatus(component, currentStatus, newStatus)
 	{
 
-		if (newStatus == "connecting")
+		if (newStatus == "starting")
 		{
 			return WaitforOrganizer.waitForSingle(component, "instantiated");
 		}
 
-		if (newStatus == "disconnecting")
+		if (newStatus == "stopping")
 		{
 			return WaitforOrganizer.waitForSingle(component, "instantiated");
 		}
 
 		if (newStatus == "opening")
 		{
-			return WaitforOrganizer.waitForSingle(component, "connected");
+			return WaitforOrganizer.waitForSingle(component, "started");
 		}
 
 		if (newStatus == "closing")
@@ -234,11 +234,11 @@ export default class WaitforOrganizer
 		{
 			if(
 				( currentStatus == "" && newStatus != "instantiated") ||
-				( currentStatus == "destroying" && newStatus != "instantiated") ||
-				( currentStatus == "connecting" && newStatus != "connected") ||
+				( currentStatus == "stopping" && newStatus != "stopped") ||
+				( currentStatus == "starting" && newStatus != "started") ||
 				( currentStatus == "opening" && (newStatus != "opened" && newStatus != "opening") ) ||
 				( currentStatus == "closeing" && newStatus != "closed") ||
-				( currentStatus == "disconnecting" && (newStatus != "instantiated" && newStatus != "closing") ) ||
+				( currentStatus == "stopping" && (newStatus != "stopped" && newStatus != "closing") ) ||
 				( newStatus == "opening" && currentStatus != "connected" )
 			)
 			{

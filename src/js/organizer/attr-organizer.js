@@ -53,7 +53,7 @@ export default class AttrOrganizer
 
 		let events = {
 //			"afterInitComponent": AttrOrganizer.onDoOrganize, // throws an error on iOS10
-			"afterConnect": AttrOrganizer.onDoOrganize,
+			"afterStart": AttrOrganizer.onDoOrganize,
 			"afterAppend": AttrOrganizer.onDoOrganize,
 			"afterSpecLoad": AttrOrganizer.onDoOrganize,
 			"beforeOpen": AttrOrganizer.onDoOrganize,

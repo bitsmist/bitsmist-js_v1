@@ -70,7 +70,7 @@ export default class TemplateOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterConnect")
+		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterStart")
 		{
 			ret = true;
 		}

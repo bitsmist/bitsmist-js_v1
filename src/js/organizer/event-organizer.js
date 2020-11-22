@@ -67,7 +67,7 @@ export default class EventOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterConnect")
+		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterStart")
 		{
 			ret = true;
 		}

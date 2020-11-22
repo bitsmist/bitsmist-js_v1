@@ -43,7 +43,8 @@ export default function Component(settings)
 	let defaults = {
 		"autoOpen": true,
 		"autoClose": true,
-		"autoSetup":true
+		"autoSetup":true,
+		"autoStop":true
 	};
 	settings = Object.assign({}, defaults, settings, _this._getSettings());
 	_this._settings = new Store({"items":settings});
@@ -53,9 +54,10 @@ export default function Component(settings)
 	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
 
 	BITSMIST.v1.Globals.organizers.notifySync("organize", "afterInitComponent", _this, _this._settings.items);
-	_this.triggerSync("afterInitComponent", _this);
-
 	WaitforOrganizer.changeStatus(_this, "instantiated");
+
+	// Trigger an event
+	_this.triggerSync("afterInitComponent", _this);
 
 	return _this;
 
@@ -151,9 +153,9 @@ Component.prototype.open = function(options)
 		Promise.resolve().then(() => {
 //			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "opening")
 //		}).then(() => {
+			console.debug(`Component.open(): Opening component. name=${this.name}`);
 			return this.changeStatus("opening");
 		}).then(() => {
-			console.debug(`Component.open(): Opening component. name=${this.name}`);
 			if (this._settings.get("autoSetup"))
 			{
 				let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
@@ -170,9 +172,9 @@ Component.prototype.open = function(options)
 		}).then(() => {
 			return this.trigger("afterOpen", sender, {"options":options});
 		}).then(() => {
+			console.debug(`Component.open(): Opened component. name=${this.name}`);
 			return this.changeStatus("opened");
 		}).then(() => {
-			console.debug(`Component.open(): Opened component. name=${this.name}`);
 			resolve();
 		});
 	});
@@ -198,9 +200,9 @@ Component.prototype.close = function(options)
 		Promise.resolve().then(() => {
 //			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "closing")
 //		}).then(() => {
+			console.debug(`Component.close(): Closing component. name=${this.name}`);
 			return this.changeStatus("closing");
 		}).then(() => {
-			console.debug(`Component.close(): Closing component. name=${this.name}`);
 			return this.trigger("beforeClose", sender);
 		}).then(() => {
 			return this.trigger("afterClose", sender);
@@ -209,9 +211,9 @@ Component.prototype.close = function(options)
 			{
 				this._modalPromise.resolve(this._modalResult);
 			}
+			console.debug(`Component.close(): Closed component. name=${this.name}`);
 			return this.changeStatus("closed");
 		}).then(() => {
-			console.debug(`Component.close(): Closed component. name=${this.name}`);
 			resolve();
 		});
 	});
@@ -299,34 +301,29 @@ Component.prototype.setup = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Connect component.
+ * Start component.
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.connect = function()
+Component.prototype.start = function()
 {
 
 	return new Promise((resolve, reject) => {
 		Promise.resolve().then(() => {
+			return this.trigger("beforeStart", this);
+		}).then(() => {
 //			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "connecting")
 //		}).then(() => {
-			return this.changeStatus("connecting");
+			console.debug(`Component.start(): Starting component. name=${this.name}`);
+			return this.changeStatus("starting");
 		}).then(() => {
-			console.debug(`Component.connect(): Connecting component. name=${this.name}`);
-
 			// Load extra settings
-			let arr = this.__getPathFromAttribute();
-			let settingsPath = arr[0];
-			let settingsName = arr[1];
-			if (settingsName || settingsPath)
-			{
-				return this.loadSetting(settingsName, settingsPath);
-			}
+			return this.__loadExtraSettings();
 		}).then((newSettings) => {
 			if (newSettings)
 			{
 				this._settings.merge(newSettings);
-				return BITSMIST.v1.Globals.organizers.notify("organize", "afterConnect", this, newSettings);
+				return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this, newSettings);
 			}
 		}).then(() => {
 			// Get settings from attributes
@@ -334,16 +331,14 @@ Component.prototype.connect = function()
 			if (attrSettings)
 			{
 				this._settings.merge(attrSettings);
-				return BITSMIST.v1.Globals.organizers.notify("organize", "afterConnect", this, attrSettings);
+				return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this, attrSettings);
 			}
 		}).then(() => {
-			// Trigger an event
-			return this.trigger("afterConnect", this);
+			console.debug(`Component.start(): Started component. name=${this.name}`);
+			return this.changeStatus("started");
 		}).then(() => {
-			// Register as connected
-			return this.changeStatus("connected");
+			return this.trigger("afterStart", this);
 		}).then(() => {
-			console.debug(`Component.connect(): Component connected. name=${this.name}`);
 			// Open
 			if (this._settings.get("autoOpen"))
 			{
@@ -359,34 +354,37 @@ Component.prototype.connect = function()
 // -----------------------------------------------------------------------------
 
 /**
- * Disconnect component.
+ * Stop component.
  *
  * @param	{Object}		options				Options for the component.
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.disconnect = function(options)
+Component.prototype.stop = function(options)
 {
 
 	return new Promise((resolve, reject) => {
 		Promise.resolve().then(() => {
-//			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "disconnecting")
-//		}).then(() => {
-			return this.changeStatus("disconnecting");
-		}).then(() => {
-			console.debug(`Component.desconnect(): Disconnecing component. name=${this.name}`);
-			return this.trigger("beforeDestroy", this);
-		}).then(() => {
+			// Close
 			if (this._settings.get("autoClose"))
 			{
 				return this.close();
 			}
 		}).then(() => {
-			return this.trigger("afterDestroy", this);
+			return this.trigger("beforeStop", this);
 		}).then(() => {
-			return this.changeStatus("instantiated");
+//			return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "disconnecting")
+//		}).then(() => {
+			console.debug(`Component.stop(): Stopping component. name=${this.name}`);
+			return this.changeStatus("stopping");
 		}).then(() => {
-			console.debug(`Component.desconnect(): Disconnected component. name=${this.name}`);
+			return this.trigger("doStop", this);
+		}).then(() => {
+			console.debug(`Component.stop(): Stopped component. name=${this.name}`);
+			return this.changeStatus("stopped");
+		}).then(() => {
+			return this.trigger("afterStop", this);
+		}).then(() => {
 			resolve();
 		});
 	});
@@ -453,7 +451,10 @@ Component.prototype.changeStatus = function(status)
 Component.prototype.connectedCallback = function()
 {
 
-	return this.connect();
+	if (this._status == "instantiated" || this._settings.get("autoRestart"))
+	{
+		return this.start();
+	}
 
 }
 
@@ -465,7 +466,10 @@ Component.prototype.connectedCallback = function()
 Component.prototype.disconnectedCallback = function()
 {
 
-	return this.disconnect();
+	if (this._settings.get("autoStop"))
+	{
+		return this.stop();
+	}
 
 }
 
@@ -505,6 +509,27 @@ Component.prototype._getSettings = function()
 
 // -----------------------------------------------------------------------------
 //  Privates
+// -----------------------------------------------------------------------------
+
+/**
+ * Load an extra setting file.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.__loadExtraSettings = function()
+{
+
+	// Load extra settings
+	let arr = this.__getPathFromAttribute();
+	let settingsPath = arr[0];
+	let settingsName = arr[1];
+	if (settingsName || settingsPath)
+	{
+		return this.loadSetting(settingsName, settingsPath);
+	}
+
+}
+
 // -----------------------------------------------------------------------------
 
 /**
