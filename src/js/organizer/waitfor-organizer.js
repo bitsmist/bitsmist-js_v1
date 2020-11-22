@@ -82,12 +82,13 @@ export default class WaitforOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for components to be loaded.
+	 * Wait for components to become specific statuses.
 	 *
+	 * @param	{Component}		component			Component.
 	 * @param	{Array}			waitlist			Components to wait.
 	 * @param	{integer}		timeout				Timeout in milliseconds.
 	 *
-	 * @return  {Array}			Promises.
+	 * @return  {Promise}		Promise.
 	 */
 	static waitFor(component, waitlist, timeout)
 	{
@@ -95,9 +96,9 @@ export default class WaitforOrganizer
 		let promise;
 		timeout = ( timeout ? timeout : 10000 );
 
-		let waitInfo = {"waiter":component, "waitlist":waitlist, "status":"pending"};
+		let waitInfo = {"waiter":component, "waitlist":waitlist};
 
-		if (!waitlist || WaitforOrganizer.__isAllReady(waitInfo, "waitFor", ""))
+		if (WaitforOrganizer.__isAllReady(waitInfo))
 		{
 			promise = Promise.resolve();
 		}
@@ -112,8 +113,7 @@ export default class WaitforOrganizer
 			});
 			waitInfo["promise"] = promise;
 
-			let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-			WaitforOrganizer.__waitingList.set(id, waitInfo);
+			WaitforOrganizer.__addToWaitingList(waitInfo, component, status);
 		}
 
 		return promise;
@@ -123,7 +123,35 @@ export default class WaitforOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for component to become an transitionable status.
+	 * Wait for a component to become specific status.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		status				Status.
+	 * @param	{integer}		timeout				Timeout in milliseconds.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static waitForSingle(component, status, timeout)
+	{
+
+		let componentInfo = BITSMIST.v1.Globals.components.get(component.uniqueId);
+		let waitlistItem = {"id":component.uniqueId, "status":status};
+
+		if (WaitforOrganizer.__isReady(waitlistItem, componentInfo))
+		{
+			return Promise.resolve();
+		}
+		else
+		{
+			return WaitforOrganizer.waitFor(component, [waitlistItem], timeout);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Wait for a component to become transitionable status.
 	 *
 	 * @param	{Object}		component			Component to register.
 	 * @param	{String}		currentStatus		Current status.
@@ -131,25 +159,32 @@ export default class WaitforOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
+	/*
 	static waitForTransitionableStatus(component, currentStatus, newStatus)
 	{
 
-		if (newStatus == "opening")
-		{
-			return component.waitFor([{"id":component.uniqueId, "status":"connected"}]);
-		}
-
 		if (newStatus == "connecting")
 		{
-			return component.waitFor([{"id":component.uniqueId, "status":"instantiated"}]);
+			return WaitforOrganizer.waitForSingle(component, "instantiated");
 		}
 
-		if (newStatus == "destroying")
+		if (newStatus == "disconnecting")
 		{
-			return component.waitFor([{"id":component.uniqueId, "status":"instantiated"}]);
+			return WaitforOrganizer.waitForSingle(component, "instantiated");
+		}
+
+		if (newStatus == "opening")
+		{
+			return WaitforOrganizer.waitForSingle(component, "connected");
+		}
+
+		if (newStatus == "closing")
+		{
+			return WaitforOrganizer.waitForSingle(component, "opened");
 		}
 
 	}
+	*/
 
 	// -------------------------------------------------------------------------
 
@@ -173,7 +208,7 @@ export default class WaitforOrganizer
 		}
 		else
 		{
-			throw Error(`Already in transition. name=${component.name}, fromStatus=${component.status}, toStatus=${status}`);
+			throw Error(`Illegal transition. name=${component.name}, fromStatus=${component.status}, toStatus=${status}`);
 		}
 
 	}
@@ -203,7 +238,8 @@ export default class WaitforOrganizer
 				( currentStatus == "connecting" && newStatus != "connected") ||
 				( currentStatus == "opening" && (newStatus != "opened" && newStatus != "opening") ) ||
 				( currentStatus == "closeing" && newStatus != "closed") ||
-				( currentStatus == "disconnecting" && (newStatus != "instantiated" && newStatus != "closing") )
+				( currentStatus == "disconnecting" && (newStatus != "instantiated" && newStatus != "closing") ) ||
+				( newStatus == "opening" && currentStatus != "connected" )
 			)
 			{
 				ret = false;
@@ -222,96 +258,149 @@ export default class WaitforOrganizer
 	static __processWaitingList(component, status)
 	{
 
-		Object.keys(WaitforOrganizer.__waitingList.items).forEach((id) => {
-			if (WaitforOrganizer.__isAllReady(WaitforOrganizer.__waitingList.get(id), component.name, status))
-			{
-				WaitforOrganizer.__waitingList.get(id).resolve();
-				WaitforOrganizer.__waitingList.remove(id);
-			}
-		});
+		// Process name index
+		let names = WaitforOrganizer.__waitingListIndexName.get(component.name + "." + status);
+		WaitforOrganizer.__processIndex(names);
+
+		// Process ID index
+		let ids = WaitforOrganizer.__waitingListIndexId.get(component.id + "." + status);
+		WaitforOrganizer.__processIndex(ids);
+
+		// Process non indexables
+		WaitforOrganizer.__processIndex(WaitforOrganizer.__waitingListIndexNone);
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if all components are ready.
+	 * Process waiting list index.
 	 *
-	 * @param	{Array}			waitlist			Components to wait.
-	 *
-	 * @return  {Boolean}		True if ready.
+	 * @param	{Array}			list				List of indexed waiting list id.
 	 */
-	static __isAllReady(waitInfo, name, status)
+	static __processIndex(list)
 	{
 
-		let result = true;
-
-		if (waitInfo.status == "done")
+		if (list)
 		{
-			return;
+			for (let i = 0; i < list.length; i++)
+			{
+				let id = list[i];
+
+				if (id)
+				{
+					let waitInfo = WaitforOrganizer.__waitingList.get(id);
+
+					if (WaitforOrganizer.__isAllReady(WaitforOrganizer.__waitingList.get(id)))
+					{
+						WaitforOrganizer.__waitingList.get(id).resolve();
+						WaitforOrganizer.__waitingList.remove(id);
+
+						// delete from index
+						list[i] = null;
+					}
+				}
+			}
 		}
 
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Add wait info to the waiting list.
+	 *
+	 * @param	{Object}		waitInfo			Wait info.
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		status				Status.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static __addToWaitingList(waitInfo, component, status)
+	{
+
+		// Add wait info to the waiting list.
+		let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+		WaitforOrganizer.__waitingList.set(id, waitInfo);
+
+		// Create index for faster processing
 		let waitlist = waitInfo["waitlist"];
 		for (let i = 0; i < waitlist.length; i++)
 		{
-			let match = false;
-			let component = this.__getComponentInfo(waitlist[i]);
-			if (component)
+			// Index for component id + status
+			if (waitlist[i].id)
 			{
-				if (WaitforOrganizer.__isReady(waitlist[i], component))
-				{
-					match = true;
-				}
+				WaitforOrganizer.__addToIndex(WaitforOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].status, id);
 			}
-
-			// If one fail all fail
-			if (!match)
+			// Index for component name + status
+			else if (waitlist[i].name)
 			{
-				result = false;
-				break;
+				WaitforOrganizer.__addToIndex(WaitforOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].status, id);
+			}
+			// Not indexable
+			else
+			{
+				WaitforOrganizer.__waitingListIndexNone.push(id);
 			}
 		}
-
-		if (result)
-		{
-			waitInfo.status = "done";
-		}
-
-		return result;
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get component info from wait info.
+	 * Add id to a waiting list index.
 	 *
-	 * @param	{Object}		waitInfo			Wait info.
+	 * @param	{Map}			index				Waiting list index.
+	 * @param	{String}		key					Index key.
+	 * @param	{String}		id					Waiting list id.
+	 */
+	static __addToIndex(index, key, id)
+	{
+
+		if (!index.get(key))
+		{
+			index.set(key, [])
+		}
+
+		index.get(key).push(id);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get component info from wait list item.
+	 *
+	 * @param	{Object}		waitlistItem		Wait list item.
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
-	static __getComponentInfo(waitInfo)
+	static __getComponentInfo(waitlistItem)
 	{
 
 		let componentInfo;
 
-		if (waitInfo["id"])
+		if (waitlistItem["id"])
 		{
-			componentInfo = BITSMIST.v1.Globals.components.get(waitInfo["id"]);
+			componentInfo = BITSMIST.v1.Globals.components.get(waitlistItem["id"]);
 		}
-		else if (waitInfo["name"])
+		else if (waitlistItem["name"])
 		{
 			Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
-				if (waitInfo["name"] == BITSMIST.v1.Globals.components.get(key).object.name)
+				if (waitlistItem["name"] == BITSMIST.v1.Globals.components.get(key).object.name)
 				{
 					componentInfo = BITSMIST.v1.Globals.components.get(key);
 				}
 			});
 		}
-		else if (waitInfo["rootNode"])
+		else if (waitlistItem["rootNode"])
 		{
-			let element = document.querySelector(waitInfo["rootNode"]);
-			componentInfo = BITSMIST.v1.Globals.components.get(element.uniqueId);
+			let element = document.querySelector(waitlistItem["rootNode"]);
+			if (element)
+			{
+				componentInfo = BITSMIST.v1.Globals.components.get(element.uniqueId);
+			}
 		}
 
 		return componentInfo;
@@ -321,84 +410,159 @@ export default class WaitforOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if a component is ready.
+	 * Check if all components are ready.
 	 *
 	 * @param	{Object}		waitInfo			Wait info.
+	 *
+	 * @return  {Boolean}		True if ready.
+	 */
+	static __isAllReady(waitInfo)
+	{
+
+		let result = true;
+		let waitlist = waitInfo["waitlist"];
+
+		for (let i = 0; i < waitlist.length; i++)
+		{
+			let match = false;
+			let componentInfo = this.__getComponentInfo(waitlist[i]);
+			if (componentInfo)
+			{
+				if (WaitforOrganizer.__isReady(waitlist[i], componentInfo))
+				{
+					match = true;
+				}
+			}
+
+			// If one fails all fail
+			if (!match)
+			{
+				result = false;
+				break;
+			}
+		}
+
+		return result;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if a component is ready.
+	 *
+	 * @param	{Object}		waitlistItem		Wait list item.
 	 * @param	{Object}		componentInfo		Registered component info.
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
-	static __isReady(waitInfo, componentInfo)
+	static __isReady(waitlistItem, componentInfo)
+	{
+
+		// Set defaults when not specified
+		waitlistItem["status"] = waitlistItem["status"] || "opened";
+
+		// Check component
+		let isMatch = WaitforOrganizer.__isComponentMatch(componentInfo, waitlistItem);
+
+		// Check status
+		if (isMatch)
+		{
+			isMatch = WaitforOrganizer.__isStatusMatch(componentInfo["status"], waitlistItem["status"]);
+		}
+
+		return isMatch;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if component match.
+	 *
+	 * @param	{Object}		componentInfo		Registered component info.
+	 * @param	{Object}		waitlistItem		Wait list item.
+	 *
+	 * @return  {Boolean}		True if match.
+	 */
+	static __isComponentMatch(componentInfo, waitlistItem)
 	{
 
 		let isMatch = true;
-		waitInfo["status"] = waitInfo["status"] || "opened"; // Status defaults to "opened" when not specified.
 
 		// check instance
-		if (waitInfo["component"] && componentInfo["object"] !== waitInfo["component"])
+		if (waitlistItem["component"] && componentInfo["object"] !== waitlistItem["component"])
 		{
 			isMatch = false;
 		}
 
 		// check name
-		if (waitInfo["name"] && componentInfo["object"].name != waitInfo["name"])
+		if (waitlistItem["name"] && componentInfo["object"].name != waitlistItem["name"])
 		{
 			isMatch = false;
 		}
 
 		// check id
-		if (waitInfo["id"] && componentInfo["object"].uniqueId != waitInfo["id"])
+		if (waitlistItem["id"] && componentInfo["object"].uniqueId != waitlistItem["id"])
 		{
 			isMatch = false;
 		}
 
-		// check status
-		if (waitInfo["status"])
+		// check node
+		if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
 		{
-			switch (waitInfo["status"])
-			{
-				case "instantiated":
-					if (
-						componentInfo["status"] != "instantiated" &&
-						componentInfo["status"] != "connected" &&
-						componentInfo["status"] != "opened" &&
-						componentInfo["status"] != "closed"
-					)
-						isMatch = false;
-					break;
-				case "connected":
-					if (
-						componentInfo["status"] != "connected" &&
-						componentInfo["status"] != "opening" &&
-						componentInfo["status"] != "opened" &&
-						componentInfo["status"] != "closed"
-					)
-						isMatch = false;
-					break;
-				default:
-					if (componentInfo["status"] != waitInfo["status"])
-					{
-						isMatch = false;
-					}
-					break;
-			}
+			isMatch = false;
 		}
 
-		// check status
-		if (waitInfo["rootNode"])
+		return isMatch;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if status match.
+	 *
+	 * @param	{String}		currentStatus		Current status.
+	 * @param	{String}		expectedStatus		Expected status.
+	 *
+	 * @return  {Boolean}		True if match.
+	 */
+	static __isStatusMatch(currentStatus, expectedStatus)
+	{
+
+		let isMatch = true;
+
+		switch (expectedStatus)
 		{
-			let element = document.querySelector(waitInfo["rootNode"]);
-			if (element)
-			{
-				if (waitInfo["status"] && element.status != waitInfo["status"])
+			case "instantiated":
+				if (
+					currentStatus != "instantiated" &&
+					currentStatus != "connected" &&
+					currentStatus != "opened" &&
+					currentStatus != "closed"
+				)
 				{
 					isMatch = false;
 				}
-			}
-			else
-			{
-				isMatch = false;
-			}
+				break;
+			case "connected":
+				if (
+					currentStatus != "connected" &&
+					currentStatus != "opening" &&
+					currentStatus != "opened" &&
+					currentStatus != "closed"
+				)
+				{
+					isMatch = false;
+				}
+				break;
+			default:
+				if (currentStatus != expectedStatus)
+				{
+					isMatch = false;
+				}
+				break;
 		}
 
 		return isMatch;
@@ -409,3 +573,6 @@ export default class WaitforOrganizer
 
 // static properties
 WaitforOrganizer.__waitingList = new Store();
+WaitforOrganizer.__waitingListIndexName = new Map();
+WaitforOrganizer.__waitingListIndexId = new Map();
+WaitforOrganizer.__waitingListIndexNone = [];
