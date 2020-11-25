@@ -109,40 +109,36 @@ export default class ComponentOrganizer
 			component._components = {};
 		}
 
-		return new Promise((resolve, reject) => {
-			let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
-			let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
-			let className = ( "className" in options ? options["className"] : componentName );
+		let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
+		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
+		let className = ( "className" in options ? options["className"] : componentName );
 
-			Promise.resolve().then(() => {
-				// Load component
-				return component.loadComponent(className, path, {"splitComponent":splitComponent});
-			}).then(() => {
-				// Insert tag
-				if (options["rootNode"] && !component._components[componentName])
+		return Promise.resolve().then(() => {
+			// Load component
+			return component.loadComponent(className, path, {"splitComponent":splitComponent});
+		}).then(() => {
+			// Insert tag
+			if (options["rootNode"] && !component._components[componentName])
+			{
+				// Check root node
+				let root = document.querySelector(options["rootNode"]);
+				if (!root)
 				{
-					// Check root node
-					let root = document.querySelector(options["rootNode"]);
-					if (!root)
-					{
-						throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
-					}
-
-					// Get tag
-					let tagName = ( options["tagName"] ? options["tagName"] : ClassUtil.getClass(className).tagName );
-					let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + "></" + tagName + ">" : "") );
-					if (!tag)
-					{
-						throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
-					}
-
-					// Insert tag
-					root.insertAdjacentHTML("afterbegin", tag);
-					component._components[componentName] = root.children[0];
+					throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
 				}
-			}).then(() => {
-				resolve();
-			});
+
+				// Get tag
+				let tagName = ( options["tagName"] ? options["tagName"] : ClassUtil.getClass(className).tagName );
+				let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + "></" + tagName + ">" : "") );
+				if (!tag)
+				{
+					throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
+				}
+
+				// Insert tag
+				root.insertAdjacentHTML("afterbegin", tag);
+				component._components[componentName] = root.children[0];
+			}
 		});
 
 	}

@@ -36,15 +36,14 @@ export default class LoadeMixin
 	static createComponent(componentName, options, path, settings)
 	{
 
-		return new Promise((resolve, reject) => {
-			options = Object.assign({}, options);
-			let className = ( "className" in options ? options["className"] : componentName );
-			let component = null;
+		options = Object.assign({}, options);
+		let className = ( "className" in options ? options["className"] : componentName );
+		let component = null;
 
-			this.__autoloadComponent(className, options, path, settings).then(() => {
-				component = ClassUtil.createObject(className, options);
-				resolve(component);
-			});
+		return this.__autoloadComponent(className, options, path, settings).then(() => {
+			component = ClassUtil.createObject(className, options);
+
+			return component;
 		});
 
 	}
@@ -80,22 +79,21 @@ export default class LoadeMixin
 	static loadSetting(settingName, path)
 	{
 
-		return new Promise((resolve, reject) => {
-			let url = Util.concatPath([path, settingName + ".js"]);
-			let settings;
+		let url = Util.concatPath([path, settingName + ".js"]);
+		let settings;
 
-			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}, name=${this.name}`);
-				try
-				{
-					settings = JSON.parse(xhr.responseText);
-				}
-				catch(e)
-				{
-					throw new SyntaxError(`Illegal json string. url=${url}`);
-				}
-				resolve(settings);
-			});
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}, name=${this.name}`);
+			try
+			{
+				settings = JSON.parse(xhr.responseText);
+			}
+			catch(e)
+			{
+				throw new SyntaxError(`Illegal json string. url=${url}`);
+			}
+
+			return settings;
 		});
 
 	}
@@ -118,32 +116,30 @@ export default class LoadeMixin
 		let spec;
 //		let specCommon;
 		let specMerged;
+		let promises = [];
 
-		return new Promise((resolve, reject) => {
-			let promises = [];
+		// Load specs
+//		promises.push(this.__loadSpecFile(urlCommon, "{}"));
+		promises.push(this.__loadSpecFile(url));
 
-			// Load specs
-//			promises.push(this.__loadSpecFile(urlCommon, "{}"));
-			promises.push(this.__loadSpecFile(url));
+		return Promise.all(promises).then((result) => {
+			// Convert to json
+			try
+			{
+//				specCommon = JSON.parse(result[0]);
+//				spec = JSON.parse(result[1]);
+				spec = JSON.parse(result[0]);
+			}
+			catch(e)
+			{
+				//throw new SyntaxError(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
+				throw new SyntaxError(`Illegal json string. url=${url}`);
+			}
+//			specMerged = Util.deepMerge(specCommon, spec);
 
-			Promise.all(promises).then((result) => {
-				// Convert to json
-				try
-				{
-//					specCommon = JSON.parse(result[0]);
-//					spec = JSON.parse(result[1]);
-					spec = JSON.parse(result[0]);
-				}
-				catch(e)
-				{
-					//throw new SyntaxError(`Illegal json string. url=${(specCommon ? url : urlCommon)}`);
-					throw new SyntaxError(`Illegal json string. url=${url}`);
-				}
-//				specMerged = Util.deepMerge(specCommon, spec);
+			//return specMerged;
 
-				//resolve(specMerged);
-				resolve(spec);
-			});
+			return spec;
 		});
 
 	}
@@ -161,29 +157,25 @@ export default class LoadeMixin
 	static loadTags(rootNode, basePath, settings)
 	{
 
-		return new Promise((resolve, reject) => {
-			let promises = [];
+		let promises = [];
 
-			rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
-				if (element.getAttribute("href"))
-				{
-					let url = element.getAttribute("href");
-					promises.push(AjaxUtil.loadScript(url));
-				}
-				else
-				{
-					let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
-					let path = element.getAttribute("data-classpath");
-					path = Util.concatPath([basePath, path]);
-					settings["splitComponent"] = ( element.getAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
-					promises.push(this.loadComponent(className, path, settings));
-				}
-			});
-
-			Promise.all(promises).then(() => {
-				resolve();
-			});
+		rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
+			if (element.getAttribute("href"))
+			{
+				let url = element.getAttribute("href");
+				promises.push(AjaxUtil.loadScript(url));
+			}
+			else
+			{
+				let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
+				let path = element.getAttribute("data-classpath");
+				path = Util.concatPath([basePath, path]);
+				settings["splitComponent"] = ( element.getAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+				promises.push(this.loadComponent(className, path, settings));
+			}
 		});
+
+		return Promise.all(promises);
 
 	}
 
@@ -309,21 +301,18 @@ export default class LoadeMixin
 
 		settings = ( settings ? settings : {} );
 
-		return new Promise((resolve, reject) => {
-			let url1 = Util.concatPath([path, componentName + ".js"]);
-			let url2 = Util.concatPath([path, componentName + ".settings.js"]);
+		let url1 = Util.concatPath([path, componentName + ".js"]);
+		let url2 = Util.concatPath([path, componentName + ".settings.js"]);
 
-			Promise.resolve().then(() => {
-				return AjaxUtil.loadScript(url1);
-			}).then(() => {
-				if (settings["splitComponent"])
-				{
-					return AjaxUtil.loadScript(url2);
-				}
-			}).then(() => {
-				console.debug(`LoaderMixin.__loadComponentScript(): Loaded script. componentName=${componentName}`);
-				resolve();
-			});
+		return Promise.resolve().then(() => {
+			return AjaxUtil.loadScript(url1);
+		}).then(() => {
+			if (settings["splitComponent"])
+			{
+				return AjaxUtil.loadScript(url2);
+			}
+		}).then(() => {
+			console.debug(`LoaderMixin.__loadComponentScript(): Loaded script. componentName=${componentName}`);
 		});
 
 	}
@@ -341,19 +330,13 @@ export default class LoadeMixin
 	static __loadSpecFile(url, defaultResponse)
 	{
 
-		return new Promise((resolve, reject) => {
-			let response;
-
-			AjaxUtil.ajaxRequest({"url":url, "method":"GET"}).then((xhr) => {
-				response = xhr.responseText;
-				resolve(response);
-			}).catch((xhr) => {
-				if (defaultResponse)
-				{
-					response = defaultResponse;
-					resolve(response);
-				}
-			});
+		return AjaxUtil.ajaxRequest({"url":url, "method":"GET"}).then((xhr) => {
+			return xhr.responseText;
+		}).catch((xhr) => {
+			if (defaultResponse)
+			{
+				return defaultResponse;
+			}
 		});
 
 	}
@@ -372,34 +355,28 @@ export default class LoadeMixin
 
 		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${this.name}, templateName=${templateInfo["name"]}`);
 
-		return new Promise((resolve, reject) => {
-			let promise;
+		let promise;
 
-			if (!templateInfo["name"] || templateInfo["html"])
-			{
-				console.debug(`Mixin.autoLoadTemplate(): Template Already exists. name=${this.name}, templateName=${templateInfo["name"]}`, );
-			}
-			else
-			{
-				promise = new Promise((resolve, reject) => {
-					let url = Util.concatPath([path, templateInfo["name"] + ".html"]);
+		if (!templateInfo["name"] || templateInfo["html"])
+		{
+			console.debug(`Mixin.autoLoadTemplate(): Template Already exists. name=${this.name}, templateName=${templateInfo["name"]}`, );
+		}
+		else
+		{
+			let url = Util.concatPath([path, templateInfo["name"] + ".html"]);
 
-					this.__loadTemplateFile(url).then((template) => {
-						templateInfo["html"] = template;
-						resolve();
-					});
-				});
-			}
-
-			Promise.all([promise]).then(() => {
-				if (!templateInfo["isLoaded"])
-				{
-					return this.trigger("load", this);
-				}
-			}).then(() => {
-				templateInfo["isLoaded"] = true;
-				resolve();
+			promise = this.__loadTemplateFile(url).then((template) => {
+				templateInfo["html"] = template;
 			});
+		}
+
+		return Promise.all([promise]).then(() => {
+			if (!templateInfo["isLoaded"])
+			{
+				return this.trigger("load", this);
+			}
+		}).then(() => {
+			templateInfo["isLoaded"] = true;
 		});
 
 	}
@@ -418,11 +395,10 @@ export default class LoadeMixin
 
 		console.debug(`LoaderMixin.loadTemplate(): Loading template. url=${url}`);
 
-		return new Promise((resolve, reject) => {
-			AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`LoaderMixin.loadTemplate(): Loaded template. url=${url}`);
-				resolve(xhr.responseText);
-			});
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			console.debug(`LoaderMixin.loadTemplate(): Loaded template. url=${url}`);
+
+			return xhr.responseText;
 		});
 
 	}

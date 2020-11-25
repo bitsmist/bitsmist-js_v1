@@ -67,14 +67,10 @@ customElements.define("bm-pad", Pad);
 Pad.prototype.open = function(options)
 {
 
-	return new Promise((resolve, reject) => {
-		Promise.resolve().then(() => {
-			return this.switchTemplate(this._settings.get("templateName"));
-		}).then(() => {
-			return Component.prototype.open.call(this, options);
-		}).then(() => {
-			resolve();
-		});
+	return Promise.resolve().then(() => {
+		return this.switchTemplate(this._settings.get("templateName"));
+	}).then(() => {
+		return Component.prototype.open.call(this, options);
 	});
 
 }
@@ -117,41 +113,36 @@ Pad.prototype.openModal = function(options)
 Pad.prototype.switchTemplate = function(templateName)
 {
 
-	return new Promise((resolve, reject) => {
-		let templateInfo = this.__getTemplateInfo(templateName);
+	let templateInfo = this.__getTemplateInfo(templateName);
 
-		if (templateInfo["isAppended"])
+	if (templateInfo["isAppended"])
+	{
+		console.debug(`Pad.switchTemplate(): Template already appended. name=${this.name}, templateName=${templateName}`);
+		return;
+	}
+
+	console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
+
+	return Promise.resolve().then(() => {
+		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.templatePath", ""), this._settings.get("path", "")]);
+		return this.loadTemplate(templateInfo, path);
+	}).then(() => {
+		return this.__applyTemplate(this._settings.get("rootNode"), templateName, this._settings.get("templateNode"));
+	}).then(() => {
+		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
+		let splitComponent = this._settings.get("system.splitComponent", false);
+		this.loadTags(this, path, {"splitComponent":splitComponent});
+	}).then(() => {
+		return BITSMIST.v1.Globals.organizers.notify("organize", "afterAppend", this, this._settings.items);
+	}).then(() => {
+		return this.trigger("afterAppend", this);
+	}).then(() => {
+		if (this._templates[this._settings.get("templateName")])
 		{
-			console.debug(`Pad.switchTemplate(): Template already appended. name=${this.name}, templateName=${templateName}`);
-			resolve();
-			return;
+			this._templates[this._settings.get("templateName")]["isAppended"] = false;
 		}
-
-		console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
-
-		Promise.resolve().then(() => {
-			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.templatePath", ""), this._settings.get("path", "")]);
-			return this.loadTemplate(templateInfo, path);
-		}).then(() => {
-			return this.__applyTemplate(this._settings.get("rootNode"), templateName, this._settings.get("templateNode"));
-		}).then(() => {
-			let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
-			let splitComponent = this._settings.get("system.splitComponent", false);
-			this.loadTags(this, path, {"splitComponent":splitComponent});
-		}).then(() => {
-			return BITSMIST.v1.Globals.organizers.notify("organize", "afterAppend", this, this._settings.items);
-		}).then(() => {
-			return this.trigger("afterAppend", this);
-		}).then(() => {
-			if (this._templates[this._settings.get("templateName")])
-			{
-				this._templates[this._settings.get("templateName")]["isAppended"] = false;
-			}
-			this._templates[templateName]["isAppended"] = true;
-			this._settings.set("templateName", templateName);
-
-			resolve();
-		});
+		this._templates[templateName]["isAppended"] = true;
+		this._settings.set("templateName", templateName);
 	});
 
 }

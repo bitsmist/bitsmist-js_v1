@@ -246,44 +246,43 @@ export default class EventMixin
 	static __handleAsync(e, sender, target, listeners)
 	{
 
-		return new Promise((resolve, reject) => {
-			let chain = Promise.resolve();
-			let results = [];
-			let stopPropagation = false;
+		let chain = Promise.resolve();
+		let results = [];
+		let stopPropagation = false;
 
-			for (let i = 0; i < listeners.length; i++)
-			{
-				// Options set on addEventHandler()
-				let ex = {
-					"target": target,
-					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
-				}
-
-				// Execute handler
-				chain = chain.then((result) => {
-					if (result)
-					{
-						results.push(result);
-					}
-
-					return listeners[i]["handler"](sender, e, ex);
-				});
-
-				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
+		for (let i = 0; i < listeners.length; i++)
+		{
+			// Options set on addEventHandler()
+			let ex = {
+				"target": target,
+				"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 			}
 
-			if (stopPropagation)
-			{
-				e.stopPropagation();
-			}
-
-			chain.then((result) => {
+			// Execute handler
+			chain = chain.then((result) => {
 				if (result)
 				{
 					results.push(result);
 				}
-				resolve(results);
+
+				return listeners[i]["handler"](sender, e, ex);
 			});
+
+			stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
+		}
+
+		if (stopPropagation)
+		{
+			e.stopPropagation();
+		}
+
+		return chain.then((result) => {
+			if (result)
+			{
+				results.push(result);
+			}
+
+			return results;
 		});
 
 	}
