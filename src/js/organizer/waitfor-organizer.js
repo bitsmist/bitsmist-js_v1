@@ -263,7 +263,7 @@ export default class WaitforOrganizer
 		WaitforOrganizer.__processIndex(names);
 
 		// Process ID index
-		let ids = WaitforOrganizer.__waitingListIndexId.get(component.id + "." + status);
+		let ids = WaitforOrganizer.__waitingListIndexId.get(component.uniqueId + "." + status);
 		WaitforOrganizer.__processIndex(ids);
 
 		// Process non indexables
