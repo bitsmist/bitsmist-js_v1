@@ -26,7 +26,10 @@ window.BITSMIST.v1.Component = Component;
 import EventMixin from './mixin/event-mixin';
 import LoaderMixin from './mixin/loader-mixin';
 
-// Organizer
+// Organizer !!!Order matters!!!
+
+import WaitforOrganizer from './organizer/waitfor-organizer';
+Globals.organizers.set("WaitforOrganizer", {"object":WaitforOrganizer, "targets":"waitFor"});
 
 import AttrOrganizer from './organizer/attr-organizer';
 Globals.organizers.set("AttrOrganizer", {"object":AttrOrganizer, "targets":"attrs"});
@@ -45,9 +48,6 @@ Globals.organizers.set("ServiceOrganizer", {"object":ServiceOrganizer, "targets"
 
 import TemplateOrganizer from './organizer/template-organizer';
 Globals.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targets":"templates"});
-
-import WaitforOrganizer from './organizer/waitfor-organizer';
-Globals.organizers.set("WaitforOrganizer", {"object":WaitforOrganizer, "targets":"waitFor"});
 
 // Pad
 
