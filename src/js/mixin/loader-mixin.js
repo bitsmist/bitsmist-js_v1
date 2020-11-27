@@ -330,7 +330,11 @@ export default class LoadeMixin
 	static __loadSpecFile(url, defaultResponse)
 	{
 
+		console.debug(`LoaderMixin.__loadSpec(): Loading spec file. url=${url}`);
+
 		return AjaxUtil.ajaxRequest({"url":url, "method":"GET"}).then((xhr) => {
+			console.debug(`LoaderMixin.__loadSpec(): Loaded spec file. url=${url}`);
+
 			return xhr.responseText;
 		}).catch((xhr) => {
 			if (defaultResponse)
@@ -373,7 +377,7 @@ export default class LoadeMixin
 		return Promise.all([promise]).then(() => {
 			if (!templateInfo["isLoaded"])
 			{
-				return this.trigger("load", this);
+				return this.trigger("afterLoadTemplate", this);
 			}
 		}).then(() => {
 			templateInfo["isLoaded"] = true;
