@@ -70,7 +70,7 @@ export default class WaitforOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterAppend")
+		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
 		{
 			ret = true;
 		}
