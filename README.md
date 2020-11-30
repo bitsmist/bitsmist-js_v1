@@ -6,7 +6,7 @@ Bitsmist is
 
 - Web Component based.
   - You make custom tags, and put them in html.
-  - You can start small replacing a part of web page with your custom tag.
+  - You can start small by replacing a part of web page with your custom tag.
 - Event driven.
   - Obvious where the handling code is.  You don't need to dig through whole source files to find them.
 - Settings driven.
