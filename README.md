@@ -2,7 +2,7 @@
 
 BitsmistJS is a Web Component based javascript framework for ordinary average guys, not for geeks.  BitsmistJS uses standard technologies.  Does not use bleeding edge high performance super extra ultra special technologies.
 
-Bitsmist is
+BitsmistJS is
 
 - Web Component based.
   - You make custom tags, and put them in html.
