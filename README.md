@@ -17,8 +17,8 @@ Bitsmist is
   - Files are downloaded when they are needed.
 
 - For the people who want to
-  - keep codes simple.
-  - focus on clients’ needs, like selling more products with lesser budgets for systems.
+  - Keep codes simple.
+  - Focus on clients’ needs, like selling more products with lesser budgets for systems. Not on framework itself, technologies, ...
 - For the people who don't want to
-  - take time to framework itself.
-  - climb up the steep learning curve.
+  - Take time to framework itself.
+  - Climb up the steep learning curve.
