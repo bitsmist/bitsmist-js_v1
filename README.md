@@ -18,7 +18,7 @@ Bitsmist is
 
 - For the people who want to
   - Keep codes simple.
-  - Focus on clients’ needs, like selling more products with lesser budgets for systems. Not on framework itself, technologies, ...
+  - Focus on clients’ needs, like selling more products with lesser budgets for systems. Not on framework itself, technologies.
 - For the people who don't want to
   - Take time to framework itself.
   - Climb up the steep learning curve.
