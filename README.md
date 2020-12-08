@@ -15,7 +15,6 @@ BitsmistJS is
   - Standard html/css in independent files.
 - On demand loading.
   - Files are downloaded when they are needed.
-
 - For the people who want to
   - Keep codes simple.
   - Focus on clients’ needs, like selling more products with lesser budgets for systems. Not on framework itself, technologies.
