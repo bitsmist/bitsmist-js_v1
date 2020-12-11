@@ -258,6 +258,26 @@ export default class Util
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Get file name and path from url.
+	 *
+	 * @param	{String}		path				Path.
+	 *
+	 * @return 	{String}		File name.
+	 */
+	static getFilenameAndPathFromUrl(url)
+	{
+
+		let pos = url.lastIndexOf("/");
+		let path = url.substr(0, pos);
+		let fileName = url.substr(pos + 1);
+
+		return [path, fileName];
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Check if character is upper case.
 	 *
 	 * @param	{String}		c					Character.
