@@ -9,7 +9,7 @@
 // =============================================================================
 
 //import Component from '../component'; // Importing component breaks this class. Do not import.
-//import Globals from '../globals';
+import Util from '../util/util';
 
 // =============================================================================
 //	Loader util class
@@ -28,26 +28,29 @@ export default class ClassUtil
 	 * @param	{Object}		superClass			Super class.
 	 * @param	{Object}		settings			Component Settings.
 	 * @param	{String}		tagName				Tag name.
+	 * @param	{String}		className			Class name.
 	 */
-	static newComponent(superClass, settings, tagName)
+	static newComponent(superClass, settings, tagName, className)
 	{
 
 		//superClass = ( superClass ? superClass : Component );
 		superClass = ( superClass ? superClass : BITSMIST.v1.Component );
+		className = ( className ? className : Util.getClassNameFromTagName(tagName) );
 
 		let component = function(options) {
 			return Reflect.construct(superClass, [options], this.constructor);
 		};
 		ClassUtil.inherit(component, superClass);
 
+		settings["name"] = className;
 		component.prototype._getSettings = function() {
 			return settings;
 		}
 
 		if (tagName)
 		{
-			component.tagName = tagName;
-			customElements.define(tagName, component);
+			//component.tagName = tagName;
+			customElements.define(tagName.toLowerCase(), component);
 		}
 
 		return component;
