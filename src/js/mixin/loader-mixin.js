@@ -167,11 +167,10 @@ export default class LoadeMixin
 			}
 			else
 			{
-				let className = ( element.getAttribute("data-classname") ? element.getAttribute("data-classname") : this.__getDefaultClassName(element.tagName) );
-				let path = element.getAttribute("data-classpath");
-				path = Util.concatPath([basePath, path]);
-				settings["splitComponent"] = ( element.getAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
-				promises.push(this.loadComponent(className, path, settings));
+				let className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
+				let classPath = element.getAttribute("data-classpath");
+				settings["splitComponent"] = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+				promises.push(this.loadComponent(className, Util.concatPath([basePath, classPath]), settings));
 			}
 		});
 
@@ -404,25 +403,6 @@ export default class LoadeMixin
 
 			return xhr.responseText;
 		});
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Get a class name from tag name.
-	 *
-	 * @param	{String}		tagName				Tag name.
-	 *
-	 * @return  {String}		Class name.
-	 */
-	static __getDefaultClassName(tagName)
-	{
-
-		let tag = tagName.split("-");
-		let className = tag[0].charAt(0).toUpperCase() + tag[0].slice(1).toLowerCase() + tag[1].charAt(0).toUpperCase() + tag[1].slice(1).toLowerCase();
-
-		return className;
 
 	}
 
