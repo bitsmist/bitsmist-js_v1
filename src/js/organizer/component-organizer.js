@@ -128,14 +128,10 @@ export default class ComponentOrganizer
 				}
 
 				// Get tag name
-				let tagName = ( options["tagName"] ? options["tagName"] : ClassUtil.getClass(className).tagName );
-				if (!tagName)
-				{
-					tagName = Util.getTagNameFromClassName(className);
-				}
+				let tagName = options["tagName"] || ClassUtil.getClass(className).tagName || Util.getTagNameFromClassName(className);
 
-				// Get tag
-				let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + "></" + tagName + ">" : "") );
+				// Build tag
+				let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + " data-path='" + options["path"] + "'></" + tagName + ">" : "") );
 				if (!tag)
 				{
 					throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
