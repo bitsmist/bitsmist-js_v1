@@ -109,13 +109,13 @@ export default class ComponentOrganizer
 			component._components = {};
 		}
 
-		let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
+		let url = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
 		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
 		let className = ( "className" in options ? options["className"] : componentName );
 
 		return Promise.resolve().then(() => {
 			// Load component
-			return component.loadComponent(className, path, {"splitComponent":splitComponent});
+			return component.loadComponent(className, url, {"splitComponent":splitComponent});
 		}).then(() => {
 			// Insert tag
 			if (options["rootNode"] && !component._components[componentName])
@@ -127,8 +127,14 @@ export default class ComponentOrganizer
 					throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
 				}
 
-				// Get tag
+				// Get tag name
 				let tagName = ( options["tagName"] ? options["tagName"] : ClassUtil.getClass(className).tagName );
+				if (!tagName)
+				{
+					tagName = Util.getTagNameFromClassName(className);
+				}
+
+				// Get tag
 				let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + "></" + tagName + ">" : "") );
 				if (!tag)
 				{
