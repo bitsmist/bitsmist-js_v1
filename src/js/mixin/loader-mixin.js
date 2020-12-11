@@ -40,7 +40,7 @@ export default class LoadeMixin
 		let className = ( "className" in options ? options["className"] : componentName );
 		let component = null;
 
-		return this.__autoloadComponent(className, options, path, settings).then(() => {
+		return this.__autoloadComponent(className, path, settings).then(() => {
 			component = ClassUtil.createObject(className, options);
 
 			return component;
@@ -55,14 +55,14 @@ export default class LoadeMixin
 	 *
 	 * @param	{String}		componentName		Component name.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		settings			System settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadComponent(componentName, path, settings)
+	static loadComponent(componentName, path, options)
 	{
 
-		return this.__autoloadComponent(componentName, null, path, settings);
+		return this.__autoloadComponent(componentName, path, options);
 
 	}
 
@@ -242,13 +242,12 @@ export default class LoadeMixin
 	 * Load the component if not loaded yet.
 	 *
 	 * @param	{String}		className			Component class name.
-	 * @param	{Object}		options				Options.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		settings			System settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __autoloadComponent(className, options, path, settings)
+	static __autoloadComponent(className, path, options)
 	{
 
 		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
@@ -270,7 +269,7 @@ export default class LoadeMixin
 		{
 			BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loading"});
 			promise = new Promise ((resolve, reject) => {
-				this.__loadComponentScript(className, path, settings).then(() => {
+				this.__loadComponentScript(className, path, options).then(() => {
 					BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loaded"});
 					resolve();
 				});
@@ -289,16 +288,16 @@ export default class LoadeMixin
 	 *
 	 * @param	{String}		componentName		Component name.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		settings			System settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __loadComponentScript(componentName, path, settings)
+	static __loadComponentScript(componentName, path, options)
 	{
 
 		console.debug(`LoaderMixin.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
 
-		settings = ( settings ? settings : {} );
+		options = ( options ? options : {} );
 
 		let url1 = Util.concatPath([path, componentName + ".js"]);
 		let url2 = Util.concatPath([path, componentName + ".settings.js"]);
@@ -306,7 +305,7 @@ export default class LoadeMixin
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
 		}).then(() => {
-			if (settings["splitComponent"])
+			if (options["splitComponent"])
 			{
 				return AjaxUtil.loadScript(url2);
 			}
