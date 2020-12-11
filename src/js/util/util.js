@@ -205,5 +205,72 @@ export default class Util
 
 	}
 
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Get a class name from tag name.
+	 *
+	 * @param	{String}		tagName				Tag name.
+	 *
+	 * @return  {String}		Class name.
+	 */
+	static getClassNameFromTagName(tagName)
+	{
+
+		let tag = tagName.split("-");
+		let className = tag[0].charAt(0).toUpperCase() + tag[0].slice(1).toLowerCase() + tag[1].charAt(0).toUpperCase() + tag[1].slice(1).toLowerCase();
+
+		return className;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get tag name from class name.
+	 *
+	 * @param	{String}		className			Class name.
+	 *
+	 * @return 	{String}		Tag name.
+	 */
+	static getTagNameFromClassName(className)
+	{
+
+		let former;
+		let latter;
+		let pos;
+
+		for (pos = 1; pos < className.length; pos++)
+		{
+			if ( Util.__isUpper(className.substring(pos, pos + 1)) )
+			{
+				break;
+			}
+		}
+
+		former = className.substring(0, pos);
+		latter = className.substring(pos);
+
+		return former.toUpperCase() + "-" + latter.toUpperCase();
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if character is upper case.
+	 *
+	 * @param	{String}		c					Character.
+	 *
+	 * @return 	{Boolean}		True if it is upper case.
+	 */
+	static __isUpper(c)
+	{
+
+		return c == c.toUpperCase() && c != c.toLowerCase();
+
+	}
+
+
 
 }
