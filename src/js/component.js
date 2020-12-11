@@ -517,16 +517,16 @@ Component.prototype.__getPathFromAttribute = function(attrName)
 	let name, path;
 	attrName = attrName || "setting";
 
-	let href = ( this.getAttribute("data-" + attrName + "href") ? this.getAttribute("data-" + attrName + "href") : "" );
-	if (href)
+	if (this.hasAttribute("data-" + attrName + "href"))
 	{
-		name = href.slice(0, -3);
-		path = "";
+		let arr = Util.getFilenameAndPathFromUrl(this.getAttribute("data-" + attrName + "href"));
+		path = arr[0];
+		name = arr[1].slice(0, -3);
 	}
 	else
 	{
-		path = ( this.getAttribute("data-" + attrName + "path") ? this.getAttribute("data-" + attrName + "path") : "" );
-		name = ( this.getAttribute("data-" + attrName + "name") ? this.getAttribute("data-" + attrName + "name") : "" );
+		path = ( this.hasAttribute("data-" + attrName + "path") ? this.getAttribute("data-" + attrName + "path") : "" );
+		name = ( this.hasAttribute("data-" + attrName + "name") ? this.getAttribute("data-" + attrName + "name") : "" );
 		if (path && !name)
 		{
 			name = "settings";
@@ -545,13 +545,52 @@ Component.prototype.__getPathFromAttribute = function(attrName)
 Component.prototype.__getSettingsFromAttribute = function()
 {
 
-	// Get options from the attribute
+	// Get class path from attribute
+	if (this.hasAttribute("data-classpath"))
+	{
+		this._settings.set("path", this.getAttribute("data-classpath"));
+	}
+
+	// Get class href from classhref
+	if (this.hasAttribute("data-classhref"))
+	{
+		let arr = Util.getFilenameAndPathFromUrl(this.getAttribute("data-classhref"));
+		this._settings.set("path", arr[0]);
+	}
+
+	// Get template path from attribute
+	if (this.hasAttribute("data-templatepath"))
+	{
+		this._settings.set("path", this.getAttribute("data-templatepath"));
+	}
+
+	// Get template name from attribute
+	if (this.hasAttribute("data-templatename"))
+	{
+		this._settings.set("templateName", this.getAttribute("data-templatename"));
+	}
+
+	// Get template href from templatehref
+	if (this.hasAttribute("data-templatehref"))
+	{
+		let arr = Util.getFilenameAndPathFromUrl(this.getAttribute("data-templatehref"));
+		this._settings.set("path", arr[0]);
+		this._settings.set("templateName", arr[1].replace(".html", ""));
+	}
+
+	// Get path from attribute
+	if (this.hasAttribute("data-path"))
+	{
+		this._settings.set("path", this.getAttribute("data-path"));
+	}
+
+	// Get settings from the attribute
+
 	let dataSettings = ( this._settings.get("rootNode") ?
 		document.querySelector(this._settings.get("rootNode")).getAttribute("data-settings") :
 		this.getAttribute("data-settings")
 	);
 
-	// Merge them to settings
 	if (dataSettings) {
 		let settings = JSON.parse(dataSettings);
 		Object.keys(settings).forEach((key) => {
