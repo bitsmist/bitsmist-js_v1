@@ -167,10 +167,31 @@ export default class LoadeMixin
 			}
 			else
 			{
-				let className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
-				let classPath = element.getAttribute("data-classpath");
-				settings["splitComponent"] = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
-				promises.push(this.loadComponent(className, Util.concatPath([basePath, classPath]), settings));
+				let className, classPath;
+
+				if (element.hasAttribute("data-classhref"))
+				{
+					let arr = Util.getFilenameAndPathFromUrl(element.getAttribute("data-classhref"));
+					classPath = arr[0];
+					className = arr[1].slice(0, -3);
+				}
+				else
+				{
+					classPath = element.getAttribute("data-classpath");
+					className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
+				}
+
+				if (classPath)
+				{
+					// Load component script
+					settings["splitComponent"] = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+					promises.push(this.loadComponent(className, Util.concatPath([basePath, classPath]), settings));
+				}
+				else
+				{
+					// Define empty class
+					ClassUtil.newComponent(BITSMIST.v1.Pad, {}, element.tagName.toLowerCase());
+				}
 			}
 		});
 
