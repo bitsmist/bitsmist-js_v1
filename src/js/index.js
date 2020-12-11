@@ -59,6 +59,10 @@ window.BITSMIST.v1.Pad = Pad;
 import Store from './store';
 window.BITSMIST.v1.Store = Store;
 
+// Tag loader
+
+import TagLoader from './tagloader';
+
 // Util
 
 import AjaxUtil from './util/ajax-util';
