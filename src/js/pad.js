@@ -104,6 +104,28 @@ Pad.prototype.openModal = function(options)
 // -----------------------------------------------------------------------------
 
 /**
+ * Close component.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Pad.prototype.close = function(options)
+{
+
+	Promise.resolve().then(() => {
+		return Component.prototype.close.call(this, options);
+	}).then(() => {
+		if (this._isModal)
+		{
+			this._modalPromise.resolve(this._modalResult);
+		}
+	});
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Change template html.
  *
  * @param	{String}		templateName		Template name.

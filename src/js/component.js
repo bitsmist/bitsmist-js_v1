@@ -202,10 +202,6 @@ Component.prototype.close = function(options)
 	}).then(() => {
 		return this.trigger("afterClose", sender);
 	}).then(() => {
-		if (this._isModal)
-		{
-			this._modalPromise.resolve(this._modalResult);
-		}
 		console.debug(`Component.close(): Closed component. name=${this.name}`);
 		return this.changeStatus("closed");
 	});
