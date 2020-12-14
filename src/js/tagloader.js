@@ -46,7 +46,7 @@ customElements.define("bm-tagloader", TagLoader);
 // -----------------------------------------------------------------------------
 
 /**
- * Append event handler.
+ * DOM content loaded event handler.
  *
  * @param	{Object}		sender				Sender.
  * @param	{Object}		e					Event info.
