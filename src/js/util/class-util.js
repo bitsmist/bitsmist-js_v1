@@ -47,10 +47,14 @@ export default class ClassUtil
 			return settings;
 		}
 
+		// Define tag
 		if (tagName)
 		{
 			customElements.define(tagName.toLowerCase(), component);
 		}
+
+		// Export to global
+		window[className] = component;
 
 		return component;
 
