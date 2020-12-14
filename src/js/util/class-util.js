@@ -49,7 +49,6 @@ export default class ClassUtil
 
 		if (tagName)
 		{
-			//component.tagName = tagName;
 			customElements.define(tagName.toLowerCase(), component);
 		}
 
@@ -105,7 +104,21 @@ export default class ClassUtil
 	static getClass(className)
 	{
 
-		return Function("return (" + className + ")")();
+		let ret;
+
+		try
+		{
+			ret = Function("return (" + className + ")")();
+		}
+		catch(e)
+		{
+			if (!(e instanceof ReferenceError))
+			{
+				throw e;
+			}
+		}
+
+		return ret;
 
 	}
 

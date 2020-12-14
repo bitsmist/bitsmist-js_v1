@@ -16,7 +16,7 @@ import Util from '../util/util';
 //	Loader mixin class
 // =============================================================================
 
-export default class LoadeMixin
+export default class LoaderMixin
 {
 
 	// -------------------------------------------------------------------------
@@ -190,7 +190,7 @@ export default class LoadeMixin
 				else
 				{
 					// Define empty class
-					ClassUtil.newComponent(BITSMIST.v1.Pad, {}, element.tagName.toLowerCase());
+					ClassUtil.newComponent(BITSMIST.v1.Pad, {}, element.tagName);
 				}
 			}
 		});
@@ -230,27 +230,15 @@ export default class LoadeMixin
 	static __isLoadedClass(className)
 	{
 
-		let ret = true;
+		let ret = false;
 
 		if (BITSMIST.v1.Globals.classes.get(className, {})["status"] == "loaded")
 		{
-			return ret;
+			ret = true;
 		}
-
-		try
+		else if (ClassUtil.getClass(className))
 		{
-			ClassUtil.getClass(className);
-		}
-		catch(e)
-		{
-			if (e instanceof ReferenceError)
-			{
-				ret = false;
-			}
-			else
-			{
-				throw e;
-			}
+			ret = true;
 		}
 
 		return ret;
