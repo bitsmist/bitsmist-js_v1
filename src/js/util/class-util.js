@@ -92,6 +92,11 @@ export default class ClassUtil
 
 		let c = ClassUtil.getClass(className);
 
+		if (!c)
+		{
+			throw new ReferenceError(`Class '${className}' is not defined.`);
+		}
+
 		return  new c(...args);
 
 	}
