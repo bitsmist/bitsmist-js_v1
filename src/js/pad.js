@@ -113,7 +113,7 @@ Pad.prototype.openModal = function(options)
 Pad.prototype.close = function(options)
 {
 
-	Promise.resolve().then(() => {
+	return Promise.resolve().then(() => {
 		return Component.prototype.close.call(this, options);
 	}).then(() => {
 		if (this._isModal)
