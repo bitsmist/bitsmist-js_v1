@@ -114,8 +114,18 @@ export default class ComponentOrganizer
 		let className = ( "className" in options ? options["className"] : componentName );
 
 		return Promise.resolve().then(() => {
-			// Load component
-			return component.loadComponent(className, url, {"splitComponent":splitComponent});
+			if (className)
+			{
+				// Load component
+				return component.loadComponent(className, url, {"splitComponent":splitComponent});
+			}
+			else
+			{
+				// Define empty class
+				let tagName = options["tagName"] || Util.getTagNameFromClassName(componentName);
+				className = componentName;
+				ClassUtil.newComponent(BITSMIST.v1.Pad, {}, tagName, className);
+			}
 		}).then(() => {
 			// Insert tag
 			if (options["rootNode"] && !component._components[componentName])
