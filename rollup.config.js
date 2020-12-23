@@ -4,7 +4,7 @@ import nodeResolve from '@rollup/plugin-node-resolve';
 import {uglify} from 'rollup-plugin-uglify';
 
 export default {
-	input: 'src/js/index.js',
+	input: 'src/core/index.js',
 	output: {
 		file: 'dist/bitsmist-js_v1.min.js',
 		format: 'iife',
