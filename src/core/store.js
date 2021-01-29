@@ -136,9 +136,7 @@ export default class Store
 	/**
 	 * Merge items.
 	 *
-	 * @param	{Object}		newItems			Items to merge.
-	 *
-	 * @return	{Promise}		Promise.
+	 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
 	 */
 	merge(newItems)
 	{
@@ -185,6 +183,13 @@ export default class Store
 	{
 
 		Util.safeSet(this._items, key, value);
+
+	}
+
+	setWithOrder(key, value, order)
+	{
+
+		this.set(key, value);
 
 	}
 
@@ -259,7 +264,7 @@ export default class Store
 
 		let chain = Promise.resolve();
 
-		Object.keys(this._items).forEach((id) => {
+		this._sortItems().forEach((id) => {
 			chain = chain.then(() => {
 				return this._callHandler(type, conditions, this._items[id], ...args);
 			});
@@ -281,7 +286,7 @@ export default class Store
 	notifySync(type, conditions, ...args)
 	{
 
-		Object.keys(this._items).forEach((id) => {
+		this._sortItems().forEach((id) => {
 			this._callHandler(type, conditions, this._items[id], ...args);
 		});
 
@@ -362,6 +367,24 @@ export default class Store
 				throw TypeError(`Notification handler is not a function. name=${observerInfo["object"].name}, type=${type}`);
 			}
 		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Sort item keys.
+	 *
+	 * @param	{Object}		observerInfo		Observer info.
+	 *
+	 * @return  {Array}			Sorted keys.
+	 */
+	_sortItems()
+	{
+
+		return Object.keys(this._items).sort((a,b) => {
+			return this._items[a]["order"] - this.items[b]["order"];
+		})
 
 	}
 

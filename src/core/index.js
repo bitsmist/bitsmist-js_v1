@@ -26,28 +26,35 @@ window.BITSMIST.v1.Component = Component;
 import EventMixin from './mixin/event-mixin';
 import LoaderMixin from './mixin/loader-mixin';
 
-// Organizer !!!Order matters!!!
+// Organizer
 
 import WaitforOrganizer from './organizer/waitfor-organizer';
-Globals.organizers.set("WaitforOrganizer", {"object":WaitforOrganizer, "targets":"waitFor"});
+Globals.organizers.set("WaitforOrganizer", {"object":WaitforOrganizer, "targets":"waitFor", "order": 100});
+window.BITSMIST.v1.WaitforOrganizer = WaitforOrganizer;
 
 import AttrOrganizer from './organizer/attr-organizer';
-Globals.organizers.set("AttrOrganizer", {"object":AttrOrganizer, "targets":"attrs"});
+Globals.organizers.set("AttrOrganizer", {"object":AttrOrganizer, "targets":"attrs", "order": 200});
+window.BITSMIST.v1.AttrOrganizer = AttrOrganizer;
 
 import ComponentOrganizer from './organizer/component-organizer';
-Globals.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targets":"components"});
+Globals.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targets":"components", "order": 300});
+window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 
 import ElementOrganizer from './organizer/element-organizer';
-Globals.organizers.set("ElementOrganizer", {"object":ElementOrganizer, "targets":"elements"});
+Globals.organizers.set("ElementOrganizer", {"object":ElementOrganizer, "targets":"elements", "order": 400});
+window.BITSMIST.v1.ElementOrganizer = ElementOrganizer;
 
 import EventOrganizer from './organizer/event-organizer';
-Globals.organizers.set("EventOrganizer", {"object":EventOrganizer, "targets":"events"});
+Globals.organizers.set("EventOrganizer", {"object":EventOrganizer, "targets":"events", "order": 500});
+window.BITSMIST.v1.EventOrganizer = EventOrganizer;
 
 import ServiceOrganizer from './organizer/service-organizer';
-Globals.organizers.set("ServiceOrganizer", {"object":ServiceOrganizer, "targets":"services"});
+Globals.organizers.set("ServiceOrganizer", {"object":ServiceOrganizer, "targets":"services", "order": 600});
+window.BITSMIST.v1.ServiceOrganizer = ServiceOrganizer;
 
 import TemplateOrganizer from './organizer/template-organizer';
-Globals.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targets":"templates"});
+Globals.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targets":"templates", "order": 700});
+window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 
 // Pad
 
