@@ -10,6 +10,7 @@
 
 import ClassUtil from '../util/class-util';
 import Util from '../util/util';
+import WaitforOrganizer from '../organizer/waitfor-organizer';
 
 // =============================================================================
 //	Component organizer class
@@ -34,6 +35,16 @@ export default class ComponentOrganizer
 	{
 
 		let chain = Promise.resolve();
+
+		let molds = settings["molds"];
+		if (molds)
+		{
+			Object.keys(molds).forEach((moldName) => {
+				chain = chain.then(() => {
+					return ComponentOrganizer.addComponent(component, moldName, molds[moldName], true);
+				});
+			});
+		}
 
 		let components = settings["components"];
 		if (components)
@@ -98,10 +109,11 @@ export default class ComponentOrganizer
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
+	 * @param	{Boolean}		sync				Wait for the component to open if true.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static addComponent(component, componentName, options)
+	static addComponent(component, componentName, options, sync)
 	{
 
 		if (!component._components)
@@ -150,6 +162,11 @@ export default class ComponentOrganizer
 				// Insert tag
 				root.insertAdjacentHTML("afterbegin", tag);
 				component._components[componentName] = root.children[0];
+			}
+		}).then(() => {
+			if (sync || options["sync"])
+			{
+				return WaitforOrganizer.waitFor(component, [{"name":className, "status":"opened"}]);
 			}
 		});
 
