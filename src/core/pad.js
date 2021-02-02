@@ -33,7 +33,7 @@ export default function Pad(settings)
 	let _this = Reflect.construct(Component, [settings], this.constructor);
 
 	// Init settings
-	_this._settings.set("templateName", _this._settings.get("templateName", _this.name));
+	 _this._settings.set("templateName", _this._settings.get("templateName", _this.tagName.toLowerCase()));
 
 	// Init vars
 	_this._isModal = false;
