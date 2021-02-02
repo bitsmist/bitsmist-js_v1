@@ -251,7 +251,7 @@ export default class Util
 		former = className.substring(0, pos);
 		latter = className.substring(pos);
 
-		return former.toUpperCase() + "-" + latter.toUpperCase();
+		return former.toLowerCase() + "-" + latter.toLowerCase();
 
 	}
 
@@ -290,7 +290,5 @@ export default class Util
 		return c == c.toUpperCase() && c != c.toLowerCase();
 
 	}
-
-
 
 }
