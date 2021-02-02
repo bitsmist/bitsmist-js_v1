@@ -541,23 +541,21 @@ Component.prototype.__getPathFromAttribute = function(attrName)
 Component.prototype.__getSettingsFromAttribute = function()
 {
 
-	// Get class path from attribute
-	if (this.hasAttribute("data-classpath"))
+	// Get path from href
+	if (this.hasAttribute("href"))
 	{
-		this._settings.set("path", this.getAttribute("data-classpath"));
+		let arr = Util.getFilenameAndPathFromUrl(this.getAttribute("href"));
+		this._settings.set("system.appBaseUrl", "");
+		this._settings.set("system.templatePath", arr[0]);
+		this._settings.set("system.componentPath", arr[0]);
+		this._settings.set("path", "");
 	}
 
-	// Get class href from classhref
-	if (this.hasAttribute("data-classhref"))
-	{
-		let arr = Util.getFilenameAndPathFromUrl(this.getAttribute("data-classhref"));
-		this._settings.set("path", arr[0]);
-	}
-
+	/*
 	// Get template path from attribute
 	if (this.hasAttribute("data-templatepath"))
 	{
-		this._settings.set("path", this.getAttribute("data-templatepath"));
+		this._settings.set("system.templatePath", this.getAttribute("data-templatepath"));
 	}
 
 	// Get template name from attribute
@@ -570,9 +568,10 @@ Component.prototype.__getSettingsFromAttribute = function()
 	if (this.hasAttribute("data-templatehref"))
 	{
 		let arr = Util.getFilenameAndPathFromUrl(this.getAttribute("data-templatehref"));
-		this._settings.set("path", arr[0]);
+		this._settings.set("system.templatePath", arr[0]);
 		this._settings.set("templateName", arr[1].replace(".html", ""));
 	}
+	*/
 
 	// Get path from attribute
 	if (this.hasAttribute("data-path"))
