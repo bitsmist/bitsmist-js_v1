@@ -33,6 +33,7 @@ export default class LoaderMixin
 	 *
 	 * @return  {Promise}		Promise.
 	 */
+	/*
 	static createComponent(componentName, options, path, settings)
 	{
 
@@ -47,6 +48,7 @@ export default class LoaderMixin
 		});
 
 	}
+	*/
 
 	// -------------------------------------------------------------------------
 
@@ -167,21 +169,10 @@ export default class LoaderMixin
 			}
 			else
 			{
-				let className, classPath;
+				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
+				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
 
-				if (element.hasAttribute("data-classhref"))
-				{
-					let arr = Util.getFilenameAndPathFromUrl(element.getAttribute("data-classhref"));
-					classPath = arr[0];
-					className = arr[1].slice(0, -3);
-				}
-				else
-				{
-					classPath = element.getAttribute("data-classpath");
-					className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
-				}
-
-				if (classPath)
+				if (className)
 				{
 					// Load component script
 					settings["splitComponent"] = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
@@ -262,26 +253,27 @@ export default class LoaderMixin
 		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
 
 		let promise;
+		let tagName = options["tagName"] || Util.getTagNameFromClassName(className);
 
-		if (this.__isLoadedClass(className))
+		if (this.__isLoadedClass(className) || customElements.get(tagName))
 		{
+			// Already loaded
 			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`, );
 			BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loaded"});
 			promise = Promise.resolve();
 		}
 		else if (BITSMIST.v1.Globals.classes.get(className, {})["status"] == "loading")
 		{
+			// Already loading
 			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already loading. className=${className}`, );
 			promise = BITSMIST.v1.Globals.classes.get(className)["promise"];
 		}
 		else
 		{
+			// Not loaded
 			BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loading"});
-			promise = new Promise ((resolve, reject) => {
-				this.__loadComponentScript(className, path, options).then(() => {
-					BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loaded"});
-					resolve();
-				});
+			promise = this.__loadComponentScript(tagName, path, options).then(() => {
+				BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loaded", "promise":null});
 			});
 			BITSMIST.v1.Globals.classes.mergeSet(className, {"promise":promise});
 		}
@@ -413,33 +405,5 @@ export default class LoaderMixin
 		});
 
 	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Merge settings to spec.
-	 *
-	 * @param	{Object}		spec					Spec.
-	 * @param	{Object}		settings				Settings.
-	 *
-	 * @return  {Object}		Merged array.
-	 */
-	/*
-	static __mergeSettings(spec, settings)
-	{
-
-		Object.keys(spec).forEach((key) => {
-			Object.keys(spec[key]).forEach((componentName) => {
-				if (key in settings && componentName in settings[key])
-				{
-					spec[key][componentName] = this.__mergeSettings(settings[key][componentName], spec[key][componentName]);
-				}
-			});
-		});
-
-		return spec;
-
-	}
-	*/
 
 }
