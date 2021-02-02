@@ -124,6 +124,7 @@ export default class ComponentOrganizer
 		let url = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
 		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
 		let className = ( "className" in options ? options["className"] : componentName );
+		let tagName = options["tagName"] || ( className && ClassUtil.getClass(className) && ClassUtil.getClass(className).tagName ) || Util.getTagNameFromClassName(className || componentName);
 
 		return Promise.resolve().then(() => {
 			if (className)
@@ -134,7 +135,6 @@ export default class ComponentOrganizer
 			else
 			{
 				// Define empty class
-				let tagName = options["tagName"] || Util.getTagNameFromClassName(componentName);
 				className = componentName;
 				ClassUtil.newComponent(BITSMIST.v1.Pad, {}, tagName, className);
 			}
@@ -149,11 +149,8 @@ export default class ComponentOrganizer
 					throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
 				}
 
-				// Get tag name
-				let tagName = options["tagName"] || ClassUtil.getClass(className).tagName || Util.getTagNameFromClassName(className);
-
 				// Build tag
-				let tag = ( options["tag"] ? options["tag"] : ( tagName ? "<" + tagName + " data-path='" + options["path"] + "'></" + tagName + ">" : "") );
+				let tag = ( options["tag"] ? options["tag"] : "<" + tagName + " data-path='" + options["path"] + "'></" + tagName + ">" );
 				if (!tag)
 				{
 					throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
