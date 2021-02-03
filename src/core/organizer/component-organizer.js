@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
 import Util from '../util/util';
 import WaitforOrganizer from '../organizer/waitfor-organizer';
@@ -130,7 +131,7 @@ export default class ComponentOrganizer
 			if (className)
 			{
 				// Load component
-				return component.loadComponent(className, url, {"splitComponent":splitComponent});
+				return ComponentOrganizer.loadComponent(className, url, {"splitComponent":splitComponent});
 			}
 			else
 			{
@@ -165,6 +166,239 @@ export default class ComponentOrganizer
 			{
 				return WaitforOrganizer.waitFor(component, [{"name":className, "status":"opened"}]);
 			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Create component.
+	 *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		options				Component options.
+	 * @param	{String}		path				Path to component.
+	 * @param	{Object}		settings			System settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	/*
+	static createComponent(componentName, options, path, settings)
+	{
+
+		options = Object.assign({}, options);
+		let className = ( "className" in options ? options["className"] : componentName );
+		let component = null;
+
+		return ComponentOrganizer.__autoloadComponent(className, path, settings).then(() => {
+			component = ClassUtil.createObject(className, options);
+
+			return component;
+		});
+
+	}
+	*/
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the template html.
+	 *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		path				Path to component.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadComponent(componentName, path, options)
+	{
+
+		return ComponentOrganizer.__autoloadComponent(componentName, path, options);
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Load scripts for tags which has data-autoload attribute.
+	 *
+	 * @param	{HTMLElement}	rootNode			Target node.
+	 * @param	{String}		path				Base path prepend to each element's path.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadTags(rootNode, basePath, settings)
+	{
+
+		let promises = [];
+
+		rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
+			if (element.getAttribute("href"))
+			{
+				let url = element.getAttribute("href");
+				promises.push(AjaxUtil.loadScript(url));
+			}
+			else
+			{
+				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
+				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
+
+				if (className)
+				{
+					// Load component script
+					settings["splitComponent"] = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+					promises.push(ComponentOrganizer.loadComponent(className, Util.concatPath([basePath, classPath]), settings));
+				}
+				else
+				{
+					// Define empty class
+					ClassUtil.newComponent(BITSMIST.v1.Pad, {}, element.tagName);
+				}
+			}
+		});
+
+		return Promise.all(promises);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load setting file.
+	 *
+	 * @param	{String}		settingName			Setting name.
+	 * @param	{String}		path				Path to setting file.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadSetting(settingName, path)
+	{
+
+		let url = Util.concatPath([path, settingName + ".js"]);
+		let settings;
+
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			//console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}, name=${this.name}`);
+			console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}`);
+			try
+			{
+				settings = JSON.parse(xhr.responseText);
+			}
+			catch(e)
+			{
+				throw new SyntaxError(`Illegal json string. url=${url}`);
+			}
+
+			return settings;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the class exists.
+	 *
+	 * @param	{String}		className			Class name.
+	 *
+	 * @return  {Bool}			True if exists.
+	 */
+	static __isLoadedClass(className)
+	{
+
+		let ret = false;
+
+		if (BITSMIST.v1.Globals.classes.get(className, {})["status"] == "loaded")
+		{
+			ret = true;
+		}
+		else if (ClassUtil.getClass(className))
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the component if not loaded yet.
+	 *
+	 * @param	{String}		className			Component class name.
+	 * @param	{String}		path				Path to component.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static __autoloadComponent(className, path, options)
+	{
+
+		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
+
+		let promise;
+		let tagName = options["tagName"] || Util.getTagNameFromClassName(className);
+
+		if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
+		{
+			// Already loaded
+			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`);
+			BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loaded"});
+			promise = Promise.resolve();
+		}
+		else if (BITSMIST.v1.Globals.classes.get(className, {})["status"] == "loading")
+		{
+			// Already loading
+			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already loading. className=${className}`);
+			promise = BITSMIST.v1.Globals.classes.get(className)["promise"];
+		}
+		else
+		{
+			// Not loaded
+			BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loading"});
+			promise = ComponentOrganizer.__loadComponentScript(tagName, path, options).then(() => {
+				BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loaded", "promise":null});
+			});
+			BITSMIST.v1.Globals.classes.mergeSet(className, {"promise":promise});
+		}
+
+		return promise;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the component js files.
+	 *
+	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		path				Path to component.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static __loadComponentScript(componentName, path, options)
+	{
+
+		console.debug(`LoaderMixin.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
+
+		options = ( options ? options : {} );
+
+		let url1 = Util.concatPath([path, componentName + ".js"]);
+		let url2 = Util.concatPath([path, componentName + ".settings.js"]);
+
+		return Promise.resolve().then(() => {
+			return AjaxUtil.loadScript(url1);
+		}).then(() => {
+			if (options["splitComponent"])
+			{
+				return AjaxUtil.loadScript(url2);
+			}
+		}).then(() => {
+			console.debug(`LoaderMixin.__loadComponentScript(): Loaded script. componentName=${componentName}`);
 		});
 
 	}

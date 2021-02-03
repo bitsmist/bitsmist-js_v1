@@ -11,7 +11,6 @@
 import ClassUtil from './util/class-util';
 import ComponentOrganizer from './organizer/component-organizer';
 import EventMixin from './mixin/event-mixin';
-import LoaderMixin from './mixin/loader-mixin';
 import Store from './store';
 import Util from './util/util';
 import WaitforOrganizer from './organizer/waitfor-organizer';
@@ -66,7 +65,6 @@ export default function Component(settings)
 // Inherit & Mixin
 ClassUtil.inherit(Component, HTMLElement);
 Object.assign(Component.prototype, EventMixin);
-Object.assign(Component.prototype, LoaderMixin);
 
 customElements.define("bm-component", Component);
 
@@ -497,7 +495,7 @@ Component.prototype.__loadExtraSettings = function()
 	let settingsName = arr[1];
 	if (settingsName || settingsPath)
 	{
-		return this.loadSetting(settingsName, settingsPath);
+		return ComponentOrganizer.loadSetting(settingsName, settingsPath);
 	}
 
 }
