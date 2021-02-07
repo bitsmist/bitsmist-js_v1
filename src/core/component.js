@@ -25,40 +25,12 @@ import WaitforOrganizer from './organizer/waitfor-organizer';
 
 /**
  * Constructor.
- *
- * @param	{Object}		settings			Settings.
  */
-export default function Component(settings)
+export default function Component()
 {
 
 	// super()
-	let _this = Reflect.construct(HTMLElement, [], this.constructor);
-
-	// Init variables
-	_this._status = "";
-	_this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-
-	// Init stores
-	let defaults = {
-		"autoOpen": true,
-		"autoClose": true,
-		"autoSetup":true,
-		"autoStop":true
-	};
-	settings = Object.assign({}, defaults, settings, _this._getSettings());
-	_this._settings = new Store({"items":settings});
-	_this._settings.chain(BITSMIST.v1.Globals["settings"]);
-
-	// Init settings
-	_this._settings.set("name", Util.safeGet(settings, "name", _this.constructor.name));
-
-	BITSMIST.v1.Globals.organizers.notifySync("organize", "afterInitComponent", _this, _this._settings.items);
-	WaitforOrganizer.changeStatus(_this, "instantiated");
-
-	// Trigger an event
-	_this.triggerSync("afterInitComponent", _this);
-
-	return _this;
+	return Reflect.construct(HTMLElement, [], this.constructor);
 
 }
 
@@ -153,6 +125,8 @@ Component.prototype.open = function(options)
 		console.debug(`Component.open(): Opening component. name=${this.name}`);
 		return this.changeStatus("opening");
 	}).then(() => {
+		return this.trigger("beforeOpen", sender, {"options":options});
+	}).then(() => {
 		if (this._settings.get("autoSetup"))
 		{
 			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
@@ -165,7 +139,7 @@ Component.prototype.open = function(options)
 			return this.refresh();
 		}
 	}).then(() => {
-		return this.trigger("beforeOpen", sender, {"options":options});
+		return this.trigger("doOpen", sender, {"options":options});
 	}).then(() => {
 		return this.trigger("afterOpen", sender, {"options":options});
 	}).then(() => {
@@ -197,6 +171,8 @@ Component.prototype.close = function(options)
 		return this.changeStatus("closing");
 	}).then(() => {
 		return this.trigger("beforeClose", sender);
+	}).then(() => {
+		return this.trigger("doClose", sender);
 	}).then(() => {
 		return this.trigger("afterClose", sender);
 	}).then(() => {
@@ -287,12 +263,14 @@ Component.prototype.start = function()
 {
 
 	return Promise.resolve().then(() => {
-		return this.trigger("beforeStart", this);
+//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "starting")
+	// }).then(() => {
+		return this.__init();
 	}).then(() => {
-//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "connecting")
-//	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}`);
 		return this.changeStatus("starting");
+	}).then(() => {
+		return this.trigger("beforeStart", this);
 	}).then(() => {
 		// Load extra settings
 		return this.__loadExtraSettings();
@@ -300,7 +278,6 @@ Component.prototype.start = function()
 		if (newSettings)
 		{
 			this._settings.merge(newSettings);
-			return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this, newSettings);
 		}
 	}).then(() => {
 		// Get settings from attributes
@@ -308,13 +285,14 @@ Component.prototype.start = function()
 		if (attrSettings)
 		{
 			this._settings.merge(attrSettings);
-			return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this, attrSettings);
 		}
+	}).then(() => {
+		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this, this._settings.items);
+	}).then(() => {
+		return this.trigger("afterStart", this);
 	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}`);
 		return this.changeStatus("started");
-	}).then(() => {
-		return this.trigger("afterStart", this);
 	}).then(() => {
 		// Open
 		if (this._settings.get("autoOpen"))
@@ -338,25 +316,25 @@ Component.prototype.stop = function(options)
 {
 
 	return Promise.resolve().then(() => {
+//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "disconnecting")
+	// }).then(() => {
 		// Close
 		if (this._settings.get("autoClose"))
 		{
 			return this.close();
 		}
 	}).then(() => {
-		return this.trigger("beforeStop", this);
-	}).then(() => {
-//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "disconnecting")
-//	}).then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this.name}`);
 		return this.changeStatus("stopping");
 	}).then(() => {
+		return this.trigger("beforeStop", this);
+	}).then(() => {
 		return this.trigger("doStop", this);
+	}).then(() => {
+		return this.trigger("afterStop", this);
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this.name}`);
 		return this.changeStatus("stopped");
-	}).then(() => {
-		return this.trigger("afterStop", this);
 	});
 
 }
@@ -421,9 +399,13 @@ Component.prototype.changeStatus = function(status)
 Component.prototype.connectedCallback = function()
 {
 
-	if (this._status == "instantiated" || this._settings.get("autoRestart"))
+	if (!WaitforOrganizer.isInitialized(this))
 	{
 		return this.start();
+	}
+	else
+	{
+		return Promise.resolve();
 	}
 
 }
@@ -439,6 +421,10 @@ Component.prototype.disconnectedCallback = function()
 	if (this._settings.get("autoStop"))
 	{
 		return this.stop();
+	}
+	else
+	{
+		return Promise.resolve();
 	}
 
 }
@@ -479,6 +465,36 @@ Component.prototype._getSettings = function()
 
 // -----------------------------------------------------------------------------
 //  Privates
+// -----------------------------------------------------------------------------
+
+/**
+ * Init component.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.__init = function()
+{
+
+	// Init variables
+	this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+
+	// Init settings
+	let defaults = {
+		"autoOpen": true,
+		"autoClose": true,
+		"autoSetup":true,
+		"autoStop":true
+	};
+	let settings = Object.assign({}, defaults, this._getSettings());
+	this._settings = new Store({"items":settings});
+	this._settings.chain(BITSMIST.v1.Globals["settings"]);
+	this._settings.set("name", Util.safeGet(settings, "name", this.constructor.name));
+
+	// Init organizers
+	return BITSMIST.v1.Globals.organizers.notify("init", "*", this, this._settings.items);
+
+}
+
 // -----------------------------------------------------------------------------
 
 /**
