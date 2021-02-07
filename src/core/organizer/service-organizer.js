@@ -123,7 +123,7 @@ export default class ServiceOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterStart")
+		if (eventName == "*" || eventName == "afterStart")
 		{
 			ret = true;
 		}
