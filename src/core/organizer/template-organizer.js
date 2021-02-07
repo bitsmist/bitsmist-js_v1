@@ -23,6 +23,21 @@ export default class TemplateOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Init.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static init(component)
+	{
+
+		component._templates = {};
+		component.settings.set("templateName", component.settings.get("templateName", component.tagName.toLowerCase()));
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
@@ -32,8 +47,6 @@ export default class TemplateOrganizer
 	 */
 	static organize(component, settings)
 	{
-
-		component._templates = component._templates || {};
 
 		let templates = settings["templates"];
 		if (templates)
@@ -76,7 +89,32 @@ export default class TemplateOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterInitComponent" || eventName == "afterStart")
+		if (eventName == "*" || eventName == "afterStart")
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the template is active.
+	 *
+	 * @param	{Component}		component			Parent component.
+	 * @param	{String}		templateName		Template name.
+	 *
+	 * @return  {Boolean}		True when active.
+	 */
+	static isActive(component, templateName)
+	{
+
+		let ret = false;
+
+		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
+		if (templateInfo["isAppended"])
 		{
 			ret = true;
 		}
@@ -98,11 +136,6 @@ export default class TemplateOrganizer
 	 */
 	static addTemplate(component, templateName, options)
 	{
-
-		if (!component._templates)
-		{
-			component._templates = {};
-		}
 
 		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
 		if (templateInfo["isAppended"])
@@ -196,7 +229,7 @@ export default class TemplateOrganizer
 	static __autoLoadTemplate(component, templateInfo, path)
 	{
 
-		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["Name"]}`);
+		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["name"]}`);
 
 		let promise;
 
