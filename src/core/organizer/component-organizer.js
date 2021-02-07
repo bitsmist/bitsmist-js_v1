@@ -25,6 +25,20 @@ export default class ComponentOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Init.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static init(component)
+	{
+
+		component._components = {};
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
@@ -42,7 +56,7 @@ export default class ComponentOrganizer
 		{
 			Object.keys(molds).forEach((moldName) => {
 				chain = chain.then(() => {
-					return ComponentOrganizer.addComponent(component, moldName, molds[moldName], true);
+					return ComponentOrganizer.addComponent(component, moldName, molds[moldName], "opened");
 				});
 			});
 		}
@@ -110,17 +124,12 @@ export default class ComponentOrganizer
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		options				Options for the component.
-	 * @param	{Boolean}		sync				Wait for the component to open if true.
+	 * @param	{Boolean}		sync				Wait for the component to become the state.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
 	static addComponent(component, componentName, options, sync)
 	{
-
-		if (!component._components)
-		{
-			component._components = {};
-		}
 
 		let url = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
 		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
@@ -164,7 +173,8 @@ export default class ComponentOrganizer
 		}).then(() => {
 			if (sync || options["sync"])
 			{
-				return WaitforOrganizer.waitFor(component, [{"name":className, "status":"opened"}]);
+				let state = sync || options["sync"];
+				return WaitforOrganizer.waitFor(component, [{"name":className, "status":state}]);
 			}
 		});
 
