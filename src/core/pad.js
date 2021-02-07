@@ -25,29 +25,12 @@ import Util from './util/util';
 
 /**
  * Constructor.
- *
- * @param	{Object}		settings			Settings.
  */
-export default function Pad(settings)
+export default function Pad()
 {
 
 	// super()
-	let _this = Reflect.construct(Component, [settings], this.constructor);
-
-	// Init settings
-	_this._settings.set("templateName", _this._settings.get("templateName", _this.tagName.toLowerCase()));
-
-	// Init vars
-	_this._isModal = false;
-	_this._modalOptions;
-	_this._modalPromise;
-	_this._modalResult;
-	_this._shadowRoot;
-	_this._templates = _this._templates || {};
-
-	_this.trigger("afterInitPad", _this);
-
-	return _this;
+	return Reflect.construct(Component, [], this.constructor);
 
 }
 
@@ -139,6 +122,11 @@ Pad.prototype.switchTemplate = function(templateName)
 
 	console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
 
+	if (TemplateOrganizer.isActive(this, templateName))
+	{
+		return Promise.resolve();
+	}
+
 	return Promise.resolve().then(() => {
 		return TemplateOrganizer.addTemplate(this, templateName, {"rootNode":this._settings.get("rootNode"), "templateNode":this._settings.get("templateNode")});
 	}).then(() => {
@@ -166,5 +154,28 @@ Pad.prototype.clone = function()
 {
 
 	return TemplateOrganizer.clone(this, this._settings.get("templateName"));
+
+}
+
+// -----------------------------------------------------------------------------
+//  Callbacks
+// -----------------------------------------------------------------------------
+
+/**
+ * Connected callback.
+ */
+Pad.prototype.connectedCallback = function()
+{
+
+	// super()
+	Component.prototype.connectedCallback.call(this).then(() => {
+		// Init vars
+		this._isModal = false;
+		this._modalOptions;
+		this._modalPromise;
+		this._modalResult;
+
+	//	_this.trigger("afterStartPad", _this);
+	});
 
 }
