@@ -22,6 +22,20 @@ export default class WaitforOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Init.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static init(component)
+	{
+
+		component._status = "";
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
@@ -214,6 +228,33 @@ export default class WaitforOrganizer
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the componenet is initialized.
+	 *
+	 * @param	{Component}		component			Parent component.
+	 *
+	 * @return  {Boolean}		True when initialized.
+	 */
+	static isInitialized(component)
+	{
+
+		let ret = false;
+
+		if (component.status &&
+			component.status != "starting" &&
+			component.status != "stopping" &&
+			component.status != "stopped"
+		)
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Privates
 	// -------------------------------------------------------------------------
 
@@ -233,13 +274,11 @@ export default class WaitforOrganizer
 		if (currentStatus && currentStatus.slice(-3) == "ing")
 		{
 			if(
-				( currentStatus == "" && newStatus != "instantiated") ||
 				( currentStatus == "stopping" && newStatus != "stopped") ||
 				( currentStatus == "starting" && newStatus != "started") ||
 				( currentStatus == "opening" && (newStatus != "opened" && newStatus != "opening") ) ||
 				( currentStatus == "closeing" && newStatus != "closed") ||
-				( currentStatus == "stopping" && (newStatus != "stopped" && newStatus != "closing") ) ||
-				( newStatus == "opening" && currentStatus != "connected" )
+				( currentStatus == "stopping" && (newStatus != "stopped" && newStatus != "closing") )
 			)
 			{
 				ret = false;
@@ -535,23 +574,13 @@ export default class WaitforOrganizer
 
 		switch (expectedStatus)
 		{
-			case "instantiated":
+			case "started":
 				if (
-					currentStatus != "instantiated" &&
-					currentStatus != "connected" &&
-					currentStatus != "opened" &&
-					currentStatus != "closed"
-				)
-				{
-					isMatch = false;
-				}
-				break;
-			case "connected":
-				if (
-					currentStatus != "connected" &&
 					currentStatus != "opening" &&
 					currentStatus != "opened" &&
-					currentStatus != "closed"
+					currentStatus != "closing" &&
+					currentStatus != "closed" &&
+					currentStatus != "started"
 				)
 				{
 					isMatch = false;
