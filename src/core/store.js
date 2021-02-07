@@ -364,7 +364,8 @@ export default class Store
 			}
 			else
 			{
-				throw TypeError(`Notification handler is not a function. name=${observerInfo["object"].name}, type=${type}`);
+				//throw TypeError(`Notification handler is not a function. name=${observerInfo["object"].name}, type=${type}`);
+				//console.debug(`Notification handler is not a function. name=${observerInfo["object"].name}, type=${type}`);
 			}
 		}
 
