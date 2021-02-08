@@ -38,7 +38,65 @@ export default function Component()
 ClassUtil.inherit(Component, HTMLElement);
 Object.assign(Component.prototype, EventMixin);
 
-customElements.define("bm-component", Component);
+// customElements.define("bm-component", Component);
+
+// -----------------------------------------------------------------------------
+//  Callbacks
+// -----------------------------------------------------------------------------
+
+/**
+ * Connected callback.
+ */
+Component.prototype.connectedCallback = function()
+{
+
+	if (!WaitforOrganizer.isInitialized(this))
+	{
+		return this.start();
+	}
+	else
+	{
+		return Promise.resolve();
+	}
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Disconnected callback.
+ */
+Component.prototype.disconnectedCallback = function()
+{
+
+	if (this._settings.get("autoStop"))
+	{
+		return this.stop();
+	}
+	else
+	{
+		return Promise.resolve();
+	}
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Adopted callback.
+ */
+Component.prototype.adoptedCallback = function()
+{
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Attribute changed callback.
+ */
+Component.prototype.attributeChangedCallback = function()
+{
+}
 
 // -----------------------------------------------------------------------------
 //  Setter/Getter
@@ -257,15 +315,17 @@ Component.prototype.setup = function(options)
 /**
  * Start component.
  *
+ * @param	{Object}		settings			Settings.
+ *
  * @return  {Promise}		Promise.
  */
-Component.prototype.start = function()
+Component.prototype.start = function(settings)
 {
 
 	return Promise.resolve().then(() => {
 //		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "starting")
 	// }).then(() => {
-		return this.__init();
+		return this.__init(settings);
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}`);
 		return this.changeStatus("starting");
@@ -316,7 +376,7 @@ Component.prototype.stop = function(options)
 {
 
 	return Promise.resolve().then(() => {
-//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "disconnecting")
+//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "stopping")
 	// }).then(() => {
 		// Close
 		if (this._settings.get("autoClose"))
@@ -390,64 +450,6 @@ Component.prototype.changeStatus = function(status)
 }
 
 // -----------------------------------------------------------------------------
-//  Callbacks
-// -----------------------------------------------------------------------------
-
-/**
- * Connected callback.
- */
-Component.prototype.connectedCallback = function()
-{
-
-	if (!WaitforOrganizer.isInitialized(this))
-	{
-		return this.start();
-	}
-	else
-	{
-		return Promise.resolve();
-	}
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Disconnected callback.
- */
-Component.prototype.disconnectedCallback = function()
-{
-
-	if (this._settings.get("autoStop"))
-	{
-		return this.stop();
-	}
-	else
-	{
-		return Promise.resolve();
-	}
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Adopted callback.
- */
-Component.prototype.adoptedCallback = function()
-{
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Attribute changed callback.
- */
-Component.prototype.attributeChangedCallback = function()
-{
-}
-
-// -----------------------------------------------------------------------------
 //  Protected
 // -----------------------------------------------------------------------------
 
@@ -472,7 +474,7 @@ Component.prototype._getSettings = function()
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.__init = function()
+Component.prototype.__init = function(settings)
 {
 
 	// Init variables
@@ -485,13 +487,12 @@ Component.prototype.__init = function()
 		"autoSetup":true,
 		"autoStop":true
 	};
-	let settings = Object.assign({}, defaults, this._getSettings());
-	this._settings = new Store({"items":settings});
+	this._settings = new Store({"items":Object.assign({}, defaults, this._getSettings(), settings)});
+	this._settings.set("name", this._settings.get("name"), this.constructor.name);
 	this._settings.chain(BITSMIST.v1.Globals["settings"]);
-	this._settings.set("name", Util.safeGet(settings, "name", this.constructor.name));
 
 	// Init organizers
-	return BITSMIST.v1.Globals.organizers.notify("init", "*", this, this._settings.items);
+	return BITSMIST.v1.Globals.organizers.notify("init", "*", this);
 
 }
 
