@@ -36,7 +36,7 @@ export default function Pad()
 
 // Inherit & Mixin
 ClassUtil.inherit(Pad, Component);
-customElements.define("bm-pad", Pad);
+// customElements.define("bm-pad", Pad);
 
 // -----------------------------------------------------------------------------
 //  Methods
@@ -144,9 +144,30 @@ Pad.prototype.switchTemplate = function(templateName)
 // -----------------------------------------------------------------------------
 
 /**
- * Clone the component.
+ * Start component.
  *
- * @param	{String}		templateName		Template name.
+ * @param	{Object}		settings			Settings.
+ *
+ * @return  {Promise}		Promise.
+ */
+Pad.prototype.start = function(settings)
+{
+
+	// Init vars
+	this._isModal = false;
+	this._modalOptions;
+	this._modalPromise;
+	this._modalResult;
+
+	// super()
+	return Component.prototype.start.call(this, settings);
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Clone the component.
  *
  * @return  {Object}		Cloned component.
  */
@@ -154,28 +175,5 @@ Pad.prototype.clone = function()
 {
 
 	return TemplateOrganizer.clone(this, this._settings.get("templateName"));
-
-}
-
-// -----------------------------------------------------------------------------
-//  Callbacks
-// -----------------------------------------------------------------------------
-
-/**
- * Connected callback.
- */
-Pad.prototype.connectedCallback = function()
-{
-
-	// super()
-	Component.prototype.connectedCallback.call(this).then(() => {
-		// Init vars
-		this._isModal = false;
-		this._modalOptions;
-		this._modalPromise;
-		this._modalResult;
-
-	//	_this.trigger("afterStartPad", _this);
-	});
 
 }
