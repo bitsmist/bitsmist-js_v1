@@ -24,19 +24,12 @@ import ComponentOrganizer from './organizer/component-organizer';
 
 /**
  * Constructor.
- *
- * @param	{Object}		settings			Options for the component.
  */
-export default function TagLoader(settings)
+export default function TagLoader()
 {
 
 	// super()
-	settings = Object.assign({}, settings, {"name":"TagLoader", "autoSetup":false});
-	let _this = Reflect.construct(Component, [settings], this.constructor);
-
-	window.addEventListener('DOMContentLoaded', _this.onDOMContentLoaded.bind(_this));
-
-	return _this;
+	return Reflect.construct(Component, [], this.constructor);
 
 }
 
@@ -65,3 +58,33 @@ TagLoader.prototype.onDOMContentLoaded= function(sender, e)
 
 }
 
+// -----------------------------------------------------------------------------
+//  Methods
+// -----------------------------------------------------------------------------
+
+/**
+ * Start component.
+ *
+ * @param	{Object}		settings			Settings.
+ *
+ * @return  {Promise}		Promise.
+ */
+TagLoader.prototype.start = function(settings)
+{
+
+	// Init component settings
+	settings = Object.assign({}, settings, {"name":"TagLoader", "autoSetup":false});
+
+	// Start
+	return BITSMIST.v1.Component.prototype.start.call(this, settings).then(() => {
+		if (document.readyState !== 'loading')
+		{
+			this.onDOMContentLoaded();
+		}
+		else
+		{
+			window.addEventListener('DOMContentLoaded', this.onDOMContentLoaded.bind(this));
+		}
+	});
+
+}
