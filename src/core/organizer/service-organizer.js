@@ -46,7 +46,7 @@ export default class ServiceOrganizer
 		}
 		waitInfo["status"] = "opened";
 
-		component.waitFor([waitInfo]).then(() => {
+		return component.waitFor([waitInfo]).then(() => {
 			// Get component
 			let service;
 			if (settings["className"])
