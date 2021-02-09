@@ -325,7 +325,11 @@ Component.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 //		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "starting")
 	// }).then(() => {
-		return this.__init(settings);
+		return this._injectSettings(settings);
+	 }).then((newSettings) => {
+		return this.__init(newSettings);
+	 }).then(() => {
+		return this._injectEvents();
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}`);
 		return this.changeStatus("starting");
@@ -334,10 +338,10 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		// Load extra settings
 		return this.__loadExtraSettings();
-	}).then((newSettings) => {
-		if (newSettings)
+	}).then((extraSettings) => {
+		if (extraSettings)
 		{
-			this._settings.merge(newSettings);
+			this._settings.merge(extraSettings);
 		}
 	}).then(() => {
 		// Get settings from attributes
@@ -454,6 +458,31 @@ Component.prototype.changeStatus = function(status)
 // -----------------------------------------------------------------------------
 
 /**
+ * Inject settings.
+ *
+ * @param	{Object}		settings			Settings.
+ *
+ * @return  {Object}		New settings.
+ */
+Component.prototype._injectSettings = function(settings)
+{
+
+	return settings;
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Inject event handlers.
+ */
+Component.prototype._injectEvents = function()
+{
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Get component options.  Need to override.
  *
  * @return  {Object}		Options.
@@ -488,7 +517,7 @@ Component.prototype.__init = function(settings)
 		"autoStop":true
 	};
 	this._settings = new Store({"items":Object.assign({}, defaults, this._getSettings(), settings)});
-	this._settings.set("name", this._settings.get("name"), this.constructor.name);
+	this._settings.set("name", this._settings.get("name", this.constructor.name));
 	this._settings.chain(BITSMIST.v1.Globals["settings"]);
 
 	// Init organizers
