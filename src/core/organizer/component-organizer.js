@@ -11,6 +11,7 @@
 import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
 import Util from '../util/util';
+//import Pad from '../pad';
 import WaitforOrganizer from '../organizer/waitfor-organizer';
 
 // =============================================================================
@@ -102,14 +103,23 @@ export default class ComponentOrganizer
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName)
+	static isTarget(eventName, observerInfo, ...args)
 	{
 
+
 		let ret = false;
+		let component = args[0];
 
 		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
 		{
 			ret = true;
+		}
+		else if (eventName == "afterStart")
+		{
+			if (!(component instanceof BITSMIST.v1.Pad))
+			{
+				ret = true;
+			}
 		}
 
 		return ret;
@@ -160,7 +170,15 @@ export default class ComponentOrganizer
 				}
 
 				// Build tag
-				let tag = ( options["tag"] ? options["tag"] : "<" + tagName + " data-path='" + options["path"] + "'></" + tagName + ">" );
+				let tag;
+				if (options["path"])
+				{
+					tag = ( options["tag"] ? options["tag"] : "<" + tagName + " data-path='" + options["path"] + "'></" + tagName + ">" );
+				}
+				else
+				{
+					tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
+				}
 				if (!tag)
 				{
 					throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
@@ -169,6 +187,18 @@ export default class ComponentOrganizer
 				// Insert tag
 				root.insertAdjacentHTML("afterbegin", tag);
 				component._components[componentName] = root.children[0];
+			}
+		}).then(() => {
+			// Expose component
+			if (options["expose"])
+			{
+				let exposeName = ( options["expose"] === true ? componentName : options["expose"] );
+				Object.defineProperty(component.__proto__, exposeName, {
+					get()
+					{
+						return component._components[componentName];
+					}
+				});
 			}
 		}).then(() => {
 			if (sync || options["sync"])
