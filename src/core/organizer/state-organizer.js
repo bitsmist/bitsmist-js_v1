@@ -14,7 +14,7 @@ import Store from '../store';
 //	Waitfor organizer class
 // =============================================================================
 
-export default class WaitforOrganizer
+export default class StateOrganizer
 {
 
 	// -------------------------------------------------------------------------
@@ -51,7 +51,7 @@ export default class WaitforOrganizer
 		let waitFor = settings["waitFor"];
 		if (waitFor)
 		{
-			promise = WaitforOrganizer.waitFor(component, waitFor);
+			promise = StateOrganizer.waitFor(component, waitFor);
 		}
 
 		return promise;
@@ -120,7 +120,7 @@ export default class WaitforOrganizer
 
 		let waitInfo = {"waiter":component, "waitlist":waitlist};
 
-		if (WaitforOrganizer.__isAllReady(waitInfo))
+		if (StateOrganizer.__isAllReady(waitInfo))
 		{
 			promise = Promise.resolve();
 		}
@@ -135,7 +135,7 @@ export default class WaitforOrganizer
 			});
 			waitInfo["promise"] = promise;
 
-			WaitforOrganizer.__addToWaitingList(waitInfo, component, status);
+			StateOrganizer.__addToWaitingList(waitInfo, component, status);
 		}
 
 		return promise;
@@ -159,13 +159,13 @@ export default class WaitforOrganizer
 		let componentInfo = BITSMIST.v1.Globals.components.get(component.uniqueId);
 		let waitlistItem = {"id":component.uniqueId, "status":status};
 
-		if (WaitforOrganizer.__isReady(waitlistItem, componentInfo))
+		if (StateOrganizer.__isReady(waitlistItem, componentInfo))
 		{
 			return Promise.resolve();
 		}
 		else
 		{
-			return WaitforOrganizer.waitFor(component, [waitlistItem], timeout);
+			return StateOrganizer.waitFor(component, [waitlistItem], timeout);
 		}
 
 	}
@@ -187,22 +187,22 @@ export default class WaitforOrganizer
 
 		if (newStatus == "starting")
 		{
-			return WaitforOrganizer.waitForSingle(component, "instantiated");
+			return StateOrganizer.waitForSingle(component, "instantiated");
 		}
 
 		if (newStatus == "stopping")
 		{
-			return WaitforOrganizer.waitForSingle(component, "instantiated");
+			return StateOrganizer.waitForSingle(component, "instantiated");
 		}
 
 		if (newStatus == "opening")
 		{
-			return WaitforOrganizer.waitForSingle(component, "started");
+			return StateOrganizer.waitForSingle(component, "started");
 		}
 
 		if (newStatus == "closing")
 		{
-			return WaitforOrganizer.waitForSingle(component, "opened");
+			return StateOrganizer.waitForSingle(component, "opened");
 		}
 
 	}
@@ -221,12 +221,12 @@ export default class WaitforOrganizer
 	static changeStatus(component, status)
 	{
 
-		if (WaitforOrganizer.__isTransitionable(component.status, status))
+		if (StateOrganizer.__isTransitionable(component.status, status))
 		{
 			component.status = status;
 			BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "status":status});
 
-			WaitforOrganizer.__processWaitingList(component, status);
+			StateOrganizer.__processWaitingList(component, status);
 		}
 		else
 		{
@@ -306,15 +306,15 @@ export default class WaitforOrganizer
 	{
 
 		// Process name index
-		let names = WaitforOrganizer.__waitingListIndexName.get(component.name + "." + status);
-		WaitforOrganizer.__processIndex(names);
+		let names = StateOrganizer.__waitingListIndexName.get(component.name + "." + status);
+		StateOrganizer.__processIndex(names);
 
 		// Process ID index
-		let ids = WaitforOrganizer.__waitingListIndexId.get(component.uniqueId + "." + status);
-		WaitforOrganizer.__processIndex(ids);
+		let ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + status);
+		StateOrganizer.__processIndex(ids);
 
 		// Process non indexables
-		WaitforOrganizer.__processIndex(WaitforOrganizer.__waitingListIndexNone);
+		StateOrganizer.__processIndex(StateOrganizer.__waitingListIndexNone);
 
 	}
 
@@ -336,12 +336,12 @@ export default class WaitforOrganizer
 
 				if (id)
 				{
-					let waitInfo = WaitforOrganizer.__waitingList.get(id);
+					let waitInfo = StateOrganizer.__waitingList.get(id);
 
-					if (WaitforOrganizer.__isAllReady(WaitforOrganizer.__waitingList.get(id)))
+					if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
 					{
-						WaitforOrganizer.__waitingList.get(id).resolve();
-						WaitforOrganizer.__waitingList.remove(id);
+						StateOrganizer.__waitingList.get(id).resolve();
+						StateOrganizer.__waitingList.remove(id);
 
 						// delete from index
 						list[i] = null;
@@ -368,7 +368,7 @@ export default class WaitforOrganizer
 
 		// Add wait info to the waiting list.
 		let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-		WaitforOrganizer.__waitingList.set(id, waitInfo);
+		StateOrganizer.__waitingList.set(id, waitInfo);
 
 		// Create index for faster processing
 		let waitlist = waitInfo["waitlist"];
@@ -377,17 +377,17 @@ export default class WaitforOrganizer
 			// Index for component id + status
 			if (waitlist[i].id)
 			{
-				WaitforOrganizer.__addToIndex(WaitforOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].status, id);
+				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].status, id);
 			}
 			// Index for component name + status
 			else if (waitlist[i].name)
 			{
-				WaitforOrganizer.__addToIndex(WaitforOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].status, id);
+				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].status, id);
 			}
 			// Not indexable
 			else
 			{
-				WaitforOrganizer.__waitingListIndexNone.push(id);
+				StateOrganizer.__waitingListIndexNone.push(id);
 			}
 		}
 
@@ -475,7 +475,7 @@ export default class WaitforOrganizer
 			let componentInfo = this.__getComponentInfo(waitlist[i]);
 			if (componentInfo)
 			{
-				if (WaitforOrganizer.__isReady(waitlist[i], componentInfo))
+				if (StateOrganizer.__isReady(waitlist[i], componentInfo))
 				{
 					match = true;
 				}
@@ -510,12 +510,12 @@ export default class WaitforOrganizer
 		waitlistItem["status"] = waitlistItem["status"] || "opened";
 
 		// Check component
-		let isMatch = WaitforOrganizer.__isComponentMatch(componentInfo, waitlistItem);
+		let isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
 
 		// Check status
 		if (isMatch)
 		{
-			isMatch = WaitforOrganizer.__isStatusMatch(componentInfo["status"], waitlistItem["status"]);
+			isMatch = StateOrganizer.__isStatusMatch(componentInfo["status"], waitlistItem["status"]);
 		}
 
 		return isMatch;
@@ -609,7 +609,7 @@ export default class WaitforOrganizer
 }
 
 // static properties
-WaitforOrganizer.__waitingList = new Store();
-WaitforOrganizer.__waitingListIndexName = new Map();
-WaitforOrganizer.__waitingListIndexId = new Map();
-WaitforOrganizer.__waitingListIndexNone = [];
+StateOrganizer.__waitingList = new Store();
+StateOrganizer.__waitingListIndexName = new Map();
+StateOrganizer.__waitingListIndexId = new Map();
+StateOrganizer.__waitingListIndexNone = [];

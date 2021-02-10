@@ -12,7 +12,7 @@ import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
 import Util from '../util/util';
 //import Pad from '../pad';
-import WaitforOrganizer from '../organizer/waitfor-organizer';
+import StateOrganizer from '../organizer/state-organizer';
 
 // =============================================================================
 //	Component organizer class
@@ -204,7 +204,7 @@ export default class ComponentOrganizer
 			if (sync || options["sync"])
 			{
 				let state = sync || options["sync"];
-				return WaitforOrganizer.waitFor(component, [{"name":className, "status":state}]);
+				return StateOrganizer.waitFor(component, [{"name":className, "status":state}]);
 			}
 		});
 

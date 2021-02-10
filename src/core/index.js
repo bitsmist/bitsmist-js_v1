@@ -27,9 +27,9 @@ import EventMixin from './mixin/event-mixin';
 
 // Organizer
 
-import WaitforOrganizer from './organizer/waitfor-organizer';
-Globals.organizers.set("WaitforOrganizer", {"object":WaitforOrganizer, "targets":"waitFor", "order": 100});
-window.BITSMIST.v1.WaitforOrganizer = WaitforOrganizer;
+import StateOrganizer from './organizer/state-organizer';
+Globals.organizers.set("StateOrganizer", {"object":StateOrganizer, "targets":"waitFor", "order": 100});
+window.BITSMIST.v1.StateOrganizer = StateOrganizer;
 
 import AttrOrganizer from './organizer/attr-organizer';
 Globals.organizers.set("AttrOrganizer", {"object":AttrOrganizer, "targets":"attrs", "order": 200});
