@@ -13,6 +13,7 @@ import Component from './component';
 import TemplateOrganizer from './organizer/template-organizer';
 import ComponentOrganizer from './organizer/component-organizer';
 import Globals from './globals';
+import StateOrganizer from './organizer/state-organizer';
 import Util from './util/util';
 
 // =============================================================================
@@ -58,7 +59,7 @@ Pad.prototype.open = function(options)
 //		return StateOrganizer.waitForTransitionableState(this, this._state., "opening")
 //	}).then(() => {
 		console.debug(`Pad.open(): Opening pad. name=${this.name}`);
-		return this.changeState("opening");
+		return StateOrganizer.changeState(this, "opening");
 	}).then(() => {
 		return this.switchTemplate(this._settings.get("templateName"));
 	}).then(() => {
@@ -81,7 +82,7 @@ Pad.prototype.open = function(options)
 		return this.trigger("afterOpen", sender, {"options":options});
 	}).then(() => {
 		console.debug(`Pad.open(): Opened pad. name=${this.name}`);
-		return this.changeState("opened");
+		return StateOrganizer.changeState(this, "opened");
 	});
 
 }
@@ -131,7 +132,7 @@ Pad.prototype.close = function(options)
 //		return StateOrganizer.waitForTransitionableState(this, this._state, "closing")
 //	}).then(() => {
 		console.debug(`Pad.close(): Closing pad. name=${this.name}`);
-		return this.changeState("closing");
+		return StateOrganizer.changeState(this, "closing");
 	}).then(() => {
 		return this.trigger("beforeClose", sender);
 	}).then(() => {
@@ -145,7 +146,7 @@ Pad.prototype.close = function(options)
 		}
 	}).then(() => {
 		console.debug(`Pad.close(): Closed pad. name=${this.name}`);
-		return this.changeState("closed");
+		return StateOrganizer.changeState(this, "closed");
 	});
 
 }
@@ -229,33 +230,6 @@ Pad.prototype.fill = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Apply settings.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Pad.prototype.setup = function(options)
-{
-
-	console.debug(`Pad.setup(): Setting up pad. name=${this.name}`);
-
-	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
-
-	return Promise.resolve().then(() => {
-		return this.trigger("beforeSetup", sender, options);
-	}).then(() => {
-		return this.trigger("doSetup", sender, options);
-	}).then(() => {
-		return this.trigger("afterSetup", sender, options);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
  * Start pad.
  *
  * @param	{Object}		settings			Settings.
@@ -275,15 +249,19 @@ Pad.prototype.start = function(settings)
 	let defaults = {
 		"autoOpen": true,
 		"autoClose": true,
-		"autoSetup":true,
+		"autoSetup": null, // To not run setup() on parent.start()
 	};
-	settings = Object.assign({}, defaults, settings);;
+	settings = Object.assign({}, defaults, settings);
 
 	// super()
 	return Promise.resolve().then(() => {
 		return Component.prototype.start.call(this, settings);
-	// }).then(() => {
-	// 	return BITSMIST.v1.Globals.organizers.notify("init", "initPad", this);
+	}).then(() => {
+		if (this._settings.get("autoSetup") === null)
+		{
+			this._settings.set("autoSetup", true);
+		}
+		return BITSMIST.v1.Globals.organizers.notify("init", "initPad", this);
 	}).then(() => {
 		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStartPad", this, this._settings.items);
 	}).then(() => {

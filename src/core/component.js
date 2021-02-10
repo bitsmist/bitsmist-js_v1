@@ -190,6 +190,12 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this, this._settings.items);
 	}).then(() => {
+		if (this._settings.get("autoSetup"))
+		{
+			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
+			return this.setup({"newPreferences":defaultPreferences});
+		}
+	}).then(() => {
 		return this.trigger("afterStart", this);
 	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}`);
@@ -224,6 +230,33 @@ Component.prototype.stop = function(options)
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this.name}`);
 		return StateOrganizer.changeState(this, "stopped");
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Apply settings.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.setup = function(options)
+{
+
+	console.debug(`Component.setup(): Setting up component. name=${this.name}`);
+
+	options = Object.assign({}, options);
+	let sender = ( options["sender"] ? options["sender"] : this );
+
+	return Promise.resolve().then(() => {
+		return this.trigger("beforeSetup", sender, options);
+	}).then(() => {
+		return this.trigger("doSetup", sender, options);
+	}).then(() => {
+		return this.trigger("afterSetup", sender, options);
 	});
 
 }

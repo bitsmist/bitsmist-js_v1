@@ -33,7 +33,8 @@ export default class SettingOrganizer
 
 		// Init settings
 		let defaults = {
-			"autoStop":true
+			"autoSetup": true,
+			"autoStop": true
 		};
 		component._settings = new Store({"items":Object.assign({}, defaults, settings, component._getSettings())});
 		component._settings.set("name", component._settings.get("name", component.constructor.name));
