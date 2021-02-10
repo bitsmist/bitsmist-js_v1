@@ -34,8 +34,8 @@ class Globals
 		// Init vars
 		this._classes = new Store();
 		this._components = new Store();
-		this._organizers = new Store({"filter": (condition, info) => {
-			return info["object"].isTarget(condition);
+		this._organizers = new Store({"filter": (condition, observerInfo, ...args) => {
+			return observerInfo["object"].isTarget(condition, observerInfo, ...args);
 		}});
 		this._preferences = new Store();
 		this._settings = new Store();
