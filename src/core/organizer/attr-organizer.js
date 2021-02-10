@@ -32,7 +32,7 @@ export default class AttrOrganizer
 		let component = ex.target;
 		let settings = ex.options["attrs"];
 
-		return AttrOrganizer.init(component, settings);
+		return AttrOrganizer.initAttr(component, settings);
 
 	}
 
@@ -97,7 +97,7 @@ export default class AttrOrganizer
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static init(component, settings)
+	static initAttr(component, settings)
 	{
 
 		if (settings)
