@@ -62,7 +62,7 @@ export default class EventOrganizer
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName)
+	static isTarget(eventName, observerInfo, ...args)
 	{
 
 		let ret = false;
