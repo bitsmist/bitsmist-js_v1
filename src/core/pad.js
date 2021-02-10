@@ -34,9 +34,8 @@ export default function Pad()
 
 }
 
-// Inherit & Mixin
+// Inherit
 ClassUtil.inherit(Pad, Component);
-// customElements.define("bm-pad", Pad);
 
 // -----------------------------------------------------------------------------
 //  Methods
@@ -52,10 +51,37 @@ ClassUtil.inherit(Pad, Component);
 Pad.prototype.open = function(options)
 {
 
+	options = Object.assign({}, options);
+	let sender = ( options["sender"] ? options["sender"] : this );
+
 	return Promise.resolve().then(() => {
+//		return StateOrganizer.waitForTransitionableState(this, this._state., "opening")
+//	}).then(() => {
+		console.debug(`Pad.open(): Opening pad. name=${this.name}`);
+		return this.changeState("opening");
+	}).then(() => {
 		return this.switchTemplate(this._settings.get("templateName"));
 	}).then(() => {
-		return Component.prototype.open.call(this, options);
+		return this.trigger("beforeOpen", sender, {"options":options});
+	}).then(() => {
+		if (this._settings.get("autoSetup"))
+		{
+			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
+			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
+			return this.setup(options);
+		}
+	}).then(() => {
+		if (this._settings.get("autoRefresh"))
+		{
+			return this.refresh();
+		}
+	}).then(() => {
+		return this.trigger("doOpen", sender, {"options":options});
+	}).then(() => {
+		return this.trigger("afterOpen", sender, {"options":options});
+	}).then(() => {
+		console.debug(`Pad.open(): Opened pad. name=${this.name}`);
+		return this.changeState("opened");
 	});
 
 }
@@ -89,7 +115,7 @@ Pad.prototype.openModal = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Close component.
+ * Close pad.
  *
  * @param	{Object}		options				Options.
  *
@@ -98,14 +124,60 @@ Pad.prototype.openModal = function(options)
 Pad.prototype.close = function(options)
 {
 
+	options = Object.assign({}, options);
+	let sender = ( options["sender"] ? options["sender"] : this );
+
 	return Promise.resolve().then(() => {
-		return Component.prototype.close.call(this, options);
+//		return StateOrganizer.waitForTransitionableState(this, this._state, "closing")
+//	}).then(() => {
+		console.debug(`Pad.close(): Closing pad. name=${this.name}`);
+		return this.changeState("closing");
+	}).then(() => {
+		return this.trigger("beforeClose", sender);
+	}).then(() => {
+		return this.trigger("doClose", sender);
+	}).then(() => {
+		return this.trigger("afterClose", sender);
 	}).then(() => {
 		if (this._isModal)
 		{
 			this._modalPromise.resolve(this._modalResult);
 		}
+	}).then(() => {
+		console.debug(`Pad.close(): Closed pad. name=${this.name}`);
+		return this.changeState("closed");
 	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Refresh pad.
+ *
+ * @return  {Promise}		Promise.
+ */
+Pad.prototype.refresh = function(options)
+{
+
+	console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}`);
+
+	options = Object.assign({}, options);
+	let sender = ( options["sender"] ? options["sender"] : this );
+
+	return Promise.resolve().then(() => {
+		return this.trigger("beforeRefresh", sender, {"options":options});
+	}).then(() => {
+		if (this._settings.get("autoFill"))
+		{
+			return this.fill(options);
+		}
+	}).then(() => {
+		return this.trigger("doRefresh", sender, {"options":options});
+	}).then(() => {
+		return this.trigger("afterRefresh", sender, {"options":options});
+	});
+
 }
 
 // -----------------------------------------------------------------------------
@@ -144,7 +216,47 @@ Pad.prototype.switchTemplate = function(templateName)
 // -----------------------------------------------------------------------------
 
 /**
- * Start component.
+ * Fill.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Pad.prototype.fill = function(options)
+{
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Apply settings.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Pad.prototype.setup = function(options)
+{
+
+	console.debug(`Pad.setup(): Setting up pad. name=${this.name}`);
+
+	options = Object.assign({}, options);
+	let sender = ( options["sender"] ? options["sender"] : this );
+
+	return Promise.resolve().then(() => {
+		return this.trigger("beforeSetup", sender, options);
+	}).then(() => {
+		return this.trigger("doSetup", sender, options);
+	}).then(() => {
+		return this.trigger("afterSetup", sender, options);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Start pad.
  *
  * @param	{Object}		settings			Settings.
  *
@@ -159,17 +271,39 @@ Pad.prototype.start = function(settings)
 	this._modalPromise;
 	this._modalResult;
 
+	// Initial settings
+	let defaults = {
+		"autoOpen": true,
+		"autoClose": true,
+		"autoSetup":true,
+	};
+	settings = Object.assign({}, defaults, settings);;
+
 	// super()
-	return Component.prototype.start.call(this, settings);
+	return Promise.resolve().then(() => {
+		return Component.prototype.start.call(this, settings);
+	// }).then(() => {
+	// 	return BITSMIST.v1.Globals.organizers.notify("init", "initPad", this);
+	}).then(() => {
+		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStartPad", this, this._settings.items);
+	}).then(() => {
+		return this.trigger("afterStartPad", this);
+	}).then(() => {
+		// Open
+		if (this._settings.get("autoOpen"))
+		{
+			return this.open();
+		}
+	});
 
 }
 
 // -----------------------------------------------------------------------------
 
 /**
- * Clone the component.
+ * Clone the pad.
  *
- * @return  {Object}		Cloned component.
+ * @return  {Object}		Cloned pad.
  */
 Pad.prototype.clone = function()
 {

@@ -13,7 +13,7 @@ import ComponentOrganizer from './organizer/component-organizer';
 import EventMixin from './mixin/event-mixin';
 import Store from './store';
 import Util from './util/util';
-import WaitforOrganizer from './organizer/waitfor-organizer';
+import StateOrganizer from './organizer/state-organizer';
 
 // =============================================================================
 //	Component class
@@ -38,8 +38,6 @@ export default function Component()
 ClassUtil.inherit(Component, HTMLElement);
 Object.assign(Component.prototype, EventMixin);
 
-// customElements.define("bm-component", Component);
-
 // -----------------------------------------------------------------------------
 //  Callbacks
 // -----------------------------------------------------------------------------
@@ -50,7 +48,7 @@ Object.assign(Component.prototype, EventMixin);
 Component.prototype.connectedCallback = function()
 {
 
-	if (!WaitforOrganizer.isInitialized(this))
+	if (!StateOrganizer.isInitialized(this))
 	{
 		return this.start();
 	}
@@ -131,18 +129,18 @@ Object.defineProperty(Component.prototype, 'uniqueId', {
 // -----------------------------------------------------------------------------
 
 /**
- * Status.
+ * State.
  *
  * @type	{String}
  */
-Object.defineProperty(Component.prototype, 'status', {
+Object.defineProperty(Component.prototype, 'state', {
 	get()
 	{
-		return this._status;
+		return this._state;
 	},
 	set(value)
 	{
-		this._status = value;
+		this._state = value;
 	}
 })
 
@@ -165,154 +163,6 @@ Object.defineProperty(Component.prototype, 'settings', {
 // -----------------------------------------------------------------------------
 
 /**
- * Open component.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.open = function(options)
-{
-
-	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
-
-	return Promise.resolve().then(() => {
-//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "opening")
-//	}).then(() => {
-		console.debug(`Component.open(): Opening component. name=${this.name}`);
-		return this.changeStatus("opening");
-	}).then(() => {
-		return this.trigger("beforeOpen", sender, {"options":options});
-	}).then(() => {
-		if (this._settings.get("autoSetup"))
-		{
-			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
-			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
-			return this.setup(options);
-		}
-	}).then(() => {
-		if (this._settings.get("autoRefresh"))
-		{
-			return this.refresh();
-		}
-	}).then(() => {
-		return this.trigger("doOpen", sender, {"options":options});
-	}).then(() => {
-		return this.trigger("afterOpen", sender, {"options":options});
-	}).then(() => {
-		console.debug(`Component.open(): Opened component. name=${this.name}`);
-		return this.changeStatus("opened");
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Close component.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.close = function(options)
-{
-
-	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
-
-	return Promise.resolve().then(() => {
-//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "closing")
-//	}).then(() => {
-		console.debug(`Component.close(): Closing component. name=${this.name}`);
-		return this.changeStatus("closing");
-	}).then(() => {
-		return this.trigger("beforeClose", sender);
-	}).then(() => {
-		return this.trigger("doClose", sender);
-	}).then(() => {
-		return this.trigger("afterClose", sender);
-	}).then(() => {
-		console.debug(`Component.close(): Closed component. name=${this.name}`);
-		return this.changeStatus("closed");
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Refresh component.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.refresh = function(options)
-{
-
-	console.debug(`Component.refresh(): Refreshing component. name=${this.name}`);
-
-	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
-
-	return Promise.resolve().then(() => {
-		return this.trigger("beforeRefresh", sender, {"options":options});
-	}).then(() => {
-		if (this._settings.get("autoFill"))
-		{
-			return this.fill(options);
-		}
-	}).then(() => {
-		return this.trigger("doRefresh", sender, {"options":options});
-	}).then(() => {
-		return this.trigger("afterRefresh", sender, {"options":options});
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Fill.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.fill = function(options)
-{
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Apply settings.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.setup = function(options)
-{
-
-	console.debug(`Component.setup(): Setting up component. name=${this.name}`);
-
-	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
-
-	return Promise.resolve().then(() => {
-		return this.trigger("beforeSetup", sender, options);
-	}).then(() => {
-		return this.trigger("doSetup", sender, options);
-	}).then(() => {
-		return this.trigger("afterSetup", sender, options);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
  * Start component.
  *
  * @param	{Object}		settings			Settings.
@@ -323,7 +173,7 @@ Component.prototype.start = function(settings)
 {
 
 	return Promise.resolve().then(() => {
-//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "starting")
+//		return StateOrganizer.waitForTransitionableState(this, this._state, "starting")
 	// }).then(() => {
 		return this._injectSettings(settings);
 	 }).then((newSettings) => {
@@ -332,7 +182,7 @@ Component.prototype.start = function(settings)
 		return this._injectEvents();
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}`);
-		return this.changeStatus("starting");
+		return this.changeState("starting");
 	}).then(() => {
 		return this.trigger("beforeStart", this);
 	}).then(() => {
@@ -356,13 +206,7 @@ Component.prototype.start = function(settings)
 		return this.trigger("afterStart", this);
 	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}`);
-		return this.changeStatus("started");
-	}).then(() => {
-		// Open
-		if (this._settings.get("autoOpen"))
-		{
-			return this.open();
-		}
+		return this.changeState("started");
 	});
 
 }
@@ -380,16 +224,10 @@ Component.prototype.stop = function(options)
 {
 
 	return Promise.resolve().then(() => {
-//		return WaitforOrganizer.waitForTransitionableStatus(this, this._status, "stopping")
+//		return StateOrganizer.waitForTransitionableState(this, this._states, "stopping")
 	// }).then(() => {
-		// Close
-		if (this._settings.get("autoClose"))
-		{
-			return this.close();
-		}
-	}).then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this.name}`);
-		return this.changeStatus("stopping");
+		return this.changeState("stopping");
 	}).then(() => {
 		return this.trigger("beforeStop", this);
 	}).then(() => {
@@ -398,7 +236,7 @@ Component.prototype.stop = function(options)
 		return this.trigger("afterStop", this);
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this.name}`);
-		return this.changeStatus("stopped");
+		return this.changeState("stopped");
 	});
 
 }
@@ -423,7 +261,7 @@ Component.prototype.addComponent = function(componentName, options)
 // -----------------------------------------------------------------------------
 
 /**
- * Wait for components to become specific statuses.
+ * Wait for components to become specific states.
  *
  * @param	{Array}			waitlist			Components to wait.
  * @param	{integer}		timeout				Timeout in milliseconds.
@@ -433,23 +271,23 @@ Component.prototype.addComponent = function(componentName, options)
 Component.prototype.waitFor = function(waitlist, timeout)
 {
 
-	return WaitforOrganizer.waitFor(this, waitlist, timeout);
+	return StateOrganizer.waitFor(this, waitlist, timeout);
 
 }
 
 // -------------------------------------------------------------------------
 
 /**
- * Change status.
+ * Change state.
  *
- * @param	{String}		status				Component status.
+ * @param	{String}		state.				Component state.
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.changeStatus = function(status)
+Component.prototype.changeState = function(state)
 {
 
-	return WaitforOrganizer.changeStatus(this, status);
+	return StateOrganizer.changeState(this, state);
 
 }
 
@@ -511,17 +349,15 @@ Component.prototype.__init = function(settings)
 
 	// Init settings
 	let defaults = {
-		"autoOpen": true,
-		"autoClose": true,
-		"autoSetup":true,
 		"autoStop":true
 	};
-	this._settings = new Store({"items":Object.assign({}, defaults, this._getSettings(), settings)});
+	this._settings = new Store({"items":Object.assign({}, defaults, settings, this._getSettings())});
 	this._settings.set("name", this._settings.get("name", this.constructor.name));
 	this._settings.chain(BITSMIST.v1.Globals["settings"]);
 
 	// Init organizers
 	return BITSMIST.v1.Globals.organizers.notify("init", "*", this);
+	//return BITSMIST.v1.Globals.organizers.notify("init", "init", this);
 
 }
 
