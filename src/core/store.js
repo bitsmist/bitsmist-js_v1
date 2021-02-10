@@ -356,7 +356,7 @@ export default class Store
 	_callHandler(type, conditions, observerInfo, ...args)
 	{
 
-		if (this._filter(conditions, observerInfo))
+		if (this._filter(conditions, observerInfo, ...args))
 		{
 			if (typeof observerInfo["object"][type] === "function")
 			{
