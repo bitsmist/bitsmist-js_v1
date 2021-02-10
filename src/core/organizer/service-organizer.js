@@ -44,7 +44,7 @@ export default class ServiceOrganizer
 		{
 			waitInfo["rootNode"] = settings["rootNode"];
 		}
-		waitInfo["status"] = "started";
+		waitInfo["state"] = "started";
 
 		return component.waitFor([waitInfo]).then(() => {
 			// Get component

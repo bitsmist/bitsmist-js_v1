@@ -29,7 +29,7 @@ export default class StateOrganizer
 	static init(component)
 	{
 
-		component._status = "";
+		component._state = "";
 
 	}
 
@@ -104,7 +104,7 @@ export default class StateOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for components to become specific statuses.
+	 * Wait for components to become specific states.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Array}			waitlist			Components to wait.
@@ -135,7 +135,8 @@ export default class StateOrganizer
 			});
 			waitInfo["promise"] = promise;
 
-			StateOrganizer.__addToWaitingList(waitInfo, component, status);
+			//StateOrganizer.__addToWaitingList(waitInfo, component, state);
+			StateOrganizer.__addToWaitingList(waitInfo, component);
 		}
 
 		return promise;
@@ -145,19 +146,19 @@ export default class StateOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for a component to become specific status.
+	 * Wait for a component to become specific state.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		status				Status.
+	 * @param	{String}		state				state.
 	 * @param	{integer}		timeout				Timeout in milliseconds.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static waitForSingle(component, status, timeout)
+	static waitForSingle(component, state, timeout)
 	{
 
 		let componentInfo = BITSMIST.v1.Globals.components.get(component.uniqueId);
-		let waitlistItem = {"id":component.uniqueId, "status":status};
+		let waitlistItem = {"id":component.uniqueId, "state":state};
 
 		if (StateOrganizer.__isReady(waitlistItem, componentInfo))
 		{
@@ -173,34 +174,34 @@ export default class StateOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for a component to become transitionable status.
+	 * Wait for a component to become transitionable state.
 	 *
 	 * @param	{Object}		component			Component to register.
-	 * @param	{String}		currentStatus		Current status.
-	 * @param	{String}		newStatus			New status.
+	 * @param	{String}		currentState		Current state.
+	 * @param	{String}		newState			New state.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
 	/*
-	static waitForTransitionableStatus(component, currentStatus, newStatus)
+	static waitForTransitionableState(component, currentState, newState)
 	{
 
-		if (newStatus == "starting")
+		if (newState == "starting")
 		{
 			return StateOrganizer.waitForSingle(component, "instantiated");
 		}
 
-		if (newStatus == "stopping")
+		if (newState == "stopping")
 		{
 			return StateOrganizer.waitForSingle(component, "instantiated");
 		}
 
-		if (newStatus == "opening")
+		if (newState == "opening")
 		{
 			return StateOrganizer.waitForSingle(component, "started");
 		}
 
-		if (newStatus == "closing")
+		if (newState == "closing")
 		{
 			return StateOrganizer.waitForSingle(component, "opened");
 		}
@@ -211,26 +212,26 @@ export default class StateOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Change component status and check waiting list.
+	 * Change component state and check waiting list.
 	 *
 	 * @param	{Component}		component			Component to register.
-	 * @param	{String}		status				Component status.
+	 * @param	{String}		state				Component state.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static changeStatus(component, status)
+	static changeState(component, state)
 	{
 
-		if (StateOrganizer.__isTransitionable(component.status, status))
+		if (StateOrganizer.__isTransitionable(component.state, state))
 		{
-			component.status = status;
-			BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "status":status});
+			component.state = state;
+			BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "state":state});
 
-			StateOrganizer.__processWaitingList(component, status);
+			StateOrganizer.__processWaitingList(component, state);
 		}
 		else
 		{
-			throw Error(`Illegal transition. name=${component.name}, fromStatus=${component.status}, toStatus=${status}`);
+			throw Error(`Illegal transition. name=${component.name}, fromState=${component.state}, toState=${state}`);
 		}
 
 	}
@@ -249,10 +250,10 @@ export default class StateOrganizer
 
 		let ret = false;
 
-		if (component.status &&
-			component.status != "starting" &&
-			component.status != "stopping" &&
-			component.status != "stopped"
+		if (component.state &&
+			component.state != "starting" &&
+			component.state != "stopping" &&
+			component.state != "stopped"
 		)
 		{
 			ret = true;
@@ -267,26 +268,26 @@ export default class StateOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check whether changing curren status to new status is allowed.
+	 * Check whether changing curren state to new state is allowed.
 	 *
-	 * @param	{String}		currentStatus		Current status.
-	 * @param	{String}		newStatus			New status.
+	 * @param	{String}		currentState		Current state.
+	 * @param	{String}		newState			New state.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __isTransitionable(currentStatus, newStatus)
+	static __isTransitionable(currentState, newState)
 	{
 
 		let ret = true;
 
-		if (currentStatus && currentStatus.slice(-3) == "ing")
+		if (currentState && currentState.slice(-3) == "ing")
 		{
 			if(
-				( currentStatus == "stopping" && newStatus != "stopped") ||
-				( currentStatus == "starting" && newStatus != "started") ||
-				( currentStatus == "opening" && (newStatus != "opened" && newStatus != "opening") ) ||
-				( currentStatus == "closeing" && newStatus != "closed") ||
-				( currentStatus == "stopping" && (newStatus != "stopped" && newStatus != "closing") )
+				( currentState == "stopping" && newState != "stopped") ||
+				( currentState == "starting" && newState != "started") ||
+				( currentState == "opening" && (newState != "opened" && newState != "opening") ) ||
+				( currentState == "closeing" && newState != "closed") ||
+				( currentState == "stopping" && (newState != "stopped" && newState != "closing") )
 			)
 			{
 				ret = false;
@@ -302,15 +303,15 @@ export default class StateOrganizer
 	/**
 	 * Check wait list and resolve() if components are ready.
 	 */
-	static __processWaitingList(component, status)
+	static __processWaitingList(component, state)
 	{
 
 		// Process name index
-		let names = StateOrganizer.__waitingListIndexName.get(component.name + "." + status);
+		let names = StateOrganizer.__waitingListIndexName.get(component.name + "." + state);
 		StateOrganizer.__processIndex(names);
 
 		// Process ID index
-		let ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + status);
+		let ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + state);
 		StateOrganizer.__processIndex(ids);
 
 		// Process non indexables
@@ -359,11 +360,12 @@ export default class StateOrganizer
 	 *
 	 * @param	{Object}		waitInfo			Wait info.
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		status				Status.
+	 * @param	{String}		state				State.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __addToWaitingList(waitInfo, component, status)
+	//static __addToWaitingList(waitInfo, component, state)
+	static __addToWaitingList(waitInfo, component)
 	{
 
 		// Add wait info to the waiting list.
@@ -374,15 +376,15 @@ export default class StateOrganizer
 		let waitlist = waitInfo["waitlist"];
 		for (let i = 0; i < waitlist.length; i++)
 		{
-			// Index for component id + status
+			// Index for component id + state
 			if (waitlist[i].id)
 			{
-				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].status, id);
+				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].state, id);
 			}
-			// Index for component name + status
+			// Index for component name + state
 			else if (waitlist[i].name)
 			{
-				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].status, id);
+				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].state, id);
 			}
 			// Not indexable
 			else
@@ -507,15 +509,15 @@ export default class StateOrganizer
 	{
 
 		// Set defaults when not specified
-		waitlistItem["status"] = waitlistItem["status"] || "opened";
+		waitlistItem["state"] = waitlistItem["state"] || "opened";
 
 		// Check component
 		let isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
 
-		// Check status
+		// Check state
 		if (isMatch)
 		{
-			isMatch = StateOrganizer.__isStatusMatch(componentInfo["status"], waitlistItem["status"]);
+			isMatch = StateOrganizer.__isStateMatch(componentInfo["state"], waitlistItem["state"]);
 		}
 
 		return isMatch;
@@ -568,34 +570,34 @@ export default class StateOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if status match.
+	 * Check if state match.
 	 *
-	 * @param	{String}		currentStatus		Current status.
-	 * @param	{String}		expectedStatus		Expected status.
+	 * @param	{String}		currentState		Current state.
+	 * @param	{String}		expectedState		Expected state.
 	 *
 	 * @return  {Boolean}		True if match.
 	 */
-	static __isStatusMatch(currentStatus, expectedStatus)
+	static __isStateMatch(currentState, expectedState)
 	{
 
 		let isMatch = true;
 
-		switch (expectedStatus)
+		switch (expectedState)
 		{
 			case "started":
 				if (
-					currentStatus != "opening" &&
-					currentStatus != "opened" &&
-					currentStatus != "closing" &&
-					currentStatus != "closed" &&
-					currentStatus != "started"
+					currentState != "opening" &&
+					currentState != "opened" &&
+					currentState != "closing" &&
+					currentState != "closed" &&
+					currentState != "started"
 				)
 				{
 					isMatch = false;
 				}
 				break;
 			default:
-				if (currentStatus != expectedStatus)
+				if (currentState != expectedState)
 				{
 					isMatch = false;
 				}

@@ -204,7 +204,7 @@ export default class ComponentOrganizer
 			if (sync || options["sync"])
 			{
 				let state = sync || options["sync"];
-				return StateOrganizer.waitFor(component, [{"name":className, "status":state}]);
+				return StateOrganizer.waitFor(component, [{"name":className, "state":state}]);
 			}
 		});
 
@@ -350,7 +350,7 @@ export default class ComponentOrganizer
 
 		let ret = false;
 
-		if (BITSMIST.v1.Globals.classes.get(className, {})["status"] == "loaded")
+		if (BITSMIST.v1.Globals.classes.get(className, {})["state"] == "loaded")
 		{
 			ret = true;
 		}
@@ -386,10 +386,10 @@ export default class ComponentOrganizer
 		{
 			// Already loaded
 			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`);
-			BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loaded"});
+			BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loaded"});
 			promise = Promise.resolve();
 		}
-		else if (BITSMIST.v1.Globals.classes.get(className, {})["status"] == "loading")
+		else if (BITSMIST.v1.Globals.classes.get(className, {})["state"] == "loading")
 		{
 			// Already loading
 			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already loading. className=${className}`);
@@ -398,9 +398,9 @@ export default class ComponentOrganizer
 		else
 		{
 			// Not loaded
-			BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loading"});
+			BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loading"});
 			promise = ComponentOrganizer.__loadComponentScript(tagName, path, options).then(() => {
-				BITSMIST.v1.Globals.classes.mergeSet(className, {"status":"loaded", "promise":null});
+				BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loaded", "promise":null});
 			});
 			BITSMIST.v1.Globals.classes.mergeSet(className, {"promise":promise});
 		}
