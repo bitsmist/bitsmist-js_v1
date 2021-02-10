@@ -11,7 +11,7 @@
 import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
 import Util from '../util/util';
-//import Pad from '../pad';
+//import Pad from '../pad'; // Circular dependency
 import StateOrganizer from '../organizer/state-organizer';
 
 // =============================================================================
@@ -298,39 +298,6 @@ export default class ComponentOrganizer
 		});
 
 		return Promise.all(promises);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load setting file.
-	 *
-	 * @param	{String}		settingName			Setting name.
-	 * @param	{String}		path				Path to setting file.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static loadSetting(settingName, path)
-	{
-
-		let url = Util.concatPath([path, settingName + ".js"]);
-		let settings;
-
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			//console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}, name=${this.name}`);
-			console.debug(`LoaderMixin.loadSettings(): Loaded settings. url=${url}`);
-			try
-			{
-				settings = JSON.parse(xhr.responseText);
-			}
-			catch(e)
-			{
-				throw new SyntaxError(`Illegal json string. url=${url}`);
-			}
-
-			return settings;
-		});
 
 	}
 
