@@ -84,12 +84,12 @@ export default class TemplateOrganizer
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName)
+	static isTarget(eventName, observerInfo, ...args)
 	{
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterStart")
+		if (eventName == "*" || eventName == "afterStartPad")
 		{
 			ret = true;
 		}
