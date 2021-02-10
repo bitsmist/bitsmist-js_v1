@@ -44,7 +44,7 @@ export default class ServiceOrganizer
 		{
 			waitInfo["rootNode"] = settings["rootNode"];
 		}
-		waitInfo["status"] = "opened";
+		waitInfo["status"] = "started";
 
 		return component.waitFor([waitInfo]).then(() => {
 			// Get component
@@ -118,7 +118,7 @@ export default class ServiceOrganizer
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName)
+	static isTarget(eventName, observerInfo, ...args)
 	{
 
 		let ret = false;
