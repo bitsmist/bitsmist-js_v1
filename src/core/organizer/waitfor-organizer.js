@@ -79,14 +79,22 @@ export default class WaitforOrganizer
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName)
+	static isTarget(eventName, observerInfo, ...args)
 	{
 
 		let ret = false;
+		let component = args[0];
 
 		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
 		{
 			ret = true;
+		}
+		else if (eventName == "afterStart")
+		{
+			if (!(component instanceof BITSMIST.v1.Pad))
+			{
+				ret = true;
+			}
 		}
 
 		return ret;
