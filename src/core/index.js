@@ -21,10 +21,6 @@ window.BITSMIST.v1.Globals = Globals;
 import Component from './component';
 window.BITSMIST.v1.Component = Component;
 
-// Mixin
-
-import EventMixin from './mixin/event-mixin';
-
 // Organizer
 
 import SettingOrganizer from './organizer/setting-organizer';
