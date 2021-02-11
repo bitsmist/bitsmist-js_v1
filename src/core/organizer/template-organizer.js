@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import Pad from '../pad';
 import Util from '../util/util';
 
 // =============================================================================
@@ -20,6 +21,30 @@ export default class TemplateOrganizer
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Global init.
+	 */
+	static globalInit()
+	{
+
+		// Add methods
+
+		Pad.prototype.addTemplate = function(templateName, options) {
+			return TemplateOrganizer.addTemplate(this, templateName, options);
+		}
+
+		Pad.prototype.cloneTemplate = function(templateName) {
+			return TemplateOrganizer.clone(this, templateName);
+		}
+
+		Pad.prototype.isActiveTemplate = function(templateName) {
+			return TemplateOrganizer.isActive(this, templateName);
+		}
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**

@@ -8,8 +8,8 @@
  */
 // =============================================================================
 
-import Component from './component';
 import ClassUtil from './util/class-util';
+import Component from './component';
 import Util from './util/util';
 
 // =============================================================================
@@ -19,8 +19,6 @@ import Util from './util/util';
 // -----------------------------------------------------------------------------
 //  Constructor
 // -----------------------------------------------------------------------------
-
-import ComponentOrganizer from './organizer/component-organizer';
 
 /**
  * Constructor.
@@ -54,7 +52,7 @@ TagLoader.prototype.onDOMContentLoaded= function(sender, e)
 	let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
 	let splitComponent = this._settings.get("system.splitComponent", false);
 
-	ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent});
+	this.loadTags(document, path, {"splitComponent":splitComponent});
 
 }
 

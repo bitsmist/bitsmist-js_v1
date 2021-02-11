@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import Component from '../component';
 import Store from '../store';
 
 // =============================================================================
@@ -19,6 +20,43 @@ export default class StateOrganizer
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Global init.
+	 */
+	static globalInit()
+	{
+
+		// Add properties
+
+		Object.defineProperty(Component.prototype, 'state', {
+			get()
+			{
+				return this._state;
+			},
+			set(value)
+			{
+				this._state = value;
+			}
+		});
+
+		// Add methods
+
+		Component.prototype.changeState= function(newState) {
+			return StateOrganizer.changeState(this, newState);
+		}
+
+		Component.prototype.isInitialized = function() {
+			return StateOrganizer.isInitialized(this);
+		}
+
+		Component.prototype.waitFor = function(waitlist, timeout) {
+			return StateOrganizer.waitFor(this, waitlist, timeout);
+		}
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -177,13 +215,12 @@ export default class StateOrganizer
 	 * Wait for a component to become transitionable state.
 	 *
 	 * @param	{Object}		component			Component to register.
-	 * @param	{String}		currentState		Current state.
 	 * @param	{String}		newState			New state.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
 	/*
-	static waitForTransitionableState(component, currentState, newState)
+	static waitForTransitionableState(component, newState)
 	{
 
 		if (newState == "starting")

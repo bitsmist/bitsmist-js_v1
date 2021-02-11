@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import Component from '../component';
 import Store from '../store';
 import Util from '../util/util';
 
@@ -21,6 +22,25 @@ export default class SettingOrganizer
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Global init.
+	 */
+	static globalInit()
+	{
+
+		// Add properties
+
+		Object.defineProperty(Component.prototype, 'settings', {
+			get() {
+				return this._settings;
+			},
+			configurable: true
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**

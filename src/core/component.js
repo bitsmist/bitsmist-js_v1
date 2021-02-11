@@ -9,11 +9,6 @@
 // =============================================================================
 
 import ClassUtil from './util/class-util';
-import ComponentOrganizer from './organizer/component-organizer';
-import EventMixin from './mixin/event-mixin';
-import Store from './store';
-import Util from './util/util';
-import StateOrganizer from './organizer/state-organizer';
 
 // =============================================================================
 //	Component class
@@ -34,9 +29,8 @@ export default function Component()
 
 }
 
-// Inherit & Mixin
+// Inherit
 ClassUtil.inherit(Component, HTMLElement);
-Object.assign(Component.prototype, EventMixin);
 
 // -----------------------------------------------------------------------------
 //  Callbacks
@@ -48,7 +42,7 @@ Object.assign(Component.prototype, EventMixin);
 Component.prototype.connectedCallback = function()
 {
 
-	if (!StateOrganizer.isInitialized(this))
+	if (!this.isInitialized())
 	{
 		return this.start();
 	}
@@ -127,38 +121,6 @@ Object.defineProperty(Component.prototype, 'uniqueId', {
 })
 
 // -----------------------------------------------------------------------------
-
-/**
- * State.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'state', {
-	get()
-	{
-		return this._state;
-	},
-	set(value)
-	{
-		this._state = value;
-	}
-})
-
-// -----------------------------------------------------------------------------
-
-/**
- * Settings.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'settings', {
-	get() {
-		return this._settings;
-	},
-	configurable: true
-})
-
-// -----------------------------------------------------------------------------
 //  Methods
 // -----------------------------------------------------------------------------
 
@@ -173,7 +135,7 @@ Component.prototype.start = function(settings)
 {
 
 	return Promise.resolve().then(() => {
-//		return StateOrganizer.waitForTransitionableState(this, this._state, "starting")
+//		return StateOrganizer.waitForTransitionableState(this, "starting")
 	// }).then(() => {
 		return this._injectSettings(settings);
 	 }).then((newSettings) => {
@@ -184,7 +146,7 @@ Component.prototype.start = function(settings)
 		return this._injectEvents();
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}`);
-		return StateOrganizer.changeState(this, "starting");
+		return this.changeState("starting");
 	}).then(() => {
 		return this.trigger("beforeStart", this);
 	}).then(() => {
@@ -199,7 +161,7 @@ Component.prototype.start = function(settings)
 		return this.trigger("afterStart", this);
 	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}`);
-		return StateOrganizer.changeState(this, "started");
+		return this.changeState("started");
 	});
 
 }
@@ -217,10 +179,10 @@ Component.prototype.stop = function(options)
 {
 
 	return Promise.resolve().then(() => {
-//		return StateOrganizer.waitForTransitionableState(this, this._states, "stopping")
+//		return StateOrganizer.waitForTransitionableState(this, "stopping")
 	// }).then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this.name}`);
-		return StateOrganizer.changeState(this, "stopping");
+		return this.changeState("stopping");
 	}).then(() => {
 		return this.trigger("beforeStop", this);
 	}).then(() => {
@@ -229,7 +191,7 @@ Component.prototype.stop = function(options)
 		return this.trigger("afterStop", this);
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this.name}`);
-		return StateOrganizer.changeState(this, "stopped");
+		return this.changeState(this, "stopped");
 	});
 
 }
@@ -258,40 +220,6 @@ Component.prototype.setup = function(options)
 	}).then(() => {
 		return this.trigger("afterSetup", sender, options);
 	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Add a component.
- *
- * @param	{String}		componentName		Component name.
- * @param	{Object}		options				Options for the component.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.addComponent = function(componentName, options)
-{
-
-	return ComponentOrganizer.addComponent(this, componentName, options);
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Wait for components to become specific states.
- *
- * @param	{Array}			waitlist			Components to wait.
- * @param	{integer}		timeout				Timeout in milliseconds.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.waitFor = function(waitlist, timeout)
-{
-
-	return StateOrganizer.waitFor(this, waitlist, timeout);
 
 }
 

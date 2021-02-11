@@ -10,10 +10,7 @@
 
 import ClassUtil from './util/class-util';
 import Component from './component';
-import TemplateOrganizer from './organizer/template-organizer';
-import ComponentOrganizer from './organizer/component-organizer';
 import Globals from './globals';
-import StateOrganizer from './organizer/state-organizer';
 import Util from './util/util';
 
 // =============================================================================
@@ -56,10 +53,10 @@ Pad.prototype.open = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
-//		return StateOrganizer.waitForTransitionableState(this, this._state., "opening")
+//		return StateOrganizer.waitForTransitionableState(this, "opening")
 //	}).then(() => {
 		console.debug(`Pad.open(): Opening pad. name=${this.name}`);
-		return StateOrganizer.changeState(this, "opening");
+		return this.changeState("opening");
 	}).then(() => {
 		return this.switchTemplate(this._settings.get("templateName"));
 	}).then(() => {
@@ -82,7 +79,7 @@ Pad.prototype.open = function(options)
 		return this.trigger("afterOpen", sender, {"options":options});
 	}).then(() => {
 		console.debug(`Pad.open(): Opened pad. name=${this.name}`);
-		return StateOrganizer.changeState(this, "opened");
+		return this.changeState("opened");
 	});
 
 }
@@ -129,10 +126,10 @@ Pad.prototype.close = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
-//		return StateOrganizer.waitForTransitionableState(this, this._state, "closing")
+//		return StateOrganizer.waitForTransitionableState(this, "closing")
 //	}).then(() => {
 		console.debug(`Pad.close(): Closing pad. name=${this.name}`);
-		return StateOrganizer.changeState(this, "closing");
+		return this.changeState("closing");
 	}).then(() => {
 		return this.trigger("beforeClose", sender);
 	}).then(() => {
@@ -146,7 +143,7 @@ Pad.prototype.close = function(options)
 		}
 	}).then(() => {
 		console.debug(`Pad.close(): Closed pad. name=${this.name}`);
-		return StateOrganizer.changeState(this, "closed");
+		return this.changeState("closed");
 	});
 
 }
@@ -195,17 +192,17 @@ Pad.prototype.switchTemplate = function(templateName)
 
 	console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
 
-	if (TemplateOrganizer.isActive(this, templateName))
+	if (this.isActiveTemplate(templateName))
 	{
 		return Promise.resolve();
 	}
 
 	return Promise.resolve().then(() => {
-		return TemplateOrganizer.addTemplate(this, templateName, {"rootNode":this._settings.get("rootNode"), "templateNode":this._settings.get("templateNode")});
+		return this.addTemplate(templateName, {"rootNode":this._settings.get("rootNode"), "templateNode":this._settings.get("templateNode")});
 	}).then(() => {
 		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
 		let splitComponent = this._settings.get("system.splitComponent", false);
-		return ComponentOrganizer.loadTags(this, path, {"splitComponent":splitComponent});
+		return this.loadTags(this, path, {"splitComponent":splitComponent});
 	}).then(() => {
 		return BITSMIST.v1.Globals.organizers.notify("organize", "afterAppend", this, this._settings.items);
 	}).then(() => {
@@ -257,6 +254,7 @@ Pad.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 		return Component.prototype.start.call(this, settings);
 	}).then(() => {
+		// If autoSetup was not overwritten by parent, then set it to true as default
 		if (this._settings.get("autoSetup") === null)
 		{
 			this._settings.set("autoSetup", true);
@@ -286,6 +284,6 @@ Pad.prototype.start = function(settings)
 Pad.prototype.clone = function()
 {
 
-	return TemplateOrganizer.clone(this, this._settings.get("templateName"));
+	return this.cloneTemplate(this._settings.get("templateName"));
 
 }

@@ -24,9 +24,6 @@ class Globals
 
 	/**
      * Constructor.
-     *
-	 * @param	{Object}		options				Options.
-	 * @param	{Store}			chain				Store Component to chain.
      */
 	constructor()
 	{
@@ -34,11 +31,21 @@ class Globals
 		// Init vars
 		this._classes = new Store();
 		this._components = new Store();
+		this._preferences = new Store();
+		this._settings = new Store();
 		this._organizers = new Store({"filter": (condition, observerInfo, ...args) => {
 			return observerInfo["object"].isTarget(condition, observerInfo, ...args);
 		}});
-		this._preferences = new Store();
-		this._settings = new Store();
+
+		// Init organizer store
+		this._organizers.setOrg = this._organizers.set;
+		this._organizers.set = (key, value) => {
+			this._organizers.setOrg(key, value);
+			if (typeof value["object"].globalInit == "function")
+			{
+				value["object"].globalInit();
+			}
+		};
 
 	}
 

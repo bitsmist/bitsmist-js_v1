@@ -10,9 +10,10 @@
 
 import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
-import Util from '../util/util';
-//import Pad from '../pad'; // Circular dependency
+import Component from '../component';
+import Pad from '../pad';
 import StateOrganizer from '../organizer/state-organizer';
+import Util from '../util/util';
 
 // =============================================================================
 //	Component organizer class
@@ -23,6 +24,26 @@ export default class ComponentOrganizer
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Global init.
+	 */
+	static globalInit()
+	{
+
+		// Add methods
+
+		Component.prototype.addComponent = function(componentName, options) {
+			return ComponentOrganizer.addComponent(this, componentName, options);
+		}
+
+		Component.prototype.loadTags = function(rootNode, basePath, settings) {
+			return ComponentOrganizer.loadTags(rootNode, basePath, settings);
+		}
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
