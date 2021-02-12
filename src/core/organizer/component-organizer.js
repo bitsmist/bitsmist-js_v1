@@ -130,7 +130,6 @@ export default class ComponentOrganizer
 	static isTarget(eventName, observerInfo, ...args)
 	{
 
-
 		let ret = false;
 		let component = args[0];
 
@@ -288,6 +287,11 @@ export default class ComponentOrganizer
 		let promises = [];
 
 		rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
+
+			// Rename data-autoload attribute
+			element.removeAttribute("data-autoload");
+			element.setAttribute("data-autoload-done", "");
+
 			if (element.getAttribute("href"))
 			{
 				let url = element.getAttribute("href");
