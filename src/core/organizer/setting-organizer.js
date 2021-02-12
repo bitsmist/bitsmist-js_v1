@@ -59,17 +59,13 @@ export default class SettingOrganizer
 			"autoStop": true
 		};
 		component._settings = new Store({"items":Object.assign({}, defaults, settings, component._getSettings())});
-		component._settings.set("name", component._settings.get("name", component.constructor.name));
 		component._settings.chain(BITSMIST.v1.Globals["settings"]);
 
-	//	console.log("@@@settings", component.name, component.settings.items);
-
-		/*
-		if (settings["name"])
+		// Overwrite name if specified
+		if (component._settings.get("name"))
 		{
-			component.name = settings["name"];
+			component._name = component._settings.get("name");
 		}
-		*/
 
 	}
 

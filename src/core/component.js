@@ -102,7 +102,7 @@ Component.prototype.attributeChangedCallback = function()
 Object.defineProperty(Component.prototype, 'name', {
 	get()
 	{
-		return this._settings.get("name");
+		return this._name;
 	}
 })
 
@@ -141,6 +141,7 @@ Component.prototype.start = function(settings)
 	 }).then((newSettings) => {
 		// Init
 		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+		this._name = this.constructor.name;
 		return BITSMIST.v1.Globals.organizers.notify("init", "*", this, newSettings);
 	 }).then(() => {
 		return this._injectEvents();
@@ -253,7 +254,7 @@ Component.prototype._injectEvents = function()
 // -----------------------------------------------------------------------------
 
 /**
- * Get component options.  Need to override.
+ * Get component settings.  Need to override.
  *
  * @return  {Object}		Options.
  */
