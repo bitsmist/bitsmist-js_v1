@@ -49,10 +49,11 @@ export default class ComponentOrganizer
 	/**
 	 * Init.
 	 *
+	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static init(component, settings)
+	static init(conditions, component, settings)
 	{
 
 		component._components = {};
@@ -64,15 +65,16 @@ export default class ComponentOrganizer
 	/**
 	 * Organize.
 	 *
+	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component)
+	static organize(conditions, component, settings)
 	{
 
 		let chain = Promise.resolve();
-		let settings = component.settings.items;
+		settings = ( settings ? settings : component.settings.items );
 
 		let molds = settings["molds"];
 		if (molds)
@@ -192,23 +194,14 @@ export default class ComponentOrganizer
 				}
 
 				// Build tag
-				let tag;
-				if (options["path"])
-				{
-					tag = ( options["tag"] ? options["tag"] : "<" + tagName + " data-path='" + options["path"] + "'></" + tagName + ">" );
-				}
-				else
-				{
-					tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
-				}
-				if (!tag)
-				{
-					throw new ReferenceError(`Tag name for '${componentName}' is not defined. name=${component.name}`);
-				}
+				let tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
 
 				// Insert tag
 				root.insertAdjacentHTML("afterbegin", tag);
 				component._components[componentName] = root.children[0];
+				component._components[componentName]._injectSettings = function(settings){
+					return Object.assign({}, settings, options);
+				};
 			}
 		}).then(() => {
 			// Expose component
