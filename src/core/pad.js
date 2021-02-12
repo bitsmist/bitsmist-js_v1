@@ -204,7 +204,7 @@ Pad.prototype.switchTemplate = function(templateName)
 		let splitComponent = this._settings.get("system.splitComponent", false);
 		return this.loadTags(this, path, {"splitComponent":splitComponent});
 	}).then(() => {
-		return BITSMIST.v1.Globals.organizers.notify("organize", "afterAppend", this, this._settings.items);
+		return BITSMIST.v1.Globals.organizers.notify("organize", "afterAppend", this);
 	}).then(() => {
 		return this.trigger("afterAppend", this);
 	});
@@ -261,7 +261,7 @@ Pad.prototype.start = function(settings)
 		}
 		return BITSMIST.v1.Globals.organizers.notify("init", "initPad", this);
 	}).then(() => {
-		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStartPad", this, this._settings.items);
+		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStartPad", this);
 	}).then(() => {
 		return this.trigger("afterStartPad", this);
 	}).then(() => {

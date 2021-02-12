@@ -150,7 +150,7 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("beforeStart", this);
 	}).then(() => {
-		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this, this._settings.items);
+		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this);
 	}).then(() => {
 		if (this._settings.get("autoSetup"))
 		{
