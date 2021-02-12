@@ -239,6 +239,8 @@ export default class Util
 		let former;
 		let latter;
 		let pos;
+		let c = className.split(".");
+		className = c[c.length - 1];
 
 		for (pos = 1; pos < className.length; pos++)
 		{
