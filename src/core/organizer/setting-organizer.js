@@ -47,6 +47,7 @@ export default class SettingOrganizer
 	 * Init.
 	 *
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 */
 	static init(component, settings)
 	{
@@ -68,11 +69,10 @@ export default class SettingOrganizer
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component, settings)
+	static organize(component)
 	{
 
 		return Promise.resolve().then(() => {

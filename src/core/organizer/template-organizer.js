@@ -51,8 +51,9 @@ export default class TemplateOrganizer
 	 * Init.
 	 *
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 */
-	static init(component)
+	static init(component, setttings)
 	{
 
 		component._templates = {};
@@ -66,14 +67,13 @@ export default class TemplateOrganizer
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component, settings)
+	static organize(component)
 	{
 
-		let templates = settings["templates"];
+		let templates = component.settings.get["templates"];
 		if (templates)
 		{
 			Object.keys(templates).forEach((key) => {

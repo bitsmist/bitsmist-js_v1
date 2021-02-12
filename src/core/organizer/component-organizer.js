@@ -50,8 +50,9 @@ export default class ComponentOrganizer
 	 * Init.
 	 *
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 */
-	static init(component)
+	static init(component, settings)
 	{
 
 		component._components = {};
@@ -64,14 +65,14 @@ export default class ComponentOrganizer
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component, settings)
+	static organize(component)
 	{
 
 		let chain = Promise.resolve();
+		let settings = component.settings.items;
 
 		let molds = settings["molds"];
 		if (molds)

@@ -44,11 +44,10 @@ export default class AttrOrganizer
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component, settings)
+	static organize(component)
 	{
 
 		let events = {
@@ -63,7 +62,7 @@ export default class AttrOrganizer
 			"doRefresh": AttrOrganizer.onDoOrganize,
 		};
 
-		let attrs = settings["attrs"];
+		let attrs = component.settings.get("attrs");
 		if (attrs)
 		{
 			Object.keys(attrs).forEach((eventName) => {

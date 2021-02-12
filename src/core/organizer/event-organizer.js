@@ -58,14 +58,13 @@ export default class EventOrganizer
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component, settings)
+	static organize(component)
 	{
 
-		let events = settings["events"];
+		let events = component.settings.get("events");
 		if (events)
 		{
 			Object.keys(events).forEach((eventName) => {

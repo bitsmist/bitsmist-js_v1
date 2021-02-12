@@ -63,8 +63,9 @@ export default class StateOrganizer
 	 * Init.
 	 *
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 */
-	static init(component)
+	static init(component, settings)
 	{
 
 		component._state = "";
@@ -77,16 +78,15 @@ export default class StateOrganizer
 	 * Organize.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component, settings)
+	static organize(component)
 	{
 
 		let promise = Promise.resolve();
 
-		let waitFor = settings["waitFor"];
+		let waitFor = component.settings.get("waitFor");
 		if (waitFor)
 		{
 			promise = StateOrganizer.waitFor(component, waitFor);
