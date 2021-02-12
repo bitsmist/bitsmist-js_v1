@@ -217,8 +217,9 @@ export default class ComponentOrganizer
 		}).then(() => {
 			if (sync || options["sync"])
 			{
-				let state = sync || options["sync"];
-				return StateOrganizer.waitFor(component, [{"name":className, "state":state}]);
+				let state = sync || (options["sync"] === true ? "started" : options["sync"]);
+				let c = className.split(".");
+				return StateOrganizer.waitFor(component, [{"name":c[c.length - 1], "state":state}]);
 			}
 		});
 
