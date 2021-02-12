@@ -68,6 +68,7 @@ window.BITSMIST.v1.Store = Store;
 // Tag loader
 
 import TagLoader from './tagloader';
+window.BITSMIST.v1.TagLoader = TagLoader;
 
 // Util
 
