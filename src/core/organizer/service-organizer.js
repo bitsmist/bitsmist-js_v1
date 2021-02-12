@@ -76,11 +76,12 @@ export default class ServiceOrganizer
 	/**
 	 * Organize.
 	 *
+	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component)
+	static organize(conditions, component)
 	{
 
 		let services = component.settings.get("services");

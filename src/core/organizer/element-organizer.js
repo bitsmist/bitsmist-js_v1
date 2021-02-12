@@ -22,11 +22,12 @@ export default class ElementOrganizer
 	/**
 	 * Organize.
 	 *
+	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component, settings)
+	static organize(conditions, component)
 	{
 
 		let elements = component.settings.get("elements");

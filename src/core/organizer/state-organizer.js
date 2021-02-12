@@ -62,10 +62,11 @@ export default class StateOrganizer
 	/**
 	 * Init.
 	 *
+	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static init(component, settings)
+	static init(conditions, component, settings)
 	{
 
 		component._state = "";
@@ -77,11 +78,12 @@ export default class StateOrganizer
 	/**
 	 * Organize.
 	 *
+	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component)
+	static organize(conditions, component)
 	{
 
 		let promise = Promise.resolve();

@@ -360,7 +360,7 @@ export default class Store
 		{
 			if (typeof observerInfo["object"][type] === "function")
 			{
-				return observerInfo["object"][type].call(observerInfo["object"], ...args);
+				return observerInfo["object"][type].call(observerInfo["object"], conditions, ...args);
 			}
 			else
 			{

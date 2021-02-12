@@ -46,10 +46,11 @@ export default class SettingOrganizer
 	/**
 	 * Init.
 	 *
+	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static init(component, settings)
+	static init(conditions, component, settings)
 	{
 
 		// Init settings
@@ -61,6 +62,15 @@ export default class SettingOrganizer
 		component._settings.set("name", component._settings.get("name", component.constructor.name));
 		component._settings.chain(BITSMIST.v1.Globals["settings"]);
 
+	//	console.log("@@@settings", component.name, component.settings.items);
+
+		/*
+		if (settings["name"])
+		{
+			component.name = settings["name"];
+		}
+		*/
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -68,11 +78,12 @@ export default class SettingOrganizer
 	/**
 	 * Organize.
 	 *
+	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(component)
+	static organize(conditions, component)
 	{
 
 		return Promise.resolve().then(() => {
