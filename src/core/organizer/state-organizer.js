@@ -71,6 +71,9 @@ export default class StateOrganizer
 
 		component._state = "";
 
+		// Load settings from attributes
+		StateOrganizer.__loadAttrSettings(component);
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -644,6 +647,32 @@ export default class StateOrganizer
 		}
 
 		return isMatch;
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Get settings from element's attribute.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static __loadAttrSettings(component)
+	{
+
+		// Get waitFor from attribute
+
+		if (component.hasAttribute("data-waitfor"))
+		{
+			let waitInfo = {"name":component.getAttribute("data-waitfor"), "state":"started"};
+			component._settings.set("waitFor", [waitInfo]);
+		}
+
+		if (component.hasAttribute("data-waitfornode"))
+		{
+			let waitInfo = {"rootNode":component.getAttribute("data-waitfornode"), "state":"started"};
+			component._settings.set("waitFor", [waitInfo]);
+		}
 
 	}
 
