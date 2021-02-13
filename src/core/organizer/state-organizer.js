@@ -55,6 +55,14 @@ export default class StateOrganizer
 			return StateOrganizer.waitFor(this, waitlist, timeout);
 		}
 
+		Component.prototype.suspend = function(state) {
+			return StateOrganizer.suspend(this, state);
+		}
+
+		Component.prototype.resume = function(state) {
+			return StateOrganizer.resume(this, state);
+		}
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -70,6 +78,7 @@ export default class StateOrganizer
 	{
 
 		component._state = "";
+		//component._suspend = {};
 
 		// Load settings from attributes
 		StateOrganizer.__loadAttrSettings(component);
@@ -275,6 +284,48 @@ export default class StateOrganizer
 		{
 			throw Error(`Illegal transition. name=${component.name}, fromState=${component.state}, toState=${state}`);
 		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Change component state and check waiting list.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		state				Component state.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static suspend(component, state)
+	{
+
+		let suspendInfo = {};
+
+		let promise = new Promise((resolve, reject) => {
+			suspendInfo["resolve"] = resolve;
+			suspendInfo["reject"] = reject;
+		});
+		suspendInfo["promise"] = promise;
+
+		component._suspend[state] = suspendInfo;
+
+		return promise;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Change component state and check waiting list.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		state				Component state.
+	 */
+	static resume(component, state)
+	{
+
+		component._suspend[state].resolve();
 
 	}
 

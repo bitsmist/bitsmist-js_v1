@@ -146,6 +146,8 @@ Component.prototype.start = function(settings)
 	 }).then(() => {
 		return this._injectEvents();
 	}).then(() => {
+		// return ( this.hasAttribute("data-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
+	// }).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}`);
 		return this.changeState("starting");
 	}).then(() => {
