@@ -213,44 +213,6 @@ export default class SettingOrganizer
 	static __loadAttrSettings(component)
 	{
 
-		// Get path from href
-		if (component.hasAttribute("href"))
-		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("href"));
-			component._settings.set("system.appBaseUrl", "");
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("system.componentPath", arr[0]);
-			component._settings.set("path", "");
-		}
-
-		/*
-		// Get template path from attribute
-		if (component.hasAttribute("data-templatepath"))
-		{
-			component._settings.set("system.templatePath", component.getAttribute("data-templatepath"));
-		}
-
-		// Get template name from attribute
-		if (component.hasAttribute("data-templatename"))
-		{
-			component._settings.set("templateName", component.getAttribute("data-templatename"));
-		}
-
-		// Get template href from templatehref
-		if (component.hasAttribute("data-templatehref"))
-		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templatehref"));
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("templateName", arr[1].replace(".html", ""));
-		}
-		*/
-
-		// Get path from attribute
-		if (component.hasAttribute("data-path"))
-		{
-			component._settings.set("path", component.getAttribute("data-path"));
-		}
-
 		// Get settings from the attribute
 
 		let dataSettings = ( component._settings.get("rootNode") ?

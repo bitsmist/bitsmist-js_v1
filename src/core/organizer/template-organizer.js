@@ -60,6 +60,9 @@ export default class TemplateOrganizer
 		component._templates = {};
 		component.settings.set("templateName", component.settings.get("templateName", component.tagName.toLowerCase()));
 
+		// Load settings from attributes
+		TemplateOrganizer.__loadAttrSettings(component);
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -401,6 +404,40 @@ export default class TemplateOrganizer
 		ele.innerHTML = component._templates[templateName].html;
 
 		return ele.firstElementChild;
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Get settings from element's attribute.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static __loadAttrSettings(component)
+	{
+
+		/*
+		// Get template path from attribute
+		if (component.hasAttribute("data-templatepath"))
+		{
+			component._settings.set("system.templatePath", component.getAttribute("data-templatepath"));
+		}
+
+		// Get template name from attribute
+		if (component.hasAttribute("data-templatename"))
+		{
+			component._settings.set("templateName", component.getAttribute("data-templatename"));
+		}
+
+		// Get template href from templatehref
+		if (component.hasAttribute("data-templatehref"))
+		{
+			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templatehref"));
+			component._settings.set("system.templatePath", arr[0]);
+			component._settings.set("templateName", arr[1].replace(".html", ""));
+		}
+		*/
 
 	}
 
