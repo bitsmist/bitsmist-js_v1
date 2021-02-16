@@ -152,7 +152,7 @@ export default class AttrOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterStart" || eventName == "afterSpecLoad")
+		if (eventName == "*" || eventName == "beforeStart" || eventName == "afterSpecLoad")
 		{
 			ret = true;
 		}

@@ -142,7 +142,7 @@ export default class ComponentOrganizer
 		{
 			ret = true;
 		}
-		else if (eventName == "afterStart")
+		else if (eventName == "beforeStart")
 		{
 			if (!(component instanceof BITSMIST.v1.Pad))
 			{
@@ -204,6 +204,9 @@ export default class ComponentOrganizer
 				root.insertAdjacentHTML("afterbegin", tag);
 				component._components[componentName] = root.children[0];
 				component._components[componentName]._injectSettings = function(settings){
+					// super()
+					settings = component._super.prototype._injectSettings.call(this, settings);
+
 					return Object.assign({}, settings, options);
 				};
 			}

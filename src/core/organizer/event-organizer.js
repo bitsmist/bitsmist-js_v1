@@ -102,7 +102,7 @@ export default class EventOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterStart")
+		if (eventName == "*" || eventName == "beforeStart")
 		{
 			ret = true;
 		}

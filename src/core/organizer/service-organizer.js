@@ -123,7 +123,7 @@ export default class ServiceOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterStart")
+		if (eventName == "*" || eventName == "beforeStart")
 		{
 			ret = true;
 		}

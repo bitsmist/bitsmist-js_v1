@@ -141,7 +141,7 @@ export default class StateOrganizer
 		{
 			ret = true;
 		}
-		else if (eventName == "afterStart")
+		else if (eventName == "beforeStart")
 		{
 			if (!(component instanceof BITSMIST.v1.Pad))
 			{

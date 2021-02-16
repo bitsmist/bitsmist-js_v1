@@ -58,7 +58,9 @@ export default class SettingOrganizer
 			"autoSetup": true,
 			"autoStop": true
 		};
-		component._settings = new Store({"items":Object.assign({}, defaults, settings, component._getSettings())});
+		component._settings = new Store({"items":defaults});
+		component._settings.merge(settings);
+		component._settings.merge(component._getSettings());
 		component._settings.chain(BITSMIST.v1.Globals["settings"]);
 
 		// Overwrite name if specified
@@ -122,7 +124,7 @@ export default class SettingOrganizer
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "afterStart")
+		if (eventName == "*" || eventName == "beforeStart")
 		{
 			ret = true;
 		}
