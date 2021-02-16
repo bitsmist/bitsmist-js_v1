@@ -135,27 +135,29 @@ Component.prototype.start = function(settings)
 {
 
 	return Promise.resolve().then(() => {
-//		return StateOrganizer.waitForTransitionableState(this, "starting")
+	//	return StateOrganizer.waitForTransitionableState(this, "starting")
 	// }).then(() => {
-		return this._injectSettings(settings);
-	 }).then((newSettings) => {
-		// Init
+		// Init vars
 		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 		this._name = this.constructor.name;
+
+		return this._injectSettings(settings);
+	}).then((newSettings) => {
 		return BITSMIST.v1.Globals.organizers.notify("init", "*", this, newSettings);
-	 }).then(() => {
-		return this._injectEvents();
-	}).then(() => {
-		// return ( this.hasAttribute("data-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
 	// }).then(() => {
+		// suspend when specified
+		// return ( this.hasAttribute("data-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
+	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}`);
 		return this.changeState("starting");
 	}).then(() => {
+		return BITSMIST.v1.Globals.organizers.notify("organize", "beforeStart", this);
+	}).then(() => {
 		return this.trigger("beforeStart", this);
 	}).then(() => {
-		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStart", this);
-	}).then(() => {
-		if (this._settings.get("autoSetup"))
+		let autoSetupOnStart = this._settings.get("autoSetupOnStart");
+		let autoSetup = this._settings.get("autoSetup");
+		if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
 		{
 			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
 			return this.setup({"newPreferences":defaultPreferences});
@@ -211,7 +213,7 @@ Component.prototype.stop = function(options)
 Component.prototype.setup = function(options)
 {
 
-	console.debug(`Component.setup(): Setting up component. name=${this.name}`);
+	console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}`);
 
 	options = Object.assign({}, options);
 	let sender = ( options["sender"] ? options["sender"] : this );
@@ -242,15 +244,6 @@ Component.prototype._injectSettings = function(settings)
 
 	return settings;
 
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Inject event handlers.
- */
-Component.prototype._injectEvents = function()
-{
 }
 
 // -----------------------------------------------------------------------------

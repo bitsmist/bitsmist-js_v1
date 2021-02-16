@@ -62,7 +62,9 @@ Pad.prototype.open = function(options)
 	}).then(() => {
 		return this.trigger("beforeOpen", sender, {"options":options});
 	}).then(() => {
-		if (this._settings.get("autoSetup"))
+		let autoSetupOnOpen = this._settings.get("autoSetupOnOpen");
+		let autoSetup = this._settings.get("autoSetup");
+		if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
 		{
 			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
 			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
@@ -236,34 +238,11 @@ Pad.prototype.fill = function(options)
 Pad.prototype.start = function(settings)
 {
 
-	// Init vars
-	this._isModal = false;
-	this._modalOptions;
-	this._modalPromise;
-	this._modalResult;
+	settings = Object.assign({}, settings, {"autoSetupOnStart":false});
 
-	// Initial settings
-	let defaults = {
-		"autoOpen": true,
-		"autoClose": true,
-		"autoSetup": null, // To not run setup() on parent.start()
-	};
-	settings = Object.assign({}, defaults, settings);
-
-	// super()
 	return Promise.resolve().then(() => {
+		// super()
 		return Component.prototype.start.call(this, settings);
-	}).then(() => {
-		// If autoSetup was not overwritten by parent, then set it to true as default
-		if (this._settings.get("autoSetup") === null)
-		{
-			this._settings.set("autoSetup", true);
-		}
-		return BITSMIST.v1.Globals.organizers.notify("init", "initPad", this);
-	}).then(() => {
-		return BITSMIST.v1.Globals.organizers.notify("organize", "afterStartPad", this);
-	}).then(() => {
-		return this.trigger("afterStartPad", this);
 	}).then(() => {
 		// Open
 		if (this._settings.get("autoOpen"))
@@ -271,19 +250,5 @@ Pad.prototype.start = function(settings)
 			return this.open();
 		}
 	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Clone the pad.
- *
- * @return  {Object}		Cloned pad.
- */
-Pad.prototype.clone = function()
-{
-
-	return this.cloneTemplate(this._settings.get("templateName"));
 
 }
