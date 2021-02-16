@@ -36,6 +36,8 @@ export default class TemplateOrganizer
 		}
 
 		Pad.prototype.cloneTemplate = function(templateName) {
+			templateName = templateName || this._settings.get("templateName");
+
 			return TemplateOrganizer.clone(this, templateName);
 		}
 
@@ -58,7 +60,11 @@ export default class TemplateOrganizer
 	{
 
 		component._templates = {};
+
+		// Set defaults if not set already
 		component.settings.set("templateName", component.settings.get("templateName", component.tagName.toLowerCase()));
+		component.settings.set("autoOpen", component.settings.get("autoOpen", true));
+		component.settings.set("autoClose", component.settings.get("autoClose", true));
 
 		// Load settings from attributes
 		TemplateOrganizer.__loadAttrSettings(component);
@@ -118,10 +124,14 @@ export default class TemplateOrganizer
 	{
 
 		let ret = false;
+		let component = args[0];
 
-		if (eventName == "*" || eventName == "afterStartPad")
+		if (component instanceof BITSMIST.v1.Pad)
 		{
-			ret = true;
+			if (eventName == "*" || eventName == "beforeStart")
+			{
+				ret = true;
+			}
 		}
 
 		return ret;
