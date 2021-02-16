@@ -33,13 +33,11 @@ export default class ClassUtil
 	static newComponent(superClass, settings, tagName, className)
 	{
 
-		//superClass = ( superClass ? superClass : Component );
-		superClass = ( superClass ? superClass : BITSMIST.v1.Component );
 		className = ( className ? className : Util.getClassNameFromTagName(tagName) );
 
-		let component = function(options) {
-			return Reflect.construct(superClass, [options], this.constructor);
-		};
+		// Define class
+		let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
+		let component = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
 		ClassUtil.inherit(component, superClass);
 
 		settings["name"] = className;
@@ -52,9 +50,6 @@ export default class ClassUtil
 		{
 			customElements.define(tagName.toLowerCase(), component);
 		}
-
-		// Export to global
-		window[className] = component;
 
 		return component;
 
@@ -73,6 +68,7 @@ export default class ClassUtil
 
 		subClass.prototype = Object.create(superClass.prototype);
 		subClass.prototype.constructor = subClass;
+		subClass.prototype._super = superClass;
 		Object.setPrototypeOf(subClass, superClass);
 
 	}
@@ -117,7 +113,7 @@ export default class ClassUtil
 
 		try
 		{
-			ret = Function("return (" + className + ")")();
+			ret = Function("return (" + ClassUtil.__validateClassName(className) + ")")();
 		}
 		catch(e)
 		{
@@ -128,6 +124,29 @@ export default class ClassUtil
 		}
 
 		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Validate class name.
+	 *
+	 * @param	{String}		className			Class name.
+	 *
+	 * @return  {String}		Class name when valid. Throws an exception when not valid.
+	 */
+	static __validateClassName(className)
+	{
+
+		let result = /^[a-zA-Z0-9\-\.]+$/.test(className);
+
+		if (!result)
+		{
+			throw new TypeError(`Class name '${className}' is not valid.`);
+		}
+
+		return className;
 
 	}
 
