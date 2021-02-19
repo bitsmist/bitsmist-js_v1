@@ -69,7 +69,11 @@ export default class EventOrganizer
 		if (events)
 		{
 			Object.keys(events).forEach((eventName) => {
-				component.addEventHandler(component, eventName, events[eventName]);
+				let arr = ( Array.isArray(events[eventName]) ? events[eventName] : [events[eventName]] );
+				for (let i = 0; i < arr.length; i++)
+				{
+					component.addEventHandler(component, eventName, arr[i]);
+				}
 			});
 		}
 
