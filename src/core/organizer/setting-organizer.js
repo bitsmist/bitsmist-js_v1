@@ -217,7 +217,7 @@ export default class SettingOrganizer
 
 		// Get settings from the attribute
 
-		let dataSettings = ( component._settings.get("rootNode") ?
+		let dataSettings = ( document.querySelector(component._settings.get("rootNode")) ?
 			document.querySelector(component._settings.get("rootNode")).getAttribute("data-settings") :
 			component.getAttribute("data-settings")
 		);
