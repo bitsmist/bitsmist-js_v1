@@ -184,7 +184,7 @@ export default class ComponentOrganizer
 			{
 				// Define empty class
 				className = componentName;
-				ClassUtil.newComponent(BITSMIST.v1.Pad, {}, tagName, className);
+				ClassUtil.newComponent(BITSMIST.v1.Pad, options, tagName, className);
 			}
 		}).then(() => {
 			// Insert tag
@@ -201,8 +201,18 @@ export default class ComponentOrganizer
 				let tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
 
 				// Insert tag
-				root.insertAdjacentHTML("afterbegin", tag);
-				component._components[componentName] = root.children[0];
+				if (options["overwrite"])
+				{
+					root.outerHTML = tag;
+					component._components[componentName] = root;
+				}
+				else
+				{
+					root.insertAdjacentHTML("afterbegin", tag);
+					component._components[componentName] = root.children[0];
+				}
+
+				// Inject settings to added component
 				component._components[componentName]._injectSettings = function(settings){
 					// super()
 					settings = component._super.prototype._injectSettings.call(this, settings);
