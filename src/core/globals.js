@@ -8,7 +8,8 @@
  */
 // =============================================================================
 
-import Store from './store';
+import OrganizerStore from './store/organizer-store';
+import Store from './store/store';
 import Util from './util/util';
 
 // =============================================================================
@@ -33,19 +34,7 @@ class Globals
 		this._components = new Store();
 		this._preferences = new Store();
 		this._settings = new Store();
-		this._organizers = new Store({"filter": (condition, observerInfo, ...args) => {
-			return observerInfo["object"].isTarget(condition, observerInfo, ...args);
-		}});
-
-		// Init organizer store
-		this._organizers.setOrg = this._organizers.set;
-		this._organizers.set = (key, value) => {
-			this._organizers.setOrg(key, value);
-			if (typeof value["object"].globalInit == "function")
-			{
-				value["object"].globalInit();
-			}
-		};
+		this._organizers = new OrganizerStore();
 
 	}
 

@@ -8,13 +8,14 @@
  */
 // =============================================================================
 
-import Util from './util/util';
+import Util from '../util/util';
+import Store from './store';
 
 // =============================================================================
-//	Store class
+//	Setting store class
 // =============================================================================
 
-export default class Store
+export default class SettingStore extends Store
 {
 
 	// -------------------------------------------------------------------------
@@ -35,8 +36,9 @@ export default class Store
 		this._filter;
 		this._items = Util.safeGet(options, "items", {});
 
-		// Init filter function
-		this.filter = ( options && options["filter"] ? options["filter"] : () => { return true; } );
+		// Init filter/merger function
+		this.filter = Util.safeGet(options, "filter", () => { return true; } );
+		this.merger = Util.safeGet(options, "merger", Util.deepMerge );
 
 	}
 
@@ -101,6 +103,32 @@ export default class Store
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Merge function.
+	 *
+	 * @type	{Function}
+	 */
+	get merger()
+	{
+
+		this._merger;
+
+	}
+
+	set merger(value)
+	{
+
+		if (typeof value != "function")
+		{
+			throw TypeError(`Merger is not a function. filter=${value}`);
+		}
+
+		this._merger = value;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Method
 	// -------------------------------------------------------------------------
 
@@ -137,17 +165,20 @@ export default class Store
 	 * Merge items.
 	 *
 	 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
+	 * @param	{Function}		merger				Merge function.
 	 */
-	merge(newItems)
+	merge(newItems, merger)
 	{
+
 
 		if (newItems)
 		{
+			merger = merger || this._merger;
 			let items = (Array.isArray(newItems) ? newItems: [newItems]);
 
 			for (let i = 0; i < items.length; i++)
 			{
-				Util.deepMerge(this._items, items[i]);
+				merger(this._items, items[i]);
 			}
 		}
 
