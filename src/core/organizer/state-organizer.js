@@ -9,7 +9,7 @@
 // =============================================================================
 
 import Component from '../component';
-import Store from '../store';
+import Store from '../store/store';
 
 // =============================================================================
 //	Waitfor organizer class

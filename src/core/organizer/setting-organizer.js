@@ -10,7 +10,7 @@
 
 import AjaxUtil from '../util/ajax-util';
 import Component from '../component';
-import Store from '../store';
+import Store from '../store/store';
 import Util from '../util/util';
 
 // =============================================================================
@@ -59,9 +59,9 @@ export default class SettingOrganizer
 			"autoStop": true
 		};
 		component._settings = new Store({"items":defaults});
+		component._settings.chain(BITSMIST.v1.Globals["settings"]);
 		component._settings.merge(settings);
 		component._settings.merge(component._getSettings());
-		component._settings.chain(BITSMIST.v1.Globals["settings"]);
 
 		// Overwrite name if specified
 		if (component._settings.get("name"))
