@@ -58,7 +58,7 @@ export default class ClassUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Instantiate the component.
+	 * Inherit the component in ES5 way.
 	 *
 	 * @param	{Object}		subClass			Sub class.
 	 * @param	{Object}		superClass			Super class.
