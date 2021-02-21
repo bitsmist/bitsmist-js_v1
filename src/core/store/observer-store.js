@@ -34,7 +34,6 @@ export default class ObserverStore extends Store
 	notify(type, conditions, ...args)
 	{
 
-//		console.log("@@@", type, conditions, args);
 		let chain = Promise.resolve();
 
 		this._sortItems().forEach((id) => {
