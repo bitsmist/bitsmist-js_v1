@@ -53,14 +53,8 @@ export default class SettingOrganizer
 	static init(conditions, component, settings)
 	{
 
-		// Init settings
-		let defaults = {
-			"autoSetup": true,
-			"autoStop": true
-		};
-		component._settings = new Store({"items":defaults});
+		component._settings = new Store({"items":settings});
 		component._settings.chain(BITSMIST.v1.Globals["settings"]);
-		component._settings.merge(settings);
 		component._settings.merge(component._getSettings());
 
 		// Overwrite name if specified
