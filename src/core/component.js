@@ -9,6 +9,7 @@
 // =============================================================================
 
 import ClassUtil from './util/class-util';
+import Util from './util/util';
 
 // =============================================================================
 //	Component class
@@ -134,6 +135,21 @@ Object.defineProperty(Component.prototype, 'uniqueId', {
 Component.prototype.start = function(settings)
 {
 
+	let defaults = {
+		"autoSetup": true,
+		"autoStop": true,
+		"organizers": {
+			"OrganizerOrganizer": {},
+			"SettingOrganizer": {},
+			"StateOrganizer": {},
+			"EventOrganizer": {},
+			"ComponentOrganizer": {}, //
+			"ServiceOrganizer": {}, //
+			"PluginOrganizer": {}, //
+		}
+	};
+	settings = Util.deepMerge(defaults, settings);
+
 	return Promise.resolve().then(() => {
 	//	return StateOrganizer.waitForTransitionableState(this, "starting")
 	// }).then(() => {
@@ -143,15 +159,15 @@ Component.prototype.start = function(settings)
 
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
-		return BITSMIST.v1.Globals.organizers.notify("init", "*", this, newSettings);
+		return this.initOrganizers(newSettings);
 	// }).then(() => {
-		// suspend when specified
+		// suspend
 		// return ( this.hasAttribute("data-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}`);
 		return this.changeState("starting");
 	}).then(() => {
-		return BITSMIST.v1.Globals.organizers.notify("organize", "beforeStart", this);
+		return this.callOrganizers("beforeStart");
 	}).then(() => {
 		return this.trigger("beforeStart", this);
 	}).then(() => {

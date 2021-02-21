@@ -206,7 +206,7 @@ Pad.prototype.switchTemplate = function(templateName)
 		let splitComponent = this._settings.get("system.splitComponent", false);
 		return this.loadTags(this, path, {"splitComponent":splitComponent});
 	}).then(() => {
-		return BITSMIST.v1.Globals.organizers.notify("organize", "afterAppend", this);
+		return this.callOrganizers("afterAppend");
 	}).then(() => {
 		return this.trigger("afterAppend", this);
 	});
@@ -238,7 +238,15 @@ Pad.prototype.fill = function(options)
 Pad.prototype.start = function(settings)
 {
 
-	settings = Object.assign({}, settings, {"autoSetupOnStart":false});
+	let defaults = {
+		"autoSetupOnStart":false,
+		"organizers":{
+			"AttrOrganizer": {}, //
+			"ElementOrganizer": {}, //
+			"TemplateOrganizer": {},
+		}
+	};
+	settings = Util.deepMerge(defaults, settings);
 
 	return Promise.resolve().then(() => {
 		// super()
