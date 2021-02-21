@@ -9,13 +9,13 @@
 // =============================================================================
 
 import Util from '../util/util';
-import ObserverStore from './observer-store';
+import Store from './store';
 
 // =============================================================================
 //	Organizer store class
 // =============================================================================
 
-export default class OrganizerStore extends ObserverStore
+export default class OrganizerStore extends Store
 {
 
 	// -------------------------------------------------------------------------
@@ -32,9 +32,6 @@ export default class OrganizerStore extends ObserverStore
 	{
 
 		options = options || {};
-		options["filter"] = (condition, observerInfo, ...args) => {
-			return observerInfo["object"].isTarget(condition, observerInfo, ...args);
-		};
 
 		super(options, chain);
 
@@ -93,15 +90,24 @@ export default class OrganizerStore extends ObserverStore
 	getMerger(key)
 	{
 
-		let merger = (this._targets[key] && this._targets[key].object.merge ? this._targets[key].object.merge : Util.deepMerge);
-		//let merger = Util.safeGet(this._targets, key + ".object.merger", Util.deepmerge);
-
-		return merger;
+		return Util.safeGet(this._targets, key + ".object.merger", Util.deepmerge);
 
 	};
 
 	// -------------------------------------------------------------------------
-	// 	Protected
-	// -------------------------------------------------------------------------
+
+	/**
+	 * Get an organizer.
+	 *
+	 * @param	{String}		key					Key.
+	 *
+	 * @return  {*}				Organizer.
+	 */
+	getOrganizer(key)
+	{
+
+		return Util.safeGet(this._targets, key + ".object");
+
+	};
 
 }
