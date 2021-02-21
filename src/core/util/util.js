@@ -190,20 +190,23 @@ export default class Util
 	static deepMerge(arr1, arr2)
 	{
 
-		Object.keys(arr2).forEach((key) => {
-			if (Array.isArray(arr1[key]))
-			{
-				arr1[key] = arr1[key].concat(arr2[key]);
-			}
-			else if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object')
-			{
-				Util.deepMerge(arr1[key], arr2[key]);
-			}
-			else
-			{
-				arr1[key] = arr2[key];
-			}
-		});
+		if (arr2)
+		{
+			Object.keys(arr2).forEach((key) => {
+				if (Array.isArray(arr1[key]))
+				{
+					arr1[key] = arr1[key].concat(arr2[key]);
+				}
+				else if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object')
+				{
+					Util.deepMerge(arr1[key], arr2[key]);
+				}
+				else
+				{
+					arr1[key] = arr2[key];
+				}
+			});
+		}
 
 		return arr1;
 
