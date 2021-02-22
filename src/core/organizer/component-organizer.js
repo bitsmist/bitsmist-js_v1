@@ -58,9 +58,6 @@ export default class ComponentOrganizer
 
 		component._components = {};
 
-		// Load settings from attributes
-		ComponentOrganizer.__loadAttrSettings(component);
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -445,34 +442,6 @@ export default class ComponentOrganizer
 		}).then(() => {
 			console.debug(`LoaderMixin.__loadComponentScript(): Loaded script. componentName=${componentName}`);
 		});
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Get settings from element's attribute.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static __loadAttrSettings(component)
-	{
-
-		// Get path from href
-		if (component.hasAttribute("href"))
-		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("href"));
-			component._settings.set("system.appBaseUrl", "");
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("system.componentPath", arr[0]);
-			component._settings.set("path", "");
-		}
-
-		// Get path from attribute
-		if (component.hasAttribute("data-path"))
-		{
-			component._settings.set("path", component.getAttribute("data-path"));
-		}
 
 	}
 
