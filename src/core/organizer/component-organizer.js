@@ -212,9 +212,9 @@ export default class ComponentOrganizer
 				// Inject settings to added component
 				component._components[componentName]._injectSettings = function(settings){
 					// super()
-					settings = component._super.prototype._injectSettings.call(this, settings);
+					settings = Object.assign({}, component._super.prototype._injectSettings.call(this, settings));
 
-					return Object.assign({}, settings, options);
+					return Util.deepMerge(settings, options);
 				};
 			}
 		}).then(() => {
