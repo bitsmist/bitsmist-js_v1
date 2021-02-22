@@ -212,7 +212,7 @@ Component.prototype.stop = function(options)
 		return this.trigger("afterStop", this);
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this.name}`);
-		return this.changeState(this, "stopped");
+		return this.changeState("stopped");
 	});
 
 }
