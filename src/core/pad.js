@@ -241,9 +241,9 @@ Pad.prototype.start = function(settings)
 	let defaults = {
 		"autoSetupOnStart":false,
 		"organizers":{
-			"AttrOrganizer": {}, //
-			"ElementOrganizer": {}, //
 			"TemplateOrganizer": {},
+//			"AttrOrganizer": {},
+//			"ElementOrganizer": {},
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);

@@ -142,10 +142,10 @@ Component.prototype.start = function(settings)
 			"OrganizerOrganizer": {},
 			"SettingOrganizer": {},
 			"StateOrganizer": {},
-			"EventOrganizer": {},
-			"ComponentOrganizer": {}, //
-			"ServiceOrganizer": {}, //
-			"PluginOrganizer": {}, //
+//			"EventOrganizer": {},
+//			"ComponentOrganizer": {},
+//			"ServiceOrganizer": {},
+//			"PluginOrganizer": {},
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);
