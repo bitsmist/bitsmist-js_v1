@@ -28,7 +28,7 @@ Globals.organizers.set("SettingOrganizer", {"object":SettingOrganizer, "order": 
 window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
 
 import OrganizerOrganizer from './organizer/organizer-organizer';
-Globals.organizers.set("OrganizerOrganizer", {"object":OrganizerOrganizer, "order": 110});
+Globals.organizers.set("OrganizerOrganizer", {"object":OrganizerOrganizer, "targets":"organizers", "order": 110});
 window.BITSMIST.v1.OrganizerOrganizer = OrganizerOrganizer;
 
 import StateOrganizer from './organizer/state-organizer';
