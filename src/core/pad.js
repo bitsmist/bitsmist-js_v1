@@ -32,8 +32,8 @@ export default function Pad()
 
 }
 
-// Inherit
 ClassUtil.inherit(Pad, Component);
+customElements.define("bm-pad", Pad);
 
 // -----------------------------------------------------------------------------
 //  Methods
@@ -53,8 +53,6 @@ Pad.prototype.open = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
-//		return StateOrganizer.waitForTransitionableState(this, "opening")
-//	}).then(() => {
 		console.debug(`Pad.open(): Opening pad. name=${this.name}`);
 		return this.changeState("opening");
 	}).then(() => {
@@ -128,8 +126,6 @@ Pad.prototype.close = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
-//		return StateOrganizer.waitForTransitionableState(this, "closing")
-//	}).then(() => {
 		console.debug(`Pad.close(): Closing pad. name=${this.name}`);
 		return this.changeState("closing");
 	}).then(() => {
@@ -238,12 +234,13 @@ Pad.prototype.fill = function(options)
 Pad.prototype.start = function(settings)
 {
 
+	// Defaults
 	let defaults = {
 		"autoSetupOnStart":false,
 		"organizers":{
-			"TemplateOrganizer": {},
-//			"AttrOrganizer": {},
-//			"ElementOrganizer": {},
+			"TemplateOrganizer": "",
+//			"AttrOrganizer": "",
+//			"ElementOrganizer": "",
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);

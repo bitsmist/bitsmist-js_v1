@@ -30,8 +30,8 @@ export default function Component()
 
 }
 
-// Inherit
 ClassUtil.inherit(Component, HTMLElement);
+customElements.define("bm-component", Component);
 
 // -----------------------------------------------------------------------------
 //  Callbacks
@@ -135,28 +135,27 @@ Object.defineProperty(Component.prototype, 'uniqueId', {
 Component.prototype.start = function(settings)
 {
 
+	// Defaults
 	let defaults = {
 		"autoSetup": true,
 		"autoStop": true,
 		"organizers": {
-			"OrganizerOrganizer": {},
-			"SettingOrganizer": {},
-			"StateOrganizer": {},
-//			"EventOrganizer": {},
-//			"ComponentOrganizer": {},
-//			"ServiceOrganizer": {},
-//			"PluginOrganizer": {},
+			"OrganizerOrganizer": "",
+			"SettingOrganizer": "",
+			"StateOrganizer": "",
+//			"EventOrganizer": "",
+//			"ComponentOrganizer": "",
+//			"ServiceOrganizer": "",
+//			"PluginOrganizer": "",
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);
 
-	return Promise.resolve().then(() => {
-	//	return StateOrganizer.waitForTransitionableState(this, "starting")
-	// }).then(() => {
-		// Init vars
-		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-		this._name = this.constructor.name;
+	// Init vars
+	this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+	this._name = this.constructor.name;
 
+	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
 		return this.initOrganizers(newSettings);
@@ -200,8 +199,6 @@ Component.prototype.stop = function(options)
 {
 
 	return Promise.resolve().then(() => {
-//		return StateOrganizer.waitForTransitionableState(this, "stopping")
-	// }).then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this.name}`);
 		return this.changeState("stopping");
 	}).then(() => {
