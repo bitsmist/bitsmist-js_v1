@@ -70,8 +70,12 @@ TagLoader.prototype.onDOMContentLoaded= function(sender, e)
 TagLoader.prototype.start = function(settings)
 {
 
-	// Init component settings
-	settings = Object.assign({}, settings, {"name":"TagLoader", "autoSetup":false});
+	// Defaults
+	let defaults = {
+		"name": "TagLoader",
+		"autoSetup": false
+	}
+	settings = BITSMIST.v1.Util.deepMerge(defaults, settings);
 
 	// Start
 	return BITSMIST.v1.Component.prototype.start.call(this, settings).then(() => {
