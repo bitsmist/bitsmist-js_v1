@@ -198,15 +198,18 @@ Component.prototype.start = function(settings)
 Component.prototype.stop = function(options)
 {
 
+	options = Object.assign({}, options);
+	let sender = ( options["sender"] ? options["sender"] : this );
+
 	return Promise.resolve().then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this.name}`);
 		return this.changeState("stopping");
 	}).then(() => {
-		return this.trigger("beforeStop", this);
+		return this.trigger("beforeStop", sender, options);
 	}).then(() => {
-		return this.trigger("doStop", this);
+		return this.trigger("doStop", sender, options);
 	}).then(() => {
-		return this.trigger("afterStop", this);
+		return this.trigger("afterStop", sender, options);
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this.name}`);
 		return this.changeState("stopped");
