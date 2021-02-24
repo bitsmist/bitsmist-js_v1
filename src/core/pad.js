@@ -58,7 +58,7 @@ Pad.prototype.open = function(options)
 	}).then(() => {
 		return this.switchTemplate(this._settings.get("templateName"));
 	}).then(() => {
-		return this.trigger("beforeOpen", sender, {"options":options});
+		return this.trigger("beforeOpen", sender, options);
 	}).then(() => {
 		let autoSetupOnOpen = this._settings.get("autoSetupOnOpen");
 		let autoSetup = this._settings.get("autoSetup");
@@ -74,9 +74,9 @@ Pad.prototype.open = function(options)
 			return this.refresh();
 		}
 	}).then(() => {
-		return this.trigger("doOpen", sender, {"options":options});
+		return this.trigger("doOpen", sender, options);
 	}).then(() => {
-		return this.trigger("afterOpen", sender, {"options":options});
+		return this.trigger("afterOpen", sender, options);
 	}).then(() => {
 		console.debug(`Pad.open(): Opened pad. name=${this.name}`);
 		return this.changeState("opened");
@@ -99,13 +99,10 @@ Pad.prototype.openModal = function(options)
 	console.debug(`Pad.openModal(): Opening pad modally. name=${this.name}`);
 
 	return new Promise((resolve, reject) => {
-		options = Object.assign({}, options);
-		this._settings.items = Object.assign(this._settings.items, options); //@@@fix
 		this._isModal = true;
 		this._modalResult = {"result":false};
-		this._modalOptions = options;
 		this._modalPromise = { "resolve": resolve, "reject": reject };
-		this.open();
+		this.open(options);
 	});
 
 }
@@ -129,11 +126,11 @@ Pad.prototype.close = function(options)
 		console.debug(`Pad.close(): Closing pad. name=${this.name}`);
 		return this.changeState("closing");
 	}).then(() => {
-		return this.trigger("beforeClose", sender);
+		return this.trigger("beforeClose", sender, options);
 	}).then(() => {
-		return this.trigger("doClose", sender);
+		return this.trigger("doClose", sender, options);
 	}).then(() => {
-		return this.trigger("afterClose", sender);
+		return this.trigger("afterClose", sender, options);
 	}).then(() => {
 		if (this._isModal)
 		{
@@ -151,6 +148,8 @@ Pad.prototype.close = function(options)
 /**
  * Refresh pad.
  *
+ * @param	{Object}		options				Options.
+ *
  * @return  {Promise}		Promise.
  */
 Pad.prototype.refresh = function(options)
@@ -162,16 +161,16 @@ Pad.prototype.refresh = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
-		return this.trigger("beforeRefresh", sender, {"options":options});
+		return this.trigger("beforeRefresh", sender, options);
 	}).then(() => {
 		if (this._settings.get("autoFill"))
 		{
 			return this.fill(options);
 		}
 	}).then(() => {
-		return this.trigger("doRefresh", sender, {"options":options});
+		return this.trigger("doRefresh", sender, options);
 	}).then(() => {
-		return this.trigger("afterRefresh", sender, {"options":options});
+		return this.trigger("afterRefresh", sender, options);
 	});
 
 }
@@ -182,13 +181,17 @@ Pad.prototype.refresh = function(options)
  * Change template html.
  *
  * @param	{String}		templateName		Template name.
+ * @param	{Object}		options				Options.
  *
  * @return  {Promise}		Promise.
  */
-Pad.prototype.switchTemplate = function(templateName)
+Pad.prototype.switchTemplate = function(templateName, options)
 {
 
 	console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
+
+	options = Object.assign({}, options);
+	let sender = ( options["sender"] ? options["sender"] : this );
 
 	if (this.isActiveTemplate(templateName))
 	{
@@ -204,7 +207,7 @@ Pad.prototype.switchTemplate = function(templateName)
 	}).then(() => {
 		return this.callOrganizers("afterAppend");
 	}).then(() => {
-		return this.trigger("afterAppend", this);
+		return this.trigger("afterAppend", sender, options);
 	});
 
 }
