@@ -33,9 +33,9 @@ export default class Store
 		// Init vars
 		this._chain = Util.safeGet(options, "chain");
 		this._filter;
-		this._items = Util.safeGet(options, "items", {});
 
-		// Init filter/merger function
+		// Init
+		this.items = Util.safeGet(options, "items");
 		this.filter = Util.safeGet(options, "filter", () => { return true; } );
 		this.merger = Util.safeGet(options, "merger", Util.deepMerge );
 
@@ -71,7 +71,7 @@ export default class Store
 	set items(value)
 	{
 
-		this._items= value;
+		this._items = Object.assign({}, value);
 
 	}
 

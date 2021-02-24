@@ -31,8 +31,6 @@ export default class OrganizerStore extends Store
 	constructor(options, chain)
 	{
 
-		options = options || {};
-
 		super(options, chain);
 
 		this._targets = {};
