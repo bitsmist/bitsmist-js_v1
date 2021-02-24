@@ -140,7 +140,7 @@ export default class ClassUtil
 	static __validateClassName(className)
 	{
 
-		let result = /^[a-zA-Z0-9\-\.]+$/.test(className);
+		let result = /^[a-zA-Z0-9\-\._]+$/.test(className);
 
 		if (!result)
 		{
