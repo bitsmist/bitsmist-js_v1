@@ -40,6 +40,7 @@ export default class ClassUtil
 		let component = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
 		ClassUtil.inherit(component, superClass);
 
+		settings = Object.assign({}, settings);
 		settings["name"] = className;
 		component.prototype._getSettings = function() {
 			return settings;

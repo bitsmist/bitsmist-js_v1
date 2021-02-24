@@ -170,7 +170,7 @@ export default class StateOrganizer
 		let promise;
 		timeout = ( timeout ? timeout : 10000 );
 
-		let waitInfo = {"waiter":component, "waitlist":waitlist};
+		let waitInfo = {"waiter":component, "waitlist":waitlist.slice()};
 
 		if (StateOrganizer.__isAllReady(waitInfo))
 		{
