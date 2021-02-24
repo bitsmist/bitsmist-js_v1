@@ -152,7 +152,7 @@ export default class EventOrganizer
 			element.addEventListener(eventName, EventOrganizer.__callEventHandler);
 		}
 
-		listeners[eventName].push({"handler":handler, "options":options, "bind":bindTo, "order":order});
+		listeners[eventName].push({"handler":handler, "options":Object.assign({}, options), "bind":bindTo, "order":order});
 
 		// Stable sort by order
 		let order = (typeof eventInfo === "object" && eventInfo["order"] ? eventInfo["order"] : 0);
