@@ -52,15 +52,12 @@ export default class OrganizerStore extends Store
 
 		super.set(key, value);
 
-		// IE workaround
-		if (!value["object"].name)
-		{
-			Object.defineProperty(value["object"], "name", {
-				get() {
-					return key;
-				}
-			});
-		}
+		// Overwrite name property to ensure a organizer returns proper name even when mangled
+		Object.defineProperty(value["object"], "name", {
+			get() {
+				return key;
+			}
+		});
 
 		// Global init
 		if (typeof value["object"].globalInit == "function")
