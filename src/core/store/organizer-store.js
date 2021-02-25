@@ -52,12 +52,10 @@ export default class OrganizerStore extends Store
 
 		super.set(key, value);
 
-		// Overwrite name property to ensure a organizer returns proper name even when mangled
-		Object.defineProperty(value["object"], "name", {
-			get() {
-				return key;
-			}
-		});
+		if (!value["name"])
+		{
+			value["name"] = key;
+		}
 
 		// Global init
 		if (typeof value["object"].globalInit == "function")
@@ -108,10 +106,10 @@ export default class OrganizerStore extends Store
 	 *
 	 * @return  {*}				Organizer.
 	 */
-	getOrganizer(key)
+	getOrganizerInfoByTarget(target)
 	{
 
-		return Util.safeGet(this._targets, key + ".object");
+		return Util.safeGet(this._targets, target);
 
 	};
 

@@ -226,11 +226,11 @@ export default class OrganizerOrganizer
 		let chain = Promise.resolve();
 
 		Object.keys(settings).forEach((key) => {
-			let organizer = BITSMIST.v1.Globals["organizers"].getOrganizer(key);
-			if (organizer)
+			let organizerInfo = BITSMIST.v1.Globals["organizers"].getOrganizerInfoByTarget(key);
+			if (organizerInfo)
 			{
 				chain = chain.then(() => {
-					return OrganizerOrganizer.__addOrganizer(component, organizer.name, settings);
+					return OrganizerOrganizer.__addOrganizer(component, organizerInfo.name, settings);
 				});
 			}
 		});
