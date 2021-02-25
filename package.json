@@ -1,7 +1,7 @@
 {
-  "name": "bitsmist-webview_v1",
-  "version": "0.9.0",
-  "description": "Bitsmist Webview V1",
+  "name": "bitsmist-js_v1",
+  "version": "0.9.3",
+  "description": "BitsmistJS V1",
   "private": true,
   "dependencies": {},
   "devDependencies": {
