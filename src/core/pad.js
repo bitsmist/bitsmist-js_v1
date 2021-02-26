@@ -71,7 +71,7 @@ Pad.prototype.open = function(options)
 	}).then(() => {
 		if (this._settings.get("autoRefresh"))
 		{
-			return this.refresh();
+			return this.refresh(options);
 		}
 	}).then(() => {
 		return this.trigger("doOpen", sender, options);
