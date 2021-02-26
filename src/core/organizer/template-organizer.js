@@ -269,14 +269,14 @@ export default class TemplateOrganizer
 	static __autoLoadTemplate(component, templateInfo, path)
 	{
 
-		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["name"]}`);
+		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
 
 		let promise;
 
 		//if (!templateInfo["name"] || templateInfo["html"])
 		if (templateInfo["html"] || templateInfo["node"])
 		{
-			console.debug(`Mixin.autoLoadTemplate(): Template Already exists. name=${component.name}, templateName=${templateInfo["name"]}`, );
+			console.debug(`Mixin.autoLoadTemplate(): Template Already exists. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`, );
 		}
 		else
 		{
@@ -391,7 +391,7 @@ export default class TemplateOrganizer
 			component.innerHTML = templateInfo["html"]
 		}
 
-		console.debug(`TemplateOrganizer.__applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}`);
+		console.debug(`TemplateOrganizer.__applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
 
 	}
 

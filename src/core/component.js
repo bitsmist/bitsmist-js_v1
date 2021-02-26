@@ -163,7 +163,7 @@ Component.prototype.start = function(settings)
 		// suspend
 		// return ( this.hasAttribute("data-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
 	}).then(() => {
-		console.debug(`Component.start(): Starting component. name=${this.name}`);
+		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
 	}).then(() => {
 		return this.callOrganizers("beforeStart");
@@ -180,7 +180,7 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("afterStart", this);
 	}).then(() => {
-		console.debug(`Component.start(): Started component. name=${this.name}`);
+		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
 	});
 
@@ -202,7 +202,7 @@ Component.prototype.stop = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.stop(): Stopping component. name=${this.name}`);
+		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopping");
 	}).then(() => {
 		return this.trigger("beforeStop", sender, options);
@@ -211,7 +211,7 @@ Component.prototype.stop = function(options)
 	}).then(() => {
 		return this.trigger("afterStop", sender, options);
 	}).then(() => {
-		console.debug(`Component.stop(): Stopped component. name=${this.name}`);
+		console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopped");
 	});
 
@@ -229,7 +229,7 @@ Component.prototype.stop = function(options)
 Component.prototype.setup = function(options)
 {
 
-	console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}`);
+	console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 
 	options = Object.assign({}, options);
 	let sender = ( options["sender"] ? options["sender"] : this );

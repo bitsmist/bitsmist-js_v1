@@ -282,7 +282,7 @@ export default class StateOrganizer
 		}
 		else
 		{
-			throw Error(`Illegal transition. name=${component.name}, fromState=${component.state}, toState=${state}`);
+			throw Error(`Illegal transition. name=${component.name}, fromState=${component.state}, toState=${state}, id=${component.id}`);
 		}
 
 	}

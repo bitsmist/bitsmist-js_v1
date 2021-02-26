@@ -53,7 +53,7 @@ Pad.prototype.open = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
-		console.debug(`Pad.open(): Opening pad. name=${this.name}`);
+		console.debug(`Pad.open(): Opening pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opening");
 	}).then(() => {
 		return this.switchTemplate(this._settings.get("templateName"));
@@ -78,7 +78,7 @@ Pad.prototype.open = function(options)
 	}).then(() => {
 		return this.trigger("afterOpen", sender, options);
 	}).then(() => {
-		console.debug(`Pad.open(): Opened pad. name=${this.name}`);
+		console.debug(`Pad.open(): Opened pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opened");
 	});
 
@@ -96,7 +96,7 @@ Pad.prototype.open = function(options)
 Pad.prototype.openModal = function(options)
 {
 
-	console.debug(`Pad.openModal(): Opening pad modally. name=${this.name}`);
+	console.debug(`Pad.openModal(): Opening pad modally. name=${this.name}, id=${this.id}`);
 
 	return new Promise((resolve, reject) => {
 		this._isModal = true;
@@ -123,7 +123,7 @@ Pad.prototype.close = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
-		console.debug(`Pad.close(): Closing pad. name=${this.name}`);
+		console.debug(`Pad.close(): Closing pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("closing");
 	}).then(() => {
 		return this.trigger("beforeClose", sender, options);
@@ -137,7 +137,7 @@ Pad.prototype.close = function(options)
 			this._modalPromise.resolve(this._modalResult);
 		}
 	}).then(() => {
-		console.debug(`Pad.close(): Closed pad. name=${this.name}`);
+		console.debug(`Pad.close(): Closed pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("closed");
 	});
 
@@ -155,7 +155,7 @@ Pad.prototype.close = function(options)
 Pad.prototype.refresh = function(options)
 {
 
-	console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}`);
+	console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
 
 	options = Object.assign({}, options);
 	let sender = ( options["sender"] ? options["sender"] : this );
@@ -188,7 +188,7 @@ Pad.prototype.refresh = function(options)
 Pad.prototype.switchTemplate = function(templateName, options)
 {
 
-	console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}`);
+	console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 
 	options = Object.assign({}, options);
 	let sender = ( options["sender"] ? options["sender"] : this );
