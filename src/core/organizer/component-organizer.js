@@ -169,7 +169,8 @@ export default class ComponentOrganizer
 		let url = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
 		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
 		let className = ( "className" in options ? options["className"] : componentName );
-		let tagName = options["tagName"] || ( className && ClassUtil.getClass(className) && ClassUtil.getClass(className).tagName ) || Util.getTagNameFromClassName(className || componentName);
+		let classDef = ( className ? ClassUtil.getClass(className) : null );
+		let tagName = options["tagName"] || ( classDef && classDef.tagName ) || Util.getTagNameFromClassName(className || componentName);
 
 		return Promise.resolve().then(() => {
 			if (className)
@@ -212,7 +213,14 @@ export default class ComponentOrganizer
 				// Inject settings to added component
 				component._components[componentName]._injectSettings = function(settings){
 					// super()
-					settings = Object.assign({}, component._super.prototype._injectSettings.call(this, settings));
+					if (component._components[componentName]._super.prototype._injectSettings)
+					{
+						settings = Object.assign({}, component._components[componentName]._super.prototype._injectSettings.call(this, settings));
+					}
+					else
+					{
+						settings = {};
+					}
 
 					return Util.deepMerge(settings, options);
 				};
