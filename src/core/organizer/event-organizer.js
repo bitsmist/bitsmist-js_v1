@@ -178,7 +178,6 @@ export default class EventOrganizer
 	{
 
 		options = Object.assign({}, options);
-		options["eventName"] = eventName;
 		options["sender"] = sender;
 		element = ( element ? element : component );
 		let e = null;
