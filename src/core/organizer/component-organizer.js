@@ -29,7 +29,7 @@ export default class ComponentOrganizer
 	/**
 	 * Global init.
 	 */
-	static globalInit()
+	static globalInit(targetClass)
 	{
 
 		// Add methods
@@ -67,6 +67,7 @@ export default class ComponentOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
@@ -74,7 +75,6 @@ export default class ComponentOrganizer
 	{
 
 		let chain = Promise.resolve();
-		settings = ( settings ? settings : component.settings.items );
 
 		// Load molds
 		let molds = settings["molds"];
@@ -180,6 +180,8 @@ export default class ComponentOrganizer
 			}
 			else
 			{
+				console.debug(`ComponentOrganizer.addComponent(): Creating empty component. name=${component.name}, componentName=${componentName}`);
+
 				// Define empty class
 				className = componentName;
 				ClassUtil.newComponent(BITSMIST.v1.Pad, options, tagName, className);
@@ -334,6 +336,8 @@ export default class ComponentOrganizer
 				}
 				else
 				{
+					console.debug(`ComponentOrganizer.loadTags(): Creating empty component. tagName=${element.tagName}`);
+
 					// Define empty class
 					ClassUtil.newComponent(BITSMIST.v1.Pad, {}, element.tagName);
 				}
@@ -387,7 +391,7 @@ export default class ComponentOrganizer
 	static __autoloadComponent(className, path, options)
 	{
 
-		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
+		console.debug(`ComponentOrganizer.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
 
 		let promise;
 		let tagName = options["tagName"] || Util.getTagNameFromClassName(className);
@@ -395,14 +399,14 @@ export default class ComponentOrganizer
 		if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
 		{
 			// Already loaded
-			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`);
+			console.debug(`ComponentOrganizer.__autoLoadComponent(): Component Already exists. className=${className}`);
 			BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loaded"});
 			promise = Promise.resolve();
 		}
 		else if (BITSMIST.v1.Globals.classes.get(className, {})["state"] == "loading")
 		{
 			// Already loading
-			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already loading. className=${className}`);
+			console.debug(`ComponentOrganizer.__autoLoadComponent(): Component Already loading. className=${className}`);
 			promise = BITSMIST.v1.Globals.classes.get(className)["promise"];
 		}
 		else
@@ -433,7 +437,7 @@ export default class ComponentOrganizer
 	static __loadComponentScript(componentName, path, options)
 	{
 
-		console.debug(`LoaderMixin.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
+		console.debug(`ComponentOrganizer.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
 
 		options = ( options ? options : {} );
 
@@ -448,7 +452,7 @@ export default class ComponentOrganizer
 				return AjaxUtil.loadScript(url2);
 			}
 		}).then(() => {
-			console.debug(`LoaderMixin.__loadComponentScript(): Loaded script. componentName=${componentName}`);
+			console.debug(`ComponentOrganizer.__loadComponentScript(): Loaded script. componentName=${componentName}`);
 		});
 
 	}

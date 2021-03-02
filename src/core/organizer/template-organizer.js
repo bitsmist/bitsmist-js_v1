@@ -78,13 +78,14 @@ export default class TemplateOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
-		let templates = component.settings.get("templates");
+		let templates = settings["templates"];
 		if (templates)
 		{
 			Object.keys(templates).forEach((key) => {
@@ -269,14 +270,14 @@ export default class TemplateOrganizer
 	static __autoLoadTemplate(component, templateInfo, path)
 	{
 
-		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
+		console.debug(`TemplateOrganizer.__autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
 
 		let promise;
 
 		//if (!templateInfo["name"] || templateInfo["html"])
 		if (templateInfo["html"] || templateInfo["node"])
 		{
-			console.debug(`Mixin.autoLoadTemplate(): Template Already exists. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`, );
+			console.debug(`TemplateOrganizer.__autoLoadTemplate(): Template Already exists. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`, );
 		}
 		else
 		{
@@ -310,10 +311,10 @@ export default class TemplateOrganizer
 	static __loadTemplateFile(url)
 	{
 
-		console.debug(`LoaderMixin.loadTemplate(): Loading template. url=${url}`);
+		console.debug(`TemplateOrganzier.loadTemplate(): Loading template. url=${url}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`LoaderMixin.loadTemplate(): Loaded template. url=${url}`);
+			console.debug(`TemplateOrganzier.loadTemplate(): Loaded template. url=${url}`);
 
 			return xhr.responseText;
 		});

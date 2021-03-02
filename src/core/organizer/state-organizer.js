@@ -92,15 +92,16 @@ export default class StateOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
 		let promise = Promise.resolve();
 
-		let waitFor = component.settings.get("waitFor");
+		let waitFor = settings["waitFor"];
 		if (waitFor)
 		{
 			promise = StateOrganizer.waitFor(component, waitFor);

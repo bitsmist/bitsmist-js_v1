@@ -9,6 +9,7 @@
 // =============================================================================
 
 import Component from '../component';
+import SettingOrganizer from './setting-organizer';
 
 // =============================================================================
 //	Organizer organizer class
@@ -78,7 +79,6 @@ export default class OrganizerOrganizer
 	static organize(conditions, component, settings)
 	{
 
-		settings = settings || component._settings.items;
 		let chain = Promise.resolve();
 
 		let organizers = settings["organizers"];
@@ -120,14 +120,7 @@ export default class OrganizerOrganizer
 	static isTarget(eventName, observerInfo, ...args)
 	{
 
-		let ret = false;
-
-		if (eventName == "*" || eventName == "beforeStart" || eventName == "afterSpecLoad")
-		{
-			ret = true;
-		}
-
-		return ret;
+		return false;
 
 	}
 
@@ -144,14 +137,13 @@ export default class OrganizerOrganizer
 	static initOrganizers(component, settings)
 	{
 
-		let chain = Promise.resolve();
-
 		// Init
 		component._organizers = {};
-		chain = OrganizerOrganizer.organize("*", component, settings);
 
-		// Auto adding organizers from settings
-		return chain.then(() => {
+		// Add organizers
+		return Promise.resolve().then(() => {
+			return OrganizerOrganizer.organize("*", component, settings);
+		}).then(() => {
 			return OrganizerOrganizer.__autoInsertOrganizers(component, component._settings.items)
 		});
 
@@ -171,18 +163,28 @@ export default class OrganizerOrganizer
 	static callOrganizers(component, conditions, settings)
 	{
 
-		let chain = Promise.resolve();
+//		console.log("@@@calling", component.name, conditions, settings);
+		// Add organizers
+		return Promise.resolve().then(() => {
+			return OrganizerOrganizer.organize("*", component, settings);
+		}).then(() => {
+			//return OrganizerOrganizer.__autoInsertOrganizers(component, component._settings.items)
+			return OrganizerOrganizer.__autoInsertOrganizers(component, settings)
+		}).then(() => {
+			// Call organizers
+			let chain = Promise.resolve();
+			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
+				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
+				{
+					chain = chain.then(() => {
+//						console.log("@@@calling an organizer", component.name, conditions, key);
+						return component._organizers[key].object.organize(conditions, component, settings);
+					});
+				}
+			});
 
-		OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
-			if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
-			{
-				chain = chain.then(() => {
-					return component._organizers[key].object.organize(conditions, component, settings);
-				});
-			}
+			return chain;
 		});
-
-		return chain;
 
 	}
 
@@ -253,10 +255,11 @@ export default class OrganizerOrganizer
 	static __addOrganizer(component, organizerName, settings)
 	{
 
-		if (!component._organizers[organizerName])
+		if (!component._organizers[organizerName] && BITSMIST.v1.Globals["organizers"]["items"][organizerName])
 		{
+//			console.log("@@@adding an organizer", component.name, organizerName);
 			component._organizers[organizerName] = BITSMIST.v1.Globals["organizers"]["items"][organizerName];
-			if (typeof component._organizers[organizerName].object.init === "function")
+			if (component._organizers[organizerName] && typeof component._organizers[organizerName].object.init === "function")
 			{
 				return component._organizers[organizerName].object.init("*", component, settings);
 			}

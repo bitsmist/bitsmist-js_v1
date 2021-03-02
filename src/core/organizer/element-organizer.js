@@ -24,13 +24,14 @@ export default class ElementOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
-		let elements = component.settings.get("elements");
+		let elements = settings["elements"];
 		if (elements)
 		{
 			Object.keys(elements).forEach((elementName) => {

@@ -60,22 +60,22 @@ export default class OrganizerStore extends Store
 		// Global init
 		if (typeof value["object"].globalInit == "function")
 		{
-			value["object"].globalInit();
+			value["object"].globalInit(value["targetClass"]);
 		}
 
 		// Create target index
-		if (value["targets"])
+		if (value["targetWords"])
 		{
-			if (Array.isArray(value["targets"]))
+			if (Array.isArray(value["targetWords"]))
 			{
-				for (let i = 0; i < value["targets"].length; i++)
+				for (let i = 0; i < value["targetWords"].length; i++)
 				{
-					this._targets[value["targets"][i]] = value;
+					this._targets[value["targetWords"][i]] = value;
 				}
 			}
 			else
 			{
-				this._targets[value["targets"]] = value;
+				this._targets[value["targetWords"]] = value;
 			}
 		}
 

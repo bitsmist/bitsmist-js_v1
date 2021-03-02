@@ -155,12 +155,11 @@ Pad.prototype.close = function(options)
 Pad.prototype.refresh = function(options)
 {
 
-	console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
-
 	options = Object.assign({}, options);
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
+		console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", sender, options);
 	}).then(() => {
 		if (this._settings.get("autoFill"))
@@ -171,6 +170,8 @@ Pad.prototype.refresh = function(options)
 		return this.trigger("doRefresh", sender, options);
 	}).then(() => {
 		return this.trigger("afterRefresh", sender, options);
+	}).then(() => {
+		console.debug(`Pad.refresh(): Refreshed pad. name=${this.name}, id=${this.id}`);
 	});
 
 }
@@ -188,8 +189,6 @@ Pad.prototype.refresh = function(options)
 Pad.prototype.switchTemplate = function(templateName, options)
 {
 
-	console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-
 	options = Object.assign({}, options);
 	let sender = ( options["sender"] ? options["sender"] : this );
 
@@ -199,15 +198,18 @@ Pad.prototype.switchTemplate = function(templateName, options)
 	}
 
 	return Promise.resolve().then(() => {
+		console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 		return this.addTemplate(templateName, {"rootNode":this._settings.get("rootNode"), "templateNode":this._settings.get("templateNode")});
 	}).then(() => {
 		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
 		let splitComponent = this._settings.get("system.splitComponent", false);
 		return this.loadTags(this, path, {"splitComponent":splitComponent});
 	}).then(() => {
-		return this.callOrganizers("afterAppend");
+		return this.callOrganizers("afterAppend", this._settings.items);
 	}).then(() => {
 		return this.trigger("afterAppend", sender, options);
+	}).then(() => {
+		console.debug(`Pad.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 	});
 
 }
@@ -242,8 +244,6 @@ Pad.prototype.start = function(settings)
 		"autoSetupOnStart":false,
 		"organizers":{
 			"TemplateOrganizer": "",
-//			"AttrOrganizer": "",
-//			"ElementOrganizer": "",
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);

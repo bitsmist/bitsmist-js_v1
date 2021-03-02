@@ -45,14 +45,14 @@ export default class AttrOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
 		let events = {
-//			"afterInitComponent": AttrOrganizer.onDoOrganize, // throws an error on iOS10
 			"afterStart": AttrOrganizer.onDoOrganize,
 			"afterAppend": AttrOrganizer.onDoOrganize,
 			"afterSpecLoad": AttrOrganizer.onDoOrganize,
@@ -63,7 +63,7 @@ export default class AttrOrganizer
 			"doRefresh": AttrOrganizer.onDoOrganize,
 		};
 
-		let attrs = component.settings.get("attrs");
+		let attrs = settings["attrs"];
 		if (attrs)
 		{
 			Object.keys(attrs).forEach((eventName) => {

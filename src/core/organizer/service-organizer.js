@@ -78,13 +78,14 @@ export default class ServiceOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
-		let services = component.settings.get("services");
+		let services = settings["services"];
 		if (services)
 		{
 			Object.keys(services).forEach((serviceName) => {

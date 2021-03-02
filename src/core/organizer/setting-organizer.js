@@ -9,7 +9,6 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
-import Component from '../component';
 import Store from '../store/store';
 import Util from '../util/util';
 
@@ -27,12 +26,12 @@ export default class SettingOrganizer
 	/**
 	 * Global init.
 	 */
-	static globalInit()
+	static globalInit(targetClass)
 	{
 
 		// Add properties
 
-		Object.defineProperty(Component.prototype, 'settings', {
+		Object.defineProperty(targetClass.prototype, 'settings', {
 			get() {
 				return this._settings;
 			},
@@ -72,10 +71,11 @@ export default class SettingOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
 		return Promise.resolve().then(() => {
@@ -116,14 +116,7 @@ export default class SettingOrganizer
 	static isTarget(eventName, observerInfo, ...args)
 	{
 
-		let ret = false;
-
-		if (eventName == "*" || eventName == "beforeStart")
-		{
-			ret = true;
-		}
-
-		return ret;
+		return false;
 
 	}
 
@@ -143,6 +136,7 @@ export default class SettingOrganizer
 		let url = Util.concatPath([path, settingName + ".js"]);
 		let settings;
 
+		console.debug(`SettingOrganizer.loadSettings(): Loading settings. url=${url}`);
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`SettingOrganizer.loadSettings(): Loaded settings. url=${url}`);
 			try

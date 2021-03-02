@@ -9,6 +9,7 @@
 // =============================================================================
 
 import ClassUtil from './util/class-util';
+import SettingOrganizer from './organizer/setting-organizer';
 import Util from './util/util';
 
 // =============================================================================
@@ -31,7 +32,6 @@ export default function Component()
 }
 
 ClassUtil.inherit(Component, HTMLElement);
-customElements.define("bm-component", Component);
 
 // -----------------------------------------------------------------------------
 //  Callbacks
@@ -140,13 +140,7 @@ Component.prototype.start = function(settings)
 		"autoSetup": true,
 		"autoStop": true,
 		"organizers": {
-			"OrganizerOrganizer": "",
-			"SettingOrganizer": "",
 			"StateOrganizer": "",
-//			"EventOrganizer": "",
-//			"ComponentOrganizer": "",
-//			"ServiceOrganizer": "",
-//			"PluginOrganizer": "",
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);
@@ -158,6 +152,7 @@ Component.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
+		SettingOrganizer.init("*", this, newSettings);
 		return this.initOrganizers(newSettings);
 	// }).then(() => {
 		// suspend
@@ -166,7 +161,9 @@ Component.prototype.start = function(settings)
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
 	}).then(() => {
-		return this.callOrganizers("beforeStart");
+		return SettingOrganizer.organize("*", this);
+	}).then(() => {
+		return this.callOrganizers("beforeStart", this._settings.items);
 	}).then(() => {
 		return this.trigger("beforeStart", this);
 	}).then(() => {
@@ -177,6 +174,8 @@ Component.prototype.start = function(settings)
 			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
 			return this.setup({"newPreferences":defaultPreferences});
 		}
+	}).then(() => {
+		return this.callOrganizers("afterStart", this._settings.items);
 	}).then(() => {
 		return this.trigger("afterStart", this);
 	}).then(() => {
@@ -229,17 +228,18 @@ Component.prototype.stop = function(options)
 Component.prototype.setup = function(options)
 {
 
-	console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
-
 	options = Object.assign({}, options);
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
+		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 		return this.trigger("beforeSetup", sender, options);
 	}).then(() => {
 		return this.trigger("doSetup", sender, options);
 	}).then(() => {
 		return this.trigger("afterSetup", sender, options);
+	}).then(() => {
+		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 	});
 
 }
@@ -275,3 +275,7 @@ Component.prototype._getSettings = function()
 	return {};
 
 }
+
+// -----------------------------------------------------------------------------
+
+customElements.define("bm-component", Component);
