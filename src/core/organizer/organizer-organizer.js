@@ -9,7 +9,6 @@
 // =============================================================================
 
 import Component from '../component';
-import SettingOrganizer from './setting-organizer';
 
 // =============================================================================
 //	Organizer organizer class
@@ -57,10 +56,6 @@ export default class OrganizerOrganizer
 
 		Component.prototype.initOrganizers = function(settings) {
 			return OrganizerOrganizer.initOrganizers(this, settings);
-		}
-
-		Component.prototype.clearOrganizers = function() {
-			return OrganizerOrganizer.clear(this);
 		}
 
 	}
