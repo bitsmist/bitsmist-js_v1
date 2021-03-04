@@ -55,6 +55,8 @@ export default class TemplateOrganizer
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static init(conditions, component, setttings)
 	{
@@ -117,19 +119,19 @@ export default class TemplateOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, component)
 	{
 
 		let ret = false;
-		let component = args[0];
 
 		if (component instanceof BITSMIST.v1.Pad)
 		{
-			if (eventName == "*" || eventName == "beforeStart")
+			if (conditions == "*" || conditions == "beforeStart")
 			{
 				ret = true;
 			}
@@ -187,22 +189,22 @@ export default class TemplateOrganizer
 		}
 
 		return Promise.resolve().then(() => {
-			let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.templatePath", ""), component._settings.get("path", "")]);
+			let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.templatePath", ""), component.settings.get("path", "")]);
 			return TemplateOrganizer._loadTemplate(component, templateInfo, path);
 		}).then(() => {
-			if (component._settings.get("templateNode"))
+			if (component.settings.get("templateNode"))
 			{
-				TemplateOrganizer.__storeTemplateNode(component, templateInfo, component._settings.get("templateNode"));
+				TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("templateNode"));
 			}
 
 			return TemplateOrganizer.__applyTemplate(component, templateInfo);
 		}).then(() => {
-			if (component._templates[component._settings.get("templateName")])
+			if (component._templates[component.settings.get("templateName")])
 			{
-				component._templates[component._settings.get("templateName")]["isAppended"] = false;
+				component._templates[component.settings.get("templateName")]["isAppended"] = false;
 			}
 			component._templates[templateName]["isAppended"] = true;
-			component._settings.set("templateName", templateName);
+			component.settings.set("templateName", templateName);
 		});
 
 	}
@@ -410,7 +412,7 @@ export default class TemplateOrganizer
 	static __dupElement(component, templateName)
 	{
 
-		templateName = ( templateName ? templateName : component._settings.get("templateName") );
+		templateName = ( templateName ? templateName : component.settings.get("templateName") );
 
 		let ele = document.createElement("div");
 		ele.innerHTML = component._templates[templateName].html;
@@ -433,21 +435,21 @@ export default class TemplateOrganizer
 		// Get template path from attribute
 		if (component.hasAttribute("data-templatepath"))
 		{
-			component._settings.set("system.templatePath", component.getAttribute("data-templatepath"));
+			component.settings.set("system.templatePath", component.getAttribute("data-templatepath"));
 		}
 
 		// Get template name from attribute
 		if (component.hasAttribute("data-templatename"))
 		{
-			component._settings.set("templateName", component.getAttribute("data-templatename"));
+			component.settings.set("templateName", component.getAttribute("data-templatename"));
 		}
 
 		// Get template href from templatehref
 		if (component.hasAttribute("data-templatehref"))
 		{
 			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templatehref"));
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("templateName", arr[1].replace(".html", ""));
+			component.settings.set("system.templatePath", arr[0]);
+			component.settings.set("templateName", arr[1].replace(".html", ""));
 		}
 		*/
 

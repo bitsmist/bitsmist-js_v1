@@ -32,14 +32,20 @@ export default class ComponentOrganizer
 	static globalInit(targetClass)
 	{
 
+		// Add properties
+
+		Object.defineProperty(Component.prototype, 'components', {
+			get() { return this._components; },
+		});
+
 		// Add methods
 
 		Component.prototype.addComponent = function(componentName, options) {
-			return ComponentOrganizer.addComponent(this, componentName, options);
+			return ComponentOrganizer._addComponent(this, componentName, options);
 		}
 
-		Component.prototype.loadTags = function(rootNode, basePath, settings) {
-			return ComponentOrganizer.loadTags(rootNode, basePath, settings);
+		Component.prototype.loadTags = function(rootNode, basePath, settings, target) {
+			return ComponentOrganizer._loadTags(rootNode, basePath, settings, target);
 		}
 
 	}
@@ -52,6 +58,8 @@ export default class ComponentOrganizer
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static init(conditions, component, settings)
 	{
@@ -82,7 +90,7 @@ export default class ComponentOrganizer
 		{
 			Object.keys(molds).forEach((moldName) => {
 				chain = chain.then(() => {
-					return ComponentOrganizer.addComponent(component, moldName, molds[moldName], "opened");
+					return ComponentOrganizer._addComponent(component, moldName, molds[moldName], "opened");
 				});
 			});
 		}
@@ -93,7 +101,7 @@ export default class ComponentOrganizer
 		{
 			Object.keys(components).forEach((componentName) => {
 				chain = chain.then(() => {
-					return ComponentOrganizer.addComponent(component, componentName, components[componentName]);
+					return ComponentOrganizer._addComponent(component, componentName, components[componentName]);
 				});
 			});
 		}
@@ -112,8 +120,8 @@ export default class ComponentOrganizer
 	static clear(component)
 	{
 
-		Object.keys(component._components).forEach((key) => {
-			component._components[key].parentNode.removeChild(component._components[key]);
+		Object.keys(component.components).forEach((key) => {
+			component.components[key].parentNode.removeChild(component._components[key]);
 		});
 
 		component._components = {};
@@ -125,21 +133,21 @@ export default class ComponentOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, component)
 	{
 
 		let ret = false;
-		let component = args[0];
 
-		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
+		if (conditions == "*" || conditions == "afterAppend" || conditions == "afterSpecLoad")
 		{
 			ret = true;
 		}
-		else if (eventName == "beforeStart")
+		else if (conditions == "beforeStart")
 		{
 			if (!(component instanceof BITSMIST.v1.Pad))
 			{
@@ -152,101 +160,98 @@ export default class ComponentOrganizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Add a component to parent component.
 	 *
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Options for the component.
+	 * @param	{Object}		settings			Settings for the component.
 	 * @param	{Boolean}		sync				Wait for the component to become the state.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static addComponent(component, componentName, options, sync)
+	static _addComponent(component, componentName, settings, sync)
 	{
 
-		let url = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
-		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
-		let className = ( "className" in options ? options["className"] : componentName );
-		let classDef = ( className ? ClassUtil.getClass(className) : null );
-		let tagName = options["tagName"] || ( classDef && classDef.tagName ) || Util.getTagNameFromClassName(className || componentName);
+		let url = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", ""), ( "path" in settings ? settings["path"] : "")]);
+		let splitComponent = ( "splitComponent" in settings ? settings["splitComponent"] : component.settings.get("system.splitComponent", false) );
+		let className = settings["className"] || componentName;
+		let tagName = settings["tagName"] || Util.getTagNameFromClassName(className || componentName);
 
 		return Promise.resolve().then(() => {
-			if (className)
-			{
-				// Load component
-				return ComponentOrganizer.loadComponent(className, url, {"splitComponent":splitComponent});
-			}
-			else
-			{
-				console.debug(`ComponentOrganizer.addComponent(): Creating empty component. name=${component.name}, componentName=${componentName}`);
-
-				// Define empty class
-				className = componentName;
-				ClassUtil.newComponent(BITSMIST.v1.Pad, options, tagName, className);
-			}
+			// Load component
+			let options = Object.assign({}, settings, {"splitComponent":splitComponent});
+			return ComponentOrganizer._loadComponent(className, url, options, tagName);
 		}).then(() => {
 			// Insert tag
-			if (options["rootNode"] && !component._components[componentName])
+			if (settings["rootNode"] && !component.components[componentName])
 			{
-				// Check root node
-				let root = document.querySelector(options["rootNode"]);
-				if (!root)
-				{
-					throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
-				}
-
-				// Build tag
-				let tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
-
-				// Insert tag
-				if (options["overwrite"])
-				{
-					root.outerHTML = tag;
-					component._components[componentName] = root;
-				}
-				else
-				{
-					root.insertAdjacentHTML("afterbegin", tag);
-					component._components[componentName] = root.children[0];
-				}
-
-				// Inject settings to added component
-				component._components[componentName]._injectSettings = function(settings){
-					// super()
-					if (component._components[componentName]._super.prototype._injectSettings)
-					{
-						settings = Object.assign({}, component._components[componentName]._super.prototype._injectSettings.call(this, settings));
-					}
-					else
-					{
-						settings = {};
-					}
-
-					return Util.deepMerge(settings, options);
-				};
+				component.components[componentName] = ComponentOrganizer.__insertTag(tagName, settings);
 			}
 		}).then(() => {
 			// Expose component
-			if (options["expose"])
+			if (settings["expose"])
 			{
-				let exposeName = ( options["expose"] === true ? componentName : options["expose"] );
+				let exposeName = ( settings["expose"] === true ? componentName : settings["expose"] );
 				Object.defineProperty(component.__proto__, exposeName, {
-					get()
-					{
-						return component._components[componentName];
-					}
+					get() { return this.components[componentName]; }
 				});
 			}
 		}).then(() => {
-			if (sync || options["sync"])
+			// Wait for the added component to be ready
+			if (sync || settings["sync"])
 			{
-				let state = sync || (options["sync"] === true ? "started" : options["sync"]);
+				let state = sync || (settings["sync"] === true ? "started" : settings["sync"]);
 				let c = className.split(".");
-				return StateOrganizer.waitFor(component, [{"name":c[c.length - 1], "state":state}]);
+				return component.waitFor([{"name":c[c.length - 1], "state":state}]);
 			}
 		});
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Load scripts for tags which has data-autoload attribute.
+	 *
+	 * @param	{HTMLElement}	rootNode			Target node.
+	 * @param	{String}		path				Base path prepend to each element's path.
+	 * @param	{Object}		settings			Settings.
+	 * @param	{String}		target				Target elements.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _loadTags(rootNode, basePath, settings, target)
+	{
+
+		let promises = [];
+		let targets = ( target ? document.querySelectorAll(target) : rootNode.querySelectorAll("[data-autoload],[data-automorph]") );
+
+		targets.forEach((element) => {
+			if (element.getAttribute("href"))
+			{
+				let url = element.getAttribute("href");
+				promises.push(AjaxUtil.loadScript(url));
+			}
+			else
+			{
+				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
+				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
+				let split = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+				let morph = ( element.hasAttribute("data-automorph") ? ( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) : false );
+				let options = Object.assign({}, settings, {"splitComponent":split, "morph":morph});
+
+				promises.push(ComponentOrganizer._loadComponent(className, Util.concatPath([basePath, classPath]), options, element.tagName));
+			}
+
+			element.removeAttribute("data-autoload");
+			element.removeAttribute("data-automorph");
+		});
+
+		return Promise.all(promises);
 
 	}
 
@@ -263,7 +268,7 @@ export default class ComponentOrganizer
 	 * @return  {Promise}		Promise.
 	 */
 	/*
-	static createComponent(componentName, options, path, settings)
+	static _createComponent(componentName, options, path, settings)
 	{
 
 		options = Object.assign({}, options);
@@ -290,61 +295,22 @@ export default class ComponentOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadComponent(componentName, path, options)
+	static _loadComponent(componentName, path, options, tagName)
 	{
 
-		return ComponentOrganizer.__autoloadComponent(componentName, path, options);
+		if (options["morph"])
+		{
+			// Define empty class
+			console.debug(`ComponentOrganizer._loadComponent(): Creating empty component. tagName=${tagName}`);
 
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Load scripts for tags which has data-autoload attribute.
-	 *
-	 * @param	{HTMLElement}	rootNode			Target node.
-	 * @param	{String}		path				Base path prepend to each element's path.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static loadTags(rootNode, basePath, settings)
-	{
-
-		let promises = [];
-
-		rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
-
-			// Rename data-autoload attribute
-			element.removeAttribute("data-autoload");
-			element.setAttribute("data-autoload-done", "");
-
-			if (element.getAttribute("href"))
-			{
-				let url = element.getAttribute("href");
-				promises.push(AjaxUtil.loadScript(url));
-			}
-			else
-			{
-				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
-				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
-
-				if (className)
-				{
-					// Load component script
-					settings["splitComponent"] = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
-					promises.push(ComponentOrganizer.loadComponent(className, Util.concatPath([basePath, classPath]), settings));
-				}
-				else
-				{
-					console.debug(`ComponentOrganizer.loadTags(): Creating empty component. tagName=${element.tagName}`);
-
-					// Define empty class
-					ClassUtil.newComponent(BITSMIST.v1.Pad, {}, element.tagName);
-				}
-			}
-		});
-
-		return Promise.all(promises);
+			let classDef = ( options["morph"] === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(options["morph"]) );
+			ClassUtil.newComponent(classDef, options, tagName);
+		}
+		else
+		{
+			// Load component script
+			return ComponentOrganizer.__autoloadComponent(componentName, path, options);
+		}
 
 	}
 
@@ -454,6 +420,62 @@ export default class ComponentOrganizer
 		}).then(() => {
 			console.debug(`ComponentOrganizer.__loadComponentScript(): Loaded script. componentName=${componentName}`);
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Insert a tag and return the inserted component.
+	 *
+	 * @param	{String}		tagName				Tagname.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Component}		Component.
+	 */
+	static __insertTag(tagName, options)
+	{
+
+		let addedComponent;
+
+		// Check root node
+		let root = document.querySelector(options["rootNode"]);
+		if (!root)
+		{
+			throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
+		}
+
+		// Build tag
+		let tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
+
+		// Insert tag
+		if (options["overwrite"])
+		{
+			root.outerHTML = tag;
+			addedComponent = root;
+		}
+		else
+		{
+			root.insertAdjacentHTML("afterbegin", tag);
+			addedComponent = root.children[0];
+		}
+
+		// Inject settings to added component
+		addedComponent._injectSettings = function(settings){
+			// super()
+			if (addedComponent._super.prototype._injectSettings)
+			{
+				settings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(this, settings));
+			}
+			else
+			{
+				settings = {};
+			}
+
+			return Util.deepMerge(settings, options);
+		};
+
+		return addedComponent;
 
 	}
 

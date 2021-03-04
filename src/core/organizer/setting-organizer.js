@@ -32,10 +32,7 @@ export default class SettingOrganizer
 		// Add properties
 
 		Object.defineProperty(targetClass.prototype, 'settings', {
-			get() {
-				return this._settings;
-			},
-			configurable: true
+			get() { return this._settings; },
 		});
 
 	}
@@ -48,18 +45,20 @@ export default class SettingOrganizer
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static init(conditions, component, settings)
 	{
 
 		component._settings = new Store({"items":settings});
-		component._settings.chain(BITSMIST.v1.Globals["settings"]);
-		component._settings.merge(component._getSettings());
+		component.settings.chain(BITSMIST.v1.Globals["settings"]);
+		component.settings.merge(component._getSettings());
 
 		// Overwrite name if specified
-		if (component._settings.get("name"))
+		if (component.settings.get("name"))
 		{
-			component._name = component._settings.get("name");
+			component._name = component.settings.get("name");
 		}
 
 	}
@@ -84,7 +83,7 @@ export default class SettingOrganizer
 		}).then((extraSettings) => {
 			if (extraSettings)
 			{
-				component._settings.merge(extraSettings);
+				component.settings.merge(extraSettings);
 			}
 		}).then(() => {
 			// Load settings from attributes
@@ -109,11 +108,12 @@ export default class SettingOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, component)
 	{
 
 		return false;
@@ -209,29 +209,29 @@ export default class SettingOrganizer
 		if (component.hasAttribute("href"))
 		{
 			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("href"));
-			component._settings.set("system.appBaseUrl", "");
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("system.componentPath", arr[0]);
-			component._settings.set("path", "");
+			component.settings.set("system.appBaseUrl", "");
+			component.settings.set("system.templatePath", arr[0]);
+			component.settings.set("system.componentPath", arr[0]);
+			component.settings.set("path", "");
 		}
 
 		// Get path from attribute
 		if (component.hasAttribute("data-path"))
 		{
-			component._settings.set("path", component.getAttribute("data-path"));
+			component.settings.set("path", component.getAttribute("data-path"));
 		}
 
 		// Get settings from the attribute
 
-		let dataSettings = ( document.querySelector(component._settings.get("rootNode")) ?
-			document.querySelector(component._settings.get("rootNode")).getAttribute("data-settings") :
+		let dataSettings = ( document.querySelector(component.settings.get("rootNode")) ?
+			document.querySelector(component.settings.get("rootNode")).getAttribute("data-settings") :
 			component.getAttribute("data-settings")
 		);
 
 		if (dataSettings) {
 			let settings = JSON.parse(dataSettings);
 			Object.keys(settings).forEach((key) => {
-				component._settings.set(key, settings[key]);
+				component.settings.set(key, settings[key]);
 			});
 		}
 

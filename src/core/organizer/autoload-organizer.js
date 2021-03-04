@@ -24,13 +24,15 @@ export default class AutoloadOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init.
+	 * Organize.
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
-	static init(conditions, component, settings)
+	static organize(conditions, component, settings)
 	{
 
 		if (document.readyState !== 'loading')
@@ -47,33 +49,19 @@ export default class AutoloadOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Organize.
-	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static organize(conditions, component, settings)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, component)
 	{
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "beforeStart" || eventName == "afterSpecLoad")
+		if (conditions == "*" || conditions == "beforeStart" || conditions == "afterSpecLoad")
 		{
 			ret = true;
 		}
@@ -99,10 +87,11 @@ export default class AutoloadOrganizer
 
 		console.debug(`AutoloadOrganizer.onDOMContentLoaded(): Auto loading started. name=${component.name}`);
 
-		let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", "")]);
-		let splitComponent = component._settings.get("system.splitComponent", false);
+		let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", "")]);
+		let splitComponent = component.settings.get("system.splitComponent", false);
+		let target = component.getAttribute("data-target");
 
-		component.loadTags(document, path, {"splitComponent":splitComponent});
+		component.loadTags(document, path, {"splitComponent":splitComponent}, target);
 
 	}
 

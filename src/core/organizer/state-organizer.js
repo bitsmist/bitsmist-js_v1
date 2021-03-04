@@ -31,14 +31,8 @@ export default class StateOrganizer
 		// Add properties
 
 		Object.defineProperty(Component.prototype, 'state', {
-			get()
-			{
-				return this._state;
-			},
-			set(value)
-			{
-				this._state = value;
-			}
+			get() { return this._state; },
+			set(value) { this._state = value; }
 		});
 
 		// Add methods
@@ -73,6 +67,8 @@ export default class StateOrganizer
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static init(conditions, component, settings)
 	{
@@ -128,21 +124,21 @@ export default class StateOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, component)
 	{
 
 		let ret = false;
-		let component = args[0];
 
-		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
+		if (conditions == "*" || conditions == "afterAppend" || conditions == "afterSpecLoad")
 		{
 			ret = true;
 		}
-		else if (eventName == "beforeStart")
+		else if (conditions == "beforeStart")
 		{
 			if (!(component instanceof BITSMIST.v1.Pad))
 			{
@@ -719,13 +715,13 @@ export default class StateOrganizer
 		if (component.hasAttribute("data-waitfor"))
 		{
 			let waitInfo = {"name":component.getAttribute("data-waitfor"), "state":"started"};
-			component._settings.set("waitFor", [waitInfo]);
+			component.settings.set("waitFor", [waitInfo]);
 		}
 
 		if (component.hasAttribute("data-waitfornode"))
 		{
 			let waitInfo = {"rootNode":component.getAttribute("data-waitfornode"), "state":"started"};
-			component._settings.set("waitFor", [waitInfo]);
+			component.settings.set("waitFor", [waitInfo]);
 		}
 
 	}

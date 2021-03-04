@@ -30,10 +30,7 @@ export default class OrganizerOrganizer
 		// Add properties
 
 		Object.defineProperty(Component.prototype, 'organizers', {
-			get() {
-				return this._organizers;
-			},
-			configurable: true
+			get() { return this._organizers; },
 		});
 
 		// Add methods
@@ -108,11 +105,12 @@ export default class OrganizerOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, component)
 	{
 
 		return false;
@@ -139,7 +137,7 @@ export default class OrganizerOrganizer
 		return Promise.resolve().then(() => {
 			return OrganizerOrganizer.organize("*", component, settings);
 		}).then(() => {
-			return OrganizerOrganizer.__autoInsertOrganizers(component, component._settings.items)
+			return OrganizerOrganizer.__autoInsertOrganizers(component, component.settings.items)
 		});
 
 	}
@@ -167,7 +165,7 @@ export default class OrganizerOrganizer
 			// Call organizers
 			let chain = Promise.resolve();
 			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
-				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
+				if (component._organizers[key].object.isTarget(conditions, component))
 				{
 					chain = chain.then(() => {
 						return component._organizers[key].object.organize(conditions, component, settings);

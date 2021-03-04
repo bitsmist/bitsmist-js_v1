@@ -98,16 +98,17 @@ export default class EventOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, component)
 	{
 
 		let ret = false;
 
-		if (eventName == "*" || eventName == "beforeStart")
+		if (conditions == "*" || conditions == "beforeStart")
 		{
 			ret = true;
 		}
@@ -235,7 +236,7 @@ export default class EventOrganizer
 	{
 
 		rootNode = ( rootNode ? rootNode : component );
-		let elementInfo = component._settings.get("elements." + elementName);
+		let elementInfo = component.settings.get("elements." + elementName);
 		let elements;
 
 		// Get target elements
