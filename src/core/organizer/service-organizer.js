@@ -16,60 +16,6 @@ export default class ServiceOrganizer
 {
 
 	// -------------------------------------------------------------------------
-	//	Event handlers
-	// -------------------------------------------------------------------------
-
-	/**
-	* Init service event handler.
-	*
-	* @param	{Object}		sender				Sender.
-	* @param	{Object}		e					Event info.
-	* @param	{Object}		ex					Extra event info.
-	*/
-	static onInitService(sender, e, ex)
-	{
-
-		let settings = ex.options["settings"];
-		let component = ex.options["component"];
-		let handler = settings["events"][e.type]["handler"];
-		let args = settings["events"][e.type]["args"];
-
-		// Init wait info
-		let waitInfo = {};
-		if (settings["className"])
-		{
-			waitInfo["name"] = settings["className"];
-		}
-		else if (settings["rootNode"])
-		{
-			waitInfo["rootNode"] = settings["rootNode"];
-		}
-		waitInfo["state"] = "started";
-
-		return component.waitFor([waitInfo]).then(() => {
-			// Get component
-			let service;
-			if (settings["className"])
-			{
-				Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
-					if (BITSMIST.v1.Globals.components.items[key].object.name == settings["className"])
-					{
-						service = BITSMIST.v1.Globals.components.items[key].object;
-					}
-				});
-			}
-			else
-			{
-				service = document.querySelector(services[serviceName]["rootNode"]);
-			}
-
-			// Call method
-			service[handler].apply(service, args);
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -132,5 +78,60 @@ export default class ServiceOrganizer
 		return ret;
 
 	}
+
+	// -------------------------------------------------------------------------
+	//	Event handlers
+	// -------------------------------------------------------------------------
+
+	/**
+	* Init service event handler.
+	*
+	* @param	{Object}		sender				Sender.
+	* @param	{Object}		e					Event info.
+	* @param	{Object}		ex					Extra event info.
+	*/
+	static onInitService(sender, e, ex)
+	{
+
+		let settings = ex.options["settings"];
+		let component = ex.options["component"];
+		let handler = settings["events"][e.type]["handler"];
+		let args = settings["events"][e.type]["args"];
+
+		// Init wait info
+		let waitInfo = {};
+		if (settings["className"])
+		{
+			waitInfo["name"] = settings["className"];
+		}
+		else if (settings["rootNode"])
+		{
+			waitInfo["rootNode"] = settings["rootNode"];
+		}
+		waitInfo["state"] = "started";
+
+		return component.waitFor([waitInfo]).then(() => {
+			// Get component
+			let service;
+			if (settings["className"])
+			{
+				Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
+					if (BITSMIST.v1.Globals.components.items[key].object.name == settings["className"])
+					{
+						service = BITSMIST.v1.Globals.components.items[key].object;
+					}
+				});
+			}
+			else
+			{
+				service = document.querySelector(services[serviceName]["rootNode"]);
+			}
+
+			// Call method
+			service[handler].apply(service, args);
+		});
+
+	}
+
 
 }

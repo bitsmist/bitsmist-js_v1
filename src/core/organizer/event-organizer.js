@@ -31,23 +31,23 @@ export default class EventOrganizer
 		// Add methods
 
 		Component.prototype.addEventHandler = function(element, eventName, eventInfo, options, bindTo) {
-			EventOrganizer.addEventHandler(this, element, eventName, eventInfo, options, bindTo);
+			EventOrganizer._addEventHandler(this, element, eventName, eventInfo, options, bindTo);
 		}
 
 		Component.prototype.trigger = function(eventName, sender, options, element) {
-			return EventOrganizer.trigger(this, eventName, sender, options, element)
+			return EventOrganizer._trigger(this, eventName, sender, options, element)
 		}
 
 		Component.prototype.triggerSync = function(eventName, sender, options, element) {
-			return EventOrganizer.triggerSync(this, eventName, sender, options, element)
+			return EventOrganizer._triggerSync(this, eventName, sender, options, element)
 		}
 
 		Component.prototype.setHtmlEventHandlers = function(elementName, options, rootNode) {
-			EventOrganizer.setHtmlEventHandlers(this, elementName, options, rootNode)
+			EventOrganizer._setHtmlEventHandlers(this, elementName, options, rootNode)
 		}
 
 		Component.prototype.getEventHandler = function(component, eventInfo, bindTo, eventName) {
-			return EventOrganizer.getEventHandler(this, component, eventInfo, bindTo, eventName)
+			return EventOrganizer._getEventHandler(this, component, eventInfo, bindTo, eventName)
 		}
 
 	}
@@ -117,6 +117,8 @@ export default class EventOrganizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Add an event handler.
@@ -128,11 +130,11 @@ export default class EventOrganizer
 	 * @param	{Object}		options					Options passed to elements.
 	 * @param	{Object}		bindTo					Object which binds to handler.
 	 */
-	static addEventHandler(component, element, eventName, eventInfo, options, bindTo)
+	static _addEventHandler(component, element, eventName, eventInfo, options, bindTo)
 	{
 
 		// Get handler
-		let handler = EventOrganizer.getEventHandler(component, eventInfo, bindTo);
+		let handler = EventOrganizer._getEventHandler(component, eventInfo, bindTo);
 		if (typeof handler !== "function")
 		{
 			let pluginName = ( bindTo ? bindTo.name : "" );
@@ -175,7 +177,7 @@ export default class EventOrganizer
 	 * @param	{Object}		sender					Object which triggered the event.
 	 * @param	{Object}		options					Event parameter options.
 	 */
-	static trigger(component, eventName, sender, options, element)
+	static _trigger(component, eventName, sender, options, element)
 	{
 
 		options = Object.assign({}, options);
@@ -210,13 +212,13 @@ export default class EventOrganizer
 	 * @param	{Object}		sender					Object which triggered the event.
 	 * @param	{Object}		options					Event parameter options.
 	 */
-	static triggerSync(component, eventName, sender, options, element)
+	static _triggerSync(component, eventName, sender, options, element)
 	{
 
 		options = options || {};
 		options["async"] = false;
 
-		return EventOrganizer.trigger.call(component, component, eventName, sender, options, element);
+		return EventOrganizer._trigger.call(component, component, eventName, sender, options, element);
 
 	}
 
@@ -229,7 +231,7 @@ export default class EventOrganizer
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Options}		options				Options.
 	 */
-	static setHtmlEventHandlers(component, elementName, options, rootNode)
+	static _setHtmlEventHandlers(component, elementName, options, rootNode)
 	{
 
 		rootNode = ( rootNode ? rootNode : component );
@@ -252,7 +254,7 @@ export default class EventOrganizer
 		{
 			Object.keys(events).forEach((eventName) => {
 				options = Object.assign({}, events[eventName]["options"], options);
-				EventOrganizer.addEventHandler(component, elements[i], eventName, events[eventName], options);
+				EventOrganizer._addEventHandler(component, elements[i], eventName, events[eventName], options);
 			});
 		}
 
@@ -267,7 +269,7 @@ export default class EventOrganizer
 	 * @param	{Object/Function/String}	eventInfo	Event info.
 	 * @param	{Object}		bindTo					Object which binds to handler.
 	 */
-	static getEventHandler(component, eventInfo, bindTo, eventName)
+	static _getEventHandler(component, eventInfo, bindTo, eventName)
 	{
 
 		bindTo = bindTo || component;

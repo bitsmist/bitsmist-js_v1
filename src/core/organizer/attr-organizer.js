@@ -15,27 +15,6 @@
 export default class AttrOrganizer
 {
 
-	// -----------------------------------------------------------------------------
-	//	Event handlers
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * DoOrganize event handler.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 * @param	{Object}		ex					Extra event info.
-	 */
-	static onDoOrganize(sender, e, ex)
-	{
-
-		let component = ex.target;
-		let settings = ex.options["attrs"];
-
-		return AttrOrganizer.initAttr(component, settings);
-
-	}
-
 	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
@@ -92,12 +71,58 @@ export default class AttrOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Check if event is target.
+	 *
+	 * @param	{String}		eventName			Event name.
+	 *
+	 * @return 	{Boolean}		True if it is target.
+	 */
+	static isTarget(eventName, observerInfo, ...args)
+	{
+
+		let ret = false;
+
+		if (eventName == "*" || eventName == "beforeStart" || eventName == "afterSpecLoad")
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -----------------------------------------------------------------------------
+	//	Event handlers
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * DoOrganize event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 * @param	{Object}		ex					Extra event info.
+	 */
+	static onDoOrganize(sender, e, ex)
+	{
+
+		let component = ex.target;
+		let settings = ex.options["attrs"];
+
+		return AttrOrganizer._initAttr(component, settings);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Init attributes.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static initAttr(component, settings)
+	static _initAttr(component, settings)
 	{
 
 		if (settings)
@@ -135,29 +160,6 @@ export default class AttrOrganizer
 		}
 
 		return Promise.resolve();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		eventName			Event name.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(eventName, observerInfo, ...args)
-	{
-
-		let ret = false;
-
-		if (eventName == "*" || eventName == "beforeStart" || eventName == "afterSpecLoad")
-		{
-			ret = true;
-		}
-
-		return ret;
 
 	}
 

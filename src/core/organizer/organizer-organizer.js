@@ -158,12 +158,10 @@ export default class OrganizerOrganizer
 	static callOrganizers(component, conditions, settings)
 	{
 
-//		console.log("@@@calling", component.name, conditions, settings);
 		// Add organizers
 		return Promise.resolve().then(() => {
 			return OrganizerOrganizer.organize("*", component, settings);
 		}).then(() => {
-			//return OrganizerOrganizer.__autoInsertOrganizers(component, component._settings.items)
 			return OrganizerOrganizer.__autoInsertOrganizers(component, settings)
 		}).then(() => {
 			// Call organizers
@@ -172,7 +170,6 @@ export default class OrganizerOrganizer
 				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
 				{
 					chain = chain.then(() => {
-//						console.log("@@@calling an organizer", component.name, conditions, key);
 						return component._organizers[key].object.organize(conditions, component, settings);
 					});
 				}
@@ -252,7 +249,6 @@ export default class OrganizerOrganizer
 
 		if (!component._organizers[organizerName] && BITSMIST.v1.Globals["organizers"]["items"][organizerName])
 		{
-//			console.log("@@@adding an organizer", component.name, organizerName);
 			component._organizers[organizerName] = BITSMIST.v1.Globals["organizers"]["items"][organizerName];
 			if (component._organizers[organizerName] && typeof component._organizers[organizerName].object.init === "function")
 			{

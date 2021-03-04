@@ -32,17 +32,17 @@ export default class TemplateOrganizer
 		// Add methods
 
 		Pad.prototype.addTemplate = function(templateName, options) {
-			return TemplateOrganizer.addTemplate(this, templateName, options);
+			return TemplateOrganizer._addTemplate(this, templateName, options);
 		}
 
 		Pad.prototype.cloneTemplate = function(templateName) {
 			templateName = templateName || this._settings.get("templateName");
 
-			return TemplateOrganizer.clone(this, templateName);
+			return TemplateOrganizer._clone(this, templateName);
 		}
 
 		Pad.prototype.isActiveTemplate = function(templateName) {
-			return TemplateOrganizer.isActive(this, templateName);
+			return TemplateOrganizer._isActive(this, templateName);
 		}
 
 	}
@@ -140,6 +140,8 @@ export default class TemplateOrganizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Check if the template is active.
@@ -149,7 +151,7 @@ export default class TemplateOrganizer
 	 *
 	 * @return  {Boolean}		True when active.
 	 */
-	static isActive(component, templateName)
+	static _isActive(component, templateName)
 	{
 
 		let ret = false;
@@ -175,7 +177,7 @@ export default class TemplateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static addTemplate(component, templateName, options)
+	static _addTemplate(component, templateName, options)
 	{
 
 		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
@@ -186,7 +188,7 @@ export default class TemplateOrganizer
 
 		return Promise.resolve().then(() => {
 			let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.templatePath", ""), component._settings.get("path", "")]);
-			return TemplateOrganizer.loadTemplate(component, templateInfo, path);
+			return TemplateOrganizer._loadTemplate(component, templateInfo, path);
 		}).then(() => {
 			if (component._settings.get("templateNode"))
 			{
@@ -216,7 +218,7 @@ export default class TemplateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadTemplate(component, templateInfo, path)
+	static _loadTemplate(component, templateInfo, path)
 	{
 
 		return TemplateOrganizer.__autoLoadTemplate(component, templateInfo, path);
@@ -233,7 +235,7 @@ export default class TemplateOrganizer
 	 *
 	 * @return  {Object}		Cloned component.
 	 */
-	static clone(component, templateName)
+	static _clone(component, templateName)
 	{
 
 		if (!component._templates[templateName])
@@ -274,7 +276,6 @@ export default class TemplateOrganizer
 
 		let promise;
 
-		//if (!templateInfo["name"] || templateInfo["html"])
 		if (templateInfo["html"] || templateInfo["node"])
 		{
 			console.debug(`TemplateOrganizer.__autoLoadTemplate(): Template Already exists. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`, );
@@ -384,8 +385,8 @@ export default class TemplateOrganizer
 
 		if (templateInfo["node"])
 		{
-			let clone = this.clone(templateInfo["name"]);
-			component.insertBefore(clone, this.firstChild);
+			let clone = TemplateOrganizer.clone(component, templateInfo["name"]);
+			component.insertBefore(clone, component.firstChild);
 		}
 		else
 		{

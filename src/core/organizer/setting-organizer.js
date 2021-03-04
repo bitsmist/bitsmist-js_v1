@@ -121,6 +121,8 @@ export default class SettingOrganizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Load setting file.
@@ -130,15 +132,15 @@ export default class SettingOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadSetting(settingName, path)
+	static _loadSetting(settingName, path)
 	{
 
 		let url = Util.concatPath([path, settingName + ".js"]);
 		let settings;
 
-		console.debug(`SettingOrganizer.loadSettings(): Loading settings. url=${url}`);
+		console.debug(`SettingOrganizer._loadSetting(): Loading settings. url=${url}`);
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SettingOrganizer.loadSettings(): Loaded settings. url=${url}`);
+			console.debug(`SettingOrganizer._loadSetting(): Loaded settings. url=${url}`);
 			try
 			{
 				settings = JSON.parse(xhr.responseText);
@@ -188,7 +190,7 @@ export default class SettingOrganizer
 
 		if (name || path)
 		{
-			return SettingOrganizer.loadSetting(name, path);
+			return SettingOrganizer._loadSetting(name, path);
 		}
 
 	}

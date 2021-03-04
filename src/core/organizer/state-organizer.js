@@ -44,23 +44,23 @@ export default class StateOrganizer
 		// Add methods
 
 		Component.prototype.changeState= function(newState) {
-			return StateOrganizer.changeState(this, newState);
+			return StateOrganizer._changeState(this, newState);
 		}
 
 		Component.prototype.isInitialized = function() {
-			return StateOrganizer.isInitialized(this);
+			return StateOrganizer._isInitialized(this);
 		}
 
 		Component.prototype.waitFor = function(waitlist, timeout) {
-			return StateOrganizer.waitFor(this, waitlist, timeout);
+			return StateOrganizer._waitFor(this, waitlist, timeout);
 		}
 
 		Component.prototype.suspend = function(state) {
-			return StateOrganizer.suspend(this, state);
+			return StateOrganizer._suspend(this, state);
 		}
 
 		Component.prototype.resume = function(state) {
-			return StateOrganizer.resume(this, state);
+			return StateOrganizer._resume(this, state);
 		}
 
 	}
@@ -104,7 +104,7 @@ export default class StateOrganizer
 		let waitFor = settings["waitFor"];
 		if (waitFor)
 		{
-			promise = StateOrganizer.waitFor(component, waitFor);
+			promise = StateOrganizer._waitFor(component, waitFor);
 		}
 
 		return promise;
@@ -155,6 +155,8 @@ export default class StateOrganizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Wait for components to become specific states.
@@ -165,7 +167,7 @@ export default class StateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static waitFor(component, waitlist, timeout)
+	static _waitFor(component, waitlist, timeout)
 	{
 
 		let promise;
@@ -207,7 +209,7 @@ export default class StateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static waitForSingle(component, state, timeout)
+	static _waitForSingle(component, state, timeout)
 	{
 
 		let componentInfo = BITSMIST.v1.Globals.components.get(component.uniqueId);
@@ -235,27 +237,27 @@ export default class StateOrganizer
 	 * @return  {Promise}		Promise.
 	 */
 	/*
-	static waitForTransitionableState(component, newState)
+	static _waitForTransitionableState(component, newState)
 	{
 
 		if (newState == "starting")
 		{
-			return StateOrganizer.waitForSingle(component, "instantiated");
+			return StateOrganizer._waitForSingle(component, "instantiated");
 		}
 
 		if (newState == "stopping")
 		{
-			return StateOrganizer.waitForSingle(component, "instantiated");
+			return StateOrganizer._waitForSingle(component, "instantiated");
 		}
 
 		if (newState == "opening")
 		{
-			return StateOrganizer.waitForSingle(component, "started");
+			return StateOrganizer._waitForSingle(component, "started");
 		}
 
 		if (newState == "closing")
 		{
-			return StateOrganizer.waitForSingle(component, "opened");
+			return StateOrganizer._waitForSingle(component, "opened");
 		}
 
 	}
@@ -271,7 +273,7 @@ export default class StateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static changeState(component, state)
+	static _changeState(component, state)
 	{
 
 		if (StateOrganizer.__isTransitionable(component.state, state))
@@ -298,7 +300,7 @@ export default class StateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static suspend(component, state)
+	static _suspend(component, state)
 	{
 
 		let suspendInfo = {};
@@ -323,7 +325,7 @@ export default class StateOrganizer
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		state				Component state.
 	 */
-	static resume(component, state)
+	static _resume(component, state)
 	{
 
 		component._suspend[state].resolve();
@@ -339,7 +341,7 @@ export default class StateOrganizer
 	 *
 	 * @return  {Boolean}		True when initialized.
 	 */
-	static isInitialized(component)
+	static _isInitialized(component)
 	{
 
 		let ret = false;

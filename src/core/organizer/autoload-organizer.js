@@ -20,30 +20,6 @@ export default class AutoloadOrganizer
 {
 
 	// -------------------------------------------------------------------------
-	//  Event handlers
-	// -------------------------------------------------------------------------
-
-	/**
-	* DOM content loaded event handler.
-	*
-	* @param	{Object}		sender				Sender.
-	* @param	{Object}		e					Event info.
-	*
-	* @return  {Promise}		Promise.
-	*/
-	static onDOMContentLoaded(component)
-	{
-
-		console.debug(`AutoloadOrganizer.onDOMContentLoaded(): Auto loading started. name=${component.name}`);
-
-		let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", "")]);
-		let splitComponent = component._settings.get("system.splitComponent", false);
-
-		component.loadTags(document, path, {"splitComponent":splitComponent});
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -103,6 +79,30 @@ export default class AutoloadOrganizer
 		}
 
 		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event handlers
+	// -------------------------------------------------------------------------
+
+	/**
+	* DOM content loaded event handler.
+	*
+	* @param	{Object}		sender				Sender.
+	* @param	{Object}		e					Event info.
+	*
+	* @return  {Promise}		Promise.
+	*/
+	static onDOMContentLoaded(component)
+	{
+
+		console.debug(`AutoloadOrganizer.onDOMContentLoaded(): Auto loading started. name=${component.name}`);
+
+		let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", "")]);
+		let splitComponent = component._settings.get("system.splitComponent", false);
+
+		component.loadTags(document, path, {"splitComponent":splitComponent});
 
 	}
 
