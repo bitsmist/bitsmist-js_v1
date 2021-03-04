@@ -45,7 +45,7 @@ export default class ComponentOrganizer
 		}
 
 		Component.prototype.loadTags = function(rootNode, basePath, settings, target) {
-			return ComponentOrganizer._loadTags(rootNode, basePath, settings, target);
+			return ComponentOrganizer._loadTags(this, rootNode, basePath, settings, target);
 		}
 
 	}
@@ -224,11 +224,13 @@ export default class ComponentOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadTags(rootNode, basePath, settings, target)
+	static _loadTags(component, rootNode, basePath, settings, target)
 	{
 
 		let promises = [];
 		let targets = ( target ? document.querySelectorAll(target) : rootNode.querySelectorAll("[data-autoload],[data-automorph]") );
+
+		console.debug(`ComponentOrganizer._loadTags(): Loading tags. name=${component.name}, target=${target}`);
 
 		targets.forEach((element) => {
 			if (element.getAttribute("href"))
