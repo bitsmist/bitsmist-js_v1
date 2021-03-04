@@ -41,7 +41,9 @@ export default class AutoloadOrganizer
 		}
 		else
 		{
-			window.addEventListener('DOMContentLoaded', AutoloadOrganizer.onDOMContentLoaded.call(component, component));
+			document.addEventListener('DOMContentLoaded', () => {
+				AutoloadOrganizer.onDOMContentLoaded.call(component, component)
+			});
 		}
 
 	}
@@ -84,8 +86,6 @@ export default class AutoloadOrganizer
 	*/
 	static onDOMContentLoaded(component)
 	{
-
-		console.debug(`AutoloadOrganizer.onDOMContentLoaded(): Auto loading started. name=${component.name}`);
 
 		let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", "")]);
 		let splitComponent = component.settings.get("system.splitComponent", false);
