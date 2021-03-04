@@ -35,28 +35,6 @@ ClassUtil.inherit(TagLoader, Component);
 customElements.define("bm-tagloader", TagLoader);
 
 // -----------------------------------------------------------------------------
-//  Event handlers
-// -----------------------------------------------------------------------------
-
-/**
- * DOM content loaded event handler.
- *
- * @param	{Object}		sender				Sender.
- * @param	{Object}		e					Event info.
- *
- * @return  {Promise}		Promise.
- */
-TagLoader.prototype.onDOMContentLoaded= function(sender, e)
-{
-
-	let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
-	let splitComponent = this._settings.get("system.splitComponent", false);
-
-	this.loadTags(document, path, {"splitComponent":splitComponent});
-
-}
-
-// -----------------------------------------------------------------------------
 //  Methods
 // -----------------------------------------------------------------------------
 
@@ -73,20 +51,13 @@ TagLoader.prototype.start = function(settings)
 	// Defaults
 	let defaults = {
 		"name": "TagLoader",
-		"autoSetup": false
+		"autoSetup": false,
+		"organizers": {
+			"AutoloadOrganizer":""
+		}
 	}
 	settings = BITSMIST.v1.Util.deepMerge(defaults, settings);
 
-	// Start
-	return BITSMIST.v1.Component.prototype.start.call(this, settings).then(() => {
-		if (document.readyState !== 'loading')
-		{
-			this.onDOMContentLoaded();
-		}
-		else
-		{
-			window.addEventListener('DOMContentLoaded', this.onDOMContentLoaded.bind(this));
-		}
-	});
+	return BITSMIST.v1.Component.prototype.start.call(this, settings);
 
 }
