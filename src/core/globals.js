@@ -10,7 +10,6 @@
 
 import OrganizerStore from './store/organizer-store';
 import Store from './store/store';
-import Util from './util/util';
 
 // =============================================================================
 //	Global class
