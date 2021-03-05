@@ -87,7 +87,7 @@ export default class TemplateOrganizer extends Organizer
 			});
 		}
 
-		return Promise.resolve();
+		return settings;
 
 	}
 

@@ -89,7 +89,9 @@ export default class StateOrganizer extends Organizer
 			promise = StateOrganizer._waitFor(component, waitFor);
 		}
 
-		return promise;
+		return promise.then(() => {
+			return settings;
+		});
 
 	}
 

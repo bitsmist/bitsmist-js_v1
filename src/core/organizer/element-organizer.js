@@ -41,7 +41,7 @@ export default class ElementOrganizer extends Organizer
 			});
 		}
 
-		return Promise.resolve();
+		return settings;
 
 	}
 

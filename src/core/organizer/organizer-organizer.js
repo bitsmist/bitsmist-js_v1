@@ -53,21 +53,47 @@ export default class OrganizerOrganizer extends Organizer
 	static organize(conditions, component, settings)
 	{
 
+		let targets = {};
 		let chain = Promise.resolve();
 
+		// List new organizers
 		let organizers = settings["organizers"];
 		if (organizers)
 		{
 			Object.keys(organizers).forEach((key) => {
-				chain = chain.then(() => {
-					return OrganizerOrganizer.__addOrganizer(component, key, settings);
-				});
+				if (!component._organizers[key] && BITSMIST.v1.Globals["organizers"]["items"][key])
+				{
+					targets[key] = BITSMIST.v1.Globals["organizers"]["items"][key];
+				}
 			});
 		}
 
-		return chain;
+		// List new organizers from settings keyword
+		Object.keys(settings).forEach((key) => {
+			let organizerInfo = BITSMIST.v1.Globals["organizers"].getOrganizerInfoByTargetWords(key);
+			if (organizerInfo)
+			{
+				if (!component._organizers[organizerInfo.name])
+				{
+					targets[organizerInfo.name] = organizerInfo.object;
+				}
+			}
+		});
+
+		// Add and init new organizers
+		OrganizerOrganizer._sortItems(targets).forEach((key) => {
+			chain = chain.then(() => {
+				component._organizers[key] = BITSMIST.v1.Globals["organizers"]["items"][key];
+				return component._organizers[key].object.init("*", component, settings);
+			});
+		});
+
+		return chain.then(() => {
+			return settings;
+		});
 
 	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -99,11 +125,7 @@ export default class OrganizerOrganizer extends Organizer
 		component._organizers = {};
 
 		// Add organizers
-		return Promise.resolve().then(() => {
-			return OrganizerOrganizer.organize("*", component, settings);
-		}).then(() => {
-			return OrganizerOrganizer.__autoInsertOrganizers(component, component.settings.items)
-		});
+		return OrganizerOrganizer.organize("*", component, settings);
 
 	}
 
@@ -121,19 +143,17 @@ export default class OrganizerOrganizer extends Organizer
 	static callOrganizers(component, conditions, settings)
 	{
 
-		// Add organizers
 		return Promise.resolve().then(() => {
+			// Add organizers
 			return OrganizerOrganizer.organize("*", component, settings);
 		}).then(() => {
-			return OrganizerOrganizer.__autoInsertOrganizers(component, settings)
-		}).then(() => {
 			// Call organizers
-			let chain = Promise.resolve();
+			let chain = Promise.resolve(settings);
 			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
 				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
 				{
-					chain = chain.then(() => {
-						return component._organizers[key].object.organize(conditions, component, settings);
+					chain = chain.then((newSettings) => {
+						return component._organizers[key].object.organize(conditions, component, newSettings);
 					});
 				}
 			});
@@ -162,60 +182,6 @@ export default class OrganizerOrganizer extends Organizer
 		return Object.keys(organizers).sort((a,b) => {
 			return globals[a]["order"] - globals[b]["order"];
 		})
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Privates
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Automatically add organizers from settings.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static __autoInsertOrganizers(component, settings)
-	{
-
-		let chain = Promise.resolve();
-
-		Object.keys(settings).forEach((key) => {
-			let organizerInfo = BITSMIST.v1.Globals["organizers"].getOrganizerInfoByTargetWords(key);
-			if (organizerInfo)
-			{
-				chain = chain.then(() => {
-					return OrganizerOrganizer.__addOrganizer(component, organizerInfo.name, settings);
-				});
-			}
-		});
-
-		return chain;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add an organizer to a component.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		organizerName		Organizer name to add.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static __addOrganizer(component, organizerName, settings)
-	{
-
-		if (!component._organizers[organizerName] && BITSMIST.v1.Globals["organizers"]["items"][organizerName])
-		{
-			component._organizers[organizerName] = BITSMIST.v1.Globals["organizers"]["items"][organizerName];
-
-			return component._organizers[organizerName].object.init("*", component, settings);
-		}
 
 	}
 

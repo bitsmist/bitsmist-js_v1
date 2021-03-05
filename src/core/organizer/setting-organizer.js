@@ -86,9 +86,11 @@ export default class SettingOrganizer extends Organizer
 			{
 				component.settings.merge(extraSettings);
 			}
-		}).then(() => {
+
 			// Load settings from attributes
 			SettingOrganizer.__loadAttrSettings(component);
+
+			return component.settings.items;
 		});
 
 	}
@@ -201,7 +203,8 @@ export default class SettingOrganizer extends Organizer
 			component.getAttribute("data-settings")
 		);
 
-		if (dataSettings) {
+		if (dataSettings)
+		{
 			let settings = JSON.parse(dataSettings);
 			Object.keys(settings).forEach((key) => {
 				component.settings.set(key, settings[key]);

@@ -43,7 +43,7 @@ export default class ServiceOrganizer extends Organizer
 			});
 		}
 
-		return Promise.resolve();
+		return settings;
 
 	}
 

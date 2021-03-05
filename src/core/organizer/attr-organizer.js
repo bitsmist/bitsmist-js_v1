@@ -55,7 +55,7 @@ export default class AttrOrganizer extends Organizer
 			});
 		}
 
-		return Promise.resolve();
+		return settings;
 
 	}
 

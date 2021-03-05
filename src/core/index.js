@@ -31,7 +31,7 @@ Globals.organizers.set("SettingOrganizer", {"object":SettingOrganizer, "targetCl
 window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
 
 import OrganizerOrganizer from './organizer/organizer-organizer';
-Globals.organizers.set("OrganizerOrganizer", {"object":OrganizerOrganizer, "targetWords":"organizers"});
+Globals.organizers.set("OrganizerOrganizer", {"object":OrganizerOrganizer});
 window.BITSMIST.v1.OrganizerOrganizer = OrganizerOrganizer;
 
 import StateOrganizer from './organizer/state-organizer';

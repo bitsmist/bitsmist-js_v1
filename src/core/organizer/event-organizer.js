@@ -74,7 +74,7 @@ export default class EventOrganizer extends Organizer
 			});
 		}
 
-		return Promise.resolve();
+		return settings;
 
 	}
 

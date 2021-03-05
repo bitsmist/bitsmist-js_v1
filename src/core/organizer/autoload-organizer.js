@@ -47,6 +47,8 @@ export default class AutoloadOrganizer extends Organizer
 			});
 		}
 
+		return settings;
+
 	}
 
 	// -------------------------------------------------------------------------
