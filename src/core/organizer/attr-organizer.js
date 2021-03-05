@@ -8,11 +8,13 @@
  */
 // =============================================================================
 
+import Organizer from './organizer';
+
 // =============================================================================
 //	Attribute organizer class
 // =============================================================================
 
-export default class AttrOrganizer
+export default class AttrOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -54,41 +56,6 @@ export default class AttrOrganizer
 		}
 
 		return Promise.resolve();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, component)
-	{
-
-		let ret = false;
-
-		if (conditions == "*" || conditions == "beforeStart" || conditions == "afterSpecLoad")
-		{
-			ret = true;
-		}
-
-		return ret;
 
 	}
 

@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import Organizer from './organizer';
 import Store from '../store/store';
 import Util from '../util/util';
 
@@ -16,7 +17,7 @@ import Util from '../util/util';
 //	Setting organizer class
 // =============================================================================
 
-export default class SettingOrganizer
+export default class SettingOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -30,7 +31,6 @@ export default class SettingOrganizer
 	{
 
 		// Add properties
-
 		Object.defineProperty(targetClass.prototype, 'settings', {
 			get() { return this._settings; },
 		});
@@ -51,6 +51,7 @@ export default class SettingOrganizer
 	static init(conditions, component, settings)
 	{
 
+		// Init vars
 		component._settings = new Store({"items":settings});
 		component.settings.chain(BITSMIST.v1.Globals["settings"]);
 		component.settings.merge(component._getSettings());
@@ -89,34 +90,6 @@ export default class SettingOrganizer
 			// Load settings from attributes
 			SettingOrganizer.__loadAttrSettings(component);
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, component)
-	{
-
-		return false;
 
 	}
 

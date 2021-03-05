@@ -10,13 +10,14 @@
 
 import ClassUtil from '../util/class-util';
 import Component from '../component';
+import Organizer from './organizer';
 import Util from '../util/util';
 
 // =============================================================================
 //	Autoload organizer class
 // =============================================================================
 
-export default class AutoloadOrganizer
+export default class AutoloadOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -45,30 +46,6 @@ export default class AutoloadOrganizer
 				AutoloadOrganizer.onDOMContentLoaded.call(component, component)
 			});
 		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, component)
-	{
-
-		let ret = false;
-
-		if (conditions == "*" || conditions == "beforeStart" || conditions == "afterSpecLoad")
-		{
-			ret = true;
-		}
-
-		return ret;
 
 	}
 

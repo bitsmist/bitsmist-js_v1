@@ -11,6 +11,7 @@
 import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
 import Component from '../component';
+import Organizer from './organizer';
 import Pad from '../pad';
 import StateOrganizer from '../organizer/state-organizer';
 import Util from '../util/util';
@@ -19,7 +20,7 @@ import Util from '../util/util';
 //	Component organizer class
 // =============================================================================
 
-export default class ComponentOrganizer
+export default class ComponentOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -32,18 +33,7 @@ export default class ComponentOrganizer
 	static globalInit(targetClass)
 	{
 
-		// Add properties
-
-		Object.defineProperty(Component.prototype, 'components', {
-			get() { return this._components; },
-		});
-
 		// Add methods
-
-		Component.prototype.addComponent = function(componentName, options) {
-			return ComponentOrganizer._addComponent(this, componentName, options);
-		}
-
 		Component.prototype.loadTags = function(rootNode, basePath, settings, target) {
 			return ComponentOrganizer._loadTags(this, rootNode, basePath, settings, target);
 		}
@@ -64,6 +54,15 @@ export default class ComponentOrganizer
 	static init(conditions, component, settings)
 	{
 
+		// Add properties
+		Object.defineProperty(component, 'components', {
+			get() { return this._components; },
+		});
+
+		// Add methods
+		component.addComponent = function(componentName, options) { return ComponentOrganizer._addComponent(this, componentName, options); }
+
+		// Init vars
 		component._components = {};
 
 	}
@@ -134,25 +133,26 @@ export default class ComponentOrganizer
 	 * Check if event is target.
 	 *
 	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(conditions, component)
+	static isTarget(conditions, organizerInfo, component)
 	{
 
 		let ret = false;
 
-		if (conditions == "*" || conditions == "afterAppend" || conditions == "afterSpecLoad")
-		{
-			ret = true;
-		}
-		else if (conditions == "beforeStart")
+		if (conditions == "beforeStart")
 		{
 			if (!(component instanceof BITSMIST.v1.Pad))
 			{
 				ret = true;
 			}
+		}
+		else
+		{
+			ret = super.isTarget(conditions, organizerInfo, component);
 		}
 
 		return ret;

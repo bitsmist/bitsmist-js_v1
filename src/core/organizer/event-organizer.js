@@ -9,13 +9,14 @@
 // =============================================================================
 
 import Component from '../component';
+import Organizer from './organizer';
 import Util from '../util/util';
 
 // =============================================================================
 //	Event organizer class
 // =============================================================================
 
-export default class EventOrganizer
+export default class EventOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -29,23 +30,18 @@ export default class EventOrganizer
 	{
 
 		// Add methods
-
 		Component.prototype.addEventHandler = function(element, eventName, eventInfo, options, bindTo) {
 			EventOrganizer._addEventHandler(this, element, eventName, eventInfo, options, bindTo);
 		}
-
 		Component.prototype.trigger = function(eventName, sender, options, element) {
 			return EventOrganizer._trigger(this, eventName, sender, options, element)
 		}
-
 		Component.prototype.triggerSync = function(eventName, sender, options, element) {
 			return EventOrganizer._triggerSync(this, eventName, sender, options, element)
 		}
-
 		Component.prototype.setHtmlEventHandlers = function(elementName, options, rootNode) {
 			EventOrganizer._setHtmlEventHandlers(this, elementName, options, rootNode)
 		}
-
 		Component.prototype.getEventHandler = function(component, eventInfo, bindTo, eventName) {
 			return EventOrganizer._getEventHandler(this, component, eventInfo, bindTo, eventName)
 		}
@@ -79,41 +75,6 @@ export default class EventOrganizer
 		}
 
 		return Promise.resolve();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, component)
-	{
-
-		let ret = false;
-
-		if (conditions == "*" || conditions == "beforeStart")
-		{
-			ret = true;
-		}
-
-		return ret;
 
 	}
 

@@ -8,11 +8,13 @@
  */
 // =============================================================================
 
+import Organizer from './organizer';
+
 // =============================================================================
 //	Service organizer class
 // =============================================================================
 
-export default class ServiceOrganizer
+export default class ServiceOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -42,41 +44,6 @@ export default class ServiceOrganizer
 		}
 
 		return Promise.resolve();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, component)
-	{
-
-		let ret = false;
-
-		if (conditions == "*" || conditions == "beforeStart")
-		{
-			ret = true;
-		}
-
-		return ret;
 
 	}
 

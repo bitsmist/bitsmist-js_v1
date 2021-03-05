@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import Organizer from './organizer';
 import Pad from '../pad';
 import Util from '../util/util';
 
@@ -16,7 +17,7 @@ import Util from '../util/util';
 //	Template organizer class
 // =============================================================================
 
-export default class TemplateOrganizer
+export default class TemplateOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -30,20 +31,9 @@ export default class TemplateOrganizer
 	{
 
 		// Add methods
-
-		Pad.prototype.addTemplate = function(templateName, options) {
-			return TemplateOrganizer._addTemplate(this, templateName, options);
-		}
-
-		Pad.prototype.cloneTemplate = function(templateName) {
-			templateName = templateName || this._settings.get("templateName");
-
-			return TemplateOrganizer._clone(this, templateName);
-		}
-
-		Pad.prototype.isActiveTemplate = function(templateName) {
-			return TemplateOrganizer._isActive(this, templateName);
-		}
+		Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
+		Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
+		Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActive(this, templateName); }
 
 	}
 
@@ -61,6 +51,7 @@ export default class TemplateOrganizer
 	static init(conditions, component, setttings)
 	{
 
+		// Init vars
 		component._templates = {};
 
 		// Set defaults if not set already
@@ -120,21 +111,25 @@ export default class TemplateOrganizer
 	 * Check if event is target.
 	 *
 	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(conditions, component)
+	static isTarget(conditions, organizerInfo, component)
 	{
 
 		let ret = false;
 
 		if (component instanceof BITSMIST.v1.Pad)
 		{
+			ret = super.isTarget(conditions, organizerInfo, component);
+			/*
 			if (conditions == "*" || conditions == "beforeStart")
 			{
 				ret = true;
 			}
+			*/
 		}
 
 		return ret;
@@ -239,6 +234,8 @@ export default class TemplateOrganizer
 	 */
 	static _clone(component, templateName)
 	{
+
+		templateName = templateName || component._settings.get("templateName");
 
 		if (!component._templates[templateName])
 		{

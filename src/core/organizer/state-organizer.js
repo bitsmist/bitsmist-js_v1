@@ -9,13 +9,14 @@
 // =============================================================================
 
 import Component from '../component';
+import Organizer from './organizer';
 import Store from '../store/store';
 
 // =============================================================================
 //	Waitfor organizer class
 // =============================================================================
 
-export default class StateOrganizer
+export default class StateOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -29,33 +30,17 @@ export default class StateOrganizer
 	{
 
 		// Add properties
-
 		Object.defineProperty(Component.prototype, 'state', {
 			get() { return this._state; },
 			set(value) { this._state = value; }
 		});
 
 		// Add methods
-
-		Component.prototype.changeState= function(newState) {
-			return StateOrganizer._changeState(this, newState);
-		}
-
-		Component.prototype.isInitialized = function() {
-			return StateOrganizer._isInitialized(this);
-		}
-
-		Component.prototype.waitFor = function(waitlist, timeout) {
-			return StateOrganizer._waitFor(this, waitlist, timeout);
-		}
-
-		Component.prototype.suspend = function(state) {
-			return StateOrganizer._suspend(this, state);
-		}
-
-		Component.prototype.resume = function(state) {
-			return StateOrganizer._resume(this, state);
-		}
+		Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); }
+		Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); }
+		Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
+		Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
+		Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
 
 	}
 
@@ -73,6 +58,7 @@ export default class StateOrganizer
 	static init(conditions, component, settings)
 	{
 
+		// Init vars
 		component._state = "";
 		//component._suspend = {};
 
@@ -125,25 +111,26 @@ export default class StateOrganizer
 	 * Check if event is target.
 	 *
 	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(conditions, component)
+	static isTarget(conditions, organizerInfo, component)
 	{
 
 		let ret = false;
 
-		if (conditions == "*" || conditions == "afterAppend" || conditions == "afterSpecLoad")
-		{
-			ret = true;
-		}
-		else if (conditions == "beforeStart")
+		if (conditions == "beforeStart")
 		{
 			if (!(component instanceof BITSMIST.v1.Pad))
 			{
 				ret = true;
 			}
+		}
+		else
+		{
+			ret = super.isTarget(conditions, organizerInfo, component);
 		}
 
 		return ret;
@@ -186,6 +173,7 @@ export default class StateOrganizer
 			});
 			waitInfo["promise"] = promise;
 
+//			console.log("@@@", component.name,"is waiting for",waitlist[0]);
 			//StateOrganizer.__addToWaitingList(waitInfo, component, state);
 			StateOrganizer.__addToWaitingList(waitInfo, component);
 		}

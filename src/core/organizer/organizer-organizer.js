@@ -9,12 +9,13 @@
 // =============================================================================
 
 import Component from '../component';
+import Organizer from './organizer';
 
 // =============================================================================
 //	Organizer organizer class
 // =============================================================================
 
-export default class OrganizerOrganizer
+export default class OrganizerOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -28,32 +29,13 @@ export default class OrganizerOrganizer
 	{
 
 		// Add properties
-
 		Object.defineProperty(Component.prototype, 'organizers', {
 			get() { return this._organizers; },
 		});
 
 		// Add methods
-
-		Component.prototype.addOrganizer = function(organizerName) {
-			OrganizerOrganizer.addOrganizer(this, organizername);
-		}
-
-		Component.prototype.removeOrganizer = function(organizerName) {
-			OrganizerOrganizer.removeOrganizer(this, organizername);
-		}
-
-		Component.prototype.clearOrganizers = function() {
-			OrganizerOrganizer.clear(this);
-		}
-
-		Component.prototype.callOrganizers = function(condition, settings) {
-			return OrganizerOrganizer.callOrganizers(this, condition, settings);
-		}
-
-		Component.prototype.initOrganizers = function(settings) {
-			return OrganizerOrganizer.initOrganizers(this, settings);
-		}
+		Component.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer.callOrganizers(this, condition, settings); }
+		Component.prototype.initOrganizers = function(settings) { return OrganizerOrganizer.initOrganizers(this, settings); }
 
 	}
 
@@ -97,23 +79,6 @@ export default class OrganizerOrganizer
 	{
 
 		component._organizers = {};
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, component)
-	{
-
-		return false;
 
 	}
 
@@ -165,7 +130,7 @@ export default class OrganizerOrganizer
 			// Call organizers
 			let chain = Promise.resolve();
 			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
-				if (component._organizers[key].object.isTarget(conditions, component))
+				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
 				{
 					chain = chain.then(() => {
 						return component._organizers[key].object.organize(conditions, component, settings);
@@ -218,7 +183,7 @@ export default class OrganizerOrganizer
 		let chain = Promise.resolve();
 
 		Object.keys(settings).forEach((key) => {
-			let organizerInfo = BITSMIST.v1.Globals["organizers"].getOrganizerInfoByTarget(key);
+			let organizerInfo = BITSMIST.v1.Globals["organizers"].getOrganizerInfoByTargetWords(key);
 			if (organizerInfo)
 			{
 				chain = chain.then(() => {
@@ -248,10 +213,8 @@ export default class OrganizerOrganizer
 		if (!component._organizers[organizerName] && BITSMIST.v1.Globals["organizers"]["items"][organizerName])
 		{
 			component._organizers[organizerName] = BITSMIST.v1.Globals["organizers"]["items"][organizerName];
-			if (component._organizers[organizerName] && typeof component._organizers[organizerName].object.init === "function")
-			{
-				return component._organizers[organizerName].object.init("*", component, settings);
-			}
+
+			return component._organizers[organizerName].object.init("*", component, settings);
 		}
 
 	}
