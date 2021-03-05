@@ -54,8 +54,9 @@ export default class OrganizerStore extends Store
 		value = Object.assign({}, value);
 		value["name"] = ( value["name"] ? value["name"] : key );
 		value["targetWords"] = ( value["targetWords"] ? value["targetWords"] : [] );
+		value["targetWords"] = ( Array.isArray(value["targetWords"]) ? value["targetWords"] : [value["targetWords"]] );
 		value["targetEvents"] = ( value["targetEvents"] ? value["targetEvents"] : [] );
-		value["targetEvents"] = ( Array.isArray(value["targetWords"]) ? value["targetWords"] : [value["targetWords"] );
+		value["targetEvents"] = ( Array.isArray(value["targetEvents"]) ? value["targetEvents"] : [value["targetEvents"]] );
 
 		super.set(key, value);
 
