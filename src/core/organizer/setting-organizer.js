@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import Component from '../component';
 import Organizer from './organizer';
 import Store from '../store/store';
 import Util from '../util/util';
@@ -31,7 +32,7 @@ export default class SettingOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(targetClass.prototype, 'settings', {
+		Object.defineProperty(Component.prototype, 'settings', {
 			get() { return this._settings; },
 		});
 

@@ -9,7 +9,6 @@
 // =============================================================================
 
 import ClassUtil from './util/class-util';
-import SettingOrganizer from './organizer/setting-organizer';
 import Util from './util/util';
 
 // =============================================================================
@@ -140,6 +139,8 @@ Component.prototype.start = function(settings)
 		"autoSetup": true,
 		"autoStop": true,
 		"organizers": {
+			"SettingOrganizer": "",
+			"OrganizerOrganizer": "",
 			"StateOrganizer": "",
 		}
 	};
@@ -152,7 +153,6 @@ Component.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
-		SettingOrganizer.init("*", this, newSettings);
 		return this.initOrganizers(newSettings);
 	// }).then(() => {
 		// suspend
@@ -160,8 +160,6 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
-	}).then(() => {
-		return SettingOrganizer.organize("*", this);
 	}).then(() => {
 		return this.callOrganizers("beforeStart", this._settings.items);
 	}).then(() => {

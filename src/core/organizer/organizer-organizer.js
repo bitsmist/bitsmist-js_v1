@@ -144,9 +144,20 @@ export default class OrganizerOrganizer extends Organizer
 	{
 
 		return Promise.resolve().then(() => {
+			// Load settings
+			let organizerInfo = component._organizers["SettingOrganizer"];
+			if (organizerInfo.object.isTarget(conditions, organizerInfo, component))
+			{
+				return organizerInfo.object.organize(conditions, component, settings);
+			}
+			else
+			{
+				return settings;
+			}
+		}).then((newSettings) => {
 			// Add organizers
-			return OrganizerOrganizer.organize("*", component, settings);
-		}).then(() => {
+			return OrganizerOrganizer.organize("*", component, newSettings);
+		}).then((newSettings) => {
 			// Call organizers
 			let chain = Promise.resolve(settings);
 			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
