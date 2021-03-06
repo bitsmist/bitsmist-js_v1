@@ -81,7 +81,7 @@ export default class Organizer
 	static isTarget(conditions, organizerInfo, component)
 	{
 
-		if (Array.isArray(organizerInfo["targetEvents"]) && organizerInfo["targetEvents"].indexOf(conditions) > -1)
+		if (organizerInfo["targetEvents"].indexOf(conditions) > -1)
 		{
 			return true;
 		}
