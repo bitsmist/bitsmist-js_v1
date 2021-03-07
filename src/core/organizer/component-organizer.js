@@ -13,7 +13,7 @@ import ClassUtil from '../util/class-util';
 import Component from '../component';
 import Organizer from './organizer';
 import Pad from '../pad';
-import StateOrganizer from '../organizer/state-organizer';
+import Store from '../store/store';
 import Util from '../util/util';
 
 // =============================================================================
@@ -38,6 +38,9 @@ export default class ComponentOrganizer extends Organizer
 			return ComponentOrganizer._loadTags(this, rootNode, basePath, settings, target);
 		}
 
+		// Init vars
+		ComponentOrganizer.__classes = new Store();
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -60,7 +63,7 @@ export default class ComponentOrganizer extends Organizer
 		});
 
 		// Add methods
-		component.addComponent = function(componentName, options) { return ComponentOrganizer._addComponent(this, componentName, options); }
+		component.addComponent = function(componentName, settings, sync) { return ComponentOrganizer._addComponent(this, componentName, settings, sync); }
 
 		// Init vars
 		component._components = {};
@@ -206,7 +209,8 @@ export default class ComponentOrganizer extends Organizer
 			// Wait for the added component to be ready
 			if (sync || settings["sync"])
 			{
-				let state = sync || (settings["sync"] === true ? "started" : settings["sync"]);
+				sync = sync || settings["sync"]; // sync precedes settings["sync"]
+				let state = (sync === true ? "started" : sync);
 				let c = className.split(".");
 				return component.waitFor([{"name":c[c.length - 1], "state":state}]);
 			}
@@ -334,7 +338,7 @@ export default class ComponentOrganizer extends Organizer
 
 		let ret = false;
 
-		if (BITSMIST.v1.Globals.classes.get(className, {})["state"] == "loaded")
+		if (ComponentOrganizer.__classes.get(className, {})["state"] == "loaded")
 		{
 			ret = true;
 		}
@@ -370,23 +374,23 @@ export default class ComponentOrganizer extends Organizer
 		{
 			// Already loaded
 			console.debug(`ComponentOrganizer.__autoLoadComponent(): Component Already exists. className=${className}`);
-			BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loaded"});
+			ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded"});
 			promise = Promise.resolve();
 		}
-		else if (BITSMIST.v1.Globals.classes.get(className, {})["state"] == "loading")
+		else if (ComponentOrganizer.__classes.get(className, {})["state"] == "loading")
 		{
 			// Already loading
 			console.debug(`ComponentOrganizer.__autoLoadComponent(): Component Already loading. className=${className}`);
-			promise = BITSMIST.v1.Globals.classes.get(className)["promise"];
+			promise = ComponentOrganizer.__classes.get(className)["promise"];
 		}
 		else
 		{
 			// Not loaded
-			BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loading"});
+			ComponentOrganizer.__classes.mergeSet(className, {"state":"loading"});
 			promise = ComponentOrganizer.__loadComponentScript(tagName, path, options).then(() => {
-				BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loaded", "promise":null});
+				ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded", "promise":null});
 			});
-			BITSMIST.v1.Globals.classes.mergeSet(className, {"promise":promise});
+			ComponentOrganizer.__classes.mergeSet(className, {"promise":promise});
 		}
 
 		return promise;

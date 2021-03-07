@@ -40,7 +40,13 @@ export default class StateOrganizer extends Organizer
 		Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); }
 		Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
 		Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
-		Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
+
+		// Init vars
+		StateOrganizer.__components = new Store();
+		StateOrganizer.__waitingList = new Store();
+		StateOrganizer.__waitingListIndexName = new Map();
+		StateOrganizer.__waitingListIndexId = new Map();
+		StateOrganizer.__waitingListIndexNone = [];	Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
 
 	}
 
@@ -198,7 +204,7 @@ export default class StateOrganizer extends Organizer
 	static _waitForSingle(component, state, timeout)
 	{
 
-		let componentInfo = BITSMIST.v1.Globals.components.get(component.uniqueId);
+		let componentInfo = StateOrganizer.__components.get(component.uniqueId);
 		let waitlistItem = {"id":component.uniqueId, "state":state};
 
 		if (StateOrganizer.__isReady(waitlistItem, componentInfo))
@@ -265,7 +271,7 @@ export default class StateOrganizer extends Organizer
 		if (StateOrganizer.__isTransitionable(component.state, state))
 		{
 			component.state = state;
-			BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "state":state});
+			StateOrganizer.__components.mergeSet(component.uniqueId, {"object":component, "state":state});
 
 			StateOrganizer.__processWaitingList(component, state);
 		}
@@ -514,14 +520,14 @@ export default class StateOrganizer extends Organizer
 
 		if (waitlistItem["id"])
 		{
-			componentInfo = BITSMIST.v1.Globals.components.get(waitlistItem["id"]);
+			componentInfo = StateOrganizer.__components.get(waitlistItem["id"]);
 		}
 		else if (waitlistItem["name"])
 		{
-			Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
-				if (waitlistItem["name"] == BITSMIST.v1.Globals.components.get(key).object.name)
+			Object.keys(StateOrganizer.__components.items).forEach((key) => {
+				if (waitlistItem["name"] == StateOrganizer.__components.get(key).object.name)
 				{
-					componentInfo = BITSMIST.v1.Globals.components.get(key);
+					componentInfo = StateOrganizer.__components.get(key);
 				}
 			});
 		}
@@ -530,7 +536,7 @@ export default class StateOrganizer extends Organizer
 			let element = document.querySelector(waitlistItem["rootNode"]);
 			if (element)
 			{
-				componentInfo = BITSMIST.v1.Globals.components.get(element.uniqueId);
+				componentInfo = StateOrganizer.__components.get(element.uniqueId);
 			}
 		}
 
@@ -717,9 +723,3 @@ export default class StateOrganizer extends Organizer
 	}
 
 }
-
-// static properties
-StateOrganizer.__waitingList = new Store();
-StateOrganizer.__waitingListIndexName = new Map();
-StateOrganizer.__waitingListIndexId = new Map();
-StateOrganizer.__waitingListIndexNone = [];

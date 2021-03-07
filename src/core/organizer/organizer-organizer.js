@@ -10,6 +10,8 @@
 
 import Component from '../component';
 import Organizer from './organizer';
+import OrganizerStore from '../store/organizer-store';
+import SettingOrganizer from './setting-organizer';
 
 // =============================================================================
 //	Organizer organizer class
@@ -37,6 +39,12 @@ export default class OrganizerOrganizer extends Organizer
 		Component.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer.callOrganizers(this, condition, settings); }
 		Component.prototype.initOrganizers = function(settings) { return OrganizerOrganizer.initOrganizers(this, settings); }
 
+		// Init vars
+		OrganizerOrganizer.__organizers = new OrganizerStore();
+		Object.defineProperty(OrganizerOrganizer, 'organizers', {
+			get() { return OrganizerOrganizer.__organizers; },
+		});
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -61,16 +69,16 @@ export default class OrganizerOrganizer extends Organizer
 		if (organizers)
 		{
 			Object.keys(organizers).forEach((key) => {
-				if (!component._organizers[key] && BITSMIST.v1.Globals["organizers"]["items"][key])
+				if (!component._organizers[key] && OrganizerOrganizer.__organizers.items[key])
 				{
-					targets[key] = BITSMIST.v1.Globals["organizers"]["items"][key];
+					targets[key] = OrganizerOrganizer.__organizers.items[key];
 				}
 			});
 		}
 
 		// List new organizers from settings keyword
 		Object.keys(settings).forEach((key) => {
-			let organizerInfo = BITSMIST.v1.Globals["organizers"].getOrganizerInfoByTargetWords(key);
+			let organizerInfo = OrganizerOrganizer.__organizers.getOrganizerInfoByTargetWords(key);
 			if (organizerInfo)
 			{
 				if (!component._organizers[organizerInfo.name])
@@ -83,7 +91,7 @@ export default class OrganizerOrganizer extends Organizer
 		// Add and init new organizers
 		OrganizerOrganizer._sortItems(targets).forEach((key) => {
 			chain = chain.then(() => {
-				component._organizers[key] = BITSMIST.v1.Globals["organizers"]["items"][key];
+				component._organizers[key] = OrganizerOrganizer.__organizers.items[key];
 				return component._organizers[key].object.init("*", component, settings);
 			});
 		});
@@ -124,8 +132,13 @@ export default class OrganizerOrganizer extends Organizer
 		// Init
 		component._organizers = {};
 
-		// Add organizers
-		return OrganizerOrganizer.organize("*", component, settings);
+		return Promise.resolve().then(() => {
+			// Init setting organizer
+			return SettingOrganizer.init("*", component, settings);
+		}).then(() => {
+			// Add organizers
+			return OrganizerOrganizer.organize("*", component, settings);
+		});
 
 	}
 
@@ -145,10 +158,9 @@ export default class OrganizerOrganizer extends Organizer
 
 		return Promise.resolve().then(() => {
 			// Load settings
-			let organizerInfo = component._organizers["SettingOrganizer"];
-			if (organizerInfo.object.isTarget(conditions, organizerInfo, component))
+			if (SettingOrganizer.isTarget(conditions))
 			{
-				return organizerInfo.object.organize(conditions, component, settings);
+				return SettingOrganizer.organize(conditions, component, settings);
 			}
 			else
 			{
@@ -188,7 +200,7 @@ export default class OrganizerOrganizer extends Organizer
 	static _sortItems(organizers)
 	{
 
-		let globals = BITSMIST.v1.Globals["organizers"].items;
+		let globals = OrganizerOrganizer.__organizers.items
 
 		return Object.keys(organizers).sort((a,b) => {
 			return globals[a]["order"] - globals[b]["order"];

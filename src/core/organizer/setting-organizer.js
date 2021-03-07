@@ -36,6 +36,9 @@ export default class SettingOrganizer extends Organizer
 			get() { return this._settings; },
 		});
 
+		// Init vars
+		SettingOrganizer.__globalSettings = new Store();
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -54,13 +57,18 @@ export default class SettingOrganizer extends Organizer
 
 		// Init vars
 		component._settings = new Store({"items":settings});
-		component.settings.chain(BITSMIST.v1.Globals["settings"]);
 		component.settings.merge(component._getSettings());
 
 		// Overwrite name if specified
 		if (component.settings.get("name"))
 		{
 			component._name = component.settings.get("name");
+		}
+
+		// Chain global settings
+		if (component.settings.get("useGlobalSettings"))
+		{
+			component.settings.chain(SettingOrganizer.__globalSettings);
 		}
 
 	}
@@ -90,11 +98,44 @@ export default class SettingOrganizer extends Organizer
 
 			// Load settings from attributes
 			SettingOrganizer.__loadAttrSettings(component);
+		}).then(() => {
+			// Load global settings
+			let load = component.settings.get("loadGlobalSettings");
+			if (load)
+			{
+				SettingOrganizer.__globalSettings.items = component.settings.items["settings"];
+			}
 
 			return component.settings.items;
 		});
 
 	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if event is target.
+	 *
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
+	 * @param	{Component}		component			Component.
+	 *
+	 * @return 	{Boolean}		True if it is target.
+	 */
+	static isTarget(conditions, organizerInfo, component)
+	{
+
+		if (conditions == "beforeStart")
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+
+	}
+
 
 	// -------------------------------------------------------------------------
 	//  Protected
