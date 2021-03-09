@@ -282,10 +282,11 @@ export default class EventOrganizer extends Organizer
 		if (Util.safeGet(e, "detail.async", true))
 		{
 			// call asynchronously
-			this._bm_detail["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, target, listeners);
-			this._bm_detail["promises"][e.type].then(() => {
+			this._bm_detail["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, target, listeners).then((result) => {
 				Util.safeSet(this, "_bm_detail.promises." + e.type, null);
 				Util.safeSet(this, "_bm_detail.statuses." + e.type, "");
+
+				return result;
 			});
 		}
 		else
