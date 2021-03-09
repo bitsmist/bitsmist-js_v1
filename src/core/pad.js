@@ -63,8 +63,6 @@ Pad.prototype.open = function(options)
 		let autoSetup = this._settings.get("autoSetup");
 		if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
 		{
-			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
-			options["newPreferences"] = ( options["newPreferences"] ? options["newPreferences"] : defaultPreferences);
 			return this.setup(options);
 		}
 	}).then(() => {
@@ -250,11 +248,13 @@ Pad.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 		// super()
 		return Component.prototype.start.call(this, settings);
-	}).then(() => {
+	}).then((newSettings) => {
+		settings = newSettings;
+
 		// Open
 		if (this._settings.get("autoOpen"))
 		{
-			return this.open();
+			return this.open(settings);
 		}
 	});
 

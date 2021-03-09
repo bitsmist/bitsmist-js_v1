@@ -138,6 +138,7 @@ Component.prototype.start = function(settings)
 	let defaults = {
 		"autoSetup": true,
 		"autoStop": true,
+		"useGlobalSettings": true,
 		"organizers": {
 			"SettingOrganizer": "",
 			"OrganizerOrganizer": "",
@@ -162,15 +163,16 @@ Component.prototype.start = function(settings)
 		return this.changeState("starting");
 	}).then(() => {
 		return this.callOrganizers("beforeStart", this._settings.items);
-	}).then(() => {
+	}).then((newSettings) => {
+		settings = newSettings
+
 		return this.trigger("beforeStart", this);
 	}).then(() => {
 		let autoSetupOnStart = this._settings.get("autoSetupOnStart");
 		let autoSetup = this._settings.get("autoSetup");
 		if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
 		{
-			let defaultPreferences = Object.assign({}, BITSMIST.v1.Globals["preferences"].items);
-			return this.setup({"newPreferences":defaultPreferences});
+			return this.setup(settings);
 		}
 	}).then(() => {
 		return this.callOrganizers("afterStart", this._settings.items);
@@ -179,6 +181,8 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
+	}).then(() => {
+		return settings;
 	});
 
 }
