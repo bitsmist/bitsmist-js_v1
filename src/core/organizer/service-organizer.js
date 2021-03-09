@@ -8,12 +8,44 @@
  */
 // =============================================================================
 
+import Organizer from './organizer';
+
 // =============================================================================
 //	Service organizer class
 // =============================================================================
 
-export default class ServiceOrganizer
+export default class ServiceOrganizer extends Organizer
 {
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Organize.
+	 *
+	 * @param	{Object}		conditions			Conditions.
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static organize(conditions, component, settings)
+	{
+
+		let services = settings["services"];
+		if (services)
+		{
+			Object.keys(services).forEach((serviceName) => {
+				Object.keys(services[serviceName]["events"]).forEach((eventName) => {
+					component.addEventHandler(component, eventName, this.onInitService, {"component":component, "settings":services[serviceName]});
+				});
+			});
+		}
+
+		return settings;
+
+	}
 
 	// -------------------------------------------------------------------------
 	//	Event handlers
@@ -69,67 +101,5 @@ export default class ServiceOrganizer
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Organize.
-	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static organize(conditions, component)
-	{
-
-		let services = component.settings.get("services");
-		if (services)
-		{
-			Object.keys(services).forEach((serviceName) => {
-				Object.keys(services[serviceName]["events"]).forEach((eventName) => {
-					component.addEventHandler(component, eventName, this.onInitService, {"component":component, "settings":services[serviceName]});
-				});
-			});
-		}
-
-		return Promise.resolve();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		eventName			Event name.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(eventName, observerInfo, ...args)
-	{
-
-		let ret = false;
-
-		if (eventName == "*" || eventName == "beforeStart")
-		{
-			ret = true;
-		}
-
-		return ret;
-
-	}
 
 }

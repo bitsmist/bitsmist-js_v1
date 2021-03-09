@@ -8,11 +8,13 @@
  */
 // =============================================================================
 
+import Organizer from './organizer';
+
 // =============================================================================
 //	Element organizer class
 // =============================================================================
 
-export default class ElementOrganizer
+export default class ElementOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -24,13 +26,14 @@ export default class ElementOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
-		let elements = component.settings.get("elements");
+		let elements = settings["elements"];
 		if (elements)
 		{
 			Object.keys(elements).forEach((elementName) => {
@@ -38,41 +41,7 @@ export default class ElementOrganizer
 			});
 		}
 
-		return Promise.resolve();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		eventName			Event name.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(eventName, observerInfo, ...args)
-	{
-
-		let ret = false;
-
-		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
-		{
-			ret = true;
-		}
-
-		return ret;
+		return settings;
 
 	}
 

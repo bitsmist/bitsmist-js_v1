@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import Organizer from './organizer';
 import Pad from '../pad';
 import Util from '../util/util';
 
@@ -16,7 +17,7 @@ import Util from '../util/util';
 //	Template organizer class
 // =============================================================================
 
-export default class TemplateOrganizer
+export default class TemplateOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -30,20 +31,9 @@ export default class TemplateOrganizer
 	{
 
 		// Add methods
-
-		Pad.prototype.addTemplate = function(templateName, options) {
-			return TemplateOrganizer.addTemplate(this, templateName, options);
-		}
-
-		Pad.prototype.cloneTemplate = function(templateName) {
-			templateName = templateName || this._settings.get("templateName");
-
-			return TemplateOrganizer.clone(this, templateName);
-		}
-
-		Pad.prototype.isActiveTemplate = function(templateName) {
-			return TemplateOrganizer.isActive(this, templateName);
-		}
+		Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
+		Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
+		Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActive(this, templateName); }
 
 	}
 
@@ -55,10 +45,13 @@ export default class TemplateOrganizer
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static init(conditions, component, setttings)
 	{
 
+		// Init vars
 		component._templates = {};
 
 		// Set defaults if not set already
@@ -78,13 +71,14 @@ export default class TemplateOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
-		let templates = component.settings.get("templates");
+		let templates = settings["templates"];
 		if (templates)
 		{
 			Object.keys(templates).forEach((key) => {
@@ -93,7 +87,7 @@ export default class TemplateOrganizer
 			});
 		}
 
-		return Promise.resolve();
+		return settings;
 
 	}
 
@@ -116,28 +110,34 @@ export default class TemplateOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, organizerInfo, component)
 	{
 
 		let ret = false;
-		let component = args[0];
 
 		if (component instanceof BITSMIST.v1.Pad)
 		{
-			if (eventName == "*" || eventName == "beforeStart")
+			ret = super.isTarget(conditions, organizerInfo, component);
+			/*
+			if (conditions == "*" || conditions == "beforeStart")
 			{
 				ret = true;
 			}
+			*/
 		}
 
 		return ret;
 
 	}
 
+	// -------------------------------------------------------------------------
+	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
@@ -148,7 +148,7 @@ export default class TemplateOrganizer
 	 *
 	 * @return  {Boolean}		True when active.
 	 */
-	static isActive(component, templateName)
+	static _isActive(component, templateName)
 	{
 
 		let ret = false;
@@ -174,7 +174,7 @@ export default class TemplateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static addTemplate(component, templateName, options)
+	static _addTemplate(component, templateName, options)
 	{
 
 		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
@@ -184,22 +184,22 @@ export default class TemplateOrganizer
 		}
 
 		return Promise.resolve().then(() => {
-			let path = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.templatePath", ""), component._settings.get("path", "")]);
-			return TemplateOrganizer.loadTemplate(component, templateInfo, path);
+			let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.templatePath", ""), component.settings.get("path", "")]);
+			return TemplateOrganizer._loadTemplate(component, templateInfo, path);
 		}).then(() => {
-			if (component._settings.get("templateNode"))
+			if (component.settings.get("templateNode"))
 			{
-				TemplateOrganizer.__storeTemplateNode(component, templateInfo, component._settings.get("templateNode"));
+				TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("templateNode"));
 			}
 
 			return TemplateOrganizer.__applyTemplate(component, templateInfo);
 		}).then(() => {
-			if (component._templates[component._settings.get("templateName")])
+			if (component._templates[component.settings.get("templateName")])
 			{
-				component._templates[component._settings.get("templateName")]["isAppended"] = false;
+				component._templates[component.settings.get("templateName")]["isAppended"] = false;
 			}
 			component._templates[templateName]["isAppended"] = true;
-			component._settings.set("templateName", templateName);
+			component.settings.set("templateName", templateName);
 		});
 
 	}
@@ -215,7 +215,7 @@ export default class TemplateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadTemplate(component, templateInfo, path)
+	static _loadTemplate(component, templateInfo, path)
 	{
 
 		return TemplateOrganizer.__autoLoadTemplate(component, templateInfo, path);
@@ -232,8 +232,10 @@ export default class TemplateOrganizer
 	 *
 	 * @return  {Object}		Cloned component.
 	 */
-	static clone(component, templateName)
+	static _clone(component, templateName)
 	{
+
+		templateName = templateName || component._settings.get("templateName");
 
 		if (!component._templates[templateName])
 		{
@@ -269,14 +271,13 @@ export default class TemplateOrganizer
 	static __autoLoadTemplate(component, templateInfo, path)
 	{
 
-		console.debug(`Mixin.autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
+		console.debug(`TemplateOrganizer.__autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
 
 		let promise;
 
-		//if (!templateInfo["name"] || templateInfo["html"])
 		if (templateInfo["html"] || templateInfo["node"])
 		{
-			console.debug(`Mixin.autoLoadTemplate(): Template Already exists. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`, );
+			console.debug(`TemplateOrganizer.__autoLoadTemplate(): Template Already exists. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`, );
 		}
 		else
 		{
@@ -310,10 +311,10 @@ export default class TemplateOrganizer
 	static __loadTemplateFile(url)
 	{
 
-		console.debug(`LoaderMixin.loadTemplate(): Loading template. url=${url}`);
+		console.debug(`TemplateOrganzier.loadTemplate(): Loading template. url=${url}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`LoaderMixin.loadTemplate(): Loaded template. url=${url}`);
+			console.debug(`TemplateOrganzier.loadTemplate(): Loaded template. url=${url}`);
 
 			return xhr.responseText;
 		});
@@ -383,8 +384,8 @@ export default class TemplateOrganizer
 
 		if (templateInfo["node"])
 		{
-			let clone = this.clone(templateInfo["name"]);
-			component.insertBefore(clone, this.firstChild);
+			let clone = TemplateOrganizer.clone(component, templateInfo["name"]);
+			component.insertBefore(clone, component.firstChild);
 		}
 		else
 		{
@@ -408,7 +409,7 @@ export default class TemplateOrganizer
 	static __dupElement(component, templateName)
 	{
 
-		templateName = ( templateName ? templateName : component._settings.get("templateName") );
+		templateName = ( templateName ? templateName : component.settings.get("templateName") );
 
 		let ele = document.createElement("div");
 		ele.innerHTML = component._templates[templateName].html;
@@ -431,21 +432,21 @@ export default class TemplateOrganizer
 		// Get template path from attribute
 		if (component.hasAttribute("data-templatepath"))
 		{
-			component._settings.set("system.templatePath", component.getAttribute("data-templatepath"));
+			component.settings.set("system.templatePath", component.getAttribute("data-templatepath"));
 		}
 
 		// Get template name from attribute
 		if (component.hasAttribute("data-templatename"))
 		{
-			component._settings.set("templateName", component.getAttribute("data-templatename"));
+			component.settings.set("templateName", component.getAttribute("data-templatename"));
 		}
 
 		// Get template href from templatehref
 		if (component.hasAttribute("data-templatehref"))
 		{
 			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templatehref"));
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("templateName", arr[1].replace(".html", ""));
+			component.settings.set("system.templatePath", arr[0]);
+			component.settings.set("templateName", arr[1].replace(".html", ""));
 		}
 		*/
 

@@ -10,6 +10,7 @@
 
 import AjaxUtil from '../util/ajax-util';
 import Component from '../component';
+import Organizer from './organizer';
 import Store from '../store/store';
 import Util from '../util/util';
 
@@ -17,7 +18,7 @@ import Util from '../util/util';
 //	Setting organizer class
 // =============================================================================
 
-export default class SettingOrganizer
+export default class SettingOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -27,17 +28,16 @@ export default class SettingOrganizer
 	/**
 	 * Global init.
 	 */
-	static globalInit()
+	static globalInit(targetClass)
 	{
 
 		// Add properties
-
 		Object.defineProperty(Component.prototype, 'settings', {
-			get() {
-				return this._settings;
-			},
-			configurable: true
+			get() { return this._settings; },
 		});
+
+		// Init vars
+		SettingOrganizer.__globalSettings = new Store();
 
 	}
 
@@ -49,18 +49,26 @@ export default class SettingOrganizer
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static init(conditions, component, settings)
 	{
 
+		// Init vars
 		component._settings = new Store({"items":settings});
-		component._settings.chain(BITSMIST.v1.Globals["settings"]);
-		component._settings.merge(component._getSettings());
+		component.settings.merge(component._getSettings());
 
 		// Overwrite name if specified
-		if (component._settings.get("name"))
+		if (component.settings.get("name"))
 		{
-			component._name = component._settings.get("name");
+			component._name = component.settings.get("name");
+		}
+
+		// Chain global settings
+		if (component.settings.get("useGlobalSettings"))
+		{
+			component.settings.chain(SettingOrganizer.__globalSettings);
 		}
 
 	}
@@ -72,10 +80,11 @@ export default class SettingOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
 		return Promise.resolve().then(() => {
@@ -84,11 +93,20 @@ export default class SettingOrganizer
 		}).then((extraSettings) => {
 			if (extraSettings)
 			{
-				component._settings.merge(extraSettings);
+				component.settings.merge(extraSettings);
 			}
-		}).then(() => {
+
 			// Load settings from attributes
 			SettingOrganizer.__loadAttrSettings(component);
+		}).then(() => {
+			// Load global settings
+			let load = component.settings.get("loadGlobalSettings");
+			if (load)
+			{
+				SettingOrganizer.__globalSettings.items = component.settings.items["settings"];
+			}
+
+			return component.settings.items;
 		});
 
 	}
@@ -96,37 +114,31 @@ export default class SettingOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, organizerInfo, component)
 	{
 
-		let ret = false;
-
-		if (eventName == "*" || eventName == "beforeStart")
+		if (conditions == "beforeStart")
 		{
-			ret = true;
+			return true;
 		}
-
-		return ret;
+		else
+		{
+			return false;
+		}
 
 	}
 
+
+	// -------------------------------------------------------------------------
+	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
@@ -137,14 +149,15 @@ export default class SettingOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadSetting(settingName, path)
+	static _loadSetting(settingName, path)
 	{
 
 		let url = Util.concatPath([path, settingName + ".js"]);
 		let settings;
 
+		console.debug(`SettingOrganizer._loadSetting(): Loading settings. url=${url}`);
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SettingOrganizer.loadSettings(): Loaded settings. url=${url}`);
+			console.debug(`SettingOrganizer._loadSetting(): Loaded settings. url=${url}`);
 			try
 			{
 				settings = JSON.parse(xhr.responseText);
@@ -194,7 +207,7 @@ export default class SettingOrganizer
 
 		if (name || path)
 		{
-			return SettingOrganizer.loadSetting(name, path);
+			return SettingOrganizer._loadSetting(name, path);
 		}
 
 	}
@@ -213,29 +226,30 @@ export default class SettingOrganizer
 		if (component.hasAttribute("href"))
 		{
 			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("href"));
-			component._settings.set("system.appBaseUrl", "");
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("system.componentPath", arr[0]);
-			component._settings.set("path", "");
+			component.settings.set("system.appBaseUrl", "");
+			component.settings.set("system.templatePath", arr[0]);
+			component.settings.set("system.componentPath", arr[0]);
+			component.settings.set("path", "");
 		}
 
 		// Get path from attribute
 		if (component.hasAttribute("data-path"))
 		{
-			component._settings.set("path", component.getAttribute("data-path"));
+			component.settings.set("path", component.getAttribute("data-path"));
 		}
 
 		// Get settings from the attribute
 
-		let dataSettings = ( document.querySelector(component._settings.get("rootNode")) ?
-			document.querySelector(component._settings.get("rootNode")).getAttribute("data-settings") :
+		let dataSettings = ( document.querySelector(component.settings.get("rootNode")) ?
+			document.querySelector(component.settings.get("rootNode")).getAttribute("data-settings") :
 			component.getAttribute("data-settings")
 		);
 
-		if (dataSettings) {
+		if (dataSettings)
+		{
 			let settings = JSON.parse(dataSettings);
 			Object.keys(settings).forEach((key) => {
-				component._settings.set(key, settings[key]);
+				component.settings.set(key, settings[key]);
 			});
 		}
 

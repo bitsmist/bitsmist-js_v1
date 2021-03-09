@@ -9,12 +9,15 @@
 // =============================================================================
 
 import Component from '../component';
+import Organizer from './organizer';
+import OrganizerStore from '../store/organizer-store';
+import SettingOrganizer from './setting-organizer';
 
 // =============================================================================
 //	Organizer organizer class
 // =============================================================================
 
-export default class OrganizerOrganizer
+export default class OrganizerOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -28,39 +31,19 @@ export default class OrganizerOrganizer
 	{
 
 		// Add properties
-
 		Object.defineProperty(Component.prototype, 'organizers', {
-			get() {
-				return this._organizers;
-			},
-			configurable: true
+			get() { return this._organizers; },
 		});
 
 		// Add methods
+		Component.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer.callOrganizers(this, condition, settings); }
+		Component.prototype.initOrganizers = function(settings) { return OrganizerOrganizer.initOrganizers(this, settings); }
 
-		Component.prototype.addOrganizer = function(organizerName) {
-			OrganizerOrganizer.addOrganizer(this, organizername);
-		}
-
-		Component.prototype.removeOrganizer = function(organizerName) {
-			OrganizerOrganizer.removeOrganizer(this, organizername);
-		}
-
-		Component.prototype.clearOrganizers = function() {
-			OrganizerOrganizer.clear(this);
-		}
-
-		Component.prototype.callOrganizers = function(condition, settings) {
-			return OrganizerOrganizer.callOrganizers(this, condition, settings);
-		}
-
-		Component.prototype.initOrganizers = function(settings) {
-			return OrganizerOrganizer.initOrganizers(this, settings);
-		}
-
-		Component.prototype.clearOrganizers = function() {
-			return OrganizerOrganizer.clear(this);
-		}
+		// Init vars
+		OrganizerOrganizer.__organizers = new OrganizerStore();
+		Object.defineProperty(OrganizerOrganizer, 'organizers', {
+			get() { return OrganizerOrganizer.__organizers; },
+		});
 
 	}
 
@@ -78,22 +61,47 @@ export default class OrganizerOrganizer
 	static organize(conditions, component, settings)
 	{
 
-		settings = settings || component._settings.items;
+		let targets = {};
 		let chain = Promise.resolve();
 
+		// List new organizers
 		let organizers = settings["organizers"];
 		if (organizers)
 		{
 			Object.keys(organizers).forEach((key) => {
-				chain = chain.then(() => {
-					return OrganizerOrganizer.__addOrganizer(component, key, settings);
-				});
+				if (!component._organizers[key] && OrganizerOrganizer.__organizers.items[key])
+				{
+					targets[key] = OrganizerOrganizer.__organizers.items[key];
+				}
 			});
 		}
 
-		return chain;
+		// List new organizers from settings keyword
+		Object.keys(settings).forEach((key) => {
+			let organizerInfo = OrganizerOrganizer.__organizers.getOrganizerInfoByTargetWords(key);
+			if (organizerInfo)
+			{
+				if (!component._organizers[organizerInfo.name])
+				{
+					targets[organizerInfo.name] = organizerInfo.object;
+				}
+			}
+		});
+
+		// Add and init new organizers
+		OrganizerOrganizer._sortItems(targets).forEach((key) => {
+			chain = chain.then(() => {
+				component._organizers[key] = OrganizerOrganizer.__organizers.items[key];
+				return component._organizers[key].object.init("*", component, settings);
+			});
+		});
+
+		return chain.then(() => {
+			return settings;
+		});
 
 	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -111,29 +119,6 @@ export default class OrganizerOrganizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		eventName			Event name.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(eventName, observerInfo, ...args)
-	{
-
-		let ret = false;
-
-		if (eventName == "*" || eventName == "beforeStart" || eventName == "afterSpecLoad")
-		{
-			ret = true;
-		}
-
-		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Call organizers.
 	 *
 	 * @param	{Component}		component			Component.
@@ -144,15 +129,15 @@ export default class OrganizerOrganizer
 	static initOrganizers(component, settings)
 	{
 
-		let chain = Promise.resolve();
-
 		// Init
 		component._organizers = {};
-		chain = OrganizerOrganizer.organize("*", component, settings);
 
-		// Auto adding organizers from settings
-		return chain.then(() => {
-			return OrganizerOrganizer.__autoInsertOrganizers(component, component._settings.items)
+		return Promise.resolve().then(() => {
+			// Init setting organizer
+			return SettingOrganizer.init("*", component, settings);
+		}).then(() => {
+			// Add organizers
+			return OrganizerOrganizer.organize("*", component, settings);
 		});
 
 	}
@@ -171,18 +156,33 @@ export default class OrganizerOrganizer
 	static callOrganizers(component, conditions, settings)
 	{
 
-		let chain = Promise.resolve();
-
-		OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
-			if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
+		return Promise.resolve().then(() => {
+			// Load settings
+			if (SettingOrganizer.isTarget(conditions))
 			{
-				chain = chain.then(() => {
-					return component._organizers[key].object.organize(conditions, component, settings);
-				});
+				return SettingOrganizer.organize(conditions, component, settings);
 			}
-		});
+			else
+			{
+				return settings;
+			}
+		}).then((newSettings) => {
+			// Add organizers
+			return OrganizerOrganizer.organize("*", component, newSettings);
+		}).then((newSettings) => {
+			// Call organizers
+			let chain = Promise.resolve(settings);
+			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
+				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
+				{
+					chain = chain.then((newSettings) => {
+						return component._organizers[key].object.organize(conditions, component, newSettings);
+					});
+				}
+			});
 
-		return chain;
+			return chain;
+		});
 
 	}
 
@@ -200,67 +200,11 @@ export default class OrganizerOrganizer
 	static _sortItems(organizers)
 	{
 
-		let globals = BITSMIST.v1.Globals["organizers"].items;
+		let globals = OrganizerOrganizer.__organizers.items
 
 		return Object.keys(organizers).sort((a,b) => {
 			return globals[a]["order"] - globals[b]["order"];
 		})
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Privates
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Automatically add organizers from settings.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static __autoInsertOrganizers(component, settings)
-	{
-
-		let chain = Promise.resolve();
-
-		Object.keys(settings).forEach((key) => {
-			let organizerInfo = BITSMIST.v1.Globals["organizers"].getOrganizerInfoByTarget(key);
-			if (organizerInfo)
-			{
-				chain = chain.then(() => {
-					return OrganizerOrganizer.__addOrganizer(component, organizerInfo.name, settings);
-				});
-			}
-		});
-
-		return chain;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add an organizer to a component.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		organizerName		Organizer name to add.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static __addOrganizer(component, organizerName, settings)
-	{
-
-		if (!component._organizers[organizerName])
-		{
-			component._organizers[organizerName] = BITSMIST.v1.Globals["organizers"]["items"][organizerName];
-			if (typeof component._organizers[organizerName].object.init === "function")
-			{
-				return component._organizers[organizerName].object.init("*", component, settings);
-			}
-		}
 
 	}
 

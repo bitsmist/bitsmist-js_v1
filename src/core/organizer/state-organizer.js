@@ -9,13 +9,14 @@
 // =============================================================================
 
 import Component from '../component';
+import Organizer from './organizer';
 import Store from '../store/store';
 
 // =============================================================================
 //	Waitfor organizer class
 // =============================================================================
 
-export default class StateOrganizer
+export default class StateOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -29,39 +30,23 @@ export default class StateOrganizer
 	{
 
 		// Add properties
-
 		Object.defineProperty(Component.prototype, 'state', {
-			get()
-			{
-				return this._state;
-			},
-			set(value)
-			{
-				this._state = value;
-			}
+			get() { return this._state; },
+			set(value) { this._state = value; }
 		});
 
 		// Add methods
+		Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); }
+		Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); }
+		Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
+		Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
 
-		Component.prototype.changeState= function(newState) {
-			return StateOrganizer.changeState(this, newState);
-		}
-
-		Component.prototype.isInitialized = function() {
-			return StateOrganizer.isInitialized(this);
-		}
-
-		Component.prototype.waitFor = function(waitlist, timeout) {
-			return StateOrganizer.waitFor(this, waitlist, timeout);
-		}
-
-		Component.prototype.suspend = function(state) {
-			return StateOrganizer.suspend(this, state);
-		}
-
-		Component.prototype.resume = function(state) {
-			return StateOrganizer.resume(this, state);
-		}
+		// Init vars
+		StateOrganizer.__components = new Store();
+		StateOrganizer.__waitingList = new Store();
+		StateOrganizer.__waitingListIndexName = new Map();
+		StateOrganizer.__waitingListIndexId = new Map();
+		StateOrganizer.__waitingListIndexNone = [];	Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
 
 	}
 
@@ -73,10 +58,13 @@ export default class StateOrganizer
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static init(conditions, component, settings)
 	{
 
+		// Init vars
 		component._state = "";
 		//component._suspend = {};
 
@@ -92,21 +80,24 @@ export default class StateOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component)
+	static organize(conditions, component, settings)
 	{
 
 		let promise = Promise.resolve();
 
-		let waitFor = component.settings.get("waitFor");
+		let waitFor = settings["waitFor"];
 		if (waitFor)
 		{
-			promise = StateOrganizer.waitFor(component, waitFor);
+			promise = StateOrganizer._waitFor(component, waitFor);
 		}
 
-		return promise;
+		return promise.then(() => {
+			return settings;
+		});
 
 	}
 
@@ -127,32 +118,35 @@ export default class StateOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, organizerInfo, component)
 	{
 
 		let ret = false;
-		let component = args[0];
 
-		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
-		{
-			ret = true;
-		}
-		else if (eventName == "beforeStart")
+		if (conditions == "beforeStart")
 		{
 			if (!(component instanceof BITSMIST.v1.Pad))
 			{
 				ret = true;
 			}
 		}
+		else
+		{
+			ret = super.isTarget(conditions, organizerInfo, component);
+		}
 
 		return ret;
 
 	}
 
+	// -------------------------------------------------------------------------
+	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
@@ -164,7 +158,7 @@ export default class StateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static waitFor(component, waitlist, timeout)
+	static _waitFor(component, waitlist, timeout)
 	{
 
 		let promise;
@@ -187,6 +181,7 @@ export default class StateOrganizer
 			});
 			waitInfo["promise"] = promise;
 
+//			console.log("@@@", component.name,"is waiting for",waitlist[0]);
 			//StateOrganizer.__addToWaitingList(waitInfo, component, state);
 			StateOrganizer.__addToWaitingList(waitInfo, component);
 		}
@@ -206,10 +201,10 @@ export default class StateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static waitForSingle(component, state, timeout)
+	static _waitForSingle(component, state, timeout)
 	{
 
-		let componentInfo = BITSMIST.v1.Globals.components.get(component.uniqueId);
+		let componentInfo = StateOrganizer.__components.get(component.uniqueId);
 		let waitlistItem = {"id":component.uniqueId, "state":state};
 
 		if (StateOrganizer.__isReady(waitlistItem, componentInfo))
@@ -234,27 +229,27 @@ export default class StateOrganizer
 	 * @return  {Promise}		Promise.
 	 */
 	/*
-	static waitForTransitionableState(component, newState)
+	static _waitForTransitionableState(component, newState)
 	{
 
 		if (newState == "starting")
 		{
-			return StateOrganizer.waitForSingle(component, "instantiated");
+			return StateOrganizer._waitForSingle(component, "instantiated");
 		}
 
 		if (newState == "stopping")
 		{
-			return StateOrganizer.waitForSingle(component, "instantiated");
+			return StateOrganizer._waitForSingle(component, "instantiated");
 		}
 
 		if (newState == "opening")
 		{
-			return StateOrganizer.waitForSingle(component, "started");
+			return StateOrganizer._waitForSingle(component, "started");
 		}
 
 		if (newState == "closing")
 		{
-			return StateOrganizer.waitForSingle(component, "opened");
+			return StateOrganizer._waitForSingle(component, "opened");
 		}
 
 	}
@@ -270,13 +265,13 @@ export default class StateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static changeState(component, state)
+	static _changeState(component, state)
 	{
 
 		if (StateOrganizer.__isTransitionable(component.state, state))
 		{
 			component.state = state;
-			BITSMIST.v1.Globals.components.mergeSet(component.uniqueId, {"object":component, "state":state});
+			StateOrganizer.__components.mergeSet(component.uniqueId, {"object":component, "state":state});
 
 			StateOrganizer.__processWaitingList(component, state);
 		}
@@ -297,7 +292,7 @@ export default class StateOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static suspend(component, state)
+	static _suspend(component, state)
 	{
 
 		let suspendInfo = {};
@@ -322,7 +317,7 @@ export default class StateOrganizer
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		state				Component state.
 	 */
-	static resume(component, state)
+	static _resume(component, state)
 	{
 
 		component._suspend[state].resolve();
@@ -338,7 +333,7 @@ export default class StateOrganizer
 	 *
 	 * @return  {Boolean}		True when initialized.
 	 */
-	static isInitialized(component)
+	static _isInitialized(component)
 	{
 
 		let ret = false;
@@ -525,14 +520,14 @@ export default class StateOrganizer
 
 		if (waitlistItem["id"])
 		{
-			componentInfo = BITSMIST.v1.Globals.components.get(waitlistItem["id"]);
+			componentInfo = StateOrganizer.__components.get(waitlistItem["id"]);
 		}
 		else if (waitlistItem["name"])
 		{
-			Object.keys(BITSMIST.v1.Globals.components.items).forEach((key) => {
-				if (waitlistItem["name"] == BITSMIST.v1.Globals.components.get(key).object.name)
+			Object.keys(StateOrganizer.__components.items).forEach((key) => {
+				if (waitlistItem["name"] == StateOrganizer.__components.get(key).object.name)
 				{
-					componentInfo = BITSMIST.v1.Globals.components.get(key);
+					componentInfo = StateOrganizer.__components.get(key);
 				}
 			});
 		}
@@ -541,7 +536,7 @@ export default class StateOrganizer
 			let element = document.querySelector(waitlistItem["rootNode"]);
 			if (element)
 			{
-				componentInfo = BITSMIST.v1.Globals.components.get(element.uniqueId);
+				componentInfo = StateOrganizer.__components.get(element.uniqueId);
 			}
 		}
 
@@ -716,21 +711,15 @@ export default class StateOrganizer
 		if (component.hasAttribute("data-waitfor"))
 		{
 			let waitInfo = {"name":component.getAttribute("data-waitfor"), "state":"started"};
-			component._settings.set("waitFor", [waitInfo]);
+			component.settings.set("waitFor", [waitInfo]);
 		}
 
 		if (component.hasAttribute("data-waitfornode"))
 		{
 			let waitInfo = {"rootNode":component.getAttribute("data-waitfornode"), "state":"started"};
-			component._settings.set("waitFor", [waitInfo]);
+			component.settings.set("waitFor", [waitInfo]);
 		}
 
 	}
 
 }
-
-// static properties
-StateOrganizer.__waitingList = new Store();
-StateOrganizer.__waitingListIndexName = new Map();
-StateOrganizer.__waitingListIndexId = new Map();
-StateOrganizer.__waitingListIndexNone = [];

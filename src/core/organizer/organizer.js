@@ -8,109 +8,88 @@
  */
 // =============================================================================
 
-import OrganizerStore from './store/organizer-store';
-import Store from './store/store';
-
 // =============================================================================
-//	Global class
+//	Base organizer class
 // =============================================================================
 
-class Globals
+export default class Organizer
 {
 
 	// -------------------------------------------------------------------------
-	//  Constructor
+	//  Methods
 	// -------------------------------------------------------------------------
 
 	/**
-     * Constructor.
-     */
-	constructor()
-	{
-
-		// Init vars
-		this._classes = new Store();
-		this._components = new Store();
-		this._preferences = new Store();
-		this._settings = new Store();
-		this._organizers = new OrganizerStore();
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Components.
-	 *
-	 * @type	{Object}
+	 * Global init.
 	 */
-	get components()
+	static globalInit(targetClass)
 	{
-
-		return this._components;
-
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Classes.
+	 * Init.
 	 *
-	 * @type	{Object}
+	 * @param	{Object}		conditions			Conditions.
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
-	get classes()
+	static init(conditions, component, settings)
 	{
-
-		return this._classes;
-
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Organizers.
+	 * Organize.
 	 *
-	 * @type	{Object}
+	 * @param	{Object}		conditions			Conditions.
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
-	get organizers()
+	static organize(conditions, component, settings)
 	{
-
-		return this._organizers;
-
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Settings.
+	 * Clear.
 	 *
-	 * @type	{Object}
+	 * @param	{Component}		component			Component.
 	 */
-	get settings()
+	static clear(component)
 	{
-
-		return this._settings;
-
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Preferences.
+	 * Check if event is target.
 	 *
-	 * @type	{Object}
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
+	 * @param	{Component}		component			Component.
+	 *
+	 * @return 	{Boolean}		True if it is target.
 	 */
-	get preferences()
+	static isTarget(conditions, organizerInfo, component)
 	{
 
-		return this._preferences;
+		if (organizerInfo["targetEvents"].indexOf(conditions) > -1)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 
 	}
 
 }
-
-// Instantiate and export
-let globals = new Globals();
-export default globals;

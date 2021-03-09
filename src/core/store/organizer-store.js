@@ -33,7 +33,7 @@ export default class OrganizerStore extends Store
 
 		super(options, chain);
 
-		this._targets = {};
+		this._targetWords = {};
 
 	}
 
@@ -50,33 +50,23 @@ export default class OrganizerStore extends Store
 	set(key, value)
 	{
 
+		// Assert
+		value = Object.assign({}, value);
+		value["name"] = ( value["name"] ? value["name"] : key );
+		value["targetWords"] = ( value["targetWords"] ? value["targetWords"] : [] );
+		value["targetWords"] = ( Array.isArray(value["targetWords"]) ? value["targetWords"] : [value["targetWords"]] );
+		value["targetEvents"] = ( value["targetEvents"] ? value["targetEvents"] : [] );
+		value["targetEvents"] = ( Array.isArray(value["targetEvents"]) ? value["targetEvents"] : [value["targetEvents"]] );
+
 		super.set(key, value);
 
-		if (!value["name"])
-		{
-			value["name"] = key;
-		}
-
 		// Global init
-		if (typeof value["object"].globalInit == "function")
-		{
-			value["object"].globalInit();
-		}
+		value["object"].globalInit(value["targetClass"]);
 
 		// Create target index
-		if (value["targets"])
+		for (let i = 0; i < value["targetWords"].length; i++)
 		{
-			if (Array.isArray(value["targets"]))
-			{
-				for (let i = 0; i < value["targets"].length; i++)
-				{
-					this._targets[value["targets"][i]] = value;
-				}
-			}
-			else
-			{
-				this._targets[value["targets"]] = value;
-			}
+			this._targetWords[value["targetWords"][i]] = value;
 		}
 
 	}
@@ -93,23 +83,23 @@ export default class OrganizerStore extends Store
 	getMerger(key)
 	{
 
-		return Util.safeGet(this._targets, key + ".object.merger", Util.deepmerge);
+		return Util.safeGet(this._targetWords, key + ".object.merger", Util.deepmerge);
 
 	};
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get an organizer.
+	 * Get an organizer by target words.
 	 *
 	 * @param	{String}		key					Key.
 	 *
 	 * @return  {*}				Organizer.
 	 */
-	getOrganizerInfoByTarget(target)
+	getOrganizerInfoByTargetWords(target)
 	{
 
-		return Util.safeGet(this._targets, target);
+		return Util.safeGet(this._targetWords, target);
 
 	};
 

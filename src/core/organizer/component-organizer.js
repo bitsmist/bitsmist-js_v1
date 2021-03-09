@@ -11,15 +11,16 @@
 import AjaxUtil from '../util/ajax-util';
 import ClassUtil from '../util/class-util';
 import Component from '../component';
+import Organizer from './organizer';
 import Pad from '../pad';
-import StateOrganizer from '../organizer/state-organizer';
+import Store from '../store/store';
 import Util from '../util/util';
 
 // =============================================================================
 //	Component organizer class
 // =============================================================================
 
-export default class ComponentOrganizer
+export default class ComponentOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
@@ -29,18 +30,16 @@ export default class ComponentOrganizer
 	/**
 	 * Global init.
 	 */
-	static globalInit()
+	static globalInit(targetClass)
 	{
 
 		// Add methods
-
-		Component.prototype.addComponent = function(componentName, options) {
-			return ComponentOrganizer.addComponent(this, componentName, options);
+		Component.prototype.loadTags = function(rootNode, basePath, settings, target) {
+			return ComponentOrganizer._loadTags(this, rootNode, basePath, settings, target);
 		}
 
-		Component.prototype.loadTags = function(rootNode, basePath, settings) {
-			return ComponentOrganizer.loadTags(rootNode, basePath, settings);
-		}
+		// Init vars
+		ComponentOrganizer.__classes = new Store();
 
 	}
 
@@ -52,10 +51,21 @@ export default class ComponentOrganizer
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static init(conditions, component, settings)
 	{
 
+		// Add properties
+		Object.defineProperty(component, 'components', {
+			get() { return this._components; },
+		});
+
+		// Add methods
+		component.addComponent = function(componentName, settings, sync) { return ComponentOrganizer._addComponent(this, componentName, settings, sync); }
+
+		// Init vars
 		component._components = {};
 
 	}
@@ -67,6 +77,7 @@ export default class ComponentOrganizer
 	 *
 	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
@@ -74,7 +85,6 @@ export default class ComponentOrganizer
 	{
 
 		let chain = Promise.resolve();
-		settings = ( settings ? settings : component.settings.items );
 
 		// Load molds
 		let molds = settings["molds"];
@@ -82,7 +92,7 @@ export default class ComponentOrganizer
 		{
 			Object.keys(molds).forEach((moldName) => {
 				chain = chain.then(() => {
-					return ComponentOrganizer.addComponent(component, moldName, molds[moldName], "opened");
+					return ComponentOrganizer._addComponent(component, moldName, molds[moldName], "opened");
 				});
 			});
 		}
@@ -93,12 +103,14 @@ export default class ComponentOrganizer
 		{
 			Object.keys(components).forEach((componentName) => {
 				chain = chain.then(() => {
-					return ComponentOrganizer.addComponent(component, componentName, components[componentName]);
+					return ComponentOrganizer._addComponent(component, componentName, components[componentName]);
 				});
 			});
 		}
 
-		return chain;
+		return chain.then(() => {
+			return settings;
+		});
 
 	}
 
@@ -112,8 +124,8 @@ export default class ComponentOrganizer
 	static clear(component)
 	{
 
-		Object.keys(component._components).forEach((key) => {
-			component._components[key].parentNode.removeChild(component._components[key]);
+		Object.keys(component.components).forEach((key) => {
+			component.components[key].parentNode.removeChild(component._components[key]);
 		});
 
 		component._components = {};
@@ -125,26 +137,27 @@ export default class ComponentOrganizer
 	/**
 	 * Check if event is target.
 	 *
-	 * @param	{String}		eventName			Event name.
+	 * @param	{String}		conditions			Event name.
+	 * @param	{Object}		organizerInfo		Organizer info.
+	 * @param	{Component}		component			Component.
 	 *
 	 * @return 	{Boolean}		True if it is target.
 	 */
-	static isTarget(eventName, observerInfo, ...args)
+	static isTarget(conditions, organizerInfo, component)
 	{
 
 		let ret = false;
-		let component = args[0];
 
-		if (eventName == "*" || eventName == "afterAppend" || eventName == "afterSpecLoad")
-		{
-			ret = true;
-		}
-		else if (eventName == "beforeStart")
+		if (conditions == "beforeStart")
 		{
 			if (!(component instanceof BITSMIST.v1.Pad))
 			{
 				ret = true;
 			}
+		}
+		else
+		{
+			ret = super.isTarget(conditions, organizerInfo, component);
 		}
 
 		return ret;
@@ -152,99 +165,101 @@ export default class ComponentOrganizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Add a component to parent component.
 	 *
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Options for the component.
+	 * @param	{Object}		settings			Settings for the component.
 	 * @param	{Boolean}		sync				Wait for the component to become the state.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static addComponent(component, componentName, options, sync)
+	static _addComponent(component, componentName, settings, sync)
 	{
 
-		let url = Util.concatPath([component._settings.get("system.appBaseUrl", ""), component._settings.get("system.componentPath", ""), ( "path" in options ? options["path"] : "")]);
-		let splitComponent = ( "splitComponent" in options ? options["splitComponent"] : component._settings.get("system.splitComponent", false) );
-		let className = ( "className" in options ? options["className"] : componentName );
-		let classDef = ( className ? ClassUtil.getClass(className) : null );
-		let tagName = options["tagName"] || ( classDef && classDef.tagName ) || Util.getTagNameFromClassName(className || componentName);
+		let url = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", ""), ( "path" in settings ? settings["path"] : "")]);
+		let splitComponent = ( "splitComponent" in settings ? settings["splitComponent"] : component.settings.get("system.splitComponent", false) );
+		let className = settings["className"] || componentName;
+		let tagName = settings["tagName"] || Util.getTagNameFromClassName(className || componentName);
 
 		return Promise.resolve().then(() => {
-			if (className)
-			{
-				// Load component
-				return ComponentOrganizer.loadComponent(className, url, {"splitComponent":splitComponent});
-			}
-			else
-			{
-				// Define empty class
-				className = componentName;
-				ClassUtil.newComponent(BITSMIST.v1.Pad, options, tagName, className);
-			}
+			// Load component
+			let options = Object.assign({}, settings, {"splitComponent":splitComponent});
+			return ComponentOrganizer._loadComponent(className, url, options, tagName);
 		}).then(() => {
 			// Insert tag
-			if (options["rootNode"] && !component._components[componentName])
+			if (settings["rootNode"] && !component.components[componentName])
 			{
-				// Check root node
-				let root = document.querySelector(options["rootNode"]);
-				if (!root)
-				{
-					throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
-				}
-
-				// Build tag
-				let tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
-
-				// Insert tag
-				if (options["overwrite"])
-				{
-					root.outerHTML = tag;
-					component._components[componentName] = root;
-				}
-				else
-				{
-					root.insertAdjacentHTML("afterbegin", tag);
-					component._components[componentName] = root.children[0];
-				}
-
-				// Inject settings to added component
-				component._components[componentName]._injectSettings = function(settings){
-					// super()
-					if (component._components[componentName]._super.prototype._injectSettings)
-					{
-						settings = Object.assign({}, component._components[componentName]._super.prototype._injectSettings.call(this, settings));
-					}
-					else
-					{
-						settings = {};
-					}
-
-					return Util.deepMerge(settings, options);
-				};
+				component.components[componentName] = ComponentOrganizer.__insertTag(tagName, settings);
 			}
 		}).then(() => {
 			// Expose component
-			if (options["expose"])
+			if (settings["expose"])
 			{
-				let exposeName = ( options["expose"] === true ? componentName : options["expose"] );
+				let exposeName = ( settings["expose"] === true ? componentName : settings["expose"] );
 				Object.defineProperty(component.__proto__, exposeName, {
-					get()
-					{
-						return component._components[componentName];
-					}
+					get() { return this.components[componentName]; }
 				});
 			}
 		}).then(() => {
-			if (sync || options["sync"])
+			// Wait for the added component to be ready
+			if (sync || settings["sync"])
 			{
-				let state = sync || (options["sync"] === true ? "started" : options["sync"]);
+				sync = sync || settings["sync"]; // sync precedes settings["sync"]
+				let state = (sync === true ? "started" : sync);
 				let c = className.split(".");
-				return StateOrganizer.waitFor(component, [{"name":c[c.length - 1], "state":state}]);
+				return component.waitFor([{"name":c[c.length - 1], "state":state}]);
 			}
 		});
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Load scripts for tags which has data-autoload attribute.
+	 *
+	 * @param	{HTMLElement}	rootNode			Target node.
+	 * @param	{String}		path				Base path prepend to each element's path.
+	 * @param	{Object}		settings			Settings.
+	 * @param	{String}		target				Target elements.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _loadTags(component, rootNode, basePath, settings, target)
+	{
+
+		let promises = [];
+		let targets = ( target ? document.querySelectorAll(target) : rootNode.querySelectorAll("[data-autoload],[data-automorph]") );
+
+		console.debug(`ComponentOrganizer._loadTags(): Loading tags. name=${component.name}, target=${target}`);
+
+		targets.forEach((element) => {
+			if (element.getAttribute("href"))
+			{
+				let url = element.getAttribute("href");
+				promises.push(AjaxUtil.loadScript(url));
+			}
+			else
+			{
+				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
+				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
+				let split = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+				let morph = ( element.hasAttribute("data-automorph") ? ( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) : false );
+				let options = Object.assign({}, settings, {"splitComponent":split, "morph":morph});
+
+				promises.push(ComponentOrganizer._loadComponent(className, Util.concatPath([basePath, classPath]), options, element.tagName));
+			}
+
+			element.removeAttribute("data-autoload");
+			element.removeAttribute("data-automorph");
+		});
+
+		return Promise.all(promises);
 
 	}
 
@@ -261,7 +276,7 @@ export default class ComponentOrganizer
 	 * @return  {Promise}		Promise.
 	 */
 	/*
-	static createComponent(componentName, options, path, settings)
+	static _createComponent(componentName, options, path, settings)
 	{
 
 		options = Object.assign({}, options);
@@ -288,59 +303,22 @@ export default class ComponentOrganizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadComponent(componentName, path, options)
+	static _loadComponent(componentName, path, options, tagName)
 	{
 
-		return ComponentOrganizer.__autoloadComponent(componentName, path, options);
+		if (options["morph"])
+		{
+			// Define empty class
+			console.debug(`ComponentOrganizer._loadComponent(): Creating empty component. tagName=${tagName}`);
 
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Load scripts for tags which has data-autoload attribute.
-	 *
-	 * @param	{HTMLElement}	rootNode			Target node.
-	 * @param	{String}		path				Base path prepend to each element's path.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static loadTags(rootNode, basePath, settings)
-	{
-
-		let promises = [];
-
-		rootNode.querySelectorAll("[data-autoload]").forEach((element) => {
-
-			// Rename data-autoload attribute
-			element.removeAttribute("data-autoload");
-			element.setAttribute("data-autoload-done", "");
-
-			if (element.getAttribute("href"))
-			{
-				let url = element.getAttribute("href");
-				promises.push(AjaxUtil.loadScript(url));
-			}
-			else
-			{
-				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
-				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
-
-				if (className)
-				{
-					// Load component script
-					settings["splitComponent"] = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
-					promises.push(ComponentOrganizer.loadComponent(className, Util.concatPath([basePath, classPath]), settings));
-				}
-				else
-				{
-					// Define empty class
-					ClassUtil.newComponent(BITSMIST.v1.Pad, {}, element.tagName);
-				}
-			}
-		});
-
-		return Promise.all(promises);
+			let classDef = ( options["morph"] === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(options["morph"]) );
+			ClassUtil.newComponent(classDef, options, tagName);
+		}
+		else
+		{
+			// Load component script
+			return ComponentOrganizer.__autoloadComponent(componentName, path, options);
+		}
 
 	}
 
@@ -360,7 +338,7 @@ export default class ComponentOrganizer
 
 		let ret = false;
 
-		if (BITSMIST.v1.Globals.classes.get(className, {})["state"] == "loaded")
+		if (ComponentOrganizer.__classes.get(className, {})["state"] == "loaded")
 		{
 			ret = true;
 		}
@@ -387,7 +365,7 @@ export default class ComponentOrganizer
 	static __autoloadComponent(className, path, options)
 	{
 
-		console.debug(`LoaderMixin.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
+		console.debug(`ComponentOrganizer.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
 
 		let promise;
 		let tagName = options["tagName"] || Util.getTagNameFromClassName(className);
@@ -395,24 +373,24 @@ export default class ComponentOrganizer
 		if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
 		{
 			// Already loaded
-			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already exists. className=${className}`);
-			BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loaded"});
+			console.debug(`ComponentOrganizer.__autoLoadComponent(): Component Already exists. className=${className}`);
+			ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded"});
 			promise = Promise.resolve();
 		}
-		else if (BITSMIST.v1.Globals.classes.get(className, {})["state"] == "loading")
+		else if (ComponentOrganizer.__classes.get(className, {})["state"] == "loading")
 		{
 			// Already loading
-			console.debug(`LoaderMixin.__autoLoadComponent(): Component Already loading. className=${className}`);
-			promise = BITSMIST.v1.Globals.classes.get(className)["promise"];
+			console.debug(`ComponentOrganizer.__autoLoadComponent(): Component Already loading. className=${className}`);
+			promise = ComponentOrganizer.__classes.get(className)["promise"];
 		}
 		else
 		{
 			// Not loaded
-			BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loading"});
+			ComponentOrganizer.__classes.mergeSet(className, {"state":"loading"});
 			promise = ComponentOrganizer.__loadComponentScript(tagName, path, options).then(() => {
-				BITSMIST.v1.Globals.classes.mergeSet(className, {"state":"loaded", "promise":null});
+				ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded", "promise":null});
 			});
-			BITSMIST.v1.Globals.classes.mergeSet(className, {"promise":promise});
+			ComponentOrganizer.__classes.mergeSet(className, {"promise":promise});
 		}
 
 		return promise;
@@ -433,7 +411,7 @@ export default class ComponentOrganizer
 	static __loadComponentScript(componentName, path, options)
 	{
 
-		console.debug(`LoaderMixin.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
+		console.debug(`ComponentOrganizer.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
 
 		options = ( options ? options : {} );
 
@@ -448,8 +426,64 @@ export default class ComponentOrganizer
 				return AjaxUtil.loadScript(url2);
 			}
 		}).then(() => {
-			console.debug(`LoaderMixin.__loadComponentScript(): Loaded script. componentName=${componentName}`);
+			console.debug(`ComponentOrganizer.__loadComponentScript(): Loaded script. componentName=${componentName}`);
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Insert a tag and return the inserted component.
+	 *
+	 * @param	{String}		tagName				Tagname.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Component}		Component.
+	 */
+	static __insertTag(tagName, options)
+	{
+
+		let addedComponent;
+
+		// Check root node
+		let root = document.querySelector(options["rootNode"]);
+		if (!root)
+		{
+			throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
+		}
+
+		// Build tag
+		let tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
+
+		// Insert tag
+		if (options["overwrite"])
+		{
+			root.outerHTML = tag;
+			addedComponent = root;
+		}
+		else
+		{
+			root.insertAdjacentHTML("afterbegin", tag);
+			addedComponent = root.children[0];
+		}
+
+		// Inject settings to added component
+		addedComponent._injectSettings = function(settings){
+			// super()
+			if (addedComponent._super.prototype._injectSettings)
+			{
+				settings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(this, settings));
+			}
+			else
+			{
+				settings = {};
+			}
+
+			return Util.deepMerge(settings, options);
+		};
+
+		return addedComponent;
 
 	}
 

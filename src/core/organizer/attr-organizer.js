@@ -8,12 +8,56 @@
  */
 // =============================================================================
 
+import Organizer from './organizer';
+
 // =============================================================================
 //	Attribute organizer class
 // =============================================================================
 
-export default class AttrOrganizer
+export default class AttrOrganizer extends Organizer
 {
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Organize.
+	 *
+	 * @param	{Object}		conditions			Conditions.
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static organize(conditions, component, settings)
+	{
+
+		let events = {
+			"afterStart": AttrOrganizer.onDoOrganize,
+			"afterAppend": AttrOrganizer.onDoOrganize,
+			"afterSpecLoad": AttrOrganizer.onDoOrganize,
+			"beforeOpen": AttrOrganizer.onDoOrganize,
+			"afterOpen": AttrOrganizer.onDoOrganize,
+			"beforeClose": AttrOrganizer.onDoOrganize,
+			"afterClose": AttrOrganizer.onDoOrganize,
+			"doRefresh": AttrOrganizer.onDoOrganize,
+		};
+
+		let attrs = settings["attrs"];
+		if (attrs)
+		{
+			Object.keys(attrs).forEach((eventName) => {
+				if (events[eventName])
+				{
+					component.addEventHandler(component, eventName, events[eventName], {"attrs":attrs[eventName]}, component);
+				}
+			});
+		}
+
+		return settings;
+
+	}
 
 	// -----------------------------------------------------------------------------
 	//	Event handlers
@@ -32,63 +76,12 @@ export default class AttrOrganizer
 		let component = ex.target;
 		let settings = ex.options["attrs"];
 
-		return AttrOrganizer.initAttr(component, settings);
+		return AttrOrganizer._initAttr(component, settings);
 
 	}
 
 	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Organize.
-	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static organize(conditions, component)
-	{
-
-		let events = {
-//			"afterInitComponent": AttrOrganizer.onDoOrganize, // throws an error on iOS10
-			"afterStart": AttrOrganizer.onDoOrganize,
-			"afterAppend": AttrOrganizer.onDoOrganize,
-			"afterSpecLoad": AttrOrganizer.onDoOrganize,
-			"beforeOpen": AttrOrganizer.onDoOrganize,
-			"afterOpen": AttrOrganizer.onDoOrganize,
-			"beforeClose": AttrOrganizer.onDoOrganize,
-			"afterClose": AttrOrganizer.onDoOrganize,
-			"doRefresh": AttrOrganizer.onDoOrganize,
-		};
-
-		let attrs = component.settings.get("attrs");
-		if (attrs)
-		{
-			Object.keys(attrs).forEach((eventName) => {
-				if (events[eventName])
-				{
-					component.addEventHandler(component, eventName, events[eventName], {"attrs":attrs[eventName]}, component);
-				}
-			});
-		}
-
-		return Promise.resolve();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
+	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
@@ -97,7 +90,7 @@ export default class AttrOrganizer
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static initAttr(component, settings)
+	static _initAttr(component, settings)
 	{
 
 		if (settings)
@@ -135,29 +128,6 @@ export default class AttrOrganizer
 		}
 
 		return Promise.resolve();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		eventName			Event name.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(eventName, observerInfo, ...args)
-	{
-
-		let ret = false;
-
-		if (eventName == "*" || eventName == "beforeStart" || eventName == "afterSpecLoad")
-		{
-			ret = true;
-		}
-
-		return ret;
 
 	}
 
