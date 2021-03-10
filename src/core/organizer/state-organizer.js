@@ -181,7 +181,6 @@ export default class StateOrganizer extends Organizer
 			});
 			waitInfo["promise"] = promise;
 
-//			console.log("@@@", component.name,"is waiting for",waitlist[0]);
 			//StateOrganizer.__addToWaitingList(waitInfo, component, state);
 			StateOrganizer.__addToWaitingList(waitInfo, component);
 		}
@@ -711,13 +710,13 @@ export default class StateOrganizer extends Organizer
 		if (component.hasAttribute("data-waitfor"))
 		{
 			let waitInfo = {"name":component.getAttribute("data-waitfor"), "state":"started"};
-			component.settings.set("waitFor", [waitInfo]);
+			component.settings.merge({"waitFor": [waitInfo]});
 		}
 
 		if (component.hasAttribute("data-waitfornode"))
 		{
 			let waitInfo = {"rootNode":component.getAttribute("data-waitfornode"), "state":"started"};
-			component.settings.set("waitFor", [waitInfo]);
+			component.settings.merge({"waitFor": [waitInfo]});
 		}
 
 	}
