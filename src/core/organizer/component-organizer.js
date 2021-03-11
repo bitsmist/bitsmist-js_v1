@@ -189,7 +189,8 @@ export default class ComponentOrganizer extends Organizer
 		return Promise.resolve().then(() => {
 			// Load component
 			let options = Object.assign({}, settings, {"splitComponent":splitComponent});
-			return ComponentOrganizer._loadComponent(className, url, options, tagName);
+			let autoLoad = Util.safeGet(options, "autoLoad", component.settings.get("system.autoLoad", true));
+			return ComponentOrganizer._loadComponent(className, url, options, tagName, autoLoad);
 		}).then(() => {
 			// Insert tag
 			if (settings["rootNode"] && !component.components[componentName])
@@ -252,7 +253,7 @@ export default class ComponentOrganizer extends Organizer
 				let morph = ( element.hasAttribute("data-automorph") ? ( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) : false );
 				let options = Object.assign({}, settings, {"splitComponent":split, "morph":morph});
 
-				promises.push(ComponentOrganizer._loadComponent(className, Util.concatPath([basePath, classPath]), options, element.tagName));
+				promises.push(ComponentOrganizer._loadComponent(className, Util.concatPath([basePath, classPath]), options, element.tagName, true));
 			}
 
 			element.removeAttribute("data-autoload");
@@ -303,7 +304,7 @@ export default class ComponentOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadComponent(componentName, path, options, tagName)
+	static _loadComponent(componentName, path, options, tagName, autoLoad)
 	{
 
 		if (options["morph"])
@@ -316,8 +317,11 @@ export default class ComponentOrganizer extends Organizer
 		}
 		else
 		{
-			// Load component script
-			return ComponentOrganizer.__autoloadComponent(componentName, path, options);
+			if (autoLoad)
+			{
+				// Load component script
+				return ComponentOrganizer.__autoloadComponent(componentName, path, options);
+			}
 		}
 
 	}
@@ -450,7 +454,8 @@ export default class ComponentOrganizer extends Organizer
 		let root = document.querySelector(options["rootNode"]);
 		if (!root)
 		{
-			throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
+			//throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
+			throw ClassUtil.setError(new ReferenceError, {"message":`Root node does not exist when adding ${tagName} to ${options["rootNode"]}`});
 		}
 
 		// Build tag
