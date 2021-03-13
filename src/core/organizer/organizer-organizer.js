@@ -12,6 +12,7 @@ import Component from '../component';
 import Organizer from './organizer';
 import OrganizerStore from '../store/organizer-store';
 import SettingOrganizer from './setting-organizer';
+import Util from '../util/util';
 
 // =============================================================================
 //	Organizer organizer class
@@ -91,7 +92,7 @@ export default class OrganizerOrganizer extends Organizer
 		// Add and init new organizers
 		OrganizerOrganizer._sortItems(targets).forEach((key) => {
 			chain = chain.then(() => {
-				component._organizers[key] = OrganizerOrganizer.__organizers.items[key];
+				component._organizers[key] = Object.assign({}, OrganizerOrganizer.__organizers.items[key], Util.safeGet(settings, "organizers." + key));
 				return component._organizers[key].object.init("*", component, settings);
 			});
 		});
@@ -200,10 +201,8 @@ export default class OrganizerOrganizer extends Organizer
 	static _sortItems(organizers)
 	{
 
-		let globals = OrganizerOrganizer.__organizers.items
-
 		return Object.keys(organizers).sort((a,b) => {
-			return globals[a]["order"] - globals[b]["order"];
+			return organizers[a]["order"] - organizers[b]["order"];
 		})
 
 	}
