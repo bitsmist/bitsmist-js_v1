@@ -454,8 +454,7 @@ export default class ComponentOrganizer extends Organizer
 		let root = document.querySelector(options["rootNode"]);
 		if (!root)
 		{
-			//throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
-			throw ClassUtil.setError(new ReferenceError, {"message":`Root node does not exist when adding ${tagName} to ${options["rootNode"]}`});
+			throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
 		}
 
 		// Build tag
