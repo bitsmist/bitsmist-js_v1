@@ -236,20 +236,26 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		templateName = templateName || component._settings.get("templateName");
+		let templateInfo = component._templates[templateName];
 
-		if (!component._templates[templateName])
+		if (!templateInfo)
 		{
 			throw new ReferenceError(`Template not loaded. name=${component.name}, templateName=${templateName}`);
 		}
 
 		let clone;
-		if (component._templates[templateName].node)
+		if (templateInfo["node"])
 		{
-			clone = document.importNode(component._templates[templateName].node, true);
+			// template is a template tag
+			clone = document.importNode(templateInfo["node"], true);
 		}
 		else
 		{
-			clone = TemplateOrganizer.__dupElement(component, templateName);
+			// template is not a template tag
+			let ele = document.createElement("div");
+			ele.innerHTML = templateInfo["html"];
+
+			clone = ele.firstElementChild;
 		}
 
 		return clone;
@@ -393,28 +399,6 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		console.debug(`TemplateOrganizer.__applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Duplicate the component element.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		templateName		Template name.
-	 *
-	 * @return  {Object}		Cloned component.
-	 */
-	static __dupElement(component, templateName)
-	{
-
-		templateName = ( templateName ? templateName : component.settings.get("templateName") );
-
-		let ele = document.createElement("div");
-		ele.innerHTML = component._templates[templateName].html;
-
-		return ele.firstElementChild;
 
 	}
 
