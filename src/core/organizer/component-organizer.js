@@ -34,8 +34,8 @@ export default class ComponentOrganizer extends Organizer
 	{
 
 		// Add methods
-		Component.prototype.loadTags = function(rootNode, basePath, settings, target) {
-			return ComponentOrganizer._loadTags(this, rootNode, basePath, settings, target);
+		Pad.prototype.loadTags = function(rootNode, basePath, settings, target) {
+			return ComponentOrganizer._loadTags(rootNode, basePath, settings, target);
 		}
 
 		// Init vars
@@ -231,13 +231,13 @@ export default class ComponentOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadTags(component, rootNode, basePath, settings, target)
+	static _loadTags(rootNode, basePath, settings, target)
 	{
 
 		let promises = [];
 		let targets = ( target ? document.querySelectorAll(target) : rootNode.querySelectorAll("[data-autoload],[data-automorph]") );
 
-		console.debug(`ComponentOrganizer._loadTags(): Loading tags. name=${component.name}, target=${target}`);
+		console.debug(`ComponentOrganizer._loadTags(): Loading tags. rootNode=${rootNode}, basePath=${basePath}, target=${target}`);
 
 		targets.forEach((element) => {
 			if (element.getAttribute("href"))
@@ -249,7 +249,7 @@ export default class ComponentOrganizer extends Organizer
 			{
 				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
 				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
-				let split = ( element.hasAttribute("data-split") ? element.getAttribute("data-split") : settings["splitComponent"] );
+				let split = ( element.hasAttribute("data-split") ? true : settings["splitComponent"] );
 				let morph = ( element.hasAttribute("data-automorph") ? ( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) : false );
 				let options = Object.assign({}, settings, {"splitComponent":split, "morph":morph});
 
@@ -313,7 +313,10 @@ export default class ComponentOrganizer extends Organizer
 			console.debug(`ComponentOrganizer._loadComponent(): Creating empty component. tagName=${tagName}`);
 
 			let classDef = ( options["morph"] === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(options["morph"]) );
-			ClassUtil.newComponent(classDef, options, tagName);
+			if (!customElements.get(tagName.toLowerCase()))
+			{
+				ClassUtil.newComponent(classDef, options, tagName);
+			}
 		}
 		else
 		{

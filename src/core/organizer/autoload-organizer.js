@@ -8,8 +8,7 @@
  */
 // =============================================================================
 
-import ClassUtil from '../util/class-util';
-import Component from '../component';
+import ComponentOrganizer from './component-organizer';
 import Organizer from './organizer';
 import Util from '../util/util';
 
@@ -70,7 +69,7 @@ export default class AutoloadOrganizer extends Organizer
 		let splitComponent = component.settings.get("system.splitComponent", false);
 		let target = component.getAttribute("data-target");
 
-		component.loadTags(document, path, {"splitComponent":splitComponent}, target);
+		ComponentOrganizer._loadTags(document, path, {"splitComponent":splitComponent}, target);
 
 	}
 
