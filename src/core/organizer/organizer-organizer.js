@@ -37,8 +37,8 @@ export default class OrganizerOrganizer extends Organizer
 		});
 
 		// Add methods
-		Component.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer.callOrganizers(this, condition, settings); }
-		Component.prototype.initOrganizers = function(settings) { return OrganizerOrganizer.initOrganizers(this, settings); }
+		Component.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer._callOrganizers(this, condition, settings); }
+		Component.prototype.initOrganizers = function(settings) { return OrganizerOrganizer._initOrganizers(this, settings); }
 
 		// Init vars
 		OrganizerOrganizer.__organizers = new OrganizerStore();
@@ -117,7 +117,9 @@ export default class OrganizerOrganizer extends Organizer
 
 	}
 
-	// -------------------------------------------------------------------------
+	// ------------------------------------------------------------------------
+	//  Protected
+	// ------------------------------------------------------------------------
 
 	/**
 	 * Call organizers.
@@ -127,7 +129,7 @@ export default class OrganizerOrganizer extends Organizer
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static initOrganizers(component, settings)
+	static _initOrganizers(component, settings)
 	{
 
 		// Init
@@ -154,7 +156,7 @@ export default class OrganizerOrganizer extends Organizer
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static callOrganizers(component, conditions, settings)
+	static _callOrganizers(component, conditions, settings)
 	{
 
 		return Promise.resolve().then(() => {
@@ -187,9 +189,7 @@ export default class OrganizerOrganizer extends Organizer
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Protected
-	// -------------------------------------------------------------------------
+	// ------------------------------------------------------------------------
 
 	/**
 	 * Sort item keys.
