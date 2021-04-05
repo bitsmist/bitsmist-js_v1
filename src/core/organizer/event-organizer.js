@@ -39,9 +39,6 @@ export default class EventOrganizer extends Organizer
 		Component.prototype.triggerSync = function(eventName, sender, options, element) {
 			return EventOrganizer._triggerSync(this, eventName, sender, options, element)
 		}
-		Component.prototype.setHtmlEventHandlers = function(elementName, options, rootNode) {
-			EventOrganizer._setHtmlEventHandlers(this, elementName, options, rootNode)
-		}
 		Component.prototype.getEventHandler = function(component, eventInfo, bindTo, eventName) {
 			return EventOrganizer._getEventHandler(this, component, eventInfo, bindTo, eventName)
 		}
@@ -181,44 +178,6 @@ export default class EventOrganizer extends Organizer
 		options["async"] = false;
 
 		return EventOrganizer._trigger.call(component, component, eventName, sender, options, element);
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Set html elements event handlers.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		elementName			Element name.
-	 * @param	{Options}		options				Options.
-	 */
-	static _setHtmlEventHandlers(component, elementName, options, rootNode)
-	{
-
-		rootNode = ( rootNode ? rootNode : component );
-		let elementInfo = component.settings.get("elements." + elementName);
-		let elements;
-
-		// Get target elements
-		if (elementInfo["rootNode"])
-		{
-			elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
-		}
-		else
-		{
-			elements = rootNode.querySelectorAll("#" + elementName);
-		}
-
-		// Set event handlers
-		let events = elementInfo["events"];
-		for (let i = 0; i < elements.length; i++)
-		{
-			Object.keys(events).forEach((eventName) => {
-				options = Object.assign({}, events[eventName]["options"], options);
-				EventOrganizer._addEventHandler(component, elements[i], eventName, events[eventName], options);
-			});
-		}
 
 	}
 

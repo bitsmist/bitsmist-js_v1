@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import Component from '../component';
 import Organizer from './organizer';
 
 // =============================================================================
@@ -19,6 +20,21 @@ export default class ElementOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Global init.
+	 */
+	static globalInit()
+	{
+
+		// Add methods
+		Component.prototype.setHtmlEventHandlers = function(elementName, options, rootNode) {
+			ElementOrganizer._setHtmlEventHandlers(this, elementName, options, rootNode)
+		}
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -42,6 +58,46 @@ export default class ElementOrganizer extends Organizer
 		}
 
 		return settings;
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Set html elements event handlers.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		elementName			Element name.
+	 * @param	{Options}		options				Options.
+	 */
+	static _setHtmlEventHandlers(component, elementName, options, rootNode)
+	{
+
+		rootNode = ( rootNode ? rootNode : component.rootElement );
+		let elementInfo = component.settings.get("elements." + elementName);
+		let elements;
+
+		// Get target elements
+		if (elementInfo["rootNode"])
+		{
+			elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
+		}
+		else
+		{
+			elements = rootNode.querySelectorAll("#" + elementName);
+		}
+
+		// Set event handlers
+		let events = elementInfo["events"];
+		for (let i = 0; i < elements.length; i++)
+		{
+			Object.keys(events).forEach((eventName) => {
+				options = Object.assign({}, events[eventName]["options"], options);
+				component.addEventHandler(elements[i], eventName, events[eventName], options);
+			});
+		}
 
 	}
 
