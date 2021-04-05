@@ -29,8 +29,8 @@ export default class ElementOrganizer extends Organizer
 	{
 
 		// Add methods
-		Component.prototype.setHtmlEventHandlers = function(elementName, options, rootNode) {
-			ElementOrganizer._setHtmlEventHandlers(this, elementName, options, rootNode)
+		Component.prototype.initElements = function(elementName, options, rootNode) {
+			ElementOrganizer._initElements(this, elementName, options, rootNode)
 		}
 
 	}
@@ -53,7 +53,7 @@ export default class ElementOrganizer extends Organizer
 		if (elements)
 		{
 			Object.keys(elements).forEach((elementName) => {
-				component.setHtmlEventHandlers(elementName);
+				component.initElements(elementName);
 			});
 		}
 
@@ -71,8 +71,9 @@ export default class ElementOrganizer extends Organizer
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Options}		options				Options.
+	 * @param	{HTMLElement}	rootNode			Root node of elements.
 	 */
-	static _setHtmlEventHandlers(component, elementName, options, rootNode)
+	static _initElements(component, elementName, options, rootNode)
 	{
 
 		rootNode = ( rootNode ? rootNode : component.rootElement );
@@ -90,7 +91,25 @@ export default class ElementOrganizer extends Organizer
 		}
 
 		// Set event handlers
-		let events = elementInfo["events"];
+		this.__initEvents(component, elements, elementInfo["events"], options);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Set html elements event handlers.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Array}			elements			Target elements.
+	 * @param	{Object}		events				Event info.
+	 * @param	{Options}		options				Event options.
+	 */
+	static __initEvents(component, elements, events, options)
+	{
+
 		for (let i = 0; i < elements.length; i++)
 		{
 			Object.keys(events).forEach((eventName) => {
