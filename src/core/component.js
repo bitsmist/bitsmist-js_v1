@@ -121,6 +121,20 @@ Object.defineProperty(Component.prototype, 'uniqueId', {
 })
 
 // -----------------------------------------------------------------------------
+
+/**
+ * Root element.
+ *
+ * @type	{HTMLElement}
+ */
+Object.defineProperty(Component.prototype, 'rootElement', {
+	get()
+	{
+		return this._rootElement;
+	}
+})
+
+// -----------------------------------------------------------------------------
 //  Methods
 // -----------------------------------------------------------------------------
 
@@ -150,6 +164,7 @@ Component.prototype.start = function(settings)
 	// Init vars
 	this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 	this._name = this.constructor.name;
+	this._rootElement = ( settings["rootElement"] ? document.querySelector(settings["rootElement"]) : this );
 
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
