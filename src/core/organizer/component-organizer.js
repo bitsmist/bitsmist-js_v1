@@ -195,7 +195,7 @@ export default class ComponentOrganizer extends Organizer
 			// Insert tag
 			if (settings["rootNode"] && !component.components[componentName])
 			{
-				component.components[componentName] = ComponentOrganizer.__insertTag(tagName, settings);
+				component.components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
 			}
 		}).then(() => {
 			// Expose component
@@ -448,16 +448,16 @@ export default class ComponentOrganizer extends Organizer
 	 *
 	 * @return  {Component}		Component.
 	 */
-	static __insertTag(tagName, options)
+	static __insertTag(component, tagName, options)
 	{
 
 		let addedComponent;
 
 		// Check root node
-		let root = document.querySelector(options["rootNode"]);
+		let root = component._rootElement.querySelector(options["rootNode"]);
 		if (!root)
 		{
-			throw new ReferenceError(`Root node does not exist when adding component ${componentName} to ${options["rootNode"]}. name=${component.name}`);
+			throw new ReferenceError(`Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${options["rootNode"]}`);
 		}
 
 		// Build tag
