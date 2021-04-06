@@ -50,8 +50,10 @@ TagLoader.prototype.start = function(settings)
 
 	// Defaults
 	let defaults = {
-		"name": "TagLoader",
-		"autoSetup": false,
+		"settings": {
+			"name": "TagLoader",
+			"autoSetup": false,
+		},
 		"organizers": {
 			"AutoloadOrganizer":""
 		}

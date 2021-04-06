@@ -61,7 +61,7 @@ Component.prototype.connectedCallback = function()
 Component.prototype.disconnectedCallback = function()
 {
 
-	if (this._settings.get("autoStop"))
+	if (this._settings.get("settings.autoStop"))
 	{
 		return this.stop();
 	}
@@ -150,9 +150,11 @@ Component.prototype.start = function(settings)
 
 	// Defaults
 	let defaults = {
-		"autoSetup": true,
-		"autoStop": true,
-		"useGlobalSettings": true,
+		"settings": {
+			"autoSetup": true,
+			"autoStop": true,
+			"useGlobalSettings": true,
+		},
 		"organizers": {
 			"SettingOrganizer": "",
 			"OrganizerOrganizer": "",
@@ -164,7 +166,7 @@ Component.prototype.start = function(settings)
 	// Init vars
 	this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 	this._name = this.constructor.name;
-	this._rootElement = ( settings["rootElement"] ? document.querySelector(settings["rootElement"]) : this );
+	this._rootElement = ( Util.safeGet(settings, "settings.rootElement") ? document.querySelector(Util.safeGet(settings, "settings.rootElement")) : this );
 
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
@@ -183,8 +185,8 @@ Component.prototype.start = function(settings)
 
 		return this.trigger("beforeStart", this);
 	}).then(() => {
-		let autoSetupOnStart = this._settings.get("autoSetupOnStart");
-		let autoSetup = this._settings.get("autoSetup");
+		let autoSetupOnStart = this._settings.get("settings.autoSetupOnStart");
+		let autoSetup = this._settings.get("settings.autoSetup");
 		if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
 		{
 			return this.setup(settings);

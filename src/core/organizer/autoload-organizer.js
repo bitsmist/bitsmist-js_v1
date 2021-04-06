@@ -57,10 +57,7 @@ export default class AutoloadOrganizer extends Organizer
 	/**
 	* DOM content loaded event handler.
 	*
-	* @param	{Object}		sender				Sender.
-	* @param	{Object}		e					Event info.
-	*
-	* @return  {Promise}		Promise.
+	* @param	{Component}		component			Component.
 	*/
 	static onDOMContentLoaded(component)
 	{
@@ -69,7 +66,7 @@ export default class AutoloadOrganizer extends Organizer
 		let splitComponent = component.settings.get("system.splitComponent", false);
 		let target = component.getAttribute("data-target");
 
-		ComponentOrganizer._loadTags(document, path, {"splitComponent":splitComponent}, target);
+		ComponentOrganizer._loadTags(component, document, path, {"splitComponent":splitComponent}, target);
 
 	}
 

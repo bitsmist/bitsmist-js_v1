@@ -35,7 +35,7 @@ export default class ComponentOrganizer extends Organizer
 
 		// Add methods
 		Pad.prototype.loadTags = function(rootNode, basePath, settings, target) {
-			return ComponentOrganizer._loadTags(rootNode, basePath, settings, target);
+			return ComponentOrganizer._loadTags(this, rootNode, basePath, settings, target);
 		}
 
 		// Init vars
@@ -181,36 +181,39 @@ export default class ComponentOrganizer extends Organizer
 	static _addComponent(component, componentName, settings, sync)
 	{
 
-		let url = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", ""), ( "path" in settings ? settings["path"] : "")]);
-		let splitComponent = ( "splitComponent" in settings ? settings["splitComponent"] : component.settings.get("system.splitComponent", false) );
-		let className = settings["className"] || componentName;
-		let tagName = settings["tagName"] || Util.getTagNameFromClassName(className || componentName);
+		let url = Util.concatPath([
+			component.settings.get("system.appBaseUrl", ""),
+			component.settings.get("system.componentPath", ""),
+			Util.safeGet(settings, "settings.path", "")
+		]);
+		let className = Util.safeGet(settings, "settings.className") || componentName;
+		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className || componentName);
 
 		return Promise.resolve().then(() => {
 			// Load component
-			let options = Object.assign({}, settings, {"splitComponent":splitComponent});
-			let autoLoad = Util.safeGet(options, "autoLoad", component.settings.get("system.autoLoad", true));
-			return ComponentOrganizer._loadComponent(className, url, options, tagName, autoLoad);
+			let autoLoad = Util.safeGet(settings, "settings.autoLoad", component.settings.get("system.autoLoad", true));
+			return ComponentOrganizer._loadComponent(component, className, url, settings, tagName, autoLoad);
 		}).then(() => {
 			// Insert tag
-			if (settings["rootNode"] && !component.components[componentName])
+			if (Util.safeGet(settings, "settings.rootNode") && !component.components[componentName])
 			{
 				component.components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
 			}
 		}).then(() => {
 			// Expose component
-			if (settings["expose"])
+			let expose = Util.safeGet(settings, "settings.expose");
+			if (expose)
 			{
-				let exposeName = ( settings["expose"] === true ? componentName : settings["expose"] );
+				let exposeName = ( expose === true ? componentName : expose );
 				Object.defineProperty(component.__proto__, exposeName, {
 					get() { return this.components[componentName]; }
 				});
 			}
 		}).then(() => {
 			// Wait for the added component to be ready
-			if (sync || settings["sync"])
+			if (sync || Util.safeGet(settings, "settings.sync"))
 			{
-				sync = sync || settings["sync"]; // sync precedes settings["sync"]
+				sync = sync || Util.safeGet(settings, "settings.sync"); // sync precedes settings["sync"]
 				let state = (sync === true ? "started" : sync);
 				let c = className.split(".");
 				return component.waitFor([{"name":c[c.length - 1], "state":state}]);
@@ -224,14 +227,15 @@ export default class ComponentOrganizer extends Organizer
 	/**
 	 * Load scripts for tags which has data-autoload attribute.
 	 *
+	 * @param	{Component}		component			Parent component.
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 * @param	{String}		path				Base path prepend to each element's path.
-	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
 	 * @param	{String}		target				Target elements.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadTags(rootNode, basePath, settings, target)
+	static _loadTags(component, rootNode, basePath, options, target)
 	{
 
 		let promises = [];
@@ -249,11 +253,14 @@ export default class ComponentOrganizer extends Organizer
 			{
 				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
 				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
-				let split = ( element.hasAttribute("data-split") ? true : settings["splitComponent"] );
+				let split = ( element.hasAttribute("data-split") ? true : options["splitComponent"] );
 				let morph = ( element.hasAttribute("data-automorph") ? ( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) : false );
-				let options = Object.assign({}, settings, {"splitComponent":split, "morph":morph});
+				let settings = {};
+				settings["settings"] = ( options? Object.assign({}, options) : {} );
+				settings["settings"]["splitComponent"] = split;
+				settings["settings"]["morph"] = morph;
 
-				promises.push(ComponentOrganizer._loadComponent(className, Util.concatPath([basePath, classPath]), options, element.tagName, true));
+				promises.push(ComponentOrganizer._loadComponent(component, className, Util.concatPath([basePath, classPath]), settings, element.tagName, true));
 			}
 
 			element.removeAttribute("data-autoload");
@@ -298,24 +305,26 @@ export default class ComponentOrganizer extends Organizer
 	/**
 	 * Load the template html.
 	 *
+	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		componentName		Component name.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		options				Options.
+	 * @param	{Object}		settings			Component settings.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadComponent(componentName, path, options, tagName, autoLoad)
+	static _loadComponent(component, componentName, path, settings, tagName, autoLoad)
 	{
 
-		if (options["morph"])
+		let morph = Util.safeGet(settings, "settings.morph");
+		if (morph)
 		{
 			// Define empty class
 			console.debug(`ComponentOrganizer._loadComponent(): Creating empty component. tagName=${tagName}`);
 
-			let classDef = ( options["morph"] === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(options["morph"]) );
+			let classDef = ( morph === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(morph) );
 			if (!customElements.get(tagName.toLowerCase()))
 			{
-				ClassUtil.newComponent(classDef, options, tagName);
+				ClassUtil.newComponent(classDef, settings, tagName);
 			}
 		}
 		else
@@ -323,7 +332,7 @@ export default class ComponentOrganizer extends Organizer
 			if (autoLoad)
 			{
 				// Load component script
-				return ComponentOrganizer.__autoloadComponent(componentName, path, options);
+				return ComponentOrganizer.__autoloadComponent(component, componentName, path, settings);
 			}
 		}
 
@@ -363,19 +372,20 @@ export default class ComponentOrganizer extends Organizer
 	/**
 	 * Load the component if not loaded yet.
 	 *
+	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		className			Component class name.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		options				Options.
+	 * @param	{Object}		settings			Component settings.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __autoloadComponent(className, path, options)
+	static __autoloadComponent(component, className, path, settings)
 	{
 
-		console.debug(`ComponentOrganizer.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
+		console.debug(`ComponentOrganizer.__autoLoadComponent(): Auto loading component. parent=${component.name}, className=${className}, path=${path}`);
 
 		let promise;
-		let tagName = options["tagName"] || Util.getTagNameFromClassName(className);
+		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
 
 		if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
 		{
@@ -394,7 +404,8 @@ export default class ComponentOrganizer extends Organizer
 		{
 			// Not loaded
 			ComponentOrganizer.__classes.mergeSet(className, {"state":"loading"});
-			promise = ComponentOrganizer.__loadComponentScript(tagName, path, options).then(() => {
+			let splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
+			promise = ComponentOrganizer.__loadComponentScript(tagName, path, {"splitComponent": splitComponent}).then(() => {
 				ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded", "promise":null});
 			});
 			ComponentOrganizer.__classes.mergeSet(className, {"promise":promise});
@@ -420,15 +431,13 @@ export default class ComponentOrganizer extends Organizer
 
 		console.debug(`ComponentOrganizer.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
 
-		options = ( options ? options : {} );
-
 		let url1 = Util.concatPath([path, componentName + ".js"]);
 		let url2 = Util.concatPath([path, componentName + ".settings.js"]);
 
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
 		}).then(() => {
-			if (options["splitComponent"])
+			if (Util.safeGet(options, "splitComponent"))
 			{
 				return AjaxUtil.loadScript(url2);
 			}
@@ -444,27 +453,27 @@ export default class ComponentOrganizer extends Organizer
 	 * Insert a tag and return the inserted component.
 	 *
 	 * @param	{String}		tagName				Tagname.
-	 * @param	{Object}		options				Options.
+	 * @param	{Object}		settings			Component settings.
 	 *
 	 * @return  {Component}		Component.
 	 */
-	static __insertTag(component, tagName, options)
+	static __insertTag(component, tagName, settings)
 	{
 
 		let addedComponent;
 
 		// Check root node
-		let root = component._rootElement.querySelector(options["rootNode"]);
+		let root = component._rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
 		if (!root)
 		{
-			throw new ReferenceError(`Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${options["rootNode"]}`);
+			throw new ReferenceError(`Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`);
 		}
 
 		// Build tag
-		let tag = ( options["tag"] ? options["tag"] : "<" + tagName +  "></" + tagName + ">" );
+		let tag = ( Util.safeGet(settings, "tag") ? Util.safeGet(settings, "tag") : "<" + tagName +  "></" + tagName + ">" );
 
 		// Insert tag
-		if (options["overwrite"])
+		if (Util.safeGet(settings, "overwrite"))
 		{
 			root.outerHTML = tag;
 			addedComponent = root;
@@ -476,18 +485,20 @@ export default class ComponentOrganizer extends Organizer
 		}
 
 		// Inject settings to added component
-		addedComponent._injectSettings = function(settings){
+		addedComponent._injectSettings = function(oldSettings){
+			let newSettings;
+
 			// super()
 			if (addedComponent._super.prototype._injectSettings)
 			{
-				settings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(this, settings));
+				newSettings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(this, oldSettings));
 			}
 			else
 			{
-				settings = {};
+				newSettings = {};
 			}
 
-			return Util.deepMerge(settings, options);
+			return Util.deepMerge(newSettings, settings);
 		};
 
 		return addedComponent;

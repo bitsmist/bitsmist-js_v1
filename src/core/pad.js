@@ -55,18 +55,18 @@ Pad.prototype.open = function(options)
 		console.debug(`Pad.open(): Opening pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opening");
 	}).then(() => {
-		return this.switchTemplate(this._settings.get("templateName"));
+		return this.switchTemplate(this._settings.get("settings.templateName"));
 	}).then(() => {
 		return this.trigger("beforeOpen", sender, options);
 	}).then(() => {
-		let autoSetupOnOpen = this._settings.get("autoSetupOnOpen");
-		let autoSetup = this._settings.get("autoSetup");
+		let autoSetupOnOpen = this._settings.get("settings.autoSetupOnOpen");
+		let autoSetup = this._settings.get("settings.autoSetup");
 		if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
 		{
 			return this.setup(options);
 		}
 	}).then(() => {
-		if (this._settings.get("autoRefresh"))
+		if (this._settings.get("settings.autoRefresh"))
 		{
 			return this.refresh(options);
 		}
@@ -159,7 +159,7 @@ Pad.prototype.refresh = function(options)
 		console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", sender, options);
 	}).then(() => {
-		if (this._settings.get("autoFill"))
+		if (this._settings.get("settings.autoFill"))
 		{
 			return this.fill(options);
 		}
@@ -196,7 +196,7 @@ Pad.prototype.switchTemplate = function(templateName, options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-		return this.addTemplate(templateName, {"rootNode":this._settings.get("rootNode"), "templateNode":this._settings.get("templateNode")});
+		return this.addTemplate(templateName, {"rootNode":this._settings.get("settings.rootNode"), "templateNode":this._settings.get("settings.templateNode")});
 	}).then(() => {
 		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
 		let splitComponent = this._settings.get("system.splitComponent", false);
@@ -238,7 +238,9 @@ Pad.prototype.start = function(settings)
 
 	// Defaults
 	let defaults = {
-		"autoSetupOnStart":false,
+		"settings": {
+			"autoSetupOnStart":false,
+		},
 		"organizers":{
 			"TemplateOrganizer": "",
 		}
@@ -252,7 +254,7 @@ Pad.prototype.start = function(settings)
 		settings = newSettings;
 
 		// Open
-		if (this._settings.get("autoOpen"))
+		if (this._settings.get("settings.autoOpen"))
 		{
 			return this.open(settings);
 		}

@@ -60,13 +60,14 @@ export default class SettingOrganizer extends Organizer
 		component.settings.merge(component._getSettings());
 
 		// Overwrite name if specified
-		if (component.settings.get("name"))
+		let name = component.settings.get("settings.name");
+		if (name)
 		{
-			component._name = component.settings.get("name");
+			component._name = name;
 		}
 
 		// Chain global settings
-		if (component.settings.get("useGlobalSettings"))
+		if (component.settings.get("settings.useGlobalSettings"))
 		{
 			component.settings.chain(SettingOrganizer.__globalSettings);
 		}
@@ -100,10 +101,10 @@ export default class SettingOrganizer extends Organizer
 			SettingOrganizer.__loadAttrSettings(component);
 		}).then(() => {
 			// Load global settings
-			let load = component.settings.get("loadGlobalSettings");
+			let load = component.settings.get("settings.loadGlobalSettings");
 			if (load)
 			{
-				SettingOrganizer.__globalSettings.items = component.settings.items["settings"];
+				SettingOrganizer.__globalSettings.items = component.settings.items["globals"];
 			}
 
 			return component.settings.items;
@@ -135,7 +136,6 @@ export default class SettingOrganizer extends Organizer
 		}
 
 	}
-
 
 	// -------------------------------------------------------------------------
 	//  Protected
@@ -229,19 +229,19 @@ export default class SettingOrganizer extends Organizer
 			component.settings.set("system.appBaseUrl", "");
 			component.settings.set("system.templatePath", arr[0]);
 			component.settings.set("system.componentPath", arr[0]);
-			component.settings.set("path", "");
+			component.settings.set("settings.path", "");
 		}
 
 		// Get path from attribute
 		if (component.hasAttribute("data-path"))
 		{
-			component.settings.set("path", component.getAttribute("data-path"));
+			component.settings.set("settings.path", component.getAttribute("data-path"));
 		}
 
 		// Get settings from the attribute
 
-		let dataSettings = ( document.querySelector(component.settings.get("rootNode")) ?
-			document.querySelector(component.settings.get("rootNode")).getAttribute("data-settings") :
+		let dataSettings = ( document.querySelector(component.settings.get("settings.rootNode")) ?
+			document.querySelector(component.settings.get("settings.rootNode")).getAttribute("data-settings") :
 			component.getAttribute("data-settings")
 		);
 

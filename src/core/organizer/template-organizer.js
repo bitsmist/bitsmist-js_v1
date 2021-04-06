@@ -55,9 +55,9 @@ export default class TemplateOrganizer extends Organizer
 		component._templates = {};
 
 		// Set defaults if not set already
-		component.settings.set("templateName", component.settings.get("templateName", component.tagName.toLowerCase()));
-		component.settings.set("autoOpen", component.settings.get("autoOpen", true));
-		component.settings.set("autoClose", component.settings.get("autoClose", true));
+		component.settings.set("settings.templateName", component.settings.get("settings.templateName", component.tagName.toLowerCase()));
+		component.settings.set("settings.autoOpen", component.settings.get("settings.autoOpen", true));
+		component.settings.set("settings.autoClose", component.settings.get("settings.autoClose", true));
 
 		// Load settings from attributes
 		TemplateOrganizer.__loadAttrSettings(component);
@@ -184,22 +184,26 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		return Promise.resolve().then(() => {
-			let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.templatePath", ""), component.settings.get("path", "")]);
+			let path = Util.concatPath([
+				component.settings.get("system.appBaseUrl", ""),
+				component.settings.get("system.templatePath", ""),
+				component.settings.get("settings.path", "")
+			]);
 			return TemplateOrganizer._loadTemplate(component, templateInfo, path);
 		}).then(() => {
-			if (component.settings.get("templateNode"))
+			if (component.settings.get("settings.templateNode"))
 			{
-				TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("templateNode"));
+				TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("settings.templateNode"));
 			}
 
 			return TemplateOrganizer.__applyTemplate(component, templateInfo);
 		}).then(() => {
-			if (component._templates[component.settings.get("templateName")])
+			if (component._templates[component.settings.get("settings.templateName")])
 			{
-				component._templates[component.settings.get("templateName")]["isAppended"] = false;
+				component._templates[component.settings.get("settings.templateName")]["isAppended"] = false;
 			}
 			component._templates[templateName]["isAppended"] = true;
-			component.settings.set("templateName", templateName);
+			component.settings.set("settings.templateName", templateName);
 		});
 
 	}
@@ -235,7 +239,7 @@ export default class TemplateOrganizer extends Organizer
 	static _clone(component, templateName)
 	{
 
-		templateName = templateName || component._settings.get("templateName");
+		templateName = templateName || component._settings.get("settings.templateName");
 		let templateInfo = component._templates[templateName];
 
 		if (!templateInfo)

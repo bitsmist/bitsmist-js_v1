@@ -41,7 +41,8 @@ export default class ClassUtil
 		ClassUtil.inherit(component, superClass);
 
 		settings = Object.assign({}, settings);
-		settings["name"] = className;
+		settings.settings = ( settings.settings ? settings.settings : {} );
+		settings["settings"]["name"] = className;
 		component.prototype._getSettings = function() {
 			return settings;
 		}
