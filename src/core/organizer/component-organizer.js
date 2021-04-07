@@ -470,10 +470,10 @@ export default class ComponentOrganizer extends Organizer
 		}
 
 		// Build tag
-		let tag = ( Util.safeGet(settings, "tag") ? Util.safeGet(settings, "tag") : "<" + tagName +  "></" + tagName + ">" );
+		let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
 
 		// Insert tag
-		if (Util.safeGet(settings, "overwrite"))
+		if (Util.safeGet(settings, "settings.overwrite"))
 		{
 			root.outerHTML = tag;
 			addedComponent = root;
