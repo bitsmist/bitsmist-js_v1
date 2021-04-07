@@ -247,10 +247,8 @@ export default class SettingOrganizer extends Organizer
 
 		if (dataSettings)
 		{
-			let settings = JSON.parse(dataSettings);
-			Object.keys(settings).forEach((key) => {
-				component.settings.set(key, settings[key]);
-			});
+			let settings = {"settings": JSON.parse(dataSettings)};
+			component.settings.merge(settings);
 		}
 
 	}
