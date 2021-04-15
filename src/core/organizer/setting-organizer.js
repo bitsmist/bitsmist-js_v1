@@ -38,6 +38,9 @@ export default class SettingOrganizer extends Organizer
 
 		// Init vars
 		SettingOrganizer.__globalSettings = new Store();
+		Object.defineProperty(SettingOrganizer, 'globalSettings', {
+			get() { return SettingOrganizer.__globalSettings; },
+		});
 
 	}
 
@@ -104,9 +107,14 @@ export default class SettingOrganizer extends Organizer
 			let load = component.settings.get("settings.loadGlobalSettings");
 			if (load)
 			{
-				SettingOrganizer.__globalSettings.items = component.settings.items["globals"];
-			}
+				// Load global settings
+				SettingOrganizer.__globalSettings.merge(component.settings.items["globals"]);
 
+				return SettingOrganizer._load(component).then((settings) => {
+					SettingOrganizer.__globalSettings.merge(settings);
+				});
+			}
+		}).then(() => {
 			return component.settings.items;
 		});
 
@@ -173,6 +181,42 @@ export default class SettingOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+	* Load items.
+	*
+	* @param	{Object}		options				Options.
+	*
+	* @return  {Promise}		Promise.
+	*/
+	static _load(component, options)
+	{
+
+		let sender = ( options && options["sender"] ? options["sender"] : component );
+
+		return component.trigger("doLoadStore", sender);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	* Save items.
+	*
+	* @param	{Object}		options				Options.
+	*
+	* @return  {Promise}		Promise.
+	*/
+	static _save(component, options)
+	{
+
+		let sender = ( options && options["sender"] ? options["sender"] : component );
+
+		return component.trigger("doSaveStore", sender, {"data":PreferenceOrganizer.__preferences.items});
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Privates
 	// -------------------------------------------------------------------------
 
@@ -223,9 +267,9 @@ export default class SettingOrganizer extends Organizer
 	{
 
 		// Get path from href
-		if (component.hasAttribute("href"))
+		if (component.getAttribute("data-autoload"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("href"));
+			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-autoload"));
 			component.settings.set("system.appBaseUrl", "");
 			component.settings.set("system.templatePath", arr[0]);
 			component.settings.set("system.componentPath", arr[0]);
