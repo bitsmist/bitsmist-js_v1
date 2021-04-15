@@ -1,4 +1,4 @@
-tsmistJS
+# BitsmistJS
 
 ## Introduction
 
@@ -12,6 +12,8 @@ BitsmistJS is a Web Components based javascript framework.
 ## Examples
 
 ### 1. HTML only
+
+![Example1](https://user-images.githubusercontent.com/49435291/114845854-17765700-9e17-11eb-8d92-c4a1e04f2224.png)
 
 **`index.html`**
 ``` html
