@@ -34,9 +34,7 @@ export default class ComponentOrganizer extends Organizer
 	{
 
 		// Add methods
-		Pad.prototype.loadTags = function(rootNode, basePath, settings, target) {
-			return ComponentOrganizer._loadTags(this, rootNode, basePath, settings, target);
-		}
+		Pad.prototype.loadTags = ComponentOrganizer.loadTags;
 
 		// Init vars
 		ComponentOrganizer.__classes = new Store();
@@ -181,18 +179,20 @@ export default class ComponentOrganizer extends Organizer
 	static _addComponent(component, componentName, settings, sync)
 	{
 
-		let url = Util.concatPath([
+		let path = Util.concatPath([
 			component.settings.get("system.appBaseUrl", ""),
 			component.settings.get("system.componentPath", ""),
 			Util.safeGet(settings, "settings.path", "")
 		]);
 		let className = Util.safeGet(settings, "settings.className") || componentName;
-		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className || componentName);
+		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
 
 		return Promise.resolve().then(() => {
 			// Load component
 			let autoLoad = Util.safeGet(settings, "settings.autoLoad", component.settings.get("system.autoLoad", true));
-			return ComponentOrganizer._loadComponent(component, className, url, settings, tagName, autoLoad);
+			let splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
+			let options = { "autoLoad":autoLoad, "splitComponent":splitComponent };
+			return ComponentOrganizer._loadComponent(className, path, settings, options, tagName);
 		}).then(() => {
 			// Insert tag
 			if (Util.safeGet(settings, "settings.rootNode") && !component.components[componentName])
@@ -227,44 +227,62 @@ export default class ComponentOrganizer extends Organizer
 	/**
 	 * Load scripts for tags which has data-autoload attribute.
 	 *
-	 * @param	{Component}		component			Parent component.
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 * @param	{String}		path				Base path prepend to each element's path.
-	 * @param	{Object}		options				Options.
+	 * @param	{Object}		options				Load Options.
 	 * @param	{String}		target				Target elements.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadTags(component, rootNode, basePath, options, target)
+	static loadTags(rootNode, basePath, options, target)
 	{
 
-		let promises = [];
-		let targets = ( target ? document.querySelectorAll(target) : rootNode.querySelectorAll("[data-autoload],[data-automorph]") );
+		console.debug(`ComponentOrganizer._loadTags(): Loading tags. rootNode=${rootNode}, basePath=${basePath}`);
 
-		console.debug(`ComponentOrganizer._loadTags(): Loading tags. rootNode=${rootNode}, basePath=${basePath}, target=${target}`);
+		let promises = [];
+		let targets = ( target ?
+			document.querySelectorAll(target) :
+			rootNode.querySelectorAll("[data-autoload]:not([data-autoloaded]),[data-automorph]:not([data-autoloaded])")
+		);
 
 		targets.forEach((element) => {
-			if (element.getAttribute("href"))
+			element.setAttribute("data-autoloaded", "");
+
+			let href = element.getAttribute("data-autoload");
+			let className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
+			let classPath = element.getAttribute("data-path") || "";
+			let split = ( element.hasAttribute("data-split") ? true : options["splitComponent"] );
+			let morph = ( element.hasAttribute("data-automorph") ?
+				( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) :
+				false
+			);
+
+			let loadOptions = {};
+			loadOptions["splitComponent"] = split;
+			loadOptions["autoLoad"] = true;
+
+			let path;
+			if (href)
 			{
-				let url = element.getAttribute("href");
-				promises.push(AjaxUtil.loadScript(url));
+				let arr = Util.getFilenameAndPathFromUrl(href);
+				path = arr[0];
+				if (href.slice(-5).toLowerCase() == ".html")
+				{
+					morph = true;
+				}
 			}
 			else
 			{
-				let classPath = ( element.hasAttribute("data-path") ? element.getAttribute("data-path") : "" );
-				let className = ( element.hasAttribute("data-classname") ? element.getAttribute("data-classname") : Util.getClassNameFromTagName(element.tagName) );
-				let split = ( element.hasAttribute("data-split") ? true : options["splitComponent"] );
-				let morph = ( element.hasAttribute("data-automorph") ? ( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) : false );
-				let settings = {};
-				settings["settings"] = ( options? Object.assign({}, options) : {} );
-				settings["settings"]["splitComponent"] = split;
-				settings["settings"]["morph"] = morph;
-
-				promises.push(ComponentOrganizer._loadComponent(component, className, Util.concatPath([basePath, classPath]), settings, element.tagName, true));
+				path = Util.concatPath([basePath, classPath]);
 			}
 
-			element.removeAttribute("data-autoload");
-			element.removeAttribute("data-automorph");
+			let settings = {
+				"settings":{
+					"morph": morph
+				}
+			};
+
+			promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
 		});
 
 		return Promise.all(promises);
@@ -274,65 +292,37 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Create component.
-	 *
-	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		options				Component options.
-	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		settings			System settings.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	/*
-	static _createComponent(componentName, options, path, settings)
-	{
-
-		options = Object.assign({}, options);
-		let className = ( "className" in options ? options["className"] : componentName );
-		let component = null;
-
-		return ComponentOrganizer.__autoloadComponent(className, path, settings).then(() => {
-			component = ClassUtil.createObject(className, options);
-
-			return component;
-		});
-
-	}
-	*/
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Load the template html.
 	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		className			Class name.
 	 * @param	{String}		path				Path to component.
 	 * @param	{Object}		settings			Component settings.
+	 * @param	{Object}		options				Load options.
+	 * @param	{String}		tagName				Component's tag name
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadComponent(component, componentName, path, settings, tagName, autoLoad)
+	static _loadComponent(className, path, settings, options, tagName)
 	{
 
 		let morph = Util.safeGet(settings, "settings.morph");
 		if (morph)
 		{
 			// Define empty class
-			console.debug(`ComponentOrganizer._loadComponent(): Creating empty component. tagName=${tagName}`);
+			console.debug(`ComponentOrganizer._loadComponent(): Creating empty component. className=${className}, path=${path}, tagName=${tagName}`);
 
 			let classDef = ( morph === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(morph) );
 			if (!customElements.get(tagName.toLowerCase()))
 			{
-				ClassUtil.newComponent(classDef, settings, tagName);
+				ClassUtil.newComponent(classDef, settings, tagName, className);
 			}
 		}
 		else
 		{
-			if (autoLoad)
+			if (options["autoLoad"])
 			{
 				// Load component script
-				return ComponentOrganizer.__autoloadComponent(component, componentName, path, settings);
+				return ComponentOrganizer.__autoloadComponent(className, path, settings, options);
 			}
 		}
 
@@ -372,17 +362,17 @@ export default class ComponentOrganizer extends Organizer
 	/**
 	 * Load the component if not loaded yet.
 	 *
-	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		className			Component class name.
 	 * @param	{String}		path				Path to component.
 	 * @param	{Object}		settings			Component settings.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __autoloadComponent(component, className, path, settings)
+	static __autoloadComponent(className, path, settings, options)
 	{
 
-		console.debug(`ComponentOrganizer.__autoLoadComponent(): Auto loading component. parent=${component.name}, className=${className}, path=${path}`);
+		console.debug(`ComponentOrganizer.__autoLoadComponent(): Auto loading component. className=${className}, path=${path}`);
 
 		let promise;
 		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
@@ -404,8 +394,7 @@ export default class ComponentOrganizer extends Organizer
 		{
 			// Not loaded
 			ComponentOrganizer.__classes.mergeSet(className, {"state":"loading"});
-			let splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
-			promise = ComponentOrganizer.__loadComponentScript(tagName, path, {"splitComponent": splitComponent}).then(() => {
+			promise = ComponentOrganizer.__loadComponentScript(tagName, path, options).then(() => {
 				ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded", "promise":null});
 			});
 			ComponentOrganizer.__classes.mergeSet(className, {"promise":promise});
@@ -420,29 +409,29 @@ export default class ComponentOrganizer extends Organizer
 	/**
 	 * Load the component js files.
 	 *
-	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		className			Class name.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		options				Options.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __loadComponentScript(componentName, path, options)
+	static __loadComponentScript(className, path, options)
 	{
 
-		console.debug(`ComponentOrganizer.__loadComponentScript(): Loading script. componentName=${componentName}, path=${path}`);
+		console.debug(`ComponentOrganizer.__loadComponentScript(): Loading script. className=${className}, path=${path}`);
 
-		let url1 = Util.concatPath([path, componentName + ".js"]);
-		let url2 = Util.concatPath([path, componentName + ".settings.js"]);
+		let url1 = Util.concatPath([path, className + ".js"]);
+		let url2 = Util.concatPath([path, className + ".settings.js"]);
 
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
 		}).then(() => {
-			if (Util.safeGet(options, "splitComponent"))
+			if (options["splitComponent"])
 			{
 				return AjaxUtil.loadScript(url2);
 			}
 		}).then(() => {
-			console.debug(`ComponentOrganizer.__loadComponentScript(): Loaded script. componentName=${componentName}`);
+			console.debug(`ComponentOrganizer.__loadComponentScript(): Loaded script. className=${className}`);
 		});
 
 	}
