@@ -37,12 +37,12 @@ export default class AutoloadOrganizer extends Organizer
 
 		if (document.readyState !== 'loading')
 		{
-			AutoloadOrganizer.onDOMContentLoaded.call(component, component);
+			AutoloadOrganizer._load.call(component, component);
 		}
 		else
 		{
 			document.addEventListener('DOMContentLoaded', () => {
-				AutoloadOrganizer.onDOMContentLoaded.call(component, component)
+				AutoloadOrganizer._load.call(component, component)
 			});
 		}
 
@@ -51,22 +51,20 @@ export default class AutoloadOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event handlers
-	// -------------------------------------------------------------------------
 
 	/**
-	* DOM content loaded event handler.
+	* Load components.
 	*
 	* @param	{Component}		component			Component.
 	*/
-	static onDOMContentLoaded(component)
+	static _load(component)
 	{
 
 		let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", "")]);
 		let splitComponent = component.settings.get("system.splitComponent", false);
 		let target = component.getAttribute("data-target");
 
-		ComponentOrganizer._loadTags(component, document, path, {"splitComponent":splitComponent}, target);
+		ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
 
 	}
 
