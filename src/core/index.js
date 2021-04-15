@@ -72,11 +72,6 @@ window.BITSMIST.v1.ObserverStore = ObserverStore;
 
 import OrganizerStore from './store/organizer-store';
 
-// Tag loader
-
-import TagLoader from './tagloader';
-window.BITSMIST.v1.TagLoader = TagLoader;
-
 // Util
 
 import AjaxUtil from './util/ajax-util';
@@ -87,3 +82,39 @@ window.BITSMIST.v1.ClassUtil = ClassUtil;
 
 import Util from './util/util';
 window.BITSMIST.v1.Util = Util;
+
+// Settings
+
+BITSMIST.v1.settings = SettingOrganizer.globalSettings;
+ClassUtil.newComponent(Component, {
+	"settings": {
+		"name":					"SettingManager",
+		"loadGlobalSettings":	true,
+	}
+}, "bm-setting", "SettingManager");
+
+// Tag loader
+
+ClassUtil.newComponent(Component, {
+	"settings": {
+		"name":					"TagLoader",
+		"autoSetup":			false,
+	},
+	"organizers": {
+		"AutoloadOrganizer":	""
+	}
+}, "bm-tagloader", "TagLoader");
+
+// Load tags
+
+document.addEventListener('DOMContentLoaded', () => {
+	if (BITSMIST.v1.settings.get("system.autoLoadOnStartup", true))
+	{
+		let path = Util.concatPath([
+			BITSMIST.v1.settings.get("system.appBaseUrl", ""),
+			BITSMIST.v1.settings.get("system.componentPath", "")
+		]);
+		let splitComponent = BITSMIST.v1.settings.get("system.splitComponent", false);
+		ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent});
+	}
+});
