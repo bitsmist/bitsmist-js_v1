@@ -15,6 +15,7 @@ BitsmistJS is a Web Components based javascript framework.
 
 ![Example1](https://user-images.githubusercontent.com/49435291/114845854-17765700-9e17-11eb-8d92-c4a1e04f2224.png)
 
+<!--
 **`index.html`**
 ``` html
 <html>
@@ -31,11 +32,13 @@ BitsmistJS is a Web Components based javascript framework.
 ``` html
 <h1>Hello, World!</h1>
 ```
+-->
 
 ### HTML and Javascript
 
 ![Example-Example2](https://user-images.githubusercontent.com/49435291/114963611-15a8a400-9ea8-11eb-8801-dbb6e79ec79b.png)
 
+<!--
 **`index.html`**
 ``` html
 <html>
@@ -94,6 +97,7 @@ class PadHello extends BITSMIST.v1.Pad
 <h1></h1>
 <button>Go</button>
 ```
+-->
 
 ## Documentation
 
