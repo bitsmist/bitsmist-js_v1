@@ -34,6 +34,8 @@ BitsmistJS is a Web Components based javascript framework.
 
 ### HTML and Javascript
 
+![Example-Example2](https://user-images.githubusercontent.com/49435291/114963611-15a8a400-9ea8-11eb-8801-dbb6e79ec79b.png)
+
 **`index.html`**
 ``` html
 <html>
@@ -80,7 +82,7 @@ class PadHello extends BITSMIST.v1.Pad
 	onButtonClick(sender, e, ex)
 	{
 
-		this.querySelector("h1").innerText = "Go";
+		this.querySelector("h1").innerText = "Hello";
 
 	}
 
