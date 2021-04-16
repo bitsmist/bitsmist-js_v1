@@ -11,7 +11,7 @@ BitsmistJS is a Web Components based javascript framework.
 
 ## Examples
 
-### 1. HTML only
+### HTML only
 
 ![Example1](https://user-images.githubusercontent.com/49435291/114845854-17765700-9e17-11eb-8d92-c4a1e04f2224.png)
 
@@ -32,11 +32,8 @@ BitsmistJS is a Web Components based javascript framework.
 <h1>Hello, World!</h1>
 ```
 
-### 2. HTML and Javascript
+### HTML and Javascript
 
-Working on ...
-
-<!--
 **`index.html`**
 ``` html
 <html>
@@ -52,17 +49,49 @@ Working on ...
 ``` js
 class PadHello extends BITSMIST.v1.Pad
 {
+
+	_getSettings()
+	{
+
+		return {
+			"name":	"PadHello",
+			"events": {
+				"afterAppend": "onAfterAppend"
+			},
+			"elements": {
+				"go": {
+					"rootNode": "button",
+					"events": {
+						"click": "onButtonClick"
+					}
+				}
+			}
+		}
+
+	}
+
+	onAfterAppend(sender, e, ex)
+	{
+
+		this.querySelector("h1").innerText = "Ready";
+
+	}
+
+	onButtonClick(sender, e, ex)
+	{
+
+		this.querySelector("h1").innerText = "Go";
+
+	}
+
 }
 ```
 
 **`pad-hello.html`**
 ``` html
-<h1>Hello, World!</h1>
--->
-
-## Tutorial
-
-Working on ...
+<h1></h1>
+<button>Go</button>
+```
 
 ## Documentation
 
@@ -70,7 +99,7 @@ Working on ...
 
 ## Contribution
 
-Contributions are welcome. Currently there is no restrict rule how to contribute yet.
+Contributions are welcome. Currently there are no rules how to contribute yet.
 
 - **Coding:** Bug report, improvement, advice etc.
 - **Translation:** Since I'm not a native english speaker, I appreciate someone translate into nicer English. Ofcourse other languages are welcome.
