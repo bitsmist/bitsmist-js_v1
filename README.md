@@ -11,7 +11,7 @@ BitsmistJS is a Web Components based javascript framework.
 
 ## Installtion
 
-#### CDN
+### CDN
 
 Load library from CDN in your html files.
 
@@ -19,7 +19,7 @@ Load library from CDN in your html files.
 <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.9.6/dist/bitsmist-js_v1.min.js"></script>
 ```
 
-#### Download
+### Download
 
 Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere under your web sites and load it in your html files.
 
@@ -29,7 +29,7 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 
 ## Examples
 
-#### HTML only
+### HTML only component
 
 ![Example1](https://user-images.githubusercontent.com/49435291/114845854-17765700-9e17-11eb-8d92-c4a1e04f2224.png)
 
@@ -43,6 +43,7 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 <body>
 <pad-hello data-autoload="https://example.com/pad-hello.html"></pad-hello>
 </body>
+
 </html>
 ```
 
@@ -52,9 +53,9 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 ```
 -->
 
-#### HTML and Javascript
+### HTML and Javascript component
 
-![Example-Example2](https://user-images.githubusercontent.com/49435291/114963611-15a8a400-9ea8-11eb-8801-dbb6e79ec79b.png)
+![Example-Example2](https://user-images.githubusercontent.com/49435291/115175776-9d8be980-a106-11eb-8405-073cc25bc1da.png)
 
 <!--
 **`index.html`**
