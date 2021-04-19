@@ -9,9 +9,27 @@ BitsmistJS is a Web Components based javascript framework.
 - **Autoload:** Files are loaded automatically when needed.
 - **Event driven:** Easy to find where the handling code is.
 
+## Installtion
+
+#### CDN
+
+Load library from CDN in your html files.
+
+```html
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.9.6/dist/bitsmist-js_v1.min.js"></script>
+```
+
+#### Download
+
+Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere under your web sites and load it in your html files.
+
+```html
+<script type="text/javascript" src="/js/bitsmist-js_v1.min.js"></script>
+```
+
 ## Examples
 
-### HTML only
+#### HTML only
 
 ![Example1](https://user-images.githubusercontent.com/49435291/114845854-17765700-9e17-11eb-8d92-c4a1e04f2224.png)
 
@@ -34,7 +52,7 @@ BitsmistJS is a Web Components based javascript framework.
 ```
 -->
 
-### HTML and Javascript
+#### HTML and Javascript
 
 ![Example-Example2](https://user-images.githubusercontent.com/49435291/114963611-15a8a400-9ea8-11eb-8801-dbb6e79ec79b.png)
 
@@ -99,6 +117,12 @@ class PadHello extends BITSMIST.v1.Pad
 ```
 -->
 
+<!--
+## Components
+
+Each component consists of html files and a javascript file. Html files are just plain html, so you can write styles directly in the files or include independent css files. Javascript file contains a class which extends a basic bitsmist class. If you don't need code, you don't need a javascript file. If your component doesn't have visuals you don't need html files.
+-->
+
 ## Documentation
 
 Working on ...
@@ -108,5 +132,5 @@ Working on ...
 Contributions are welcome. Currently there are no rules how to contribute yet.
 
 - **Coding:** Bug report, improvement, advice etc.
-- **Translation:** Since I'm not a native english speaker, I appreciate someone translate into nicer English. Ofcourse other languages are welcome.
+- **Translation:** Since I'm not a native english speaker, I appreciate someone translate into nicer English. Of course other languages are welcome.
 
