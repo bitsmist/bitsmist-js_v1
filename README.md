@@ -4,9 +4,9 @@
 
 BitsmistJS is a Web Components based javascript framework.
 
-- **Independent plain HTML files:** Web designer friendly.
-- **Component:** Every component is a custom element.
-- **Autoload:** Files are loaded automatically when needed.
+- **Independent plain HTML files:** No JSX. Web designer friendly.
+- **Component:** Component based. Every component is a custom element.
+- **Auto loading:** Files are loaded automatically when needed.
 - **Event driven:** Easy to find where the handling code is.
 
 ## Installtion
@@ -27,13 +27,12 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 <script type="text/javascript" src="/js/bitsmist-js_v1.min.js"></script>
 ```
 
-## How it looks like
+## How index.html looks like
 
-### <ins>HTML only component</ins>
+### HTML only component
 
 ![Example1](https://user-images.githubusercontent.com/49435291/114845854-17765700-9e17-11eb-8d92-c4a1e04f2224.png)
 
-<!--
 **`index.html`**
 ``` html
 <html>
@@ -51,14 +50,11 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 ``` html
 <h1>Hello, World!</h1>
 ```
--->
 
-### <ins>HTML and Javascript component</ins>
+### HTML and Javascript component
 
-![Example-Example2](https://user-images.githubusercontent.com/49435291/115177195-ad58fd00-a109-11eb-85cc-5aea1907db49.png)
+![Example-Example2](https://user-images.githubusercontent.com/49435291/115195307-91fdea00-a129-11eb-870e-d4c7321820f0.png)
 
-<!--
-**`index.html`**
 ``` html
 <html>
 <head>
@@ -73,41 +69,33 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 ``` js
 class PadHello extends BITSMIST.v1.Pad
 {
+  _getSettings()
+  {
+    return {
+      "name": "PadHello",
+      "events": {
+        "afterAppend": "onAfterAppend"
+      },
+      "elements": {
+        "go": {
+          "rootNode": "button",
+          "events": {
+            "click": "onButtonClick"
+          }
+        }
+      }
+    }
+  }
 
-	_getSettings()
-	{
+  onAfterAppend(sender, e, ex)
+  {
+    this.querySelector("h1").innerText = "Ready";
+  }
 
-		return {
-			"name":	"PadHello",
-			"events": {
-				"afterAppend": "onAfterAppend"
-			},
-			"elements": {
-				"go": {
-					"rootNode": "button",
-					"events": {
-						"click": "onButtonClick"
-					}
-				}
-			}
-		}
-
-	}
-
-	onAfterAppend(sender, e, ex)
-	{
-
-		this.querySelector("h1").innerText = "Ready";
-
-	}
-
-	onButtonClick(sender, e, ex)
-	{
-
-		this.querySelector("h1").innerText = "Hello";
-
-	}
-
+  onButtonClick(sender, e, ex)
+  {
+    this.querySelector("h1").innerText = "Hello";
+  }
 }
 ```
 
@@ -116,13 +104,12 @@ class PadHello extends BITSMIST.v1.Pad
 <h1></h1>
 <button>Go</button>
 ```
--->
 
-<!--
-## Components
+## How components looks like
 
-Each component consists of html files and a javascript file. Html files are just plain html, so you can write styles directly in the files or include independent css files. Javascript file contains a class which extends a basic bitsmist class. If you don't need code, you don't need a javascript file. If your component doesn't have visuals you don't need html files.
--->
+Basically each component consists of one or more html files and one javascript file. You can create a component without a script file if the component doesn't have event handlers, without html files if the component doesn't have interface. Html files are just plain html, so you can write styles directly in the html files or include independent css files. Javascript files are classes which inherits bitsmist base component objects which initialize, trigger events and load html files.
+
+![Example-Component](https://user-images.githubusercontent.com/49435291/115195342-99bd8e80-a129-11eb-8e8c-57b807ab65bb.png)
 
 ## Documentation
 
