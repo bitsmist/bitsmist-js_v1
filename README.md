@@ -42,7 +42,6 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 <body>
 <pad-hello data-autoload="https://example.com/pad-hello.html"></pad-hello>
 </body>
-
 </html>
 ```
 
@@ -55,6 +54,7 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 
 ![Example-Example2](https://user-images.githubusercontent.com/49435291/115195307-91fdea00-a129-11eb-870e-d4c7321820f0.png)
 
+**`index.html`**
 ``` html
 <html>
 <head>
