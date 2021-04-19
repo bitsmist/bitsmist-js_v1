@@ -27,9 +27,9 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 <script type="text/javascript" src="/js/bitsmist-js_v1.min.js"></script>
 ```
 
-## Examples
+## How it looks like
 
-### HTML only component
+### <ins>HTML only component</ins>
 
 ![Example1](https://user-images.githubusercontent.com/49435291/114845854-17765700-9e17-11eb-8d92-c4a1e04f2224.png)
 
@@ -53,9 +53,9 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 ```
 -->
 
-### HTML and Javascript component
+### <ins>HTML and Javascript component</ins>
 
-![Example-Example2](https://user-images.githubusercontent.com/49435291/115175776-9d8be980-a106-11eb-8405-073cc25bc1da.png)
+![Example-Example2](https://user-images.githubusercontent.com/49435291/115177195-ad58fd00-a109-11eb-85cc-5aea1907db49.png)
 
 <!--
 **`index.html`**
