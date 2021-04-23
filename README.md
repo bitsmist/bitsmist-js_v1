@@ -16,7 +16,7 @@ BitsmistJS is a Web Components based javascript framework.
 Load library from CDN in your html files.
 
 ```html
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.9.6/dist/bitsmist-js_v1.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@latest/dist/bitsmist-js_v1.min.js"></script>
 ```
 
 ### Download
@@ -37,7 +37,7 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 ``` html
 <html>
 <head>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.9.6/dist/bitsmist-js_v1.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@latest/dist/bitsmist-js_v1.min.js"></script>
 </head>
 <body>
 <pad-hello data-autoload="https://example.com/pad-hello.html"></pad-hello>
@@ -58,7 +58,7 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 ``` html
 <html>
 <head>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.9.6/dist/bitsmist-js_v1.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@latest/dist/bitsmist-js_v1.min.js"></script>
 </head>
 <body>
 <pad-hello data-autoload="https://example.com/pad-hello.js"></pad-hello>
@@ -107,7 +107,7 @@ class PadHello extends BITSMIST.v1.Pad
 <button>Go</button>
 ```
 
-## How components looks like
+## How components look like
 
 Basically each component consists of one or more html files and one javascript file. You can create a component without a script file if the component doesn't have event handlers, without html files if the component doesn't have interface. Html files are just plain html, so you can write styles directly in the html files or include independent css files. Javascript files are classes which inherits bitsmist base component objects which initialize, trigger events and load html files.
 
