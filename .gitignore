@@ -1,5 +1,4 @@
 !.gitkeep
-dist/
 vendor/
 node_modules/
 package-lock.json
