@@ -243,24 +243,25 @@ export default class Util
 	static getTagNameFromClassName(className)
 	{
 
-		let former;
-		let latter;
 		let pos;
+		let result = className;
 		let c = className.split(".");
-		className = c[c.length - 1];
+		let cName = c[c.length - 1];
 
-		for (pos = 1; pos < className.length; pos++)
+		for (pos = 1; pos < cName.length; pos++)
 		{
-			if ( Util.__isUpper(className.substring(pos, pos + 1)) )
+			if ( Util.__isUpper(cName.substring(pos, pos + 1)) )
 			{
 				break;
 			}
 		}
 
-		former = className.substring(0, pos);
-		latter = className.substring(pos);
+		if ( pos < cName.length )
+		{
+			result = cName.substring(0, pos).toLowerCase() + "-" + cName.substring(pos).toLowerCase();
+		}
 
-		return former.toLowerCase() + "-" + latter.toLowerCase();
+		return result;
 
 	}
 
