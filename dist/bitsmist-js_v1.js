@@ -3907,11 +3907,11 @@
 				var className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
 				var path = element.getAttribute("data-path") || "";
 				var split = ( element.hasAttribute("data-split") ? true : options["splitComponent"] );
-				( element.hasAttribute("data-automorph") ?
+				var morph = ( element.hasAttribute("data-automorph") ?
 					( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) :
 					false
 				);
-				var settings = {"settings":{}};
+				var settings = {"settings":{"morph":morph}};
 				var loadOptions = {"splitComponent":split, "autoLoad": true};
 
 				if (href)
