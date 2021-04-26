@@ -256,7 +256,7 @@ export default class ComponentOrganizer extends Organizer
 				( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) :
 				false
 			);
-			let settings = {"settings":{}};
+			let settings = {"settings":{"morph":morph}};
 			let loadOptions = {"splitComponent":split, "autoLoad": true};
 
 			if (href)
