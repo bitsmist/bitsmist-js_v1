@@ -250,37 +250,32 @@ export default class ComponentOrganizer extends Organizer
 
 			let href = element.getAttribute("data-autoload");
 			let className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
-			let classPath = element.getAttribute("data-path") || "";
+			let path = element.getAttribute("data-path") || "";
 			let split = ( element.hasAttribute("data-split") ? true : options["splitComponent"] );
 			let morph = ( element.hasAttribute("data-automorph") ?
 				( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) :
 				false
 			);
+			let settings = {"settings":{}};
+			let loadOptions = {"splitComponent":split, "autoLoad": true};
 
-			let loadOptions = {};
-			loadOptions["splitComponent"] = split;
-			loadOptions["autoLoad"] = true;
-
-			let path;
 			if (href)
 			{
 				let arr = Util.getFilenameAndPathFromUrl(href);
 				path = arr[0];
-				if (href.slice(-5).toLowerCase() == ".html")
+				if (href.slice(-3).toLowerCase() == ".js")
 				{
-					morph = true;
+					settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
+				}
+				else if (href.slice(-5).toLowerCase() == ".html")
+				{
+					settings["settings"]["morph"] = true;
 				}
 			}
 			else
 			{
-				path = Util.concatPath([basePath, classPath]);
+				path = Util.concatPath([basePath, path]);
 			}
-
-			let settings = {
-				"settings":{
-					"morph": morph
-				}
-			};
 
 			promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
 		});
@@ -376,6 +371,7 @@ export default class ComponentOrganizer extends Organizer
 
 		let promise;
 		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
+		let fileName = ( settings["fileName"] ? settings["fileName"] : tagName );
 
 		if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
 		{
@@ -394,7 +390,7 @@ export default class ComponentOrganizer extends Organizer
 		{
 			// Not loaded
 			ComponentOrganizer.__classes.mergeSet(className, {"state":"loading"});
-			promise = ComponentOrganizer.__loadComponentScript(tagName, path, options).then(() => {
+			promise = ComponentOrganizer.__loadComponentScript(fileName, path, options).then(() => {
 				ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded", "promise":null});
 			});
 			ComponentOrganizer.__classes.mergeSet(className, {"promise":promise});
@@ -415,13 +411,13 @@ export default class ComponentOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __loadComponentScript(className, path, options)
+	static __loadComponentScript(fileName, path, options)
 	{
 
-		console.debug(`ComponentOrganizer.__loadComponentScript(): Loading script. className=${className}, path=${path}`);
+		console.debug(`ComponentOrganizer.__loadComponentScript(): Loading script. fileName=${fileName}, path=${path}`);
 
-		let url1 = Util.concatPath([path, className + ".js"]);
-		let url2 = Util.concatPath([path, className + ".settings.js"]);
+		let url1 = Util.concatPath([path, fileName + ".js"]);
+		let url2 = Util.concatPath([path, fileName + ".settings.js"]);
 
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
@@ -431,7 +427,7 @@ export default class ComponentOrganizer extends Organizer
 				return AjaxUtil.loadScript(url2);
 			}
 		}).then(() => {
-			console.debug(`ComponentOrganizer.__loadComponentScript(): Loaded script. className=${className}`);
+			console.debug(`ComponentOrganizer.__loadComponentScript(): Loaded script. fileName=${fileName}`);
 		});
 
 	}
