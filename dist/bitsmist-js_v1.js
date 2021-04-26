@@ -236,24 +236,25 @@
 	Util.getTagNameFromClassName = function getTagNameFromClassName (className)
 	{
 
-		var former;
-		var latter;
 		var pos;
+		var result = className;
 		var c = className.split(".");
-		className = c[c.length - 1];
+		var cName = c[c.length - 1];
 
-		for (pos = 1; pos < className.length; pos++)
+		for (pos = 1; pos < cName.length; pos++)
 		{
-			if ( Util.__isUpper(className.substring(pos, pos + 1)) )
+			if ( Util.__isUpper(cName.substring(pos, pos + 1)) )
 			{
 				break;
 			}
 		}
 
-		former = className.substring(0, pos);
-		latter = className.substring(pos);
+		if ( pos < cName.length )
+		{
+			result = cName.substring(0, pos).toLowerCase() + "-" + cName.substring(pos).toLowerCase();
+		}
 
-		return former.toLowerCase() + "-" + latter.toLowerCase();
+		return result;
 
 	};
 
@@ -3904,43 +3905,32 @@
 
 				var href = element.getAttribute("data-autoload");
 				var className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
-				var classPath = element.getAttribute("data-path") || "";
+				var path = element.getAttribute("data-path") || "";
 				var split = ( element.hasAttribute("data-split") ? true : options["splitComponent"] );
-				var morph = ( element.hasAttribute("data-automorph") ?
+				( element.hasAttribute("data-automorph") ?
 					( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) :
 					false
 				);
+				var settings = {"settings":{}};
+				var loadOptions = {"splitComponent":split, "autoLoad": true};
 
-				var loadOptions = {};
-				loadOptions["splitComponent"] = split;
-				loadOptions["autoLoad"] = true;
-
-				var path;
 				if (href)
 				{
 					var arr = Util.getFilenameAndPathFromUrl(href);
-					/*
+					path = arr[0];
 					if (href.slice(-3).toLowerCase() == ".js")
 					{
-						className = arr[1].;
+						settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
 					}
-					*/
-					path = arr[0];
-					if (href.slice(-5).toLowerCase() == ".html")
+					else if (href.slice(-5).toLowerCase() == ".html")
 					{
-						morph = true;
+						settings["settings"]["morph"] = true;
 					}
 				}
 				else
 				{
-					path = Util.concatPath([basePath, classPath]);
+					path = Util.concatPath([basePath, path]);
 				}
-
-				var settings = {
-					"settings":{
-						"morph": morph
-					}
-				};
 
 				promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
 			});
@@ -4036,6 +4026,7 @@
 
 			var promise;
 			var tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
+			var fileName = ( settings["fileName"] ? settings["fileName"] : tagName );
 
 			if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
 			{
@@ -4054,7 +4045,7 @@
 			{
 				// Not loaded
 				ComponentOrganizer.__classes.mergeSet(className, {"state":"loading"});
-				promise = ComponentOrganizer.__loadComponentScript(tagName, path, options).then(function () {
+				promise = ComponentOrganizer.__loadComponentScript(fileName, path, options).then(function () {
 					ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded", "promise":null});
 				});
 				ComponentOrganizer.__classes.mergeSet(className, {"promise":promise});
@@ -4075,14 +4066,13 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		ComponentOrganizer.__loadComponentScript = function __loadComponentScript (className, path, options)
-		//static __loadComponentScript(fileName, path, options)
+		ComponentOrganizer.__loadComponentScript = function __loadComponentScript (fileName, path, options)
 		{
 
-			console.debug(("ComponentOrganizer.__loadComponentScript(): Loading script. className=" + className + ", path=" + path));
+			console.debug(("ComponentOrganizer.__loadComponentScript(): Loading script. fileName=" + fileName + ", path=" + path));
 
-			var url1 = Util.concatPath([path, className + ".js"]);
-			var url2 = Util.concatPath([path, className + ".settings.js"]);
+			var url1 = Util.concatPath([path, fileName + ".js"]);
+			var url2 = Util.concatPath([path, fileName + ".settings.js"]);
 
 			return Promise.resolve().then(function () {
 				return AjaxUtil.loadScript(url1);
@@ -4092,7 +4082,7 @@
 					return AjaxUtil.loadScript(url2);
 				}
 			}).then(function () {
-				console.debug(("ComponentOrganizer.__loadComponentScript(): Loaded script. className=" + className));
+				console.debug(("ComponentOrganizer.__loadComponentScript(): Loaded script. fileName=" + fileName));
 			});
 
 		};
