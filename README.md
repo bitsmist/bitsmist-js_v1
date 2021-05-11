@@ -31,7 +31,7 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in dist folder to somewhere un
 
 ### HTML only component
 
-![Example1](https://user-images.githubusercontent.com/49435291/114845854-17765700-9e17-11eb-8d92-c4a1e04f2224.png)
+![bitmist_htmlonly](https://user-images.githubusercontent.com/49435291/117796406-068bfa80-b28a-11eb-9448-c4d577d3630f.png)
 
 **`index.html`**
 ``` html
