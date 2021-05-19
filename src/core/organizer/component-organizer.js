@@ -371,7 +371,7 @@ export default class ComponentOrganizer extends Organizer
 
 		let promise;
 		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
-		let fileName = ( settings["fileName"] ? settings["fileName"] : tagName );
+		let fileName = Util.safeGet(settings, "settings.fileName", tagName);
 
 		if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
 		{
