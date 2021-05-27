@@ -92,4 +92,18 @@ export default class Organizer
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get editor for the organizer.
+	 *
+	 * @return 	{String}		Editor.
+	 */
+	static getEditor()
+	{
+
+		return "";
+
+	}
+
 }
