@@ -373,7 +373,7 @@ export default class StateOrganizer extends Organizer
 				( currentState == "stopping" && newState != "stopped") ||
 				( currentState == "starting" && newState != "started") ||
 				( currentState == "opening" && (newState != "opened" && newState != "opening") ) ||
-				( currentState == "closeing" && newState != "closed") ||
+				( currentState == "closing" && newState != "closed") ||
 				( currentState == "stopping" && (newState != "stopped" && newState != "closing") )
 			)
 			{
