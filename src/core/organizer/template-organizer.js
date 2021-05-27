@@ -429,10 +429,10 @@ export default class TemplateOrganizer extends Organizer
 			component.settings.set("templateName", component.getAttribute("data-templatename"));
 		}
 
-		// Get template href from templatehref
-		if (component.hasAttribute("data-templatehref"))
+		// Get template ref from templateref
+		if (component.hasAttribute("data-templateref"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templatehref"));
+			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templateref"));
 			component.settings.set("system.templatePath", arr[0]);
 			component.settings.set("templateName", arr[1].replace(".html", ""));
 		}

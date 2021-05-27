@@ -72,7 +72,7 @@ export default class SettingOrganizer extends Organizer
 		// Chain global settings
 		if (component.settings.get("settings.useGlobalSettings"))
 		{
-			component.settings.chain(SettingOrganizer.__globalSettings);
+			component.settings.chain(SettingOrganizer.globalSettings);
 		}
 
 	}
@@ -233,9 +233,9 @@ export default class SettingOrganizer extends Organizer
 
 		let name, path;
 
-		if (component.hasAttribute("data-" + settingName + "href"))
+		if (component.hasAttribute("data-" + settingName + "ref"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-" + settingName + "href"));
+			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-" + settingName + "ref"));
 			path = arr[0];
 			name = arr[1].slice(0, -3);
 		}
@@ -266,7 +266,7 @@ export default class SettingOrganizer extends Organizer
 	static __loadAttrSettings(component)
 	{
 
-		// Get path from href
+		// Get path from  data-autoload
 		if (component.getAttribute("data-autoload"))
 		{
 			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-autoload"));
