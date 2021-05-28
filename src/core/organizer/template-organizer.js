@@ -399,7 +399,7 @@ export default class TemplateOrganizer extends Organizer
 		}
 		else
 		{
-			component.innerHTML = templateInfo["html"]
+			component.innerHTML = templateInfo["html"];
 		}
 
 		console.debug(`TemplateOrganizer.__applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
