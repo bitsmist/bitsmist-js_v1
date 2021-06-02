@@ -50,7 +50,7 @@ export default class AttrOrganizer extends Organizer
 			Object.keys(attrs).forEach((eventName) => {
 				if (events[eventName])
 				{
-					component.addEventHandler(component, eventName, events[eventName], {"attrs":attrs[eventName]}, component);
+					component.addEventHandler(eventName, {"handler":events[eventName], "options":{"attrs":attrs[eventName]}});
 				}
 			});
 		}
@@ -73,7 +73,7 @@ export default class AttrOrganizer extends Organizer
 	static onDoOrganize(sender, e, ex)
 	{
 
-		let component = ex.target;
+		let component = ex.component;
 		let settings = ex.options["attrs"];
 
 		return AttrOrganizer._initAttr(component, settings);
