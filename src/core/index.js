@@ -34,7 +34,7 @@ OrganizerOrganizer.organizers.set("StateOrganizer", {"object":StateOrganizer, "t
 window.BITSMIST.v1.StateOrganizer = StateOrganizer;
 
 import EventOrganizer from './organizer/event-organizer';
-OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart"], "order":300});
+OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend"], "order":300});
 window.BITSMIST.v1.EventOrganizer = EventOrganizer;
 
 import AttrOrganizer from './organizer/attr-organizer';
@@ -48,10 +48,6 @@ window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 import AutoloadOrganizer from './organizer/autoload-organizer';
 OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetWords":"autoloads", "targetEvents":["beforeStart"], "order":700});
 window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
-
-import ElementOrganizer from './organizer/element-organizer';
-OrganizerOrganizer.organizers.set("ElementOrganizer", {"object":ElementOrganizer, "targetWords":"elements","targetEvents":["afterAppend"], "order":700});
-window.BITSMIST.v1.ElementOrganizer = ElementOrganizer;
 
 import ComponentOrganizer from './organizer/component-organizer';
 OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":"components","targetEvents":["afterAppend"], "order":800});
