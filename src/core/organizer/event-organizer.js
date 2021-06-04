@@ -30,8 +30,8 @@ export default class EventOrganizer extends Organizer
 	{
 
 		// Add methods
-		Component.prototype.initElement = function(elementName, handlerInfo, rootNode) {
-			EventOrganizer._initElement(this, elementName, handlerInfo, rootNode)
+		Component.prototype.initEvents = function(elementName, handlerInfo, rootNode) {
+			EventOrganizer._initEvents(this, elementName, handlerInfo, rootNode)
 		}
 		Component.prototype.addEventHandler = function(eventName, handlerInfo, element, bindTo) {
 			EventOrganizer._addEventHandler(this, element, eventName, handlerInfo, bindTo);
@@ -67,7 +67,7 @@ export default class EventOrganizer extends Organizer
 		if (events)
 		{
 			Object.keys(events).forEach((elementName) => {
-				EventOrganizer._initElement(component, elementName, events[elementName]);
+				EventOrganizer._initEvents(component, elementName, events[elementName]);
 			});
 		}
 
@@ -171,14 +171,14 @@ export default class EventOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Set html elements' event handlers.
+	 * Set event handlers to the element.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Options}		options				Options.
 	 * @param	{HTMLElement}	rootNode			Root node of elements.
 	 */
-	static _initElement(component, elementName, handlerInfo, rootNode)
+	static _initEvents(component, elementName, handlerInfo, rootNode)
 	{
 
 		rootNode = ( rootNode ? rootNode : component.rootElement );
