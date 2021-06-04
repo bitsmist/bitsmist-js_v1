@@ -1373,7 +1373,7 @@
 			// Chain global settings
 			if (component.settings.get("settings.useGlobalSettings"))
 			{
-				component.settings.chain(SettingOrganizer.__globalSettings);
+				component.settings.chain(SettingOrganizer.globalSettings);
 			}
 
 		};
@@ -1534,9 +1534,9 @@
 
 			var name, path;
 
-			if (component.hasAttribute("data-" + settingName + "href"))
+			if (component.hasAttribute("data-" + settingName + "ref"))
 			{
-				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-" + settingName + "href"));
+				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-" + settingName + "ref"));
 				path = arr[0];
 				name = arr[1].slice(0, -3);
 			}
@@ -1567,7 +1567,7 @@
 		SettingOrganizer.__loadAttrSettings = function __loadAttrSettings (component)
 		{
 
-			// Get path from href
+			// Get path from  data-autoload
 			if (component.getAttribute("data-autoload"))
 			{
 				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-autoload"));
@@ -2160,7 +2160,7 @@
 					( currentState == "stopping" && newState != "stopped") ||
 					( currentState == "starting" && newState != "started") ||
 					( currentState == "opening" && (newState != "opened" && newState != "opening") ) ||
-					( currentState == "closeing" && newState != "closed") ||
+					( currentState == "closing" && newState != "closed") ||
 					( currentState == "stopping" && (newState != "stopped" && newState != "closing") )
 				)
 				{
@@ -2530,14 +2530,17 @@
 		{
 
 			// Add methods
-			Component.prototype.addEventHandler = function(element, eventName, eventInfo, options, bindTo) {
-				EventOrganizer._addEventHandler(this, element, eventName, eventInfo, options, bindTo);
+			Component.prototype.initEvents = function(elementName, handlerInfo, rootNode) {
+				EventOrganizer._initEvents(this, elementName, handlerInfo, rootNode);
+			};
+			Component.prototype.addEventHandler = function(eventName, handlerInfo, element, bindTo) {
+				EventOrganizer._addEventHandler(this, element, eventName, handlerInfo, bindTo);
 			};
 			Component.prototype.trigger = function(eventName, sender, options, element) {
 				return EventOrganizer._trigger(this, eventName, sender, options, element)
 			};
-			Component.prototype.triggerSync = function(eventName, sender, options, element) {
-				return EventOrganizer._triggerSync(this, eventName, sender, options, element)
+			Component.prototype.triggerAsync = function(eventName, sender, options, element) {
+				return EventOrganizer._triggerAsync(this, eventName, sender, options, element)
 			};
 			Component.prototype.getEventHandler = function(component, eventInfo, bindTo, eventName) {
 				return EventOrganizer._getEventHandler(this, component, eventInfo, bindTo, eventName)
@@ -2560,14 +2563,11 @@
 		{
 
 			var events = settings["events"];
+
 			if (events)
 			{
-				Object.keys(events).forEach(function (eventName) {
-					var arr = ( Array.isArray(events[eventName]) ? events[eventName] : [events[eventName]] );
-					for (var i = 0; i < arr.length; i++)
-					{
-						component.addEventHandler(component, eventName, arr[i]);
-					}
+				Object.keys(events).forEach(function (elementName) {
+					EventOrganizer._initEvents(component, elementName, events[elementName]);
 				});
 			}
 
@@ -2585,19 +2585,19 @@
 		 * @param	{Component}		component			Component.
 		 * @param	{HTMLElement}	element					HTML element.
 		 * @param	{String}		eventName				Event name.
-		 * @param	{Object/Function/String}	eventInfo	Event info.
-		 * @param	{Object}		options					Options passed to elements.
-		 * @param	{Object}		bindTo					Object which binds to handler.
+		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
+		 * @param	{Object}		bindTo					Object that binds to the handler.
 		 */
-		EventOrganizer._addEventHandler = function _addEventHandler (component, element, eventName, eventInfo, options, bindTo)
+		EventOrganizer._addEventHandler = function _addEventHandler (component, element, eventName, handlerInfo, bindTo)
 		{
 
+			element = element || component;
+
 			// Get handler
-			var handler = EventOrganizer._getEventHandler(component, eventInfo, bindTo);
+			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
 			if (typeof handler !== "function")
 			{
-				var pluginName = ( bindTo ? bindTo.name : "" );
-				throw TypeError(("Event handler is not a function. componentName=" + (component.name) + ", pluginName=" + pluginName + ", eventName=" + eventName));
+				throw TypeError(("Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName));
 			}
 
 			// Init holder object for the element
@@ -2611,13 +2611,13 @@
 			if (!listeners[eventName])
 			{
 				listeners[eventName] = [];
-				element.addEventListener(eventName, EventOrganizer.__callEventHandler);
+				element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerInfo["listenerOptions"]);
 			}
 
-			listeners[eventName].push({"handler":handler, "options":Object.assign({}, options), "bind":bindTo, "order":order});
+			listeners[eventName].push({"handler":handler, "options":Object.assign({}, handlerInfo["options"]), "bindTo":bindTo, "order":order});
 
 			// Stable sort by order
-			var order = (typeof eventInfo === "object" && eventInfo["order"] ? eventInfo["order"] : 0);
+			var order = Util.safeGet(handlerInfo, "order");
 			listeners[eventName].sort(function (a, b) {
 				if (a.order == b.order)		{ return 0; }
 				else if (a.order > b.order)	{ return 1; }
@@ -2629,9 +2629,92 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Trigger the event.
+		 * Remove an event handler.
 		 *
 		 * @param	{Component}		component			Component.
+		 * @param	{HTMLElement}	element					HTML element.
+		 * @param	{String}		eventName				Event name.
+		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
+		 */
+		EventOrganizer._removeEventHandler = function _removeEventHandler (component, element, eventName, handlerInfo)
+		{
+
+			element = element || component;
+
+			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
+			if (typeof handler !== "function")
+			{
+				throw TypeError(("Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName));
+			}
+
+			var listeners = Util.safeGet(element, "_bm_detail.listeners." + eventName);
+			if (listeners)
+			{
+				var index = -1;
+				for (var i = 0; i < listeners.length; i++)
+				{
+					if (listeners["handler"] == handler)
+					{
+						index = i;
+						break;
+					}
+				}
+
+				if (index > -1)
+				{
+					element._bm_detail.listeners = array.splice(index, 1);
+				}
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Set event handlers to the element.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		elementName			Element name.
+		 * @param	{Options}		options				Options.
+		 * @param	{HTMLElement}	rootNode			Root node of elements.
+		 */
+		EventOrganizer._initEvents = function _initEvents (component, elementName, handlerInfo, rootNode)
+		{
+
+			rootNode = ( rootNode ? rootNode : component.rootElement );
+			handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
+
+			// Get target elements
+			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+
+			// Set event handlers
+			if (handlerInfo["handlers"])
+			{
+				Object.keys(handlerInfo["handlers"]).forEach(function (eventName) {
+					var arr = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
+
+					for (var i = 0; i < arr.length; i++)
+					{
+						var handler = component.getEventHandler(arr[i]);
+						for (var j = 0; j < elements.length; j++)
+						{
+							if (!EventOrganizer.__isHandlerInstalled(elements[j], eventName, handler, component))
+							{
+								component.addEventHandler(eventName, arr[i], elements[j]);
+							}
+						}
+					}
+				});
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Trigger the event.
+		 *
+		 * @param	{Component}		component				Component.
 		 * @param	{String}		eventName				Event name to trigger.
 		 * @param	{Object}		sender					Object which triggered the event.
 		 * @param	{Object}		options					Event parameter options.
@@ -2666,16 +2749,16 @@
 		/**
 		 * Trigger the event synchronously.
 		 *
-		 * @param	{Component}		component			Component.
+		 * @param	{Component}		component				Component.
 		 * @param	{String}		eventName				Event name to trigger.
 		 * @param	{Object}		sender					Object which triggered the event.
 		 * @param	{Object}		options					Event parameter options.
 		 */
-		EventOrganizer._triggerSync = function _triggerSync (component, eventName, sender, options, element)
+		EventOrganizer._triggerAsync = function _triggerAsync (component, eventName, sender, options, element)
 		{
 
 			options = options || {};
-			options["async"] = false;
+			options["async"] = true;
 
 			return EventOrganizer._trigger.call(component, component, eventName, sender, options, element);
 
@@ -2688,22 +2771,15 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 * @param	{Object/Function/String}	eventInfo	Event info.
-		 * @param	{Object}		bindTo					Object which binds to handler.
 		 */
-		EventOrganizer._getEventHandler = function _getEventHandler (component, eventInfo, bindTo, eventName)
+		EventOrganizer._getEventHandler = function _getEventHandler (component, eventInfo)
 		{
 
-			bindTo = bindTo || component;
 			var handler = ( typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo );
 
 			if ( typeof handler === "string" )
 			{
-				handler = ( bindTo ? bindTo[handler] : component[handler] );
-			}
-
-			if (handler)
-			{
-				handler = handler.bind(bindTo);
+				handler = component[handler];
 			}
 
 			return handler;
@@ -2715,10 +2791,84 @@
 		// -------------------------------------------------------------------------
 
 		/**
+		 * Set html elements event handlers.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{HTMLElement}	rootNode			A root node to search elements.
+		 * @param	{String}		elementName			Element name.
+		 * @param	{Object}		elementInfo			Element info.
+		 *
+		 * @return 	{Array}			Target node list.
+		 */
+		EventOrganizer.__getTargetElements = function __getTargetElements (component, rootNode, elementName, elementInfo)
+		{
+
+			var elements;
+
+			if (elementInfo["rootNode"])
+			{
+				if (elementInfo["rootNode"] == "this" || elementInfo["rootNode"] == component.tagName.toLowerCase())
+				{
+					elements = [rootNode];
+				}
+				else
+				{
+					elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
+				}
+			}
+			else if (elementName == "this" || elementName == component.tagName.toLowerCase())
+			{
+				elements = [rootNode];
+			}
+			else
+			{
+				elements = rootNode.querySelectorAll("#" + elementName);
+			}
+
+			return elements;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the given handler is already installed.
+		 *
+		 * @param	{HTMLElement}	element				HTMLElement to check.
+		 * @param	{String}		eventName			Event name.
+		 * @param	{Function}		handler				Event handler.
+		 *
+		 * @return 	{Boolean}		True if already installed.
+		 */
+		EventOrganizer.__isHandlerInstalled = function __isHandlerInstalled (element, eventName, handler)
+		{
+
+			var isInstalled = false;
+			var listeners = Util.safeGet(element._bm_detail, "listeners." + eventName);
+
+			if (listeners)
+			{
+				for (var i = 0; i < listeners.length; i++)
+				{
+					if (listeners[i]["handler"] === handler)
+					{
+						isInstalled = true;
+						break;
+					}
+				}
+			}
+
+			return isInstalled;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
 		 * Call event handlers.
 		 *
-		 * This function is registered as event listener by element.addEventListner(),
-		 * so "this" is HTML element which triggered the event.
+		 * This function is registered as event listener by element.addEventListener(),
+		 * so "this" is HTML element that triggered the event.
 		 *
 		 * @param	{Object}		e						Event parameter.
 		 */
@@ -2729,7 +2879,7 @@
 
 			var listeners = Util.safeGet(this, "_bm_detail.listeners." + e.type);
 			var sender = Util.safeGet(e, "detail.sender", this);
-			var target = Util.safeGet(this, "_bm_detail.component");
+			var component = Util.safeGet(this, "_bm_detail.component");
 
 			// Check if handler is already running
 			if (Util.safeGet(this, "_bm_detail.statuses." + e.type) == "handling")
@@ -2739,10 +2889,10 @@
 
 			Util.safeSet(this, "_bm_detail.statuses." + e.type, "handling");
 
-			if (Util.safeGet(e, "detail.async", true))
+			if (Util.safeGet(e, "detail.async", false) == false)
 			{
-				// call asynchronously
-				this._bm_detail["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, target, listeners).then(function (result) {
+				// Wait previous handler
+				this._bm_detail["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(function (result) {
 					Util.safeSet(this$1, "_bm_detail.promises." + e.type, null);
 					Util.safeSet(this$1, "_bm_detail.statuses." + e.type, "");
 
@@ -2751,8 +2901,8 @@
 			}
 			else
 			{
-				// call synchronously
-				this._bm_detail["promises"][e.type] = EventOrganizer.__handleSync(e, sender, target, listeners);
+				// Does not wait previous handler
+				this._bm_detail["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
 				Util.safeSet(this, "_bm_detail.promises." + e.type, null);
 				Util.safeSet(this, "_bm_detail.statuses." + e.type, "");
 			}
@@ -2762,14 +2912,14 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Call event handlers asynchronously.
+		 * Call event handlers.
 		 *
 		 * @param	{Object}		e						Event parameter.
 		 * @param	{Object}		sender					Sender object.
-		 * @param	{Object}		target					Target component.
+		 * @param	{Object}		component				Target component.
 		 * @param	{Object}		listener				Listers info.
 		 */
-		EventOrganizer.__handleAsync = function __handleAsync (e, sender, target, listeners)
+		EventOrganizer.__handle = function __handle (e, sender, component, listeners)
 		{
 
 			var chain = Promise.resolve();
@@ -2779,18 +2929,16 @@
 			var loop = function ( i ) {
 				// Options set on addEventHandler()
 				var ex = {
-					"target": target,
+					"component": component,
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 				};
 
 				// Execute handler
 				chain = chain.then(function (result) {
-					if (result)
-					{
-						results.push(result);
-					}
+					results.push(result);
 
-					return listeners[i]["handler"](sender, e, ex);
+					var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+					return listeners[i]["handler"].call(bindTo, sender, e, ex);
 				});
 
 				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
@@ -2805,10 +2953,7 @@
 			}
 
 			return chain.then(function (result) {
-				if (result)
-				{
-					results.push(result);
-				}
+				results.push(result);
 
 				return results;
 			});
@@ -2818,14 +2963,14 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Call event handlers synchronously.
+		 * Call event handlers (Async).
 		 *
 		 * @param	{Object}		e						Event parameter.
 		 * @param	{Object}		sender					Sender object.
-		 * @param	{Object}		target					Target component.
+		 * @param	{Object}		component				Target component.
 		 * @param	{Object}		listener				Listers info.
 		 */
-		EventOrganizer.__handleSync = function __handleSync (e, sender, target, listeners)
+		EventOrganizer.__handleAsync = function __handleAsync (e, sender, component, listeners)
 		{
 
 			var stopPropagation = false;
@@ -2834,12 +2979,13 @@
 			{
 				// Options set on addEventHandler()
 				var ex = {
-					"target": target,
+					"component": component,
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 				};
 
 				// Execute handler
-				listeners[i]["handler"](sender, e, ex);
+				var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+				listeners[i]["handler"].call(bindTo, sender, e, ex);
 
 				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
 			}
@@ -2854,125 +3000,6 @@
 		};
 
 		return EventOrganizer;
-	}(Organizer));
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Attribute organizer class
-	// =============================================================================
-
-	var AttrOrganizer = /*@__PURE__*/(function (Organizer) {
-		function AttrOrganizer () {
-			Organizer.apply(this, arguments);
-		}
-
-		if ( Organizer ) AttrOrganizer.__proto__ = Organizer;
-		AttrOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		AttrOrganizer.prototype.constructor = AttrOrganizer;
-
-		AttrOrganizer.organize = function organize (conditions, component, settings)
-		{
-
-			var events = {
-				"afterStart": AttrOrganizer.onDoOrganize,
-				"afterAppend": AttrOrganizer.onDoOrganize,
-				"afterSpecLoad": AttrOrganizer.onDoOrganize,
-				"beforeOpen": AttrOrganizer.onDoOrganize,
-				"afterOpen": AttrOrganizer.onDoOrganize,
-				"beforeClose": AttrOrganizer.onDoOrganize,
-				"afterClose": AttrOrganizer.onDoOrganize,
-				"doRefresh": AttrOrganizer.onDoOrganize,
-			};
-
-			var attrs = settings["attrs"];
-			if (attrs)
-			{
-				Object.keys(attrs).forEach(function (eventName) {
-					if (events[eventName])
-					{
-						component.addEventHandler(component, eventName, events[eventName], {"attrs":attrs[eventName]}, component);
-					}
-				});
-			}
-
-			return settings;
-
-		};
-
-		// -----------------------------------------------------------------------------
-		//	Event handlers
-		// -----------------------------------------------------------------------------
-
-		/**
-		 * DoOrganize event handler.
-		 *
-		 * @param	{Object}		sender				Sender.
-		 * @param	{Object}		e					Event info.
-		 * @param	{Object}		ex					Extra event info.
-		 */
-		AttrOrganizer.onDoOrganize = function onDoOrganize (sender, e, ex)
-		{
-
-			var component = ex.target;
-			var settings = ex.options["attrs"];
-
-			return AttrOrganizer._initAttr(component, settings);
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Init attributes.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 */
-		AttrOrganizer._initAttr = function _initAttr (component, settings)
-		{
-
-			if (settings)
-			{
-				Object.keys(settings).forEach(function (key) {
-					switch (key)
-					{
-						case "style":
-							Object.keys(settings[key]).forEach(function (styleName) {
-								component.style[styleName] = settings[key][styleName];
-							});
-							break;
-						default:
-							component.setAttribute(key, settings[key]);
-
-							/*
-							if (key.substr(0, 1) == "-")
-							{
-								let attrs = settings[key].split(" ");
-								for (let i = 0; i < attrs.length; i++)
-								{
-									console.log("@@@removing attr", component.name, key, attrs[i]);
-									component.removeAttribute(key, attrs[i]);
-								}
-							}
-							else
-							{
-								console.log("@@@settings attr", component.name, key, settings[key]);
-								component.setAttribute(key, settings[key]);
-							}
-							*/
-							break;
-					}
-				});
-			}
-
-			return Promise.resolve();
-
-		};
-
-		return AttrOrganizer;
 	}(Organizer));
 
 	// =============================================================================
@@ -3656,10 +3683,10 @@
 				component.settings.set("templateName", component.getAttribute("data-templatename"));
 			}
 
-			// Get template href from templatehref
-			if (component.hasAttribute("data-templatehref"))
+			// Get template ref from templateref
+			if (component.hasAttribute("data-templateref"))
 			{
-				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templatehref"));
+				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templateref"));
 				component.settings.set("system.templatePath", arr[0]);
 				component.settings.set("templateName", arr[1].replace(".html", ""));
 			}
@@ -4026,7 +4053,7 @@
 
 			var promise;
 			var tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
-			var fileName = ( settings["fileName"] ? settings["fileName"] : tagName );
+			var fileName = Util.safeGet(settings, "settings.fileName", tagName);
 
 			if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
 			{
@@ -4182,6 +4209,8 @@
 		};
 
 		// -------------------------------------------------------------------------
+		//  Protected
+		// -------------------------------------------------------------------------
 
 		/**
 		* Load components.
@@ -4200,121 +4229,6 @@
 		};
 
 		return AutoloadOrganizer;
-	}(Organizer));
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Element organizer class
-	// =============================================================================
-
-	var ElementOrganizer = /*@__PURE__*/(function (Organizer) {
-		function ElementOrganizer () {
-			Organizer.apply(this, arguments);
-		}
-
-		if ( Organizer ) ElementOrganizer.__proto__ = Organizer;
-		ElementOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		ElementOrganizer.prototype.constructor = ElementOrganizer;
-
-		ElementOrganizer.globalInit = function globalInit ()
-		{
-
-			// Add methods
-			Component.prototype.initElements = function(elementName, options, rootNode) {
-				ElementOrganizer._initElements(this, elementName, options, rootNode);
-			};
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Organize.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		ElementOrganizer.organize = function organize (conditions, component, settings)
-		{
-
-			var elements = settings["elements"];
-			if (elements)
-			{
-				Object.keys(elements).forEach(function (elementName) {
-					component.initElements(elementName);
-				});
-			}
-
-			return settings;
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Set html elements event handlers.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		elementName			Element name.
-		 * @param	{Options}		options				Options.
-		 * @param	{HTMLElement}	rootNode			Root node of elements.
-		 */
-		ElementOrganizer._initElements = function _initElements (component, elementName, options, rootNode)
-		{
-
-			rootNode = ( rootNode ? rootNode : component.rootElement );
-			var elementInfo = component.settings.get("elements." + elementName);
-			var elements;
-
-			// Get target elements
-			if (elementInfo["rootNode"])
-			{
-				elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
-			}
-			else
-			{
-				elements = rootNode.querySelectorAll("#" + elementName);
-			}
-
-			// Set event handlers
-			this.__initEvents(component, elements, elementInfo["events"], options);
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Set html elements event handlers.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Array}			elements			Target elements.
-		 * @param	{Object}		events				Event info.
-		 * @param	{Options}		options				Event options.
-		 */
-		ElementOrganizer.__initEvents = function __initEvents (component, elements, events, options)
-		{
-
-			var loop = function ( i ) {
-				Object.keys(events).forEach(function (eventName) {
-					options = Object.assign({}, events[eventName]["options"], options);
-					component.addEventHandler(elements[i], eventName, events[eventName], options);
-				});
-			};
-
-			for (var i = 0; i < elements.length; i++)
-			loop( i );
-
-		};
-
-		return ElementOrganizer;
 	}(Organizer));
 
 	// =============================================================================
@@ -4451,16 +4365,12 @@
 	SettingOrganizer.globalInit();
 	OrganizerOrganizer.organizers.set("StateOrganizer", {"object":StateOrganizer, "targetWords":"waitFor", "targetEvents":["afterAppend"], "order":200});
 	window.BITSMIST.v1.StateOrganizer = StateOrganizer;
-	OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart"], "order":300});
+	OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend"], "order":300});
 	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
-	OrganizerOrganizer.organizers.set("AttrOrganizer", {"object":AttrOrganizer, "targetWords":"attrs", "targetEvents":["beforeStart"], "order":600});
-	window.BITSMIST.v1.AttrOrganizer = AttrOrganizer;
 	OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart"], "order":600});
 	window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 	OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetWords":"autoloads", "targetEvents":["beforeStart"], "order":700});
 	window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
-	OrganizerOrganizer.organizers.set("ElementOrganizer", {"object":ElementOrganizer, "targetWords":"elements","targetEvents":["afterAppend"], "order":700});
-	window.BITSMIST.v1.ElementOrganizer = ElementOrganizer;
 	OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":"components","targetEvents":["afterAppend"], "order":800});
 	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 	window.BITSMIST.v1.Pad = Pad;
