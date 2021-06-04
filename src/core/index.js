@@ -37,10 +37,6 @@ import EventOrganizer from './organizer/event-organizer';
 OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend"], "order":300});
 window.BITSMIST.v1.EventOrganizer = EventOrganizer;
 
-import AttrOrganizer from './organizer/attr-organizer';
-OrganizerOrganizer.organizers.set("AttrOrganizer", {"object":AttrOrganizer, "targetWords":"attrs", "targetEvents":["beforeStart"], "order":600});
-window.BITSMIST.v1.AttrOrganizer = AttrOrganizer;
-
 import TemplateOrganizer from './organizer/template-organizer';
 OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart"], "order":600});
 window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
