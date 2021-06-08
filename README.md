@@ -106,16 +106,10 @@ class PadHello extends BITSMIST.v1.Pad
 <h1></h1>
 <button>Go</button>
 ```
-
-## How component looks like
-
-Basically, each component consists of one or more HTML files and one javascript file. You can create a component without a script file if the component doesn't have event handlers, without HTML files if the component doesn't have an interface. Html files are just plain HTML, so you can write styles directly in the HTML files or include independent CSS files. Javascript files are classes that inherit BitsmistJS base component objects which initialize, trigger events, and load HTML files.
-
-![Example-Component](https://user-images.githubusercontent.com/49435291/115198078-a2639400-a12c-11eb-89da-8fdcef16fa8e.png)
-
 ## Documentation
 
-Working on ...
+- [English](https://bitsmist.com/en/bitsmistjs/docs/start)
+- [Japanese（日本語）](https://bitsmist.com/ja/bitsmistjs/docs/start)
 
 ## Contribution
 
