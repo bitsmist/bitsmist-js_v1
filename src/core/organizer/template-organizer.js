@@ -56,8 +56,6 @@ export default class TemplateOrganizer extends Organizer
 
 		// Set defaults if not set already
 		component.settings.set("settings.templateName", component.settings.get("settings.templateName", component.tagName.toLowerCase()));
-		component.settings.set("settings.autoOpen", component.settings.get("settings.autoOpen", true));
-		component.settings.set("settings.autoClose", component.settings.get("settings.autoClose", true));
 
 		// Load settings from attributes
 		TemplateOrganizer.__loadAttrSettings(component);

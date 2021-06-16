@@ -240,6 +240,10 @@ Pad.prototype.start = function(settings)
 	let defaults = {
 		"settings": {
 			"autoSetupOnStart":false,
+			"autoOpen": true,
+			"autoClose": true,
+			"autoRefresh": true,
+			"autoFill": true,
 		},
 		"organizers":{
 			"TemplateOrganizer": "",
