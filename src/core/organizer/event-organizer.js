@@ -42,8 +42,8 @@ export default class EventOrganizer extends Organizer
 		Component.prototype.triggerAsync = function(eventName, sender, options, element) {
 			return EventOrganizer._triggerAsync(this, eventName, sender, options, element)
 		}
-		Component.prototype.getEventHandler = function(component, eventInfo, bindTo, eventName) {
-			return EventOrganizer._getEventHandler(this, component, eventInfo, bindTo, eventName)
+		Component.prototype.getEventHandler = function(handlerInfo) {
+			return EventOrganizer._getEventHandler(this, handlerInfo)
 		}
 
 	}
@@ -186,6 +186,12 @@ export default class EventOrganizer extends Organizer
 
 		// Get target elements
 		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+		/*
+		if (elements.length == 0)
+		{
+			throw TypeError(`No elements for the event found. componentName=${component.name}, elementName=${elementName}`);
+		}
+		*/
 
 		// Set event handlers
 		if (handlerInfo["handlers"])
@@ -267,15 +273,15 @@ export default class EventOrganizer extends Organizer
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Get event handler from event info object.
+	 * Get an event handler from a handler info object.
 	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object/Function/String}	eventInfo	Event info.
+	 * @param	{Component}		component				Component.
+	 * @param	{Object/Function/String}	handlerInfo	Handler info.
 	 */
-	static _getEventHandler(component, eventInfo)
+	static _getEventHandler(component, handlerInfo)
 	{
 
-		let handler = ( typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo );
+		let handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
 
 		if ( typeof handler === "string" )
 		{
@@ -290,6 +296,7 @@ export default class EventOrganizer extends Organizer
 	//  Privates
 	// -------------------------------------------------------------------------
 
+	//@@@ fix
 	/**
 	 * Set html elements event handlers.
 	 *
