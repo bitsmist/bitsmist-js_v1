@@ -59,9 +59,6 @@ window.BITSMIST.v1.Pad = Pad;
 import Store from './store/store';
 window.BITSMIST.v1.Store = Store;
 
-import ObserverStore from './store/observer-store';
-window.BITSMIST.v1.ObserverStore = ObserverStore;
-
 import OrganizerStore from './store/organizer-store';
 window.BITSMIST.v1.OrganizerStore = OrganizerStore;
 
