@@ -9,9 +9,9 @@
 // =============================================================================
 
 import AjaxUtil from '../util/ajax-util';
+import ChainableStore from '../store/chainable-store';
 import Component from '../component';
 import Organizer from './organizer';
-import Store from '../store/store';
 import Util from '../util/util';
 
 // =============================================================================
@@ -37,7 +37,7 @@ export default class SettingOrganizer extends Organizer
 		});
 
 		// Init vars
-		SettingOrganizer.__globalSettings = new Store();
+		SettingOrganizer.__globalSettings = new ChainableStore();
 		Object.defineProperty(SettingOrganizer, 'globalSettings', {
 			get() { return SettingOrganizer.__globalSettings; },
 		});
@@ -59,7 +59,7 @@ export default class SettingOrganizer extends Organizer
 	{
 
 		// Init vars
-		component._settings = new Store({"items":settings});
+		component._settings = new ChainableStore({"items":settings});
 		component.settings.merge(component._getSettings());
 
 		// Overwrite name if specified

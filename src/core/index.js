@@ -63,6 +63,10 @@ import ObserverStore from './store/observer-store';
 window.BITSMIST.v1.ObserverStore = ObserverStore;
 
 import OrganizerStore from './store/organizer-store';
+window.BITSMIST.v1.OrganizerStore = OrganizerStore;
+
+import ChainableStore from './store/chainable-store';
+window.BITSMIST.v1.ChainableStore = ChainableStore;
 
 // Util
 
