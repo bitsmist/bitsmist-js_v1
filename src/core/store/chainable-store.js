@@ -8,13 +8,14 @@
  */
 // =============================================================================
 
+import Store from './store.js';
 import Util from '../util/util';
 
 // =============================================================================
-//	Store class
+//	Chainable store class
 // =============================================================================
 
-export default class Store
+export default class ChainableStore extends Store
 {
 
 	// -------------------------------------------------------------------------
@@ -25,19 +26,18 @@ export default class Store
      * Constructor.
      *
 	 * @param	{Object}		options				Options.
+	 * @param	{Store}			chain				Store Component to chain.
      */
-	constructor(options)
+	constructor(options, chain)
 	{
 
-		// Init vars
-		this._filter;
+		super(options);
 
-		// Init
-		this.items = Util.safeGet(options, "items");
-		this.filter = Util.safeGet(options, "filter", () => { return true; } );
-		this.merger = Util.safeGet(options, "merger", Util.deepMerge );
+		// Init vars
+		this._chain = Util.safeGet(options, "chain");
 
 	}
+
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
@@ -51,7 +51,18 @@ export default class Store
 	get items()
 	{
 
-		return Object.assign({}, this._items);
+		let items;
+
+		if (this._chain)
+		{
+			items = Object.assign({}, this._chain._items, this._items);
+		}
+		else
+		{
+			items = Object.assign({}, this._items);
+		}
+
+		return items;
 
 	}
 
@@ -63,95 +74,19 @@ export default class Store
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Filter function.
-	 *
-	 * @type	{Function}
-	 */
-	get filter()
-	{
-
-		this._filter;
-
-	}
-
-	set filter(value)
-	{
-
-		if (typeof value != "function")
-		{
-			throw TypeError(`Filter is not a function. filter=${value}`);
-		}
-
-		this._filter = value;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Merge function.
-	 *
-	 * @type	{Function}
-	 */
-	get merger()
-	{
-
-		this._merger;
-
-	}
-
-	set merger(value)
-	{
-
-		if (typeof value != "function")
-		{
-			throw TypeError(`Merger is not a function. filter=${value}`);
-		}
-
-		this._merger = value;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Method
 	// -------------------------------------------------------------------------
 
 	/**
-     * Clear.
+     * Chain another store.
      *
 	 * @param	{Object}		component			Component to attach.
 	 * @param	{Object}		options				Plugin options.
      */
-	clear()
+	chain(store)
 	{
 
-		this._items = {};
-
-	}
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Merge items.
-	 *
-	 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
-	 * @param	{Function}		merger				Merge function.
-	 */
-	merge(newItems, merger)
-	{
-
-
-		if (newItems)
-		{
-			merger = merger || this._merger;
-			let items = (Array.isArray(newItems) ? newItems: [newItems]);
-
-			for (let i = 0; i < items.length; i++)
-			{
-				merger(this._items, items[i]);
-			}
-		}
+		this._chain = store;
 
 	}
 
@@ -159,6 +94,7 @@ export default class Store
 
 	/**
 	 * Get a value from store. Return default value when specified key is not available.
+	 * If chained, chained store is also considiered.
 	 *
 	 * @param	{String}		key					Key to get.
 	 * @param	{Object}		defaultValue		Value returned when key is not found.
@@ -168,22 +104,7 @@ export default class Store
 	get(key, defaultValue)
 	{
 
-		return Util.safeGet(this._items, key, defaultValue);
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Set a value to store.
-	 *
-	 * @param	{String}		key					Key to store.
-	 * @param	{Object}		value				Value to store.
-	 */
-	set(key, value)
-	{
-
-		Util.safeSet(this._items, key, value);
+		return this._getChainedItem(this._chain, this, key, defaultValue);
 
 	}
 
@@ -199,7 +120,7 @@ export default class Store
 	mergeSet(key, value)
 	{
 
-		let holder = this.get(key);
+		let holder = this._getLocal(key);
 
 		if (typeof holder == "object")
 		{
@@ -213,32 +134,51 @@ export default class Store
 	}
 
 	// -------------------------------------------------------------------------
+	// 	Protected
+	// -------------------------------------------------------------------------
 
 	/**
-	 * Remove from the list.
-	 *
-	 * @param	{String}		key					Key to store.
-	 */
-	remove(key)
+	* Get an value from store. Return default value when specified key is not available.
+	* Ignore chain.
+	*
+	* @param	{String}		key					Key to get.
+	* @param	{Object}		defaultValue		Value returned when key is not found.
+	*
+	* @return  {*}				Value.
+	*/
+	_getLocal(key, defaultValue)
 	{
 
-		delete this._items[key];
+		return Util.safeGet(this._items, key, defaultValue);
 
 	}
 
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Check if the store has specified key.
-	 *
-	 * @param	{String}		key					Key to check.
-	 *
-	 * @return	{Boolean}		True:exists, False:not exists.
-	 */
-	has(key)
+	* Get an value from stores. Return default value when specified key is not available.
+	* If both store1 and store2 has the key, store2 precedes store1.
+	*
+	* @param	{String}		key					Key to get.
+	* @param	{Object}		defaultValue		Value returned when key is not found.
+	*
+	* @return  {*}				Value.
+	*/
+	_getChainedItem(store1, store2, key, defaultValue)
 	{
 
-		return Util.safeHas(this._items, key);
+		let result = defaultValue;
+
+		if (store2 && store2.has(key))
+		{
+			result = store2._getLocal(key);
+		}
+		else if (store1 && store1.has(key))
+		{
+			result = store1._getLocal(key);
+		}
+
+		return result;
 
 	}
 
