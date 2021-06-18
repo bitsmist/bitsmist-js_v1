@@ -31,6 +31,7 @@ export default class Store
 
 		// Init vars
 		this._filter;
+		this._options = Object.assign({}, options);
 
 		// Init
 		this.items = Util.safeGet(options, "items");
