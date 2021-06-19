@@ -218,7 +218,7 @@ export default class EventOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Trigger the event.
+	 * Trigger the event synchronously.
 	 *
 	 * @param	{Component}		component				Component.
 	 * @param	{String}		eventName				Event name to trigger.
@@ -253,7 +253,7 @@ export default class EventOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Trigger the event synchronously.
+	 * Trigger the event asynchronously.
 	 *
 	 * @param	{Component}		component				Component.
 	 * @param	{String}		eventName				Event name to trigger.
