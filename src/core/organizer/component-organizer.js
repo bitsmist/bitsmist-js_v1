@@ -225,7 +225,7 @@ export default class ComponentOrganizer extends Organizer
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Load scripts for tags which has data-autoload attribute.
+	 * Load scripts for tags which has bm-autoload attribute.
 	 *
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 * @param	{String}		path				Base path prepend to each element's path.
@@ -242,18 +242,18 @@ export default class ComponentOrganizer extends Organizer
 		let promises = [];
 		let targets = ( target ?
 			document.querySelectorAll(target) :
-			rootNode.querySelectorAll("[data-autoload]:not([data-autoloaded]),[data-automorph]:not([data-autoloaded])")
+			rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])")
 		);
 
 		targets.forEach((element) => {
-			element.setAttribute("data-autoloaded", "");
+			element.setAttribute("bm-autoloaded", "");
 
-			let href = element.getAttribute("data-autoload");
-			let className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
-			let path = element.getAttribute("data-path") || "";
-			let split = ( element.hasAttribute("data-split") ? true : options["splitComponent"] );
-			let morph = ( element.hasAttribute("data-automorph") ?
-				( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) :
+			let href = element.getAttribute("bm-autoload");
+			let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
+			let path = element.getAttribute("bm-path") || "";
+			let split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
+			let morph = ( element.hasAttribute("bm-automorph") ?
+				( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
 				false
 			);
 			let settings = {"settings":{"morph":morph}};

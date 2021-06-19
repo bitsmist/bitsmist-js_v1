@@ -233,16 +233,16 @@ export default class SettingOrganizer extends Organizer
 
 		let name, path;
 
-		if (component.hasAttribute("data-" + settingName + "ref"))
+		if (component.hasAttribute("bm-" + settingName + "ref"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-" + settingName + "ref"));
+			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-" + settingName + "ref"));
 			path = arr[0];
 			name = arr[1].slice(0, -3);
 		}
 		else
 		{
-			path = ( component.hasAttribute("data-" + settingName + "path") ? component.getAttribute("data-" + settingName + "path") : "" );
-			name = ( component.hasAttribute("data-" + settingName + "name") ? component.getAttribute("data-" + settingName + "name") : "" );
+			path = ( component.hasAttribute("bm-" + settingName + "path") ? component.getAttribute("bm-" + settingName + "path") : "" );
+			name = ( component.hasAttribute("bm-" + settingName + "name") ? component.getAttribute("bm-" + settingName + "name") : "" );
 			if (path && !name)
 			{
 				name = "settings";
@@ -266,10 +266,10 @@ export default class SettingOrganizer extends Organizer
 	static __loadAttrSettings(component)
 	{
 
-		// Get path from  data-autoload
-		if (component.getAttribute("data-autoload"))
+		// Get path from  bm-autoload
+		if (component.getAttribute("bm-autoload"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-autoload"));
+			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
 			component.settings.set("system.appBaseUrl", "");
 			component.settings.set("system.templatePath", arr[0]);
 			component.settings.set("system.componentPath", arr[0]);
@@ -277,16 +277,16 @@ export default class SettingOrganizer extends Organizer
 		}
 
 		// Get path from attribute
-		if (component.hasAttribute("data-path"))
+		if (component.hasAttribute("bm-path"))
 		{
-			component.settings.set("settings.path", component.getAttribute("data-path"));
+			component.settings.set("settings.path", component.getAttribute("bm-path"));
 		}
 
 		// Get settings from the attribute
 
 		let dataSettings = ( document.querySelector(component.settings.get("settings.rootNode")) ?
-			document.querySelector(component.settings.get("settings.rootNode")).getAttribute("data-settings") :
-			component.getAttribute("data-settings")
+			document.querySelector(component.settings.get("settings.rootNode")).getAttribute("bm-settings") :
+			component.getAttribute("bm-settings")
 		);
 
 		if (dataSettings)

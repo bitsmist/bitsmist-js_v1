@@ -416,21 +416,21 @@ export default class TemplateOrganizer extends Organizer
 
 		/*
 		// Get template path from attribute
-		if (component.hasAttribute("data-templatepath"))
+		if (component.hasAttribute("bm-templatepath"))
 		{
-			component.settings.set("system.templatePath", component.getAttribute("data-templatepath"));
+			component.settings.set("system.templatePath", component.getAttribute("bm-templatepath"));
 		}
 
 		// Get template name from attribute
-		if (component.hasAttribute("data-templatename"))
+		if (component.hasAttribute("bm-templatename"))
 		{
-			component.settings.set("templateName", component.getAttribute("data-templatename"));
+			component.settings.set("templateName", component.getAttribute("bbmmplatename"));
 		}
 
 		// Get template ref from templateref
-		if (component.hasAttribute("data-templateref"))
+		if (component.hasAttribute("bm-templateref"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templateref"));
+			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-templateref"));
 			component.settings.set("system.templatePath", arr[0]);
 			component.settings.set("templateName", arr[1].replace(".html", ""));
 		}

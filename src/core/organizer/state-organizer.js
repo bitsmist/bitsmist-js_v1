@@ -707,15 +707,15 @@ export default class StateOrganizer extends Organizer
 
 		// Get waitFor from attribute
 
-		if (component.hasAttribute("data-waitfor"))
+		if (component.hasAttribute("bm-waitfor"))
 		{
-			let waitInfo = {"name":component.getAttribute("data-waitfor"), "state":"started"};
+			let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"started"};
 			component.settings.merge({"waitFor": [waitInfo]});
 		}
 
-		if (component.hasAttribute("data-waitfornode"))
+		if (component.hasAttribute("bm-waitfornode"))
 		{
-			let waitInfo = {"rootNode":component.getAttribute("data-waitfornode"), "state":"started"};
+			let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"started"};
 			component.settings.merge({"waitFor": [waitInfo]});
 		}
 

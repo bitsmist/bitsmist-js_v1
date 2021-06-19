@@ -64,7 +64,7 @@ export default class AutoloadOrganizer extends Organizer
 
 		let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", "")]);
 		let splitComponent = component.settings.get("system.splitComponent", false);
-		let target = component.getAttribute("data-target");
+		let target = component.getAttribute("bm-target");
 
 		ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
 

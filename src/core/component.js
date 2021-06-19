@@ -174,7 +174,7 @@ Component.prototype.start = function(settings)
 		return this.initOrganizers(newSettings);
 	// }).then(() => {
 		// suspend
-		// return ( this.hasAttribute("data-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
+		// return ( this.hasAttribute("bm-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
