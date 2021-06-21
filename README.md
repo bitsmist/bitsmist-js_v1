@@ -40,7 +40,7 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in the dist folder somewhere u
 <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.9.9/dist/bitsmist-js_v1.min.js"></script>
 </head>
 <body>
-<pad-hello data-autoload="https://example.com/pad-hello.html"></pad-hello>
+<pad-hello bm-autoload="https://example.com/pad-hello.html"></pad-hello>
 </body>
 </html>
 ```
@@ -61,7 +61,7 @@ Download BitsmistJS and put bitsmist-js_v1.min.js in the dist folder somewhere u
 <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.9.9/dist/bitsmist-js_v1.min.js"></script>
 </head>
 <body>
-<pad-hello data-autoload="https://example.com/pad-hello.js"></pad-hello>
+<pad-hello bm-autoload="https://example.com/pad-hello.js"></pad-hello>
 </body>
 </html>
 ```
