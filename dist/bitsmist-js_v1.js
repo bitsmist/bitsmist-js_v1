@@ -594,7 +594,7 @@
 			return this$1.initOrganizers(newSettings);
 		// }).then(() => {
 			// suspend
-			// return ( this.hasAttribute("data-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
+			// return ( this.hasAttribute("bm-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
 		}).then(function () {
 			console.debug(("Component.start(): Starting component. name=" + (this$1.name) + ", id=" + (this$1.id)));
 			return this$1.changeState("starting");
@@ -829,12 +829,12 @@
 	//	Store class
 	// =============================================================================
 
-	var Store = function Store(options, chain)
+	var Store = function Store(options)
 	{
 
 		// Init vars
-		this._chain = Util.safeGet(options, "chain");
 		this._filter;
+		this._options = Object.assign({}, options);
 
 		// Init
 		this.items = Util.safeGet(options, "items");
@@ -857,18 +857,7 @@
 	prototypeAccessors.items.get = function ()
 	{
 
-		var items;
-
-		if (this._chain)
-		{
-			items = Object.assign({}, this._chain._items, this._items);
-		}
-		else
-		{
-			items = Object.assign({}, this._items);
-		}
-
-		return items;
+		return Object.assign({}, this._items);
 
 	};
 
@@ -936,21 +925,6 @@
 	// -------------------------------------------------------------------------
 
 	/**
-	     * Chain another store.
-	     *
-		 * @param{Object}	component		Component to attach.
-		 * @param{Object}	options			Plugin options.
-	     */
-	Store.prototype.chain = function chain (store)
-	{
-
-		this._chain = store;
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
 	     * Clear.
 	     *
 		 * @param{Object}	component		Component to attach.
@@ -991,7 +965,6 @@
 
 	/**
 		 * Get a value from store. Return default value when specified key is not available.
-		 * If chained, chained store is also considiered.
 		 *
 		 * @param{String}	key				Key to get.
 		 * @param{Object}	defaultValue	Value returned when key is not found.
@@ -1001,7 +974,7 @@
 	Store.prototype.get = function get (key, defaultValue)
 	{
 
-		return this._getChainedItem(this._chain, this, key, defaultValue);
+		return Util.safeGet(this._items, key, defaultValue);
 
 	};
 
@@ -1020,13 +993,6 @@
 
 	};
 
-	Store.prototype.setWithOrder = function setWithOrder (key, value, order)
-	{
-
-		this.set(key, value);
-
-	};
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -1039,7 +1005,7 @@
 	Store.prototype.mergeSet = function mergeSet (key, value)
 	{
 
-		var holder = this._getLocal(key);
+		var holder = this.get(key);
 
 		if (typeof holder == "object")
 		{
@@ -1079,55 +1045,6 @@
 	{
 
 		return Util.safeHas(this._items, key);
-
-	};
-
-	// -------------------------------------------------------------------------
-	// Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	* Get an value from store. Return default value when specified key is not available.
-	* Ignore chain.
-	*
-	* @param{String}	key				Key to get.
-	* @param{Object}	defaultValue	Value returned when key is not found.
-	*
-	* @return  {*}			Value.
-	*/
-	Store.prototype._getLocal = function _getLocal (key, defaultValue)
-	{
-
-		return Util.safeGet(this._items, key, defaultValue);
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	* Get an value from stores. Return default value when specified key is not available.
-	* If both store1 and store2 has the key, store2 precedes store1.
-	*
-	* @param{String}	key				Key to get.
-	* @param{Object}	defaultValue	Value returned when key is not found.
-	*
-	* @return  {*}			Value.
-	*/
-	Store.prototype._getChainedItem = function _getChainedItem (store1, store2, key, defaultValue)
-	{
-
-		var result = defaultValue;
-
-		if (store2 && store2.has(key))
-		{
-			result = store2._getLocal(key);
-		}
-		else if (store1 && store1.has(key))
-		{
-			result = store1._getLocal(key);
-		}
-
-		return result;
 
 	};
 
@@ -1317,6 +1234,178 @@
 	// =============================================================================
 
 	// =============================================================================
+	//	Chainable store class
+	// =============================================================================
+
+	var ChainableStore = /*@__PURE__*/(function (Store) {
+		function ChainableStore(options, chain)
+		{
+
+			Store.call(this, options);
+
+			// Init vars
+			this._chain = Util.safeGet(options, "chain");
+
+		}
+
+		if ( Store ) ChainableStore.__proto__ = Store;
+		ChainableStore.prototype = Object.create( Store && Store.prototype );
+		ChainableStore.prototype.constructor = ChainableStore;
+
+		var prototypeAccessors = { items: { configurable: true } };
+
+
+		// -------------------------------------------------------------------------
+		//  Setter/Getter
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Items.
+		 *
+		 * @type	{String}
+		 */
+		prototypeAccessors.items.get = function ()
+		{
+
+			var items;
+
+			if (this._chain)
+			{
+				items = Object.assign({}, this._chain._items, this._items);
+			}
+			else
+			{
+				items = Object.assign({}, this._items);
+			}
+
+			return items;
+
+		};
+
+		prototypeAccessors.items.set = function (value)
+		{
+
+			this._items = Object.assign({}, value);
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Method
+		// -------------------------------------------------------------------------
+
+		/**
+	     * Chain another store.
+	     *
+		 * @param	{Object}		component			Component to attach.
+		 * @param	{Object}		options				Plugin options.
+	     */
+		ChainableStore.prototype.chain = function chain (store)
+		{
+
+			this._chain = store;
+
+		};
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Get a value from store. Return default value when specified key is not available.
+		 * If chained, chained store is also considiered.
+		 *
+		 * @param	{String}		key					Key to get.
+		 * @param	{Object}		defaultValue		Value returned when key is not found.
+		 *
+		 * @return  {*}				Value.
+		 */
+		ChainableStore.prototype.get = function get (key, defaultValue)
+		{
+
+			return this._getChainedItem(this._chain, this, key, defaultValue);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Set a value to store. Unlike set(), this merges with an existing value
+		 * if the existing value is object, otherwise overwrites.
+		 *
+		 * @param	{String}		key					Key to store.
+		 * @param	{Object}		value				Value to store.
+		 */
+		ChainableStore.prototype.mergeSet = function mergeSet (key, value)
+		{
+
+			var holder = this._getLocal(key);
+
+			if (typeof holder == "object")
+			{
+				Object.assign(holder, value);
+			}
+			else
+			{
+				this.set(key, value);
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+		// 	Protected
+		// -------------------------------------------------------------------------
+
+		/**
+		* Get an value from store. Return default value when specified key is not available.
+		* Ignore chain.
+		*
+		* @param	{String}		key					Key to get.
+		* @param	{Object}		defaultValue		Value returned when key is not found.
+		*
+		* @return  {*}				Value.
+		*/
+		ChainableStore.prototype._getLocal = function _getLocal (key, defaultValue)
+		{
+
+			return Util.safeGet(this._items, key, defaultValue);
+
+		};
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		* Get an value from stores. Return default value when specified key is not available.
+		* If both store1 and store2 has the key, store2 precedes store1.
+		*
+		* @param	{String}		key					Key to get.
+		* @param	{Object}		defaultValue		Value returned when key is not found.
+		*
+		* @return  {*}				Value.
+		*/
+		ChainableStore.prototype._getChainedItem = function _getChainedItem (store1, store2, key, defaultValue)
+		{
+
+			var result = defaultValue;
+
+			if (store2 && store2.has(key))
+			{
+				result = store2._getLocal(key);
+			}
+			else if (store1 && store1.has(key))
+			{
+				result = store1._getLocal(key);
+			}
+
+			return result;
+
+		};
+
+		Object.defineProperties( ChainableStore.prototype, prototypeAccessors );
+
+		return ChainableStore;
+	}(Store));
+
+	// =============================================================================
+
+	// =============================================================================
 	//	Setting organizer class
 	// =============================================================================
 
@@ -1338,7 +1427,7 @@
 			});
 
 			// Init vars
-			SettingOrganizer.__globalSettings = new Store();
+			SettingOrganizer.__globalSettings = new ChainableStore();
 			Object.defineProperty(SettingOrganizer, 'globalSettings', {
 				get: function get() { return SettingOrganizer.__globalSettings; },
 			});
@@ -1360,7 +1449,7 @@
 		{
 
 			// Init vars
-			component._settings = new Store({"items":settings});
+			component._settings = new ChainableStore({"items":settings});
 			component.settings.merge(component._getSettings());
 
 			// Overwrite name if specified
@@ -1534,16 +1623,16 @@
 
 			var name, path;
 
-			if (component.hasAttribute("data-" + settingName + "ref"))
+			if (component.hasAttribute("bm-" + settingName + "ref"))
 			{
-				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-" + settingName + "ref"));
+				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-" + settingName + "ref"));
 				path = arr[0];
 				name = arr[1].slice(0, -3);
 			}
 			else
 			{
-				path = ( component.hasAttribute("data-" + settingName + "path") ? component.getAttribute("data-" + settingName + "path") : "" );
-				name = ( component.hasAttribute("data-" + settingName + "name") ? component.getAttribute("data-" + settingName + "name") : "" );
+				path = ( component.hasAttribute("bm-" + settingName + "path") ? component.getAttribute("bm-" + settingName + "path") : "" );
+				name = ( component.hasAttribute("bm-" + settingName + "name") ? component.getAttribute("bm-" + settingName + "name") : "" );
 				if (path && !name)
 				{
 					name = "settings";
@@ -1567,10 +1656,10 @@
 		SettingOrganizer.__loadAttrSettings = function __loadAttrSettings (component)
 		{
 
-			// Get path from  data-autoload
-			if (component.getAttribute("data-autoload"))
+			// Get path from  bm-autoload
+			if (component.getAttribute("bm-autoload"))
 			{
-				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-autoload"));
+				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
 				component.settings.set("system.appBaseUrl", "");
 				component.settings.set("system.templatePath", arr[0]);
 				component.settings.set("system.componentPath", arr[0]);
@@ -1578,16 +1667,16 @@
 			}
 
 			// Get path from attribute
-			if (component.hasAttribute("data-path"))
+			if (component.hasAttribute("bm-path"))
 			{
-				component.settings.set("settings.path", component.getAttribute("data-path"));
+				component.settings.set("settings.path", component.getAttribute("bm-path"));
 			}
 
 			// Get settings from the attribute
 
 			var dataSettings = ( document.querySelector(component.settings.get("settings.rootNode")) ?
-				document.querySelector(component.settings.get("settings.rootNode")).getAttribute("data-settings") :
-				component.getAttribute("data-settings")
+				document.querySelector(component.settings.get("settings.rootNode")).getAttribute("bm-settings") :
+				component.getAttribute("bm-settings")
 			);
 
 			if (dataSettings)
@@ -2494,15 +2583,15 @@
 
 			// Get waitFor from attribute
 
-			if (component.hasAttribute("data-waitfor"))
+			if (component.hasAttribute("bm-waitfor"))
 			{
-				var waitInfo = {"name":component.getAttribute("data-waitfor"), "state":"started"};
+				var waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"started"};
 				component.settings.merge({"waitFor": [waitInfo]});
 			}
 
-			if (component.hasAttribute("data-waitfornode"))
+			if (component.hasAttribute("bm-waitfornode"))
 			{
-				var waitInfo$1 = {"rootNode":component.getAttribute("data-waitfornode"), "state":"started"};
+				var waitInfo$1 = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"started"};
 				component.settings.merge({"waitFor": [waitInfo$1]});
 			}
 
@@ -2542,8 +2631,8 @@
 			Component.prototype.triggerAsync = function(eventName, sender, options, element) {
 				return EventOrganizer._triggerAsync(this, eventName, sender, options, element)
 			};
-			Component.prototype.getEventHandler = function(component, eventInfo, bindTo, eventName) {
-				return EventOrganizer._getEventHandler(this, component, eventInfo, bindTo, eventName)
+			Component.prototype.getEventHandler = function(handlerInfo) {
+				return EventOrganizer._getEventHandler(this, handlerInfo)
 			};
 
 		};
@@ -2601,13 +2690,13 @@
 			}
 
 			// Init holder object for the element
-			if (!element._bm_detail)
+			if (!element.__bm_eventinfo)
 			{
-				element._bm_detail = { "component":component, "listeners":{}, "promises":{}, "statuses":{} };
+				element.__bm_eventinfo = { "component":component, "listeners":{}, "promises":{}, "statuses":{} };
 			}
 
 			// Add hook event handler
-			var listeners = element._bm_detail.listeners;
+			var listeners = element.__bm_eventinfo.listeners;
 			if (!listeners[eventName])
 			{
 				listeners[eventName] = [];
@@ -2647,7 +2736,7 @@
 				throw TypeError(("Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName));
 			}
 
-			var listeners = Util.safeGet(element, "_bm_detail.listeners." + eventName);
+			var listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
 			if (listeners)
 			{
 				var index = -1;
@@ -2662,7 +2751,7 @@
 
 				if (index > -1)
 				{
-					element._bm_detail.listeners = array.splice(index, 1);
+					element.__bm_eventinfo.listeners = array.splice(index, 1);
 				}
 			}
 
@@ -2686,6 +2775,12 @@
 
 			// Get target elements
 			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+			/*
+			if (elements.length == 0)
+			{
+				throw TypeError(`No elements for the event found. componentName=${component.name}, elementName=${elementName}`);
+			}
+			*/
 
 			// Set event handlers
 			if (handlerInfo["handlers"])
@@ -2712,7 +2807,7 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Trigger the event.
+		 * Trigger the event synchronously.
 		 *
 		 * @param	{Component}		component				Component.
 		 * @param	{String}		eventName				Event name to trigger.
@@ -2740,14 +2835,14 @@
 			element.dispatchEvent(e);
 
 			// return the promise if exists
-			return Util.safeGet(element, "_bm_detail.promises." + eventName) || Promise.resolve();
+			return Util.safeGet(element, "__bm_eventinfo.promises." + eventName) || Promise.resolve();
 
 		};
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Trigger the event synchronously.
+		 * Trigger the event asynchronously.
 		 *
 		 * @param	{Component}		component				Component.
 		 * @param	{String}		eventName				Event name to trigger.
@@ -2767,15 +2862,15 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Get event handler from event info object.
+		 * Get an event handler from a handler info object.
 		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Object/Function/String}	eventInfo	Event info.
+		 * @param	{Component}		component				Component.
+		 * @param	{Object/Function/String}	handlerInfo	Handler info.
 		 */
-		EventOrganizer._getEventHandler = function _getEventHandler (component, eventInfo)
+		EventOrganizer._getEventHandler = function _getEventHandler (component, handlerInfo)
 		{
 
-			var handler = ( typeof eventInfo === "object" ? eventInfo["handler"] : eventInfo );
+			var handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
 
 			if ( typeof handler === "string" )
 			{
@@ -2790,6 +2885,7 @@
 		//  Privates
 		// -------------------------------------------------------------------------
 
+		//@@@ fix
 		/**
 		 * Set html elements event handlers.
 		 *
@@ -2844,7 +2940,7 @@
 		{
 
 			var isInstalled = false;
-			var listeners = Util.safeGet(element._bm_detail, "listeners." + eventName);
+			var listeners = Util.safeGet(element.__bm_eventinfo, "listeners." + eventName);
 
 			if (listeners)
 			{
@@ -2877,24 +2973,24 @@
 			var this$1 = this;
 
 
-			var listeners = Util.safeGet(this, "_bm_detail.listeners." + e.type);
+			var listeners = Util.safeGet(this, "__bm_eventinfo.listeners." + e.type);
 			var sender = Util.safeGet(e, "detail.sender", this);
-			var component = Util.safeGet(this, "_bm_detail.component");
+			var component = Util.safeGet(this, "__bm_eventinfo.component");
 
 			// Check if handler is already running
-			if (Util.safeGet(this, "_bm_detail.statuses." + e.type) == "handling")
+			if (Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) == "handling")
 			{
 				throw new Error(("Event handler is already running. name=" + (this.tagName) + ", eventName=" + (e.type)));
 			}
 
-			Util.safeSet(this, "_bm_detail.statuses." + e.type, "handling");
+			Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
 
 			if (Util.safeGet(e, "detail.async", false) == false)
 			{
 				// Wait previous handler
-				this._bm_detail["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(function (result) {
-					Util.safeSet(this$1, "_bm_detail.promises." + e.type, null);
-					Util.safeSet(this$1, "_bm_detail.statuses." + e.type, "");
+				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(function (result) {
+					Util.safeSet(this$1, "__bm_eventinfo.promises." + e.type, null);
+					Util.safeSet(this$1, "__bm_eventinfo.statuses." + e.type, "");
 
 					return result;
 				});
@@ -2902,9 +2998,9 @@
 			else
 			{
 				// Does not wait previous handler
-				this._bm_detail["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
-				Util.safeSet(this, "_bm_detail.promises." + e.type, null);
-				Util.safeSet(this, "_bm_detail.statuses." + e.type, "");
+				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
+				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
 			}
 
 		};
@@ -3244,6 +3340,10 @@
 		var defaults = {
 			"settings": {
 				"autoSetupOnStart":false,
+				"autoOpen": true,
+				"autoClose": true,
+				"autoRefresh": true,
+				"autoFill": true,
 			},
 			"organizers":{
 				"TemplateOrganizer": "",
@@ -3310,8 +3410,6 @@
 
 			// Set defaults if not set already
 			component.settings.set("settings.templateName", component.settings.get("settings.templateName", component.tagName.toLowerCase()));
-			component.settings.set("settings.autoOpen", component.settings.get("settings.autoOpen", true));
-			component.settings.set("settings.autoClose", component.settings.get("settings.autoClose", true));
 
 			// Load settings from attributes
 			TemplateOrganizer.__loadAttrSettings(component);
@@ -3672,21 +3770,21 @@
 
 			/*
 			// Get template path from attribute
-			if (component.hasAttribute("data-templatepath"))
+			if (component.hasAttribute("bm-templatepath"))
 			{
-				component.settings.set("system.templatePath", component.getAttribute("data-templatepath"));
+				component.settings.set("system.templatePath", component.getAttribute("bm-templatepath"));
 			}
 
 			// Get template name from attribute
-			if (component.hasAttribute("data-templatename"))
+			if (component.hasAttribute("bm-templatename"))
 			{
-				component.settings.set("templateName", component.getAttribute("data-templatename"));
+				component.settings.set("templateName", component.getAttribute("bbmmplatename"));
 			}
 
 			// Get template ref from templateref
-			if (component.hasAttribute("data-templateref"))
+			if (component.hasAttribute("bm-templateref"))
 			{
-				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("data-templateref"));
+				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-templateref"));
 				component.settings.set("system.templatePath", arr[0]);
 				component.settings.set("templateName", arr[1].replace(".html", ""));
 			}
@@ -3907,7 +4005,7 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Load scripts for tags which has data-autoload attribute.
+		 * Load scripts for tags which has bm-autoload attribute.
 		 *
 		 * @param	{HTMLElement}	rootNode			Target node.
 		 * @param	{String}		path				Base path prepend to each element's path.
@@ -3924,18 +4022,18 @@
 			var promises = [];
 			var targets = ( target ?
 				document.querySelectorAll(target) :
-				rootNode.querySelectorAll("[data-autoload]:not([data-autoloaded]),[data-automorph]:not([data-autoloaded])")
+				rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])")
 			);
 
 			targets.forEach(function (element) {
-				element.setAttribute("data-autoloaded", "");
+				element.setAttribute("bm-autoloaded", "");
 
-				var href = element.getAttribute("data-autoload");
-				var className = element.getAttribute("data-classname") || Util.getClassNameFromTagName(element.tagName);
-				var path = element.getAttribute("data-path") || "";
-				var split = ( element.hasAttribute("data-split") ? true : options["splitComponent"] );
-				var morph = ( element.hasAttribute("data-automorph") ?
-					( element.getAttribute("data-automorph") ? element.getAttribute("data-automorph") : true ) :
+				var href = element.getAttribute("bm-autoload");
+				var className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
+				var path = element.getAttribute("bm-path") || "";
+				var split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
+				var morph = ( element.hasAttribute("bm-automorph") ?
+					( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
 					false
 				);
 				var settings = {"settings":{"morph":morph}};
@@ -4222,7 +4320,7 @@
 
 			var path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", "")]);
 			var splitComponent = component.settings.get("system.splitComponent", false);
-			var target = component.getAttribute("data-target");
+			var target = component.getAttribute("bm-target");
 
 			ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
 
@@ -4230,120 +4328,6 @@
 
 		return AutoloadOrganizer;
 	}(Organizer));
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Observer store class
-	// =============================================================================
-
-	var ObserverStore = /*@__PURE__*/(function (Store) {
-		function ObserverStore () {
-			Store.apply(this, arguments);
-		}
-
-		if ( Store ) ObserverStore.__proto__ = Store;
-		ObserverStore.prototype = Object.create( Store && Store.prototype );
-		ObserverStore.prototype.constructor = ObserverStore;
-
-		ObserverStore.prototype.notify = function notify (type, conditions)
-		{
-			var this$1 = this;
-			var args = [], len = arguments.length - 2;
-			while ( len-- > 0 ) args[ len ] = arguments[ len + 2 ];
-
-
-			var chain = Promise.resolve();
-
-			this._sortItems().forEach(function (id) {
-				chain = chain.then(function () {
-					var ref;
-
-					return (ref = this$1)._callHandler.apply(ref, [ type, conditions, this$1._items[id] ].concat( args ));
-				});
-			});
-
-			return chain;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Notify observers synchronously.
-		 *
-		 * @param	{String}		type				Notification type(=methodname).
-		 * @param	{Object}		conditions			Current conditions.
-		 * @param	{Object}		...args				Arguments to callback function.
-		 */
-		ObserverStore.prototype.notifySync = function notifySync (type, conditions)
-		{
-			var this$1 = this;
-			var args = [], len = arguments.length - 2;
-			while ( len-- > 0 ) args[ len ] = arguments[ len + 2 ];
-
-
-			this._sortItems().forEach(function (id) {
-				var ref;
-
-				(ref = this$1)._callHandler.apply(ref, [ type, conditions, this$1._items[id] ].concat( args ));
-			});
-
-		};
-
-		// -------------------------------------------------------------------------
-		// 	Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Call handler.
-		 *
-		 * @param	{String}		type				Notification type(=methodname).
-		 * @param	{Object}		conditions			Current conditions.
-		 * @param	{Object}		observerInfo		Observer info.
-		 * @param	{Object}		...args				Arguments to callback function.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		ObserverStore.prototype._callHandler = function _callHandler (type, conditions, observerInfo)
-		{
-			var ref, ref$1;
-
-			var args = [], len = arguments.length - 3;
-			while ( len-- > 0 ) args[ len ] = arguments[ len + 3 ];
-
-			if ((ref = this)._filter.apply(ref, [ conditions, observerInfo ].concat( args )))
-			{
-				if (typeof observerInfo["object"][type] === "function")
-				{
-					return (ref$1 = observerInfo["object"][type]).call.apply(ref$1, [ observerInfo["object"], conditions ].concat( args ));
-				}
-			}
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Sort item keys.
-		 *
-		 * @param	{Object}		observerInfo		Observer info.
-		 *
-		 * @return  {Array}			Sorted keys.
-		 */
-		ObserverStore.prototype._sortItems = function _sortItems ()
-		{
-			var this$1 = this;
-
-
-			return Object.keys(this._items).sort(function (a,b) {
-				return this$1._items[a]["order"] - this$1.items[b]["order"];
-			})
-
-		};
-
-		return ObserverStore;
-	}(Store));
 
 	// =============================================================================
 	/**
@@ -4375,7 +4359,8 @@
 	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 	window.BITSMIST.v1.Pad = Pad;
 	window.BITSMIST.v1.Store = Store;
-	window.BITSMIST.v1.ObserverStore = ObserverStore;
+	window.BITSMIST.v1.OrganizerStore = OrganizerStore;
+	window.BITSMIST.v1.ChainableStore = ChainableStore;
 	window.BITSMIST.v1.AjaxUtil = AjaxUtil;
 	window.BITSMIST.v1.ClassUtil = ClassUtil;
 	window.BITSMIST.v1.Util = Util;
