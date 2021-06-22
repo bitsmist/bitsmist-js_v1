@@ -55,18 +55,18 @@ Pad.prototype.open = function(options)
 		console.debug(`Pad.open(): Opening pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opening");
 	}).then(() => {
-		return this.switchTemplate(this._settings.get("settings.templateName"));
+		return this.switchTemplate(Util.safeGet(options, "templateName", this._settings.get("settings.templateName")));
 	}).then(() => {
 		return this.trigger("beforeOpen", sender, options);
 	}).then(() => {
-		let autoSetupOnOpen = this._settings.get("settings.autoSetupOnOpen");
-		let autoSetup = this._settings.get("settings.autoSetup");
+		let autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetupOnOpen"));
+		let autoSetup = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetup"));
 		if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
 		{
 			return this.setup(options);
 		}
 	}).then(() => {
-		if (this._settings.get("settings.autoRefresh"))
+		if (Util.safeGet(options, "autoRefresh", this._settings.get("settings.autoRefresh")))
 		{
 			return this.refresh(options);
 		}
@@ -159,7 +159,7 @@ Pad.prototype.refresh = function(options)
 		console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", sender, options);
 	}).then(() => {
-		if (this._settings.get("settings.autoFill"))
+		if (Util.safeGet(options, "autoFill", this._settings.get("settings.autoFill")))
 		{
 			return this.fill(options);
 		}
