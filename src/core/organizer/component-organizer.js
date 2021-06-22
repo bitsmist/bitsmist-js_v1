@@ -200,16 +200,6 @@ export default class ComponentOrganizer extends Organizer
 				component.components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
 			}
 		}).then(() => {
-			// Expose component
-			let expose = Util.safeGet(settings, "settings.expose");
-			if (expose)
-			{
-				let exposeName = ( expose === true ? componentName : expose );
-				Object.defineProperty(component.__proto__, exposeName, {
-					get() { return this.components[componentName]; }
-				});
-			}
-		}).then(() => {
 			// Wait for the added component to be ready
 			if (sync || Util.safeGet(settings, "settings.sync"))
 			{
@@ -256,7 +246,7 @@ export default class ComponentOrganizer extends Organizer
 				( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
 				false
 			);
-			let settings = {"settings":{"morph":morph}};
+			let settings = {"settings":{"autoMorph":morph}};
 			let loadOptions = {"splitComponent":split, "autoLoad": true};
 
 			if (href)
@@ -269,7 +259,7 @@ export default class ComponentOrganizer extends Organizer
 				}
 				else if (href.slice(-5).toLowerCase() == ".html")
 				{
-					settings["settings"]["morph"] = true;
+					settings["settings"]["autoMorph"] = true;
 				}
 			}
 			else
@@ -300,7 +290,7 @@ export default class ComponentOrganizer extends Organizer
 	static _loadComponent(className, path, settings, options, tagName)
 	{
 
-		let morph = Util.safeGet(settings, "settings.morph");
+		let morph = Util.safeGet(settings, "settings.autoMorph");
 		if (morph)
 		{
 			// Define empty class
@@ -471,17 +461,8 @@ export default class ComponentOrganizer extends Organizer
 
 		// Inject settings to added component
 		addedComponent._injectSettings = function(oldSettings){
-			let newSettings;
-
 			// super()
-			if (addedComponent._super.prototype._injectSettings)
-			{
-				newSettings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(this, oldSettings));
-			}
-			else
-			{
-				newSettings = {};
-			}
+			let newSettings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(addedComponent, oldSettings));
 
 			return Util.deepMerge(newSettings, settings);
 		};
