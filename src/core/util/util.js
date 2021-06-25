@@ -197,7 +197,12 @@ export default class Util
 				{
 					arr1[key] = arr1[key].concat(arr2[key]);
 				}
-				else if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object')
+				else if (
+					arr1.hasOwnProperty(key) &&
+					typeof arr1[key] === 'object' &&
+					typeof arr1[key] !== 'function' &&
+					!(arr1[key] instanceof HTMLElement) &&
+				)
 				{
 					Util.deepMerge(arr1[key], arr2[key]);
 				}
