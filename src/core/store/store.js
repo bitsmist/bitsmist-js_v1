@@ -200,11 +200,11 @@ export default class Store
 	mergeSet(key, value)
 	{
 
-		let holder = this.get(key);
+		let holder = ( key ? this.get(key) : this._items );
 
 		if (typeof holder == "object")
 		{
-			Object.assign(holder, value);
+			Util.deepMerge(holder, value);
 		}
 		else
 		{
