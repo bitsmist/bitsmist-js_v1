@@ -8,8 +8,8 @@
  */
 // =============================================================================
 
-import Store from './store.js';
-import Util from '../util/util';
+import Store from "./store.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Chainable store class
