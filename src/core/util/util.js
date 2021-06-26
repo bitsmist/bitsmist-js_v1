@@ -200,7 +200,6 @@ export default class Util
 				else if (
 					arr1.hasOwnProperty(key) &&
 					typeof arr1[key] === 'object' &&
-					typeof arr1[key] !== 'function' &&
 					!(arr1[key] instanceof HTMLElement)
 				)
 				{
