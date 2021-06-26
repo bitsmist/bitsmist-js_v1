@@ -8,9 +8,9 @@
  */
 // =============================================================================
 
-import ClassUtil from './util/class-util';
-import Component from './component';
-import Util from './util/util';
+import ClassUtil from "./util/class-util.js";
+import Component from "./component.js";
+import Util from "./util/util.js";
 
 // =============================================================================
 //	Pad class
@@ -32,10 +32,51 @@ export default function Pad()
 }
 
 ClassUtil.inherit(Pad, Component);
-customElements.define("bm-pad", Pad);
 
 // -----------------------------------------------------------------------------
 //  Methods
+// -----------------------------------------------------------------------------
+
+/**
+ * Start pad.
+ *
+ * @param	{Object}		settings			Settings.
+ *
+ * @return  {Promise}		Promise.
+ */
+Pad.prototype.start = function(settings)
+{
+
+	// Defaults
+	let defaults = {
+		"settings": {
+			"autoSetupOnStart":false,
+			"autoOpen": true,
+			"autoClose": true,
+			"autoRefresh": true,
+			"autoFill": true,
+		},
+		"organizers":{
+			"TemplateOrganizer": "",
+		}
+	};
+	settings = Util.deepMerge(defaults, settings);
+
+	return Promise.resolve().then(() => {
+		// super()
+		return Component.prototype.start.call(this, settings);
+	}).then((newSettings) => {
+		settings = newSettings;
+
+		// Open
+		if (this._settings.get("settings.autoOpen"))
+		{
+			return this.open(settings);
+		}
+	});
+
+}
+
 // -----------------------------------------------------------------------------
 
 /**
@@ -226,42 +267,4 @@ Pad.prototype.fill = function(options)
 
 // -----------------------------------------------------------------------------
 
-/**
- * Start pad.
- *
- * @param	{Object}		settings			Settings.
- *
- * @return  {Promise}		Promise.
- */
-Pad.prototype.start = function(settings)
-{
-
-	// Defaults
-	let defaults = {
-		"settings": {
-			"autoSetupOnStart":false,
-			"autoOpen": true,
-			"autoClose": true,
-			"autoRefresh": true,
-			"autoFill": true,
-		},
-		"organizers":{
-			"TemplateOrganizer": "",
-		}
-	};
-	settings = Util.deepMerge(defaults, settings);
-
-	return Promise.resolve().then(() => {
-		// super()
-		return Component.prototype.start.call(this, settings);
-	}).then((newSettings) => {
-		settings = newSettings;
-
-		// Open
-		if (this._settings.get("settings.autoOpen"))
-		{
-			return this.open(settings);
-		}
-	});
-
-}
+customElements.define("bm-pad", Pad);

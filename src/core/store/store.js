@@ -8,7 +8,7 @@
  */
 // =============================================================================
 
-import Util from '../util/util';
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Store class
@@ -131,6 +131,7 @@ export default class Store
 		this._items = {};
 
 	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -141,7 +142,6 @@ export default class Store
 	 */
 	merge(newItems, merger)
 	{
-
 
 		if (newItems)
 		{
@@ -191,7 +191,7 @@ export default class Store
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Set a value to store. Unlike set(), this merges with an existing value
+	 * Set values to store. Unlike set(), this merges with an existing value
 	 * if the existing value is object, otherwise overwrites.
 	 *
 	 * @param	{String}		key					Key to store.

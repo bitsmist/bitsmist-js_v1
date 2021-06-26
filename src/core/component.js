@@ -8,8 +8,8 @@
  */
 // =============================================================================
 
-import ClassUtil from './util/class-util';
-import Util from './util/util';
+import ClassUtil from "./util/class-util.js";
+import Util from "./util/util.js";
 
 // =============================================================================
 //	Component class
@@ -284,7 +284,7 @@ Component.prototype._injectSettings = function(settings)
 // -----------------------------------------------------------------------------
 
 /**
- * Get component settings.  Need to override.
+ * Get component settings. Need to override.
  *
  * @return  {Object}		Options.
  */
