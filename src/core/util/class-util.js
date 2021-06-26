@@ -8,8 +8,8 @@
  */
 // =============================================================================
 
-//import Component from '../component'; // Importing component breaks this class. Do not import.
-import Util from '../util/util';
+//import Component from "../component.js"; // Importing component breaks this class. Do not import.
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Loader util class
