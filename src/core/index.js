@@ -65,6 +65,11 @@ window.BITSMIST.v1.OrganizerStore = OrganizerStore;
 import ChainableStore from "./store/chainable-store.js";
 window.BITSMIST.v1.ChainableStore = ChainableStore;
 
+// Widget
+
+import SettingManager from "./widget/bm-setting.js";
+import TagLoader from "./widget/bm-tagloader.js";
+
 // Util
 
 import AjaxUtil from "./util/ajax-util.js";
