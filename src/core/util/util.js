@@ -180,39 +180,42 @@ export default class Util
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Deep merge two arrays.
+	 * Deep merge two objects. Merge obj2 into obj1, not immutable.
 	 *
-	 * @param	{Object}		arr1					Array1.
-	 * @param	{Object}		arr2					Array2.
+	 * @param	{Object}		obj1					Object1.
+	 * @param	{Object}		obj2					Object2.
 	 *
 	 * @return  {Object}		Merged array.
 	 */
-	static deepMerge(arr1, arr2)
+	static deepMerge(obj1, obj2)
 	{
 
-		if (arr2)
+		if (!obj1 || typeof obj1 !== "object" || !obj2 || typeof obj2 !== "object")
 		{
-			Object.keys(arr2).forEach((key) => {
-				if (Array.isArray(arr1[key]))
-				{
-					arr1[key] = arr1[key].concat(arr2[key]);
-				}
-				else if (
-					arr1.hasOwnProperty(key) &&
-					typeof arr1[key] === 'object' &&
-					!(arr1[key] instanceof HTMLElement)
-				)
-				{
-					Util.deepMerge(arr1[key], arr2[key]);
-				}
-				else
-				{
-					arr1[key] = arr2[key];
-				}
-			});
+			throw TypeError("Util.deepMerge(): Parameters must be an object.");
 		}
 
-		return arr1;
+		Object.keys(obj2).forEach((key) => {
+			if (Array.isArray(obj1[key]))
+			{
+				obj1[key] = obj1[key].concat(obj2[key]);
+			}
+			else if (
+				obj1.hasOwnProperty(key) &&
+				obj1[key] && typeof obj1[key] === 'object' &&
+				obj2[key] && typeof obj2[key] === 'object' &&
+				!(obj1[key] instanceof HTMLElement)
+			)
+			{
+				Util.deepMerge(obj1[key], obj2[key]);
+			}
+			else
+			{
+				obj1[key] = obj2[key];
+			}
+		});
+
+		return obj1;
 
 	}
 
