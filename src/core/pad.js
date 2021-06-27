@@ -60,7 +60,7 @@ Pad.prototype.start = function(settings)
 			"TemplateOrganizer": "",
 		}
 	};
-	settings = Util.deepMerge(defaults, settings);
+	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
 
 	return Promise.resolve().then(() => {
 		// super()

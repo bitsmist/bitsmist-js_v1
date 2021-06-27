@@ -161,7 +161,7 @@ Component.prototype.start = function(settings)
 			"StateOrganizer": "",
 		}
 	};
-	settings = Util.deepMerge(defaults, settings);
+	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
 
 	// Init vars
 	this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
