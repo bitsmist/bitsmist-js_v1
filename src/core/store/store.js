@@ -208,7 +208,7 @@ export default class Store
 		}
 		else
 		{
-			this.set(key, value);
+			Util.safeSet(this._items, key, value);
 		}
 
 	}
