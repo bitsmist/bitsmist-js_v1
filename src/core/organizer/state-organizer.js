@@ -8,9 +8,9 @@
  */
 // =============================================================================
 
-import Component from '../component';
-import Organizer from './organizer';
-import Store from '../store/store';
+import Component from "../component.js";
+import Organizer from "./organizer.js";
+import Store from "../store/store.js";
 
 // =============================================================================
 //	Waitfor organizer class
@@ -30,7 +30,7 @@ export default class StateOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(Component.prototype, 'state', {
+		Object.defineProperty(Component.prototype, "state", {
 			get() { return this._state; },
 			set(value) { this._state = value; }
 		});
@@ -92,7 +92,10 @@ export default class StateOrganizer extends Organizer
 		let waitFor = settings["waitFor"];
 		if (waitFor)
 		{
-			promise = StateOrganizer._waitFor(component, waitFor);
+			if (waitFor[conditions])
+			{
+				promise = StateOrganizer._waitFor(component, waitFor[conditions], component.settings.get("system.waitforTimeout"));
+			}
 		}
 
 		return promise.then(() => {
@@ -110,38 +113,6 @@ export default class StateOrganizer extends Organizer
 	{
 
 		this.__waitingList.clear();
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Object}		organizerInfo		Organizer info.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, organizerInfo, component)
-	{
-
-		let ret = false;
-
-		if (conditions == "beforeStart")
-		{
-			if (!(component instanceof BITSMIST.v1.Pad))
-			{
-				ret = true;
-			}
-		}
-		else
-		{
-			ret = super.isTarget(conditions, organizerInfo, component);
-		}
-
-		return ret;
 
 	}
 
@@ -270,7 +241,7 @@ export default class StateOrganizer extends Organizer
 		if (StateOrganizer.__isTransitionable(component.state, state))
 		{
 			component.state = state;
-			StateOrganizer.__components.mergeSet(component.uniqueId, {"object":component, "state":state});
+			StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
 
 			StateOrganizer.__processWaitingList(component, state);
 		}
