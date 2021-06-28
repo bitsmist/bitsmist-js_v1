@@ -8,13 +8,13 @@
  */
 // =============================================================================
 
-import AjaxUtil from '../util/ajax-util';
-import ClassUtil from '../util/class-util';
-import Component from '../component';
-import Organizer from './organizer';
-import Pad from '../pad';
-import Store from '../store/store';
-import Util from '../util/util';
+import AjaxUtil from "../util/ajax-util.js";
+import ClassUtil from "../util/class-util.js";
+import Component from "../component.js";
+import Organizer from "./organizer.js";
+import Pad from "../pad.js";
+import Store from "../store/store.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Component organizer class
@@ -56,7 +56,7 @@ export default class ComponentOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(component, 'components', {
+		Object.defineProperty(component, "components", {
 			get() { return this._components; },
 		});
 
@@ -367,7 +367,7 @@ export default class ComponentOrganizer extends Organizer
 		{
 			// Already loaded
 			console.debug(`ComponentOrganizer.__autoLoadComponent(): Component Already exists. className=${className}`);
-			ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded"});
+			ComponentOrganizer.__classes.set(className, {"state":"loaded"});
 			promise = Promise.resolve();
 		}
 		else if (ComponentOrganizer.__classes.get(className, {})["state"] == "loading")
@@ -379,11 +379,11 @@ export default class ComponentOrganizer extends Organizer
 		else
 		{
 			// Not loaded
-			ComponentOrganizer.__classes.mergeSet(className, {"state":"loading"});
+			ComponentOrganizer.__classes.set(className, {"state":"loading"});
 			promise = ComponentOrganizer.__loadComponentScript(fileName, path, options).then(() => {
-				ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded", "promise":null});
+				ComponentOrganizer.__classes.set(className, {"state":"loaded", "promise":null});
 			});
-			ComponentOrganizer.__classes.mergeSet(className, {"promise":promise});
+			ComponentOrganizer.__classes.set(className, {"promise":promise});
 		}
 
 		return promise;

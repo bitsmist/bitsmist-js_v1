@@ -110,24 +110,23 @@ export default class ChainableStore extends Store
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Set a value to store. Unlike set(), this merges with an existing value
-	 * if the existing value is object, otherwise overwrites.
+	 * Set a value to the store. If key is empty, it sets the value to the root.
 	 *
 	 * @param	{String}		key					Key to store.
 	 * @param	{Object}		value				Value to store.
 	 */
-	mergeSet(key, value)
+	set(key, value, options)
 	{
 
-		let holder = this._getLocal(key);
+		let holder = ( key ? this._getLocal(key) : this._items );
 
 		if (typeof holder == "object")
 		{
-			Object.assign(holder, value);
+			Util.deepMerge(holder, value);
 		}
 		else
 		{
-			this.set(key, value);
+			Util.safeSet(this._items, key, value);
 		}
 
 	}

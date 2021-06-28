@@ -143,12 +143,12 @@ export default class Store
 	merge(newItems, merger)
 	{
 
-		if (newItems)
-		{
-			merger = merger || this._merger;
-			let items = (Array.isArray(newItems) ? newItems: [newItems]);
+		merger = merger || this._merger;
+		let items = (Array.isArray(newItems) ? newItems: [newItems]);
 
-			for (let i = 0; i < items.length; i++)
+		for (let i = 0; i < items.length; i++)
+		{
+			if (items[i] && typeof items[i] == "object")
 			{
 				merger(this._items, items[i]);
 			}
@@ -176,33 +176,17 @@ export default class Store
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Set a value to store.
+	 * Set a value to the store. If key is empty, it sets the value to the root.
 	 *
 	 * @param	{String}		key					Key to store.
 	 * @param	{Object}		value				Value to store.
 	 */
-	set(key, value)
-	{
-
-		Util.safeSet(this._items, key, value);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Set values to store. Unlike set(), this merges with an existing value
-	 * if the existing value is object, otherwise overwrites.
-	 *
-	 * @param	{String}		key					Key to store.
-	 * @param	{Object}		value				Value to store.
-	 */
-	mergeSet(key, value)
+	set(key, value, options)
 	{
 
 		let holder = ( key ? this.get(key) : this._items );
 
-		if (typeof holder == "object")
+		if (holder && typeof holder == "object" && value && typeof value == "object")
 		{
 			Util.deepMerge(holder, value);
 		}
