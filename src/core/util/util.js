@@ -180,12 +180,12 @@ export default class Util
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Deep merge two objects. Merge obj2 into obj1, not immutable.
+	 * Deep merge two objects. Merge obj2 into obj1.
 	 *
 	 * @param	{Object}		obj1					Object1.
 	 * @param	{Object}		obj2					Object2.
 	 *
-	 * @return  {Object}		Merged array.
+	 * @return  {Object}		Merged object.
 	 */
 	static deepMerge(obj1, obj2)
 	{
@@ -196,19 +196,23 @@ export default class Util
 		}
 
 		Object.keys(obj2).forEach((key) => {
+			// array <--- *
 			if (Array.isArray(obj1[key]))
 			{
 				obj1[key] = obj1[key].concat(obj2[key]);
 			}
+			// object <--- object
 			else if (
 				obj1.hasOwnProperty(key) &&
-				obj1[key] && typeof obj1[key] === 'object' &&
-				obj2[key] && typeof obj2[key] === 'object' &&
-				!(obj1[key] instanceof HTMLElement)
+				obj1[key] && typeof obj1[key] === "object" &&
+				obj2[key] && typeof obj2[key] === "object" &&
+				!(obj1[key] instanceof HTMLElement) &&
+				!(obj2[key] instanceof HTMLElement)
 			)
 			{
 				Util.deepMerge(obj1[key], obj2[key]);
 			}
+			// value <--- *
 			else
 			{
 				obj1[key] = obj2[key];
@@ -216,6 +220,104 @@ export default class Util
 		});
 
 		return obj1;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Deep clone an objects into another object.
+	 *
+	 * @param	{Object}		obj1					Object1.
+	 * @param	{Object}		obj2					Object2.
+	 *
+	 * @return  {Object}		Merged object.
+	 */
+	static deepClone(obj1, obj2)
+	{
+
+		if (!obj1 || typeof obj1 !== "object" || !obj2 || typeof obj2 !== "object")
+		{
+			throw TypeError("Util.deepClone(): Parameters must be an object.");
+		}
+
+		Object.keys(obj2).forEach((key) => {
+			// array <--- *
+			if (Array.isArray(obj1[key]))
+			{
+				obj1[key] = obj1[key].concat(obj2[key]);
+			}
+			// object <--- object
+			else if (
+				obj1.hasOwnProperty(key) &&
+				obj1[key] && typeof obj1[key] === "object" &&
+				obj2[key] && typeof obj2[key] === "object" &&
+				!(obj1[key] instanceof HTMLElement) &&
+				!(obj2[key] instanceof HTMLElement)
+			)
+			{
+				Util.deepClone(obj1[key], obj2[key]);
+			}
+			// * <--- array
+			else if (Array.isArray(obj2[key]))
+			{
+				obj1[key] = Util.deepCloneArray(obj2[key]);
+			}
+			// * <--- object
+			else if (
+				obj2[key] && typeof obj2[key] === "object" &&
+				!(obj2[key] instanceof HTMLElement)
+			)
+			{
+				obj1[key] = {};
+				Util.deepClone(obj1[key], obj2[key]);
+			}
+			// value <--- value
+			else
+			{
+				obj1[key] = obj2[key];
+			}
+		});
+
+		return obj1;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Deep clone an array.
+	 *
+	 * @param	{Object}		arr						Array.
+	 *
+	 * @return  {Object}		Merged array.
+	 */
+	static deepCloneArray(arr)
+	{
+
+		if (!Array.isArray(arr))
+		{
+			throw TypeError("Util.deepCloneArray(): Parameter must be an array.");
+		}
+
+		let result = [];
+
+		for (let i = 0; i < arr.length; i++)
+		{
+			if (
+				arr[i] && typeof arr[i] === "object" &&
+				!(arr[i] instanceof HTMLElement)
+			)
+			{
+				result.push(Util.deepClone({}, arr[i]));
+			}
+			else
+			{
+				result.push(arr[i]);
+			}
+		}
+
+		return result;
 
 	}
 
