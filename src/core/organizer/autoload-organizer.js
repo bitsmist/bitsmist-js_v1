@@ -8,9 +8,9 @@
  */
 // =============================================================================
 
-import ComponentOrganizer from './component-organizer';
-import Organizer from './organizer';
-import Util from '../util/util';
+import ComponentOrganizer from "./component-organizer.js";
+import Organizer from "./organizer.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Autoload organizer class
@@ -21,6 +21,28 @@ export default class AutoloadOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Global init.
+	 */
+	static globalInit()
+	{
+
+		document.addEventListener("DOMContentLoaded", () => {
+			if (BITSMIST.v1.settings.get("system.autoLoadOnStartup", true))
+			{
+				let path = Util.concatPath([
+					BITSMIST.v1.settings.get("system.appBaseUrl", ""),
+					BITSMIST.v1.settings.get("system.componentPath", "")
+				]);
+				let splitComponent = BITSMIST.v1.settings.get("system.splitComponent", false);
+				ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent});
+			}
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -35,13 +57,13 @@ export default class AutoloadOrganizer extends Organizer
 	static organize(conditions, component, settings)
 	{
 
-		if (document.readyState !== 'loading')
+		if (document.readyState !== "loading")
 		{
 			AutoloadOrganizer._load.call(component, component);
 		}
 		else
 		{
-			document.addEventListener('DOMContentLoaded', () => {
+			document.addEventListener("DOMContentLoaded", () => {
 				AutoloadOrganizer._load.call(component, component)
 			});
 		}

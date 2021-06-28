@@ -84,17 +84,3 @@ window.BITSMIST.v1.Util = Util;
 // Settings
 
 BITSMIST.v1.settings = SettingOrganizer.globalSettings;
-
-// Load tags
-
-document.addEventListener("DOMContentLoaded", () => {
-	if (BITSMIST.v1.settings.get("system.autoLoadOnStartup", true))
-	{
-		let path = Util.concatPath([
-			BITSMIST.v1.settings.get("system.appBaseUrl", ""),
-			BITSMIST.v1.settings.get("system.componentPath", "")
-		]);
-		let splitComponent = BITSMIST.v1.settings.get("system.splitComponent", false);
-		ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent});
-	}
-});
