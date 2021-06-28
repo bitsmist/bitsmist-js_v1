@@ -8,12 +8,12 @@
  */
 // =============================================================================
 
+import AutoloadOrganizer from "../organizer/autoload-organizer.js";
 import ClassUtil from "../util/class-util.js";
 import Component from "../component.js";
-import SettingOrganizer from "../organizer/setting-organizer.js";
 
 // =============================================================================
-//	SettingManager class
+//	TagLoader class
 // =============================================================================
 
 // -----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ import SettingOrganizer from "../organizer/setting-organizer.js";
 /**
  * Constructor.
  */
-export default function SettingManager()
+export default function TagLoader()
 {
 
 	// super()
@@ -31,7 +31,7 @@ export default function SettingManager()
 
 }
 
-ClassUtil.inherit(SettingManager, Component);
+ClassUtil.inherit(TagLoader, Component);
 
 // -----------------------------------------------------------------------------
 
@@ -40,13 +40,16 @@ ClassUtil.inherit(SettingManager, Component);
  *
  * @return  {Object}		Options.
  */
-SettingManager.prototype._getSettings = function()
+TagLoader.prototype._getSettings = function()
 {
 
 	return {
 		"settings": {
-			"name":					"SettingManager",
+			"name":					"TagLoader",
 			"loadGlobalSettings":	true,
+		},
+		"organizers": {
+			"AutoloadOrganizer": ""
 		}
 	};
 
@@ -54,4 +57,4 @@ SettingManager.prototype._getSettings = function()
 
 // -----------------------------------------------------------------------------
 
-customElements.define("bm-setting", SettingManager);
+customElements.define("bm-tagloader", TagLoader);
