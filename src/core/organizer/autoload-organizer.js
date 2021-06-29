@@ -37,6 +37,7 @@ export default class AutoloadOrganizer extends Organizer
 					BITSMIST.v1.settings.get("system.componentPath", "")
 				]);
 				let splitComponent = BITSMIST.v1.settings.get("system.splitComponent", false);
+
 				ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent});
 			}
 		});
@@ -57,38 +58,22 @@ export default class AutoloadOrganizer extends Organizer
 	static organize(conditions, component, settings)
 	{
 
-		if (document.readyState !== "loading")
-		{
-			AutoloadOrganizer._load.call(component, component);
-		}
-		else
-		{
-			document.addEventListener("DOMContentLoaded", () => {
-				AutoloadOrganizer._load.call(component, component)
-			});
-		}
-
-		return settings;
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	* Load components.
-	*
-	* @param	{Component}		component			Component.
-	*/
-	static _load(component)
-	{
-
 		let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", "")]);
 		let splitComponent = component.settings.get("system.splitComponent", false);
 		let target = component.getAttribute("bm-target");
 
-		ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
+		if (document.readyState !== "loading")
+		{
+			ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
+		}
+		else
+		{
+			document.addEventListener("DOMContentLoaded", () => {
+				ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
+			});
+		}
+
+		return settings;
 
 	}
 
