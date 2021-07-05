@@ -439,10 +439,7 @@ export default class ComponentOrganizer extends Organizer
 
 		// Check root node
 		let root = component._rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
-		if (!root)
-		{
-			throw new ReferenceError(`Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`);
-		}
+		Util.assert(root, `Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`, ReferenceError);
 
 		// Build tag
 		let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
