@@ -18,7 +18,7 @@ export default class Util
 	/**
 	* Get an value from store. Return default value when specified key is not available.
 	*
-	* @param	{Object}		store				Object which holds keys/values.
+	* @param	{Object}		store				Object that holds keys/values.
 	* @param	{String}		key					Key to get.
 	* @param	{Object}		defaultValue		Value returned when key is not found.
 	*
@@ -59,7 +59,7 @@ export default class Util
 	/**
 	* Set an value to store.
 	*
-	* @param	{Object}		store				Object which holds keys/values.
+	* @param	{Object}		store				Object that holds keys/values.
 	* @param	{String}		key					Key to store.
 	* @param	{Object}		value				Value to store.
 	*/
@@ -71,24 +71,18 @@ export default class Util
 		let items = key.split(".");
 		for (let i = 0; i < items.length - 1; i++)
 		{
-			if (typeof current === "object" && !(items[i] in current))
+			Util.assert(typeof current === "object", `Util.safeSet(): Key already exists. key=${key}, existingKey=${prevKey}, existingValue=${current}`, TypeError);
+
+			if (!(items[i] in current))
 			{
 				current[items[i]] = {}
-			}
-			else if (typeof current !== "object")
-			{
-				throw new TypeError(`Key already exists. key=${key}, existingKey=${prevKey}, existingValue=${current}`);
 			}
 
 			prevKey = items[i];
 			current = current[items[i]];
 		}
 
-		if (typeof current !== "object")
-		{
-			throw new TypeError(`Key already exists. key=${key}, existingKey=${prevKey}, existingValue=${current}`);
-		}
-
+		Util.assert(typeof current === "object", `Util.safeSet(): Key already exists. key=${key}, existingKey=${prevKey}, existingValue=${current}`, TypeError);
 		current[items[items.length - 1]] = value;
 
 		return store;
@@ -190,10 +184,7 @@ export default class Util
 	static deepMerge(obj1, obj2)
 	{
 
-		if (!obj1 || typeof obj1 !== "object" || !obj2 || typeof obj2 !== "object")
-		{
-			throw TypeError("Util.deepMerge(): Parameters must be an object.");
-		}
+		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepMerge(): Parameters must be an object.", TypeError);
 
 		Object.keys(obj2).forEach((key) => {
 			// array <--- *
@@ -236,10 +227,7 @@ export default class Util
 	static deepClone(obj1, obj2)
 	{
 
-		if (!obj1 || typeof obj1 !== "object" || !obj2 || typeof obj2 !== "object")
-		{
-			throw TypeError("Util.deepClone(): Parameters must be an object.");
-		}
+		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepClone(): Parameters must be an object.", TypeError);
 
 		Object.keys(obj2).forEach((key) => {
 			// array <--- *
@@ -295,10 +283,7 @@ export default class Util
 	static deepCloneArray(arr)
 	{
 
-		if (!Array.isArray(arr))
-		{
-			throw TypeError("Util.deepCloneArray(): Parameter must be an array.");
-		}
+		Util.assert(Array.isArray(arr), "Util.deepCloneArray(): Parameter must be an array.", TypeError);
 
 		let result = [];
 
@@ -410,4 +395,32 @@ export default class Util
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Assert conditions. Throws an error when assertion failed.
+	 *
+	 * @param	{Boolean}		conditions			Conditions.
+	 * @param	{String}		Message				Error message.
+	 * @param	{Error}			error				Error to throw.
+	 * @param	{Options}		options				Options.
+	 *
+	 * @return 	{Boolean}		True if it is upper case.
+	 */
+	static assert(conditions, msg, error, options)
+	{
+
+		if (!conditions)
+		{
+			let e = new error(msg);
+
+			// Remove last stack (assert() itself)
+			let stacks = e.stack.split("\n");
+			stacks.splice(1, 1);
+			e.stack = stacks.join("\n");
+
+			throw e;
+		}
+
+	}
 }
