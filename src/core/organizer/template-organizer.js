@@ -8,10 +8,10 @@
  */
 // =============================================================================
 
-import AjaxUtil from '../util/ajax-util';
-import Organizer from './organizer';
-import Pad from '../pad';
-import Util from '../util/util';
+import AjaxUtil from "../util/ajax-util";
+import Organizer from "./organizer";
+import Pad from "../pad";
+import Util from "../util/util";
 
 // =============================================================================
 //	Template organizer class
@@ -176,10 +176,7 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
-		if (templateInfo["isAppended"])
-		{
-			throw new ReferenceError(`Template already appended. name=${component.name}, templateName=${templateName}`);
-		}
+		Util.assert(!templateInfo["isAppended"], `TemplateOrganizer._addTemplate(): Template already appended. name=${component.name}, templateName=${templateName}`, ReferenceError);
 
 		return Promise.resolve().then(() => {
 			let path = Util.concatPath([
@@ -240,10 +237,7 @@ export default class TemplateOrganizer extends Organizer
 		templateName = templateName || component._settings.get("settings.templateName");
 		let templateInfo = component._templates[templateName];
 
-		if (!templateInfo)
-		{
-			throw new ReferenceError(`Template not loaded. name=${component.name}, templateName=${templateName}`);
-		}
+		Util.assert(templateInfo,`TemplateOrganizer._addTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}`, ReferenceError);
 
 		let clone;
 		if (templateInfo["node"])
@@ -368,10 +362,7 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		let rootNode = document.querySelector(templateNodeName);
-		if (!rootNode)
-		{
-			throw new ReferenceError(`Root node does not exist. name=${component.name}, rootNode=${templateNodeName}, templateName=${templateInfo["name"]}`);
-		}
+		Util.assert(rootNode, `TemplateOrganizer._addTemplate(): Root node does not exist. name=${component.name}, rootNode=${templateNodeName}, templateName=${templateInfo["name"]}`, ReferenceError);
 
 		rootNode.insertAdjacentHTML("afterbegin", templateInfo["html"]);
 		let node = rootNode.children[0];
