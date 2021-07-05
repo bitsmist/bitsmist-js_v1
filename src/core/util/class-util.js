@@ -89,11 +89,7 @@ export default class ClassUtil
 	{
 
 		let c = ClassUtil.getClass(className);
-
-		if (!c)
-		{
-			throw new ReferenceError(`Class '${className}' is not defined.`);
-		}
+		Util.assert(c, `ClassUtil.createObject(): Class '${className}' is not defined.`, ReferenceError);
 
 		return  new c(...args);
 
@@ -142,11 +138,7 @@ export default class ClassUtil
 	{
 
 		let result = /^[a-zA-Z0-9\-\._]+$/.test(className);
-
-		if (!result)
-		{
-			throw new TypeError(`Class name '${className}' is not valid.`);
-		}
+		Util.assert(result, `ClassUtil.__validateClassName(): Class name '${className}' is not valid.`, TypeError);
 
 		return className;
 
