@@ -28,13 +28,20 @@ export default class ChainableStore extends Store
 	 * @param	{Object}		options				Options.
 	 * @param	{Store}			chain				Store Component to chain.
      */
-	constructor(options, chain)
+	constructor(options)
 	{
 
 		super(options);
 
 		// Init vars
-		this._chain = Util.safeGet(options, "chain");
+		this.chain;
+
+		// Chain
+		let chain = Util.safeGet(options, "chain");
+		if (chain)
+		{
+			this.chain(chain);
+		}
 
 	}
 
@@ -54,11 +61,11 @@ export default class ChainableStore extends Store
 
 		if (this._chain)
 		{
-			items = Object.assign({}, this._chain._items, this._items);
+			items = Util.deepClone(this._chain.clone(), this._items);
 		}
 		else
 		{
-			items = Object.assign({}, this._items);
+			items = this.clone();
 		}
 
 		return items;
@@ -84,6 +91,8 @@ export default class ChainableStore extends Store
      */
 	chain(store)
 	{
+
+		Util.assert(store instanceof ChainableStore, "ChainableStore.chain(): Parameter must be a ChainableStore.", TypeError);
 
 		this._chain = store;
 
