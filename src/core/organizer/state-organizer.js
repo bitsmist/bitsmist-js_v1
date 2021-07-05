@@ -11,6 +11,7 @@
 import Component from "../component.js";
 import Organizer from "./organizer.js";
 import Store from "../store/store.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Waitfor organizer class
@@ -147,7 +148,7 @@ export default class StateOrganizer extends Organizer
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
 				setTimeout(() => {
-					reject(`waitFor() timed out after ${timeout} milliseconds waiting for ${JSON.stringify(waitlist)}, name=${component.name}.`);
+					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${JSON.stringify(waitlist)}, name=${component.name}.`);
 				}, timeout);
 			});
 			waitInfo["promise"] = promise;
@@ -238,17 +239,12 @@ export default class StateOrganizer extends Organizer
 	static _changeState(component, state)
 	{
 
-		if (StateOrganizer.__isTransitionable(component.state, state))
-		{
-			component.state = state;
-			StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
+		Util.assert(StateOrganizer.__isTransitionable(component.state, state), `StateOrganizer._changeState(): Illegal transition. name=${component.name}, fromState=${component.state}, toState=${state}, id=${component.id}`, Error);
 
-			StateOrganizer.__processWaitingList(component, state);
-		}
-		else
-		{
-			throw Error(`Illegal transition. name=${component.name}, fromState=${component.state}, toState=${state}, id=${component.id}`);
-		}
+		component.state = state;
+		StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
+
+		StateOrganizer.__processWaitingList(component, state);
 
 	}
 
