@@ -8,9 +8,9 @@
  */
 // =============================================================================
 
-import Component from '../component';
-import Organizer from './organizer';
-import Util from '../util/util';
+import Component from "../component.js";
+import Organizer from "./organizer.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Event organizer class
@@ -95,10 +95,7 @@ export default class EventOrganizer extends Organizer
 
 		// Get handler
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-		if (typeof handler !== "function")
-		{
-			throw TypeError(`Event handler is not a function. componentName=${component.name}, eventName=${eventName}`);
-		}
+		Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. componentName=${component.name}, eventName=${eventName}`, TypeError);
 
 		// Init holder object for the element
 		if (!element.__bm_eventinfo)
@@ -142,10 +139,7 @@ export default class EventOrganizer extends Organizer
 		element = element || component;
 
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-		if (typeof handler !== "function")
-		{
-			throw TypeError(`Event handler is not a function. componentName=${component.name}, eventName=${eventName}`);
-		}
+		Util.assert(typeof handler === "function", `EventOrganizer._removeEventHandler(): Event handler is not a function. componentName=${component.name}, eventName=${eventName}`, TypeError);
 
 		let listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
 		if (listeners)
@@ -239,7 +233,7 @@ export default class EventOrganizer extends Organizer
 		}
 		catch(error)
 		{
-			e  = document.createEvent('CustomEvent');
+			e  = document.createEvent("CustomEvent");
 			e.initCustomEvent(eventName, false, false, options);
 		}
 
@@ -387,11 +381,7 @@ export default class EventOrganizer extends Organizer
 		let component = Util.safeGet(this, "__bm_eventinfo.component");
 
 		// Check if handler is already running
-		if (Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) == "handling")
-		{
-			throw new Error(`Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
-			return;
-		}
+		Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
 
 		Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
 
