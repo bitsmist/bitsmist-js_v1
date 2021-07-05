@@ -8,11 +8,11 @@
  */
 // =============================================================================
 
-import AjaxUtil from '../util/ajax-util';
-import ChainableStore from '../store/chainable-store';
-import Component from '../component';
-import Organizer from './organizer';
-import Util from '../util/util';
+import AjaxUtil from "../util/ajax-util.js";
+import ChainableStore from "../store/chainable-store.js";
+import Component from "../component.js";
+import Organizer from "./organizer.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Setting organizer class
@@ -32,13 +32,13 @@ export default class SettingOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(Component.prototype, 'settings', {
+		Object.defineProperty(Component.prototype, "settings", {
 			get() { return this._settings; },
 		});
 
 		// Init vars
 		SettingOrganizer.__globalSettings = new ChainableStore();
-		Object.defineProperty(SettingOrganizer, 'globalSettings', {
+		Object.defineProperty(SettingOrganizer, "globalSettings", {
 			get() { return SettingOrganizer.__globalSettings; },
 		});
 
