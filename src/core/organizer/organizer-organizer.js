@@ -8,11 +8,11 @@
  */
 // =============================================================================
 
-import Component from '../component';
-import Organizer from './organizer';
-import OrganizerStore from '../store/organizer-store';
-import SettingOrganizer from './setting-organizer';
-import Util from '../util/util';
+import Component from "../component";
+import Organizer from "./organizer";
+import OrganizerStore from "../store/organizer-store";
+import SettingOrganizer from "./setting-organizer";
+import Util from "../util/util";
 
 // =============================================================================
 //	Organizer organizer class
@@ -32,7 +32,7 @@ export default class OrganizerOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(Component.prototype, 'organizers', {
+		Object.defineProperty(Component.prototype, "organizers", {
 			get() { return this._organizers; },
 		});
 
@@ -42,7 +42,7 @@ export default class OrganizerOrganizer extends Organizer
 
 		// Init vars
 		OrganizerOrganizer.__organizers = new OrganizerStore();
-		Object.defineProperty(OrganizerOrganizer, 'organizers', {
+		Object.defineProperty(OrganizerOrganizer, "organizers", {
 			get() { return OrganizerOrganizer.__organizers; },
 		});
 
@@ -70,7 +70,11 @@ export default class OrganizerOrganizer extends Organizer
 		if (organizers)
 		{
 			Object.keys(organizers).forEach((key) => {
-				if (!component._organizers[key] && OrganizerOrganizer.__organizers.items[key])
+				if (
+					Util.safeGet(organizers[key], "settings.enabled", true) &&
+					!component._organizers[key] &&
+					OrganizerOrganizer.__organizers.get(key)
+				)
 				{
 					targets[key] = OrganizerOrganizer.__organizers.items[key];
 				}
