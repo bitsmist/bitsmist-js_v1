@@ -52,7 +52,7 @@ export default class Store
 	get items()
 	{
 
-		return Object.assign({}, this._items);
+		return this.clone();
 
 	}
 
@@ -80,10 +80,7 @@ export default class Store
 	set filter(value)
 	{
 
-		if (typeof value != "function")
-		{
-			throw TypeError(`Filter is not a function. filter=${value}`);
-		}
+		Util.assert(typeof value === "function", `Store.filter: Filter is not a function. filter=${value}`, TypeError);
 
 		this._filter = value;
 
@@ -106,10 +103,7 @@ export default class Store
 	set merger(value)
 	{
 
-		if (typeof value != "function")
-		{
-			throw TypeError(`Merger is not a function. filter=${value}`);
-		}
+		Util.assert(typeof value === "function", `Store.merger: Merger is not a function. filter=${value}`, TypeError);
 
 		this._merger = value;
 
@@ -129,6 +123,20 @@ export default class Store
 	{
 
 		this._items = {};
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+     * Clone contents as an object.
+     *
+	 * @return  {Object}		Cloned items.
+     */
+	clone()
+	{
+
+		return Util.deepClone({}, this._items);
 
 	}
 
