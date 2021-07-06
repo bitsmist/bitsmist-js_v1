@@ -131,38 +131,6 @@ export default class ComponentOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Object}		organizerInfo		Organizer info.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, organizerInfo, component)
-	{
-
-		let ret = false;
-
-		if (conditions == "beforeStart")
-		{
-			if (!(component instanceof BITSMIST.v1.Pad))
-			{
-				ret = true;
-			}
-		}
-		else
-		{
-			ret = super.isTarget(conditions, organizerInfo, component);
-		}
-
-		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
 
@@ -220,20 +188,16 @@ export default class ComponentOrganizer extends Organizer
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 * @param	{String}		path				Base path prepend to each element's path.
 	 * @param	{Object}		options				Load Options.
-	 * @param	{String}		target				Target elements.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadTags(rootNode, basePath, options, target)
+	static loadTags(rootNode, basePath, options)
 	{
 
-		console.debug(`ComponentOrganizer._loadTags(): Loading tags. rootNode=${rootNode}, basePath=${basePath}`);
+		console.debug(`ComponentOrganizer._loadTags(): Loading tags. rootNode=${rootNode.tagName}, basePath=${basePath}`);
 
 		let promises = [];
-		let targets = ( target ?
-			document.querySelectorAll(target) :
-			rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])")
-		);
+		let targets = rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
 
 		targets.forEach((element) => {
 			element.setAttribute("bm-autoloaded", "");
