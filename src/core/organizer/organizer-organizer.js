@@ -71,7 +71,7 @@ export default class OrganizerOrganizer extends Organizer
 		{
 			Object.keys(organizers).forEach((key) => {
 				if (
-					Util.safeGet(organizers[key], "settings.enabled", true) &&
+					Util.safeGet(organizers[key], "settings.attach") &&
 					!component._organizers[key] &&
 					OrganizerOrganizer.__organizers.get(key)
 				)

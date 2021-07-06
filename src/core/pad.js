@@ -50,14 +50,15 @@ Pad.prototype.start = function(settings)
 	// Defaults
 	let defaults = {
 		"settings": {
-			"autoSetupOnStart":false,
-			"autoOpen": true,
 			"autoClose": true,
-			"autoRefresh": true,
 			"autoFill": true,
+			"autoOpen": true,
+			"autoRefresh": true,
+			"autoSetupOnStart": false,
+			"triggerAppendOnStart": false,
 		},
 		"organizers":{
-			"TemplateOrganizer": "",
+			"TemplateOrganizer": {"settings":{"attach":true}},
 		}
 	};
 	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
