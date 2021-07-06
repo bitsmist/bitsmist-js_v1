@@ -30,15 +30,9 @@ export default class AutoloadOrganizer extends Organizer
 	{
 
 		document.addEventListener("DOMContentLoaded", () => {
-			if (BITSMIST.v1.settings.get("system.autoLoadOnStartup", true))
+			if (BITSMIST.v1.settings.get("organizers.AutoloadOrganizer.settings.autoLoadOnStartup", true))
 			{
-				let path = Util.concatPath([
-					BITSMIST.v1.settings.get("system.appBaseUrl", ""),
-					BITSMIST.v1.settings.get("system.componentPath", "")
-				]);
-				let splitComponent = BITSMIST.v1.settings.get("system.splitComponent", false);
-
-				ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent});
+				this.load(document.body, BITSMIST.v1.settings)
 			}
 		});
 
@@ -58,22 +52,24 @@ export default class AutoloadOrganizer extends Organizer
 	static organize(conditions, component, settings)
 	{
 
-		let path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", "")]);
-		let splitComponent = component.settings.get("system.splitComponent", false);
-		let target = component.getAttribute("bm-target");
-
-		if (document.readyState !== "loading")
-		{
-			ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
-		}
-		else
-		{
-			document.addEventListener("DOMContentLoaded", () => {
-				ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
-			});
-		}
+		this.load(component.rootElement, component.settings);
 
 		return settings;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	* Load all tags.
+	*/
+	static load(rootNode, settings)
+	{
+
+		let path = Util.concatPath([settings.get("system.appBaseUrl", ""), settings.get("system.componentPath", "")]);
+		let splitComponent = settings.get("system.splitComponent", false);
+
+		ComponentOrganizer.loadTags(rootNode, path, {"splitComponent":splitComponent});
 
 	}
 

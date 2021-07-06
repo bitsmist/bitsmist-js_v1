@@ -11,6 +11,7 @@
 import AutoloadOrganizer from "../organizer/autoload-organizer.js";
 import ClassUtil from "../util/class-util.js";
 import Component from "../component.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	TagLoader class
@@ -34,24 +35,40 @@ export default function TagLoader()
 ClassUtil.inherit(TagLoader, Component);
 
 // -----------------------------------------------------------------------------
+//  Methods
+// -----------------------------------------------------------------------------
 
 /**
- * Get component settings.
+ * Start pad.
  *
- * @return  {Object}		Options.
+ * @param	{Object}		settings			Settings.
+ *
+ * @return  {Promise}		Promise.
  */
-TagLoader.prototype._getSettings = function()
+TagLoader.prototype.start = function(settings)
 {
 
-	return {
+	// Defaults
+	let defaults = {
 		"settings": {
-			"name":					"TagLoader",
-			"loadGlobalSettings":	true,
+			"name": "TagLoader",
 		},
-		"organizers": {
-			"AutoloadOrganizer": ""
-		}
 	};
+	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
+
+	// super()
+	return BITSMIST.v1.Component.prototype.start.call(this, settings).then(() => {
+		if (document.readyState !== "loading")
+		{
+			AutoloadOrganizer.load(document.body, this.settings);
+		}
+		else
+		{
+			document.addEventListener("DOMContentLoaded", () => {
+				AutoloadOrganizer.load(document.body, this.settings);
+			});
+		}
+	});
 
 }
 
