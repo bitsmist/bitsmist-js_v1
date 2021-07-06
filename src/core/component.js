@@ -153,11 +153,12 @@ Component.prototype.start = function(settings)
 		"settings": {
 			"autoSetup": true,
 			"autoStop": true,
+			"triggerAppendOnStart": true,
 			"useGlobalSettings": true,
 		},
 		"organizers": {
-			"SettingOrganizer": "",
 			"OrganizerOrganizer": "",
+			"SettingOrganizer": "",
 			"StateOrganizer": "",
 		}
 	};
@@ -166,7 +167,7 @@ Component.prototype.start = function(settings)
 	// Init vars
 	this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 	this._name = this.constructor.name;
-	this._rootElement = ( Util.safeGet(settings, "settings.rootElement") ? document.querySelector(Util.safeGet(settings, "settings.rootElement")) : this );
+	this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
 
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
@@ -198,6 +199,16 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
+	}).then(() => {
+		let triggerAppendOnStart = this._settings.get("settings.triggerAppendOnStart");
+		if (triggerAppendOnStart)
+		{
+			return Promise.resolve().then(() => {
+				return this.callOrganizers("afterAppend", settings);
+			}).then(() => {
+				return this.trigger("afterAppend", this, settings);
+			});
+		}
 	}).then(() => {
 		return settings;
 	});
