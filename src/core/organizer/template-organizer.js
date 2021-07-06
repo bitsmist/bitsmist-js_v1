@@ -104,37 +104,6 @@ export default class TemplateOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Object}		organizerInfo		Organizer info.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, organizerInfo, component)
-	{
-
-		let ret = false;
-
-		if (component instanceof BITSMIST.v1.Pad)
-		{
-			ret = super.isTarget(conditions, organizerInfo, component);
-			/*
-			if (conditions == "*" || conditions == "beforeStart")
-			{
-				ret = true;
-			}
-			*/
-		}
-
-		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
 
