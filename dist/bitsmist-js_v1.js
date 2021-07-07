@@ -52,7 +52,7 @@
 	/**
 	* Set an value to store.
 	*
-	* @param{Object}	store			Object which holds keys/values.
+	* @param{Object}	store			Object that holds keys/values.
 	* @param{String}	key				Key to store.
 	* @param{Object}	value			Value to store.
 	*/
@@ -64,24 +64,18 @@
 		var items = key.split(".");
 		for (var i = 0; i < items.length - 1; i++)
 		{
-			if (typeof current === "object" && !(items[i] in current))
+			Util.assert(typeof current === "object", ("Util.safeSet(): Key already exists. key=" + key + ", existingKey=" + prevKey + ", existingValue=" + current), TypeError);
+
+			if (!(items[i] in current))
 			{
 				current[items[i]] = {};
-			}
-			else if (typeof current !== "object")
-			{
-				throw new TypeError(("Key already exists. key=" + key + ", existingKey=" + prevKey + ", existingValue=" + current));
 			}
 
 			prevKey = items[i];
 			current = current[items[i]];
 		}
 
-		if (typeof current !== "object")
-		{
-			throw new TypeError(("Key already exists. key=" + key + ", existingKey=" + prevKey + ", existingValue=" + current));
-		}
-
+		Util.assert(typeof current === "object", ("Util.safeSet(): Key already exists. key=" + key + ", existingKey=" + prevKey + ", existingValue=" + current), TypeError);
 		current[items[items.length - 1]] = value;
 
 		return store;
@@ -173,35 +167,135 @@
 	// -------------------------------------------------------------------------
 
 	/**
-		 * Deep merge two arrays.
+		 * Deep merge two objects. Merge obj2 into obj1.
 		 *
-		 * @param{Object}	arr1				Array1.
-		 * @param{Object}	arr2				Array2.
+		 * @param{Object}	obj1				Object1.
+		 * @param{Object}	obj2				Object2.
+		 *
+		 * @return  {Object}	Merged object.
+		 */
+	Util.deepMerge = function deepMerge (obj1, obj2)
+	{
+
+		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepMerge(): Parameters must be an object.", TypeError);
+
+		Object.keys(obj2).forEach(function (key) {
+			// array <--- *
+			if (Array.isArray(obj1[key]))
+			{
+				obj1[key] = obj1[key].concat(obj2[key]);
+			}
+			// object <--- object
+			else if (
+				obj1.hasOwnProperty(key) &&
+				obj1[key] && typeof obj1[key] === "object" &&
+				obj2[key] && typeof obj2[key] === "object" &&
+				!(obj1[key] instanceof HTMLElement) &&
+				!(obj2[key] instanceof HTMLElement)
+			)
+			{
+				Util.deepMerge(obj1[key], obj2[key]);
+			}
+			// value <--- *
+			else
+			{
+				obj1[key] = obj2[key];
+			}
+		});
+
+		return obj1;
+
+	};
+
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Deep clone an objects into another object.
+		 *
+		 * @param{Object}	obj1				Object1.
+		 * @param{Object}	obj2				Object2.
+		 *
+		 * @return  {Object}	Merged object.
+		 */
+	Util.deepClone = function deepClone (obj1, obj2)
+	{
+
+		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepClone(): Parameters must be an object.", TypeError);
+
+		Object.keys(obj2).forEach(function (key) {
+			// array <--- *
+			if (Array.isArray(obj1[key]))
+			{
+				obj1[key] = obj1[key].concat(obj2[key]);
+			}
+			// object <--- object
+			else if (
+				obj1.hasOwnProperty(key) &&
+				obj1[key] && typeof obj1[key] === "object" &&
+				obj2[key] && typeof obj2[key] === "object" &&
+				!(obj1[key] instanceof HTMLElement) &&
+				!(obj2[key] instanceof HTMLElement)
+			)
+			{
+				Util.deepClone(obj1[key], obj2[key]);
+			}
+			// * <--- array
+			else if (Array.isArray(obj2[key]))
+			{
+				obj1[key] = Util.deepCloneArray(obj2[key]);
+			}
+			// * <--- object
+			else if (
+				obj2[key] && typeof obj2[key] === "object" &&
+				!(obj2[key] instanceof HTMLElement)
+			)
+			{
+				obj1[key] = {};
+				Util.deepClone(obj1[key], obj2[key]);
+			}
+			// value <--- value
+			else
+			{
+				obj1[key] = obj2[key];
+			}
+		});
+
+		return obj1;
+
+	};
+
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Deep clone an array.
+		 *
+		 * @param{Object}	arr					Array.
 		 *
 		 * @return  {Object}	Merged array.
 		 */
-	Util.deepMerge = function deepMerge (arr1, arr2)
+	Util.deepCloneArray = function deepCloneArray (arr)
 	{
 
-		if (arr2)
+		Util.assert(Array.isArray(arr), "Util.deepCloneArray(): Parameter must be an array.", TypeError);
+
+		var result = [];
+
+		for (var i = 0; i < arr.length; i++)
 		{
-			Object.keys(arr2).forEach(function (key) {
-				if (Array.isArray(arr1[key]))
-				{
-					arr1[key] = arr1[key].concat(arr2[key]);
-				}
-				else if (arr1.hasOwnProperty(key) && typeof arr1[key] === 'object')
-				{
-					Util.deepMerge(arr1[key], arr2[key]);
-				}
-				else
-				{
-					arr1[key] = arr2[key];
-				}
-			});
+			if (
+				arr[i] && typeof arr[i] === "object" &&
+				!(arr[i] instanceof HTMLElement)
+			)
+			{
+				result.push(Util.deepClone({}, arr[i]));
+			}
+			else
+			{
+				result.push(arr[i]);
+			}
 		}
 
-		return arr1;
+		return result;
 
 	};
 
@@ -294,6 +388,35 @@
 
 	};
 
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Assert conditions. Throws an error when assertion failed.
+		 *
+		 * @param{Boolean}	conditions		Conditions.
+		 * @param{String}	Message			Error message.
+		 * @param{Error}		error			Error to throw.
+		 * @param{Options}	options			Options.
+		 *
+		 * @return {Boolean}	True if it is upper case.
+		 */
+	Util.assert = function assert (conditions, msg, error, options)
+	{
+
+		if (!conditions)
+		{
+			var e = new error(msg);
+
+			// Remove last stack (assert() itself)
+			var stacks = e.stack.split("\n");
+			stacks.splice(1, 1);
+			e.stack = stacks.join("\n");
+
+			throw e;
+		}
+
+	};
+
 	// =============================================================================
 
 	// =============================================================================
@@ -364,11 +487,7 @@
 
 
 		var c = ClassUtil.getClass(className);
-
-		if (!c)
-		{
-			throw new ReferenceError(("Class '" + className + "' is not defined."));
-		}
+		Util.assert(c, ("ClassUtil.createObject(): Class '" + className + "' is not defined."), ReferenceError);
 
 		return  new (Function.prototype.bind.apply( c, [ null ].concat( args) ));
 
@@ -417,11 +536,7 @@
 	{
 
 		var result = /^[a-zA-Z0-9\-\._]+$/.test(className);
-
-		if (!result)
-		{
-			throw new TypeError(("Class name '" + className + "' is not valid."));
-		}
+		Util.assert(result, ("ClassUtil.__validateClassName(): Class name '" + className + "' is not valid."), TypeError);
 
 		return className;
 
@@ -573,20 +688,21 @@
 			"settings": {
 				"autoSetup": true,
 				"autoStop": true,
+				"triggerAppendOnStart": true,
 				"useGlobalSettings": true,
 			},
 			"organizers": {
-				"SettingOrganizer": "",
-				"OrganizerOrganizer": "",
-				"StateOrganizer": "",
+				"OrganizerOrganizer": {"settings":{"attach":true}},
+				"SettingOrganizer": {"settings":{"attach":true}},
+				"StateOrganizer": {"settings":{"attach":true}},
 			}
 		};
-		settings = Util.deepMerge(defaults, settings);
+		settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
 
 		// Init vars
 		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 		this._name = this.constructor.name;
-		this._rootElement = ( Util.safeGet(settings, "settings.rootElement") ? document.querySelector(Util.safeGet(settings, "settings.rootElement")) : this );
+		this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
 
 		return Promise.resolve().then(function () {
 			return this$1._injectSettings(settings);
@@ -618,6 +734,16 @@
 		}).then(function () {
 			console.debug(("Component.start(): Started component. name=" + (this$1.name) + ", id=" + (this$1.id)));
 			return this$1.changeState("started");
+		}).then(function () {
+			var triggerAppendOnStart = this$1._settings.get("settings.triggerAppendOnStart");
+			if (triggerAppendOnStart)
+			{
+				return Promise.resolve().then(function () {
+					return this$1.callOrganizers("afterAppend", settings);
+				}).then(function () {
+					return this$1.trigger("afterAppend", this$1, settings);
+				});
+			}
 		}).then(function () {
 			return settings;
 		});
@@ -708,7 +834,7 @@
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Get component settings.  Need to override.
+	 * Get component settings. Need to override.
 	 *
 	 * @return  {Object}		Options.
 	 */
@@ -798,7 +924,11 @@
 	Organizer.isTarget = function isTarget (conditions, organizerInfo, component)
 	{
 
-		if (organizerInfo["targetEvents"].indexOf(conditions) > -1)
+		if (organizerInfo["targetEvents"] == "*")
+		{
+			return true;
+		}
+		else if (organizerInfo["targetEvents"].indexOf(conditions) > -1)
 		{
 			return true;
 		}
@@ -857,7 +987,7 @@
 	prototypeAccessors.items.get = function ()
 	{
 
-		return Object.assign({}, this._items);
+		return this.clone();
 
 	};
 
@@ -885,10 +1015,7 @@
 	prototypeAccessors.filter.set = function (value)
 	{
 
-		if (typeof value != "function")
-		{
-			throw TypeError(("Filter is not a function. filter=" + value));
-		}
+		Util.assert(typeof value === "function", ("Store.filter: Filter is not a function. filter=" + value), TypeError);
 
 		this._filter = value;
 
@@ -911,10 +1038,7 @@
 	prototypeAccessors.merger.set = function (value)
 	{
 
-		if (typeof value != "function")
-		{
-			throw TypeError(("Merger is not a function. filter=" + value));
-		}
+		Util.assert(typeof value === "function", ("Store.merger: Merger is not a function. filter=" + value), TypeError);
 
 		this._merger = value;
 
@@ -936,6 +1060,21 @@
 		this._items = {};
 
 	};
+
+	// -------------------------------------------------------------------------
+
+	/**
+	     * Clone contents as an object.
+	     *
+		 * @return  {Object}	Cloned items.
+	     */
+	Store.prototype.clone = function clone ()
+	{
+
+		return Util.deepClone({}, this._items);
+
+	};
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -947,13 +1086,12 @@
 	Store.prototype.merge = function merge (newItems, merger)
 	{
 
+		merger = merger || this._merger;
+		var items = (Array.isArray(newItems) ? newItems: [newItems]);
 
-		if (newItems)
+		for (var i = 0; i < items.length; i++)
 		{
-			merger = merger || this._merger;
-			var items = (Array.isArray(newItems) ? newItems: [newItems]);
-
-			for (var i = 0; i < items.length; i++)
+			if (items[i] && typeof items[i] == "object")
 			{
 				merger(this._items, items[i]);
 			}
@@ -981,39 +1119,23 @@
 	// -----------------------------------------------------------------------------
 
 	/**
-		 * Set a value to store.
+		 * Set a value to the store. If key is empty, it sets the value to the root.
 		 *
 		 * @param{String}	key				Key to store.
 		 * @param{Object}	value			Value to store.
 		 */
-	Store.prototype.set = function set (key, value)
+	Store.prototype.set = function set (key, value, options)
 	{
 
-		Util.safeSet(this._items, key, value);
+		var holder = ( key ? this.get(key) : this._items );
 
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Set a value to store. Unlike set(), this merges with an existing value
-		 * if the existing value is object, otherwise overwrites.
-		 *
-		 * @param{String}	key				Key to store.
-		 * @param{Object}	value			Value to store.
-		 */
-	Store.prototype.mergeSet = function mergeSet (key, value)
-	{
-
-		var holder = this.get(key);
-
-		if (typeof holder == "object")
+		if (holder && typeof holder == "object" && value && typeof value == "object")
 		{
-			Object.assign(holder, value);
+			Util.deepMerge(holder, value);
 		}
 		else
 		{
-			this.set(key, value);
+			Util.safeSet(this._items, key, value);
 		}
 
 	};
@@ -1179,7 +1301,9 @@
 			xhr.addEventListener("load", function () {
 				if (xhr.status == 200 || xhr.status == 201)
 				{
+					setTimeout(function (){
 					resolve(xhr);
+					}, 500);
 				}
 				else
 				{
@@ -1220,7 +1344,9 @@
 					script = undefined;
 
 					if(!isAbort) {
+						setTimeout(function (){
 						resolve();
+						}, 500);
 					}
 				}
 			};
@@ -1238,13 +1364,20 @@
 	// =============================================================================
 
 	var ChainableStore = /*@__PURE__*/(function (Store) {
-		function ChainableStore(options, chain)
+		function ChainableStore(options)
 		{
 
 			Store.call(this, options);
 
 			// Init vars
-			this._chain = Util.safeGet(options, "chain");
+			this.chain;
+
+			// Chain
+			var chain = Util.safeGet(options, "chain");
+			if (chain)
+			{
+				this.chain(chain);
+			}
 
 		}
 
@@ -1253,7 +1386,6 @@
 		ChainableStore.prototype.constructor = ChainableStore;
 
 		var prototypeAccessors = { items: { configurable: true } };
-
 
 		// -------------------------------------------------------------------------
 		//  Setter/Getter
@@ -1271,11 +1403,11 @@
 
 			if (this._chain)
 			{
-				items = Object.assign({}, this._chain._items, this._items);
+				items = Util.deepClone(this._chain.clone(), this._items);
 			}
 			else
 			{
-				items = Object.assign({}, this._items);
+				items = this.clone();
 			}
 
 			return items;
@@ -1302,6 +1434,8 @@
 		ChainableStore.prototype.chain = function chain (store)
 		{
 
+			Util.assert(store instanceof ChainableStore, "ChainableStore.chain(): Parameter must be a ChainableStore.", TypeError);
+
 			this._chain = store;
 
 		};
@@ -1327,24 +1461,23 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Set a value to store. Unlike set(), this merges with an existing value
-		 * if the existing value is object, otherwise overwrites.
+		 * Set a value to the store. If key is empty, it sets the value to the root.
 		 *
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
 		 */
-		ChainableStore.prototype.mergeSet = function mergeSet (key, value)
+		ChainableStore.prototype.set = function set (key, value, options)
 		{
 
-			var holder = this._getLocal(key);
+			var holder = ( key ? this._getLocal(key) : this._items );
 
 			if (typeof holder == "object")
 			{
-				Object.assign(holder, value);
+				Util.deepMerge(holder, value);
 			}
 			else
 			{
-				this.set(key, value);
+				Util.safeSet(this._items, key, value);
 			}
 
 		};
@@ -1422,13 +1555,13 @@
 		{
 
 			// Add properties
-			Object.defineProperty(Component.prototype, 'settings', {
+			Object.defineProperty(Component.prototype, "settings", {
 				get: function get() { return this._settings; },
 			});
 
 			// Init vars
 			SettingOrganizer.__globalSettings = new ChainableStore();
-			Object.defineProperty(SettingOrganizer, 'globalSettings', {
+			Object.defineProperty(SettingOrganizer, "globalSettings", {
 				get: function get() { return SettingOrganizer.__globalSettings; },
 			});
 
@@ -1709,7 +1842,7 @@
 		{
 
 			// Add properties
-			Object.defineProperty(Component.prototype, 'organizers', {
+			Object.defineProperty(Component.prototype, "organizers", {
 				get: function get() { return this._organizers; },
 			});
 
@@ -1719,7 +1852,7 @@
 
 			// Init vars
 			OrganizerOrganizer.__organizers = new OrganizerStore();
-			Object.defineProperty(OrganizerOrganizer, 'organizers', {
+			Object.defineProperty(OrganizerOrganizer, "organizers", {
 				get: function get() { return OrganizerOrganizer.__organizers; },
 			});
 
@@ -1747,7 +1880,11 @@
 			if (organizers)
 			{
 				Object.keys(organizers).forEach(function (key) {
-					if (!component._organizers[key] && OrganizerOrganizer.__organizers.items[key])
+					if (
+						Util.safeGet(organizers[key], "settings.attach") &&
+						!component._organizers[key] &&
+						OrganizerOrganizer.__organizers.get(key)
+					)
 					{
 						targets[key] = OrganizerOrganizer.__organizers.items[key];
 					}
@@ -1890,6 +2027,1640 @@
 	// =============================================================================
 
 	// =============================================================================
+	//	Pad class
+	// =============================================================================
+
+	// -----------------------------------------------------------------------------
+	//  Constructor
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Constructor.
+	 */
+	function Pad()
+	{
+
+		// super()
+		return Reflect.construct(Component, [], this.constructor);
+
+	}
+
+	ClassUtil.inherit(Pad, Component);
+
+	// -----------------------------------------------------------------------------
+	//  Methods
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Start pad.
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Pad.prototype.start = function(settings)
+	{
+		var this$1 = this;
+
+
+		// Defaults
+		var defaults = {
+			"settings": {
+				"autoClose": true,
+				"autoFill": true,
+				"autoOpen": true,
+				"autoRefresh": true,
+				"autoSetupOnStart": false,
+				"triggerAppendOnStart": false,
+			},
+			"organizers":{
+				"AutoloadOrganizer": {"settings":{"attach":true}},
+				"TemplateOrganizer": {"settings":{"attach":true}},
+			}
+		};
+		settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
+
+		return Promise.resolve().then(function () {
+			// super()
+			return Component.prototype.start.call(this$1, settings);
+		}).then(function (newSettings) {
+			settings = newSettings;
+
+			// Open
+			if (this$1._settings.get("settings.autoOpen"))
+			{
+				return this$1.open(settings);
+			}
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Open pad.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Pad.prototype.open = function(options)
+	{
+		var this$1 = this;
+
+
+		options = Object.assign({}, options);
+		var sender = ( options["sender"] ? options["sender"] : this );
+
+		return Promise.resolve().then(function () {
+			console.debug(("Pad.open(): Opening pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
+			return this$1.changeState("opening");
+		}).then(function () {
+			return this$1.switchTemplate(Util.safeGet(options, "templateName", this$1._settings.get("settings.templateName")));
+		}).then(function () {
+			return this$1.trigger("beforeOpen", sender, options);
+		}).then(function () {
+			var autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this$1._settings.get("settings.autoSetupOnOpen"));
+			var autoSetup = Util.safeGet(options, "autoSetupOnOpen", this$1._settings.get("settings.autoSetup"));
+			if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
+			{
+				return this$1.setup(options);
+			}
+		}).then(function () {
+			if (Util.safeGet(options, "autoRefresh", this$1._settings.get("settings.autoRefresh")))
+			{
+				return this$1.refresh(options);
+			}
+		}).then(function () {
+			return this$1.trigger("doOpen", sender, options);
+		}).then(function () {
+			return this$1.trigger("afterOpen", sender, options);
+		}).then(function () {
+			console.debug(("Pad.open(): Opened pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
+			return this$1.changeState("opened");
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Open pad modally.
+	 *
+	 * @param	{array}			options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Pad.prototype.openModal = function(options)
+	{
+		var this$1 = this;
+
+
+		console.debug(("Pad.openModal(): Opening pad modally. name=" + (this.name) + ", id=" + (this.id)));
+
+		return new Promise(function (resolve, reject) {
+			this$1._isModal = true;
+			this$1._modalResult = {"result":false};
+			this$1._modalPromise = { "resolve": resolve, "reject": reject };
+			this$1.open(options);
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Close pad.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Pad.prototype.close = function(options)
+	{
+		var this$1 = this;
+
+
+		options = Object.assign({}, options);
+		var sender = ( options["sender"] ? options["sender"] : this );
+
+		return Promise.resolve().then(function () {
+			console.debug(("Pad.close(): Closing pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
+			return this$1.changeState("closing");
+		}).then(function () {
+			return this$1.trigger("beforeClose", sender, options);
+		}).then(function () {
+			return this$1.trigger("doClose", sender, options);
+		}).then(function () {
+			return this$1.trigger("afterClose", sender, options);
+		}).then(function () {
+			if (this$1._isModal)
+			{
+				this$1._modalPromise.resolve(this$1._modalResult);
+			}
+		}).then(function () {
+			console.debug(("Pad.close(): Closed pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
+			return this$1.changeState("closed");
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Refresh pad.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Pad.prototype.refresh = function(options)
+	{
+		var this$1 = this;
+
+
+		options = Object.assign({}, options);
+		var sender = ( options["sender"] ? options["sender"] : this );
+
+		return Promise.resolve().then(function () {
+			console.debug(("Pad.refresh(): Refreshing pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
+			return this$1.trigger("beforeRefresh", sender, options);
+		}).then(function () {
+			if (Util.safeGet(options, "autoFill", this$1._settings.get("settings.autoFill")))
+			{
+				return this$1.fill(options);
+			}
+		}).then(function () {
+			return this$1.trigger("doRefresh", sender, options);
+		}).then(function () {
+			return this$1.trigger("afterRefresh", sender, options);
+		}).then(function () {
+			console.debug(("Pad.refresh(): Refreshed pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Change template html.
+	 *
+	 * @param	{String}		templateName		Template name.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Pad.prototype.switchTemplate = function(templateName, options)
+	{
+		var this$1 = this;
+
+
+		options = Object.assign({}, options);
+		var sender = ( options["sender"] ? options["sender"] : this );
+
+		if (this.isActiveTemplate(templateName))
+		{
+			return Promise.resolve();
+		}
+
+		return Promise.resolve().then(function () {
+			console.debug(("Pad.switchTemplate(): Switching template. name=" + (this$1.name) + ", templateName=" + templateName + ", id=" + (this$1.id)));
+			return this$1.addTemplate(templateName, {"rootNode":this$1._settings.get("settings.rootNode"), "templateNode":this$1._settings.get("settings.templateNode")});
+		}).then(function () {
+			return this$1.callOrganizers("afterAppend", this$1._settings.items);
+		}).then(function () {
+			return this$1.trigger("afterAppend", sender, options);
+		}).then(function () {
+			console.debug(("Pad.switchTemplate(): Switched template. name=" + (this$1.name) + ", templateName=" + templateName + ", id=" + (this$1.id)));
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Fill.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Pad.prototype.fill = function(options)
+	{
+	};
+
+	// -----------------------------------------------------------------------------
+
+	customElements.define("bm-pad", Pad);
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Template organizer class
+	// =============================================================================
+
+	var TemplateOrganizer = /*@__PURE__*/(function (Organizer) {
+		function TemplateOrganizer () {
+			Organizer.apply(this, arguments);
+		}
+
+		if ( Organizer ) TemplateOrganizer.__proto__ = Organizer;
+		TemplateOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
+		TemplateOrganizer.prototype.constructor = TemplateOrganizer;
+
+		TemplateOrganizer.globalInit = function globalInit ()
+		{
+
+			// Add methods
+			Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); };
+			Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); };
+			Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActive(this, templateName); };
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Init.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		TemplateOrganizer.init = function init (conditions, component, setttings)
+		{
+
+			// Init vars
+			component._templates = {};
+
+			// Set defaults if not set already
+			component.settings.set("settings.templateName", component.settings.get("settings.templateName", component.tagName.toLowerCase()));
+
+			// Load settings from attributes
+			TemplateOrganizer.__loadAttrSettings(component);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Organize.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		TemplateOrganizer.organize = function organize (conditions, component, settings)
+		{
+
+			var templates = settings["templates"];
+			if (templates)
+			{
+				Object.keys(templates).forEach(function (key) {
+					var templateInfo = TemplateOrganizer.__getTemplateInfo(component, key);
+					templateInfo["html"] = templates[key];
+				});
+			}
+
+			return settings;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Clear.
+		 *
+		 * @param	{Component}		component			Component.
+		 */
+		TemplateOrganizer.clear = function clear (component)
+		{
+
+			component._templates = {};
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Protected
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the template is active.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{String}		templateName		Template name.
+		 *
+		 * @return  {Boolean}		True when active.
+		 */
+		TemplateOrganizer._isActive = function _isActive (component, templateName)
+		{
+
+			var ret = false;
+
+			var templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
+			if (templateInfo["isAppended"])
+			{
+				ret = true;
+			}
+
+			return ret;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Add a component to parent component.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{String}		templateName		Template name.
+		 * @param	{Object}		options				Options for the template.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		TemplateOrganizer._addTemplate = function _addTemplate (component, templateName, options)
+		{
+
+			var templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
+			Util.assert(!templateInfo["isAppended"], ("TemplateOrganizer._addTemplate(): Template already appended. name=" + (component.name) + ", templateName=" + templateName), ReferenceError);
+
+			return Promise.resolve().then(function () {
+				var path = Util.concatPath([
+					component.settings.get("system.appBaseUrl", ""),
+					component.settings.get("system.templatePath", ""),
+					component.settings.get("settings.path", "")
+				]);
+				return TemplateOrganizer._loadTemplate(component, templateInfo, path);
+			}).then(function () {
+				if (component.settings.get("settings.templateNode"))
+				{
+					TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("settings.templateNode"));
+				}
+
+				return TemplateOrganizer.__applyTemplate(component, templateInfo);
+			}).then(function () {
+				if (component._templates[component.settings.get("settings.templateName")])
+				{
+					component._templates[component.settings.get("settings.templateName")]["isAppended"] = false;
+				}
+				component._templates[templateName]["isAppended"] = true;
+				component.settings.set("settings.templateName", templateName);
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the template html.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{Object}		templateInfo		Template info.
+		 * @param	{String}		path				Path to template.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		TemplateOrganizer._loadTemplate = function _loadTemplate (component, templateInfo, path)
+		{
+
+			return TemplateOrganizer.__autoLoadTemplate(component, templateInfo, path);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Clone the component.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{String}		templateName		Template name.
+		 *
+		 * @return  {Object}		Cloned component.
+		 */
+		TemplateOrganizer._clone = function _clone (component, templateName)
+		{
+
+			templateName = templateName || component._settings.get("settings.templateName");
+			var templateInfo = component._templates[templateName];
+
+			Util.assert(templateInfo,("TemplateOrganizer._addTemplate(): Template not loaded. name=" + (component.name) + ", templateName=" + templateName), ReferenceError);
+
+			var clone;
+			if (templateInfo["node"])
+			{
+				// template is a template tag
+				clone = document.importNode(templateInfo["node"], true);
+			}
+			else
+			{
+				// template is not a template tag
+				var ele = document.createElement("div");
+				ele.innerHTML = templateInfo["html"];
+
+				clone = ele.firstElementChild;
+			}
+
+			return clone;
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the template html if not loaded yet.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{Object}		templateInfo		Template info.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		TemplateOrganizer.__autoLoadTemplate = function __autoLoadTemplate (component, templateInfo, path)
+		{
+
+			console.debug(("TemplateOrganizer.__autoLoadTemplate(): Auto loading template. name=" + (component.name) + ", templateName=" + (templateInfo["name"]) + ", id=" + (component.id)));
+
+			var promise;
+
+			if (templateInfo["html"] || templateInfo["node"])
+			{
+				console.debug(("TemplateOrganizer.__autoLoadTemplate(): Template Already exists. name=" + (component.name) + ", templateName=" + (templateInfo["name"]) + ", id=" + (component.id)) );
+			}
+			else
+			{
+				var url = Util.concatPath([path, templateInfo["name"] + ".html"]);
+
+				promise = TemplateOrganizer.__loadTemplateFile(url).then(function (template) {
+					templateInfo["html"] = template;
+				});
+			}
+
+			return Promise.all([promise]).then(function () {
+				if (!templateInfo["isLoaded"])
+				{
+					return component.trigger("afterLoadTemplate", component);
+				}
+			}).then(function () {
+				templateInfo["isLoaded"] = true;
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the template html.
+		 *
+		 * @param	{String}		url					Template url.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		TemplateOrganizer.__loadTemplateFile = function __loadTemplateFile (url)
+		{
+
+			console.debug(("TemplateOrganzier.loadTemplate(): Loading template. url=" + url));
+
+			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then(function (xhr) {
+				console.debug(("TemplateOrganzier.loadTemplate(): Loaded template. url=" + url));
+
+				return xhr.responseText;
+			});
+
+		};
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Returns templateInfo for the specified templateName. Create one if not exists.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{String}		templateName		Template name.
+		 *
+		 * @return  {Object}		Template info.
+		 */
+		TemplateOrganizer.__getTemplateInfo = function __getTemplateInfo (component, templateName)
+		{
+
+			if (!component._templates[templateName])
+			{
+				component._templates[templateName] = {};
+				component._templates[templateName]["name"] = templateName;
+				component._templates[templateName]["html"] = "";
+				component._templates[templateName]["isAppended"] = false;
+				component._templates[templateName]["isLoaded"] = false;
+			}
+
+			return component._templates[templateName];
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Store a template node.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{Object}		templateInfo		Template info.
+		 * @param	{String}		templateNodeName	Template node name.
+		 */
+		TemplateOrganizer.__storeTemplateNode = function __storeTemplateNode (component, templateInfo, templateNodeName)
+		{
+
+			var rootNode = document.querySelector(templateNodeName);
+			Util.assert(rootNode, ("TemplateOrganizer._addTemplate(): Root node does not exist. name=" + (component.name) + ", rootNode=" + templateNodeName + ", templateName=" + (templateInfo["name"])), ReferenceError);
+
+			rootNode.insertAdjacentHTML("afterbegin", templateInfo["html"]);
+			var node = rootNode.children[0];
+			templateInfo["node"] = ('content' in node ? node.content : node);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Apply template.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{Object}		templateInfo		Template info.
+		 */
+		TemplateOrganizer.__applyTemplate = function __applyTemplate (component, templateInfo)
+		{
+
+			if (templateInfo["node"])
+			{
+				var clone = TemplateOrganizer.clone(component, templateInfo["name"]);
+				component.insertBefore(clone, component.firstChild);
+			}
+			else
+			{
+				component.innerHTML = templateInfo["html"];
+			}
+
+			console.debug(("TemplateOrganizer.__applyTemplate(): Applied template. name=" + (component.name) + ", templateName=" + (templateInfo["name"]) + ", id=" + (component.id)));
+
+		};
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Get settings from element's attribute.
+		 *
+		 * @param	{Component}		component			Component.
+		 */
+		TemplateOrganizer.__loadAttrSettings = function __loadAttrSettings (component)
+		{
+
+			/*
+			// Get template path from attribute
+			if (component.hasAttribute("bm-templatepath"))
+			{
+				component.settings.set("system.templatePath", component.getAttribute("bm-templatepath"));
+			}
+
+			// Get template name from attribute
+			if (component.hasAttribute("bm-templatename"))
+			{
+				component.settings.set("templateName", component.getAttribute("bbmmplatename"));
+			}
+
+			// Get template ref from templateref
+			if (component.hasAttribute("bm-templateref"))
+			{
+				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-templateref"));
+				component.settings.set("system.templatePath", arr[0]);
+				component.settings.set("templateName", arr[1].replace(".html", ""));
+			}
+			*/
+
+		};
+
+		return TemplateOrganizer;
+	}(Organizer));
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Event organizer class
+	// =============================================================================
+
+	var EventOrganizer = /*@__PURE__*/(function (Organizer) {
+		function EventOrganizer () {
+			Organizer.apply(this, arguments);
+		}
+
+		if ( Organizer ) EventOrganizer.__proto__ = Organizer;
+		EventOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
+		EventOrganizer.prototype.constructor = EventOrganizer;
+
+		EventOrganizer.globalInit = function globalInit ()
+		{
+
+			// Add methods
+			Component.prototype.initEvents = function(elementName, handlerInfo, rootNode) {
+				EventOrganizer._initEvents(this, elementName, handlerInfo, rootNode);
+			};
+			Component.prototype.addEventHandler = function(eventName, handlerInfo, element, bindTo) {
+				EventOrganizer._addEventHandler(this, element, eventName, handlerInfo, bindTo);
+			};
+			Component.prototype.trigger = function(eventName, sender, options, element) {
+				return EventOrganizer._trigger(this, eventName, sender, options, element)
+			};
+			Component.prototype.triggerAsync = function(eventName, sender, options, element) {
+				return EventOrganizer._triggerAsync(this, eventName, sender, options, element)
+			};
+			Component.prototype.getEventHandler = function(handlerInfo) {
+				return EventOrganizer._getEventHandler(this, handlerInfo)
+			};
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Organize.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		EventOrganizer.organize = function organize (conditions, component, settings)
+		{
+
+			var events = settings["events"];
+
+			if (events)
+			{
+				Object.keys(events).forEach(function (elementName) {
+					EventOrganizer._initEvents(component, elementName, events[elementName]);
+				});
+			}
+
+			return settings;
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Protected
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Add an event handler.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{HTMLElement}	element					HTML element.
+		 * @param	{String}		eventName				Event name.
+		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
+		 * @param	{Object}		bindTo					Object that binds to the handler.
+		 */
+		EventOrganizer._addEventHandler = function _addEventHandler (component, element, eventName, handlerInfo, bindTo)
+		{
+
+			element = element || component;
+
+			// Get handler
+			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
+			Util.assert(typeof handler === "function", ("EventOrganizer._addEventHandler(): Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName), TypeError);
+
+			// Init holder object for the element
+			if (!element.__bm_eventinfo)
+			{
+				element.__bm_eventinfo = { "component":component, "listeners":{}, "promises":{}, "statuses":{} };
+			}
+
+			// Add hook event handler
+			var listeners = element.__bm_eventinfo.listeners;
+			if (!listeners[eventName])
+			{
+				listeners[eventName] = [];
+				element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerInfo["listenerOptions"]);
+			}
+
+			listeners[eventName].push({"handler":handler, "options":Object.assign({}, handlerInfo["options"]), "bindTo":bindTo, "order":order});
+
+			// Stable sort by order
+			var order = Util.safeGet(handlerInfo, "order");
+			listeners[eventName].sort(function (a, b) {
+				if (a.order == b.order)		{ return 0; }
+				else if (a.order > b.order)	{ return 1; }
+				else 						{ return -1 }
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Remove an event handler.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{HTMLElement}	element					HTML element.
+		 * @param	{String}		eventName				Event name.
+		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
+		 */
+		EventOrganizer._removeEventHandler = function _removeEventHandler (component, element, eventName, handlerInfo)
+		{
+
+			element = element || component;
+
+			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
+			Util.assert(typeof handler === "function", ("EventOrganizer._removeEventHandler(): Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName), TypeError);
+
+			var listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
+			if (listeners)
+			{
+				var index = -1;
+				for (var i = 0; i < listeners.length; i++)
+				{
+					if (listeners["handler"] == handler)
+					{
+						index = i;
+						break;
+					}
+				}
+
+				if (index > -1)
+				{
+					element.__bm_eventinfo.listeners = array.splice(index, 1);
+				}
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Set event handlers to the element.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		elementName			Element name.
+		 * @param	{Options}		options				Options.
+		 * @param	{HTMLElement}	rootNode			Root node of elements.
+		 */
+		EventOrganizer._initEvents = function _initEvents (component, elementName, handlerInfo, rootNode)
+		{
+
+			rootNode = ( rootNode ? rootNode : component.rootElement );
+			handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
+
+			// Get target elements
+			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+			/*
+			if (elements.length == 0)
+			{
+				throw TypeError(`No elements for the event found. componentName=${component.name}, elementName=${elementName}`);
+			}
+			*/
+
+			// Set event handlers
+			if (handlerInfo["handlers"])
+			{
+				Object.keys(handlerInfo["handlers"]).forEach(function (eventName) {
+					var arr = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
+
+					for (var i = 0; i < arr.length; i++)
+					{
+						var handler = component.getEventHandler(arr[i]);
+						for (var j = 0; j < elements.length; j++)
+						{
+							if (!EventOrganizer.__isHandlerInstalled(elements[j], eventName, handler, component))
+							{
+								component.addEventHandler(eventName, arr[i], elements[j]);
+							}
+						}
+					}
+				});
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Trigger the event synchronously.
+		 *
+		 * @param	{Component}		component				Component.
+		 * @param	{String}		eventName				Event name to trigger.
+		 * @param	{Object}		sender					Object which triggered the event.
+		 * @param	{Object}		options					Event parameter options.
+		 */
+		EventOrganizer._trigger = function _trigger (component, eventName, sender, options, element)
+		{
+
+			options = Object.assign({}, options);
+			options["sender"] = sender;
+			element = ( element ? element : component );
+			var e = null;
+
+			try
+			{
+				e = new CustomEvent(eventName, { detail: options });
+			}
+			catch(error)
+			{
+				e  = document.createEvent("CustomEvent");
+				e.initCustomEvent(eventName, false, false, options);
+			}
+
+			element.dispatchEvent(e);
+
+			// return the promise if exists
+			return Util.safeGet(element, "__bm_eventinfo.promises." + eventName) || Promise.resolve();
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Trigger the event asynchronously.
+		 *
+		 * @param	{Component}		component				Component.
+		 * @param	{String}		eventName				Event name to trigger.
+		 * @param	{Object}		sender					Object which triggered the event.
+		 * @param	{Object}		options					Event parameter options.
+		 */
+		EventOrganizer._triggerAsync = function _triggerAsync (component, eventName, sender, options, element)
+		{
+
+			options = options || {};
+			options["async"] = true;
+
+			return EventOrganizer._trigger.call(component, component, eventName, sender, options, element);
+
+		};
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Get an event handler from a handler info object.
+		 *
+		 * @param	{Component}		component				Component.
+		 * @param	{Object/Function/String}	handlerInfo	Handler info.
+		 */
+		EventOrganizer._getEventHandler = function _getEventHandler (component, handlerInfo)
+		{
+
+			var handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
+
+			if ( typeof handler === "string" )
+			{
+				handler = component[handler];
+			}
+
+			return handler;
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
+
+		//@@@ fix
+		/**
+		 * Set html elements event handlers.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{HTMLElement}	rootNode			A root node to search elements.
+		 * @param	{String}		elementName			Element name.
+		 * @param	{Object}		elementInfo			Element info.
+		 *
+		 * @return 	{Array}			Target node list.
+		 */
+		EventOrganizer.__getTargetElements = function __getTargetElements (component, rootNode, elementName, elementInfo)
+		{
+
+			var elements;
+
+			if (elementInfo["rootNode"])
+			{
+				if (elementInfo["rootNode"] == "this" || elementInfo["rootNode"] == component.tagName.toLowerCase())
+				{
+					elements = [rootNode];
+				}
+				else
+				{
+					elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
+				}
+			}
+			else if (elementName == "this" || elementName == component.tagName.toLowerCase())
+			{
+				elements = [rootNode];
+			}
+			else
+			{
+				elements = rootNode.querySelectorAll("#" + elementName);
+			}
+
+			return elements;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the given handler is already installed.
+		 *
+		 * @param	{HTMLElement}	element				HTMLElement to check.
+		 * @param	{String}		eventName			Event name.
+		 * @param	{Function}		handler				Event handler.
+		 *
+		 * @return 	{Boolean}		True if already installed.
+		 */
+		EventOrganizer.__isHandlerInstalled = function __isHandlerInstalled (element, eventName, handler)
+		{
+
+			var isInstalled = false;
+			var listeners = Util.safeGet(element.__bm_eventinfo, "listeners." + eventName);
+
+			if (listeners)
+			{
+				for (var i = 0; i < listeners.length; i++)
+				{
+					if (listeners[i]["handler"] === handler)
+					{
+						isInstalled = true;
+						break;
+					}
+				}
+			}
+
+			return isInstalled;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Call event handlers.
+		 *
+		 * This function is registered as event listener by element.addEventListener(),
+		 * so "this" is HTML element that triggered the event.
+		 *
+		 * @param	{Object}		e						Event parameter.
+		 */
+		EventOrganizer.__callEventHandler = function __callEventHandler (e)
+		{
+			var this$1 = this;
+
+
+			var listeners = Util.safeGet(this, "__bm_eventinfo.listeners." + e.type);
+			var sender = Util.safeGet(e, "detail.sender", this);
+			var component = Util.safeGet(this, "__bm_eventinfo.component");
+
+			// Check if handler is already running
+			Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", ("EventOrganizer.__callEventHandler(): Event handler is already running. name=" + (this.tagName) + ", eventName=" + (e.type)), Error);
+
+			Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
+
+			if (Util.safeGet(e, "detail.async", false) == false)
+			{
+				// Wait previous handler
+				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(function (result) {
+					Util.safeSet(this$1, "__bm_eventinfo.promises." + e.type, null);
+					Util.safeSet(this$1, "__bm_eventinfo.statuses." + e.type, "");
+
+					return result;
+				});
+			}
+			else
+			{
+				// Does not wait previous handler
+				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
+				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Call event handlers.
+		 *
+		 * @param	{Object}		e						Event parameter.
+		 * @param	{Object}		sender					Sender object.
+		 * @param	{Object}		component				Target component.
+		 * @param	{Object}		listener				Listers info.
+		 */
+		EventOrganizer.__handle = function __handle (e, sender, component, listeners)
+		{
+
+			var chain = Promise.resolve();
+			var results = [];
+			var stopPropagation = false;
+
+			var loop = function ( i ) {
+				// Options set on addEventHandler()
+				var ex = {
+					"component": component,
+					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
+				};
+
+				// Execute handler
+				chain = chain.then(function (result) {
+					results.push(result);
+
+					var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+					return listeners[i]["handler"].call(bindTo, sender, e, ex);
+				});
+
+				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
+			};
+
+			for (var i = 0; i < listeners.length; i++)
+			loop( i );
+
+			if (stopPropagation)
+			{
+				e.stopPropagation();
+			}
+
+			return chain.then(function (result) {
+				results.push(result);
+
+				return results;
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Call event handlers (Async).
+		 *
+		 * @param	{Object}		e						Event parameter.
+		 * @param	{Object}		sender					Sender object.
+		 * @param	{Object}		component				Target component.
+		 * @param	{Object}		listener				Listers info.
+		 */
+		EventOrganizer.__handleAsync = function __handleAsync (e, sender, component, listeners)
+		{
+
+			var stopPropagation = false;
+
+			for (var i = 0; i < listeners.length; i++)
+			{
+				// Options set on addEventHandler()
+				var ex = {
+					"component": component,
+					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
+				};
+
+				// Execute handler
+				var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+				listeners[i]["handler"].call(bindTo, sender, e, ex);
+
+				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
+			}
+
+			if (stopPropagation)
+			{
+				e.stopPropagation();
+			}
+
+			return Promise.resolve();
+
+		};
+
+		return EventOrganizer;
+	}(Organizer));
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Component organizer class
+	// =============================================================================
+
+	var ComponentOrganizer = /*@__PURE__*/(function (Organizer) {
+		function ComponentOrganizer () {
+			Organizer.apply(this, arguments);
+		}
+
+		if ( Organizer ) ComponentOrganizer.__proto__ = Organizer;
+		ComponentOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
+		ComponentOrganizer.prototype.constructor = ComponentOrganizer;
+
+		ComponentOrganizer.globalInit = function globalInit (targetClass)
+		{
+
+			// Add methods
+			Pad.prototype.loadTags = ComponentOrganizer.loadTags;
+
+			// Init vars
+			ComponentOrganizer.__classes = new Store();
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Init.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		ComponentOrganizer.init = function init (conditions, component, settings)
+		{
+
+			// Add properties
+			Object.defineProperty(component, "components", {
+				get: function get() { return this._components; },
+			});
+
+			// Add methods
+			component.addComponent = function(componentName, settings, sync) { return ComponentOrganizer._addComponent(this, componentName, settings, sync); };
+
+			// Init vars
+			component._components = {};
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Organize.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		ComponentOrganizer.organize = function organize (conditions, component, settings)
+		{
+
+			var chain = Promise.resolve();
+
+			// Load molds
+			var molds = settings["molds"];
+			if (molds)
+			{
+				Object.keys(molds).forEach(function (moldName) {
+					chain = chain.then(function () {
+						return ComponentOrganizer._addComponent(component, moldName, molds[moldName], "opened");
+					});
+				});
+			}
+
+			// Load components
+			var components = settings["components"];
+			if (components)
+			{
+				Object.keys(components).forEach(function (componentName) {
+					chain = chain.then(function () {
+						return ComponentOrganizer._addComponent(component, componentName, components[componentName]);
+					});
+				});
+			}
+
+			return chain.then(function () {
+				return settings;
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Clear.
+		 *
+		 * @param	{Component}		component			Component.
+		 */
+		ComponentOrganizer.clear = function clear (component)
+		{
+
+			Object.keys(component.components).forEach(function (key) {
+				component.components[key].parentNode.removeChild(component._components[key]);
+			});
+
+			component._components = {};
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Protected
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Add a component to parent component.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 * @param	{String}		componentName		Component name.
+		 * @param	{Object}		settings			Settings for the component.
+		 * @param	{Boolean}		sync				Wait for the component to become the state.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		ComponentOrganizer._addComponent = function _addComponent (component, componentName, settings, sync)
+		{
+
+			var path = Util.concatPath([
+				component.settings.get("system.appBaseUrl", ""),
+				component.settings.get("system.componentPath", ""),
+				Util.safeGet(settings, "settings.path", "")
+			]);
+			var className = Util.safeGet(settings, "settings.className") || componentName;
+			var tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
+
+			return Promise.resolve().then(function () {
+				// Load component
+				var autoLoad = Util.safeGet(settings, "settings.autoLoad", component.settings.get("system.autoLoad", true));
+				var splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
+				var options = { "autoLoad":autoLoad, "splitComponent":splitComponent };
+				return ComponentOrganizer._loadComponent(className, path, settings, options, tagName);
+			}).then(function () {
+				// Insert tag
+				if (Util.safeGet(settings, "settings.rootNode") && !component.components[componentName])
+				{
+					component.components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
+				}
+			}).then(function () {
+				// Wait for the added component to be ready
+				if (sync || Util.safeGet(settings, "settings.sync"))
+				{
+					sync = sync || Util.safeGet(settings, "settings.sync"); // sync precedes settings["sync"]
+					var state = (sync === true ? "started" : sync);
+					var c = className.split(".");
+					return component.waitFor([{"name":c[c.length - 1], "state":state}]);
+				}
+			});
+
+		};
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Load scripts for tags which has bm-autoload attribute.
+		 *
+		 * @param	{HTMLElement}	rootNode			Target node.
+		 * @param	{String}		path				Base path prepend to each element's path.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		ComponentOrganizer.loadTags = function loadTags (rootNode, basePath, options)
+		{
+
+			console.debug(("ComponentOrganizer._loadTags(): Loading tags. rootNode=" + (rootNode.tagName) + ", basePath=" + basePath));
+
+			var promises = [];
+			var targets = rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
+
+			targets.forEach(function (element) {
+				element.setAttribute("bm-autoloaded", "");
+
+				var href = element.getAttribute("bm-autoload");
+				var className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
+				var path = element.getAttribute("bm-path") || "";
+				var split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
+				var morph = ( element.hasAttribute("bm-automorph") ?
+					( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
+					false
+				);
+				var settings = {"settings":{"autoMorph":morph}};
+				var loadOptions = {"splitComponent":split, "autoLoad": true};
+
+				if (href)
+				{
+					var arr = Util.getFilenameAndPathFromUrl(href);
+					path = arr[0];
+					if (href.slice(-3).toLowerCase() == ".js")
+					{
+						settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
+					}
+					else if (href.slice(-5).toLowerCase() == ".html")
+					{
+						settings["settings"]["autoMorph"] = true;
+					}
+				}
+				else
+				{
+					path = Util.concatPath([basePath, path]);
+				}
+
+				promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
+			});
+
+			return Promise.all(promises);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the template html.
+		 *
+		 * @param	{String}		className			Class name.
+		 * @param	{String}		path				Path to component.
+		 * @param	{Object}		settings			Component settings.
+		 * @param	{Object}		options				Load options.
+		 * @param	{String}		tagName				Component's tag name
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		ComponentOrganizer._loadComponent = function _loadComponent (className, path, settings, options, tagName)
+		{
+
+			var morph = Util.safeGet(settings, "settings.autoMorph");
+			if (morph)
+			{
+				// Define empty class
+				console.debug(("ComponentOrganizer._loadComponent(): Creating empty component. className=" + className + ", path=" + path + ", tagName=" + tagName));
+
+				var classDef = ( morph === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(morph) );
+				if (!customElements.get(tagName.toLowerCase()))
+				{
+					ClassUtil.newComponent(classDef, settings, tagName, className);
+				}
+			}
+			else
+			{
+				if (options["autoLoad"])
+				{
+					// Load component script
+					return ComponentOrganizer.__autoloadComponent(className, path, settings, options);
+				}
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the class exists.
+		 *
+		 * @param	{String}		className			Class name.
+		 *
+		 * @return  {Bool}			True if exists.
+		 */
+		ComponentOrganizer.__isLoadedClass = function __isLoadedClass (className)
+		{
+
+			var ret = false;
+
+			if (ComponentOrganizer.__classes.get(className, {})["state"] == "loaded")
+			{
+				ret = true;
+			}
+			else if (ClassUtil.getClass(className))
+			{
+				ret = true;
+			}
+
+			return ret;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the component if not loaded yet.
+		 *
+		 * @param	{String}		className			Component class name.
+		 * @param	{String}		path				Path to component.
+		 * @param	{Object}		settings			Component settings.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		ComponentOrganizer.__autoloadComponent = function __autoloadComponent (className, path, settings, options)
+		{
+
+			console.debug(("ComponentOrganizer.__autoLoadComponent(): Auto loading component. className=" + className + ", path=" + path));
+
+			var promise;
+			var tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
+			var fileName = Util.safeGet(settings, "settings.fileName", tagName);
+
+			if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
+			{
+				// Already loaded
+				console.debug(("ComponentOrganizer.__autoLoadComponent(): Component Already exists. className=" + className));
+				ComponentOrganizer.__classes.set(className, {"state":"loaded"});
+				promise = Promise.resolve();
+			}
+			else if (ComponentOrganizer.__classes.get(className, {})["state"] == "loading")
+			{
+				// Already loading
+				console.debug(("ComponentOrganizer.__autoLoadComponent(): Component Already loading. className=" + className));
+				promise = ComponentOrganizer.__classes.get(className)["promise"];
+			}
+			else
+			{
+				// Not loaded
+				ComponentOrganizer.__classes.set(className, {"state":"loading"});
+				promise = ComponentOrganizer.__loadComponentScript(fileName, path, options).then(function () {
+					ComponentOrganizer.__classes.set(className, {"state":"loaded", "promise":null});
+				});
+				ComponentOrganizer.__classes.set(className, {"promise":promise});
+			}
+
+			return promise;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the component js files.
+		 *
+		 * @param	{String}		className			Class name.
+		 * @param	{String}		path				Path to component.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		ComponentOrganizer.__loadComponentScript = function __loadComponentScript (fileName, path, options)
+		{
+
+			console.debug(("ComponentOrganizer.__loadComponentScript(): Loading script. fileName=" + fileName + ", path=" + path));
+
+			var url1 = Util.concatPath([path, fileName + ".js"]);
+			var url2 = Util.concatPath([path, fileName + ".settings.js"]);
+
+			return Promise.resolve().then(function () {
+				return AjaxUtil.loadScript(url1);
+			}).then(function () {
+				if (options["splitComponent"])
+				{
+					return AjaxUtil.loadScript(url2);
+				}
+			}).then(function () {
+				console.debug(("ComponentOrganizer.__loadComponentScript(): Loaded script. fileName=" + fileName));
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Insert a tag and return the inserted component.
+		 *
+		 * @param	{String}		tagName				Tagname.
+		 * @param	{Object}		settings			Component settings.
+		 *
+		 * @return  {Component}		Component.
+		 */
+		ComponentOrganizer.__insertTag = function __insertTag (component, tagName, settings)
+		{
+
+			var addedComponent;
+
+			// Check root node
+			var root = component._rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
+			Util.assert(root, ("Root node does not exist. name=" + (component.name) + ", tagName=" + tagName + ", rootNode=" + (Util.safeGet(settings, "settings.rootNode"))), ReferenceError);
+
+			// Build tag
+			var tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
+
+			// Insert tag
+			if (Util.safeGet(settings, "settings.overwrite"))
+			{
+				root.outerHTML = tag;
+				addedComponent = root;
+			}
+			else
+			{
+				root.insertAdjacentHTML("afterbegin", tag);
+				addedComponent = root.children[0];
+			}
+
+			// Inject settings to added component
+			addedComponent._injectSettings = function(oldSettings){
+				// super()
+				var newSettings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(addedComponent, oldSettings));
+
+				return Util.deepMerge(newSettings, settings);
+			};
+
+			return addedComponent;
+
+		};
+
+		return ComponentOrganizer;
+	}(Organizer));
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Autoload organizer class
+	// =============================================================================
+
+	var AutoloadOrganizer = /*@__PURE__*/(function (Organizer) {
+		function AutoloadOrganizer () {
+			Organizer.apply(this, arguments);
+		}
+
+		if ( Organizer ) AutoloadOrganizer.__proto__ = Organizer;
+		AutoloadOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
+		AutoloadOrganizer.prototype.constructor = AutoloadOrganizer;
+
+		AutoloadOrganizer.globalInit = function globalInit ()
+		{
+			var this$1 = this;
+
+
+			document.addEventListener("DOMContentLoaded", function () {
+				if (BITSMIST.v1.settings.get("organizers.AutoloadOrganizer.settings.autoLoadOnStartup", true))
+				{
+					this$1.load(document.body, BITSMIST.v1.settings);
+				}
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Organize.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		AutoloadOrganizer.organize = function organize (conditions, component, settings)
+		{
+
+			this.load(component.rootElement, component.settings);
+
+			return settings;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		* Load all tags.
+		*/
+		AutoloadOrganizer.load = function load (rootNode, settings)
+		{
+
+			var path = Util.concatPath([settings.get("system.appBaseUrl", ""), settings.get("system.componentPath", "")]);
+			var splitComponent = settings.get("system.splitComponent", false);
+
+			ComponentOrganizer.loadTags(rootNode, path, {"splitComponent":splitComponent});
+
+		};
+
+		return AutoloadOrganizer;
+	}(Organizer));
+
+	// =============================================================================
+
+	// =============================================================================
 	//	Waitfor organizer class
 	// =============================================================================
 
@@ -1906,7 +3677,7 @@
 		{
 
 			// Add properties
-			Object.defineProperty(Component.prototype, 'state', {
+			Object.defineProperty(Component.prototype, "state", {
 				get: function get() { return this._state; },
 				set: function set(value) { this._state = value; }
 			});
@@ -1968,7 +3739,10 @@
 			var waitFor = settings["waitFor"];
 			if (waitFor)
 			{
-				promise = StateOrganizer._waitFor(component, waitFor);
+				if (waitFor[conditions])
+				{
+					promise = StateOrganizer._waitFor(component, waitFor[conditions], component.settings.get("system.waitforTimeout"));
+				}
 			}
 
 			return promise.then(function () {
@@ -1986,38 +3760,6 @@
 		{
 
 			this.__waitingList.clear();
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if event is target.
-		 *
-		 * @param	{String}		conditions			Event name.
-		 * @param	{Object}		organizerInfo		Organizer info.
-		 * @param	{Component}		component			Component.
-		 *
-		 * @return 	{Boolean}		True if it is target.
-		 */
-		StateOrganizer.isTarget = function isTarget (conditions, organizerInfo, component)
-		{
-
-			var ret = false;
-
-			if (conditions == "beforeStart")
-			{
-				if (!(component instanceof BITSMIST.v1.Pad))
-				{
-					ret = true;
-				}
-			}
-			else
-			{
-				ret = Organizer.isTarget.call(this, conditions, organizerInfo, component);
-			}
-
-			return ret;
 
 		};
 
@@ -2052,7 +3794,7 @@
 					waitInfo["resolve"] = resolve;
 					waitInfo["reject"] = reject;
 					setTimeout(function () {
-						reject(("waitFor() timed out after " + timeout + " milliseconds waiting for " + (JSON.stringify(waitlist)) + ", name=" + (component.name) + "."));
+						reject(("StateOrganizer._waitFor(): Timed out after " + timeout + " milliseconds waiting for " + (JSON.stringify(waitlist)) + ", name=" + (component.name) + "."));
 					}, timeout);
 				});
 				waitInfo["promise"] = promise;
@@ -2143,17 +3885,12 @@
 		StateOrganizer._changeState = function _changeState (component, state)
 		{
 
-			if (StateOrganizer.__isTransitionable(component.state, state))
-			{
-				component.state = state;
-				StateOrganizer.__components.mergeSet(component.uniqueId, {"object":component, "state":state});
+			Util.assert(StateOrganizer.__isTransitionable(component.state, state), ("StateOrganizer._changeState(): Illegal transition. name=" + (component.name) + ", fromState=" + (component.state) + ", toState=" + state + ", id=" + (component.id)), Error);
 
-				StateOrganizer.__processWaitingList(component, state);
-			}
-			else
-			{
-				throw Error(("Illegal transition. name=" + (component.name) + ", fromState=" + (component.state) + ", toState=" + state + ", id=" + (component.id)));
-			}
+			component.state = state;
+			StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
+
+			StateOrganizer.__processWaitingList(component, state);
 
 		};
 
@@ -2603,505 +4340,7 @@
 	// =============================================================================
 
 	// =============================================================================
-	//	Event organizer class
-	// =============================================================================
-
-	var EventOrganizer = /*@__PURE__*/(function (Organizer) {
-		function EventOrganizer () {
-			Organizer.apply(this, arguments);
-		}
-
-		if ( Organizer ) EventOrganizer.__proto__ = Organizer;
-		EventOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		EventOrganizer.prototype.constructor = EventOrganizer;
-
-		EventOrganizer.globalInit = function globalInit ()
-		{
-
-			// Add methods
-			Component.prototype.initEvents = function(elementName, handlerInfo, rootNode) {
-				EventOrganizer._initEvents(this, elementName, handlerInfo, rootNode);
-			};
-			Component.prototype.addEventHandler = function(eventName, handlerInfo, element, bindTo) {
-				EventOrganizer._addEventHandler(this, element, eventName, handlerInfo, bindTo);
-			};
-			Component.prototype.trigger = function(eventName, sender, options, element) {
-				return EventOrganizer._trigger(this, eventName, sender, options, element)
-			};
-			Component.prototype.triggerAsync = function(eventName, sender, options, element) {
-				return EventOrganizer._triggerAsync(this, eventName, sender, options, element)
-			};
-			Component.prototype.getEventHandler = function(handlerInfo) {
-				return EventOrganizer._getEventHandler(this, handlerInfo)
-			};
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Organize.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		EventOrganizer.organize = function organize (conditions, component, settings)
-		{
-
-			var events = settings["events"];
-
-			if (events)
-			{
-				Object.keys(events).forEach(function (elementName) {
-					EventOrganizer._initEvents(component, elementName, events[elementName]);
-				});
-			}
-
-			return settings;
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Add an event handler.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{HTMLElement}	element					HTML element.
-		 * @param	{String}		eventName				Event name.
-		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
-		 * @param	{Object}		bindTo					Object that binds to the handler.
-		 */
-		EventOrganizer._addEventHandler = function _addEventHandler (component, element, eventName, handlerInfo, bindTo)
-		{
-
-			element = element || component;
-
-			// Get handler
-			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
-			if (typeof handler !== "function")
-			{
-				throw TypeError(("Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName));
-			}
-
-			// Init holder object for the element
-			if (!element.__bm_eventinfo)
-			{
-				element.__bm_eventinfo = { "component":component, "listeners":{}, "promises":{}, "statuses":{} };
-			}
-
-			// Add hook event handler
-			var listeners = element.__bm_eventinfo.listeners;
-			if (!listeners[eventName])
-			{
-				listeners[eventName] = [];
-				element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerInfo["listenerOptions"]);
-			}
-
-			listeners[eventName].push({"handler":handler, "options":Object.assign({}, handlerInfo["options"]), "bindTo":bindTo, "order":order});
-
-			// Stable sort by order
-			var order = Util.safeGet(handlerInfo, "order");
-			listeners[eventName].sort(function (a, b) {
-				if (a.order == b.order)		{ return 0; }
-				else if (a.order > b.order)	{ return 1; }
-				else 						{ return -1 }
-			});
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Remove an event handler.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{HTMLElement}	element					HTML element.
-		 * @param	{String}		eventName				Event name.
-		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
-		 */
-		EventOrganizer._removeEventHandler = function _removeEventHandler (component, element, eventName, handlerInfo)
-		{
-
-			element = element || component;
-
-			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
-			if (typeof handler !== "function")
-			{
-				throw TypeError(("Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName));
-			}
-
-			var listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
-			if (listeners)
-			{
-				var index = -1;
-				for (var i = 0; i < listeners.length; i++)
-				{
-					if (listeners["handler"] == handler)
-					{
-						index = i;
-						break;
-					}
-				}
-
-				if (index > -1)
-				{
-					element.__bm_eventinfo.listeners = array.splice(index, 1);
-				}
-			}
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Set event handlers to the element.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		elementName			Element name.
-		 * @param	{Options}		options				Options.
-		 * @param	{HTMLElement}	rootNode			Root node of elements.
-		 */
-		EventOrganizer._initEvents = function _initEvents (component, elementName, handlerInfo, rootNode)
-		{
-
-			rootNode = ( rootNode ? rootNode : component.rootElement );
-			handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
-
-			// Get target elements
-			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
-			/*
-			if (elements.length == 0)
-			{
-				throw TypeError(`No elements for the event found. componentName=${component.name}, elementName=${elementName}`);
-			}
-			*/
-
-			// Set event handlers
-			if (handlerInfo["handlers"])
-			{
-				Object.keys(handlerInfo["handlers"]).forEach(function (eventName) {
-					var arr = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
-
-					for (var i = 0; i < arr.length; i++)
-					{
-						var handler = component.getEventHandler(arr[i]);
-						for (var j = 0; j < elements.length; j++)
-						{
-							if (!EventOrganizer.__isHandlerInstalled(elements[j], eventName, handler, component))
-							{
-								component.addEventHandler(eventName, arr[i], elements[j]);
-							}
-						}
-					}
-				});
-			}
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Trigger the event synchronously.
-		 *
-		 * @param	{Component}		component				Component.
-		 * @param	{String}		eventName				Event name to trigger.
-		 * @param	{Object}		sender					Object which triggered the event.
-		 * @param	{Object}		options					Event parameter options.
-		 */
-		EventOrganizer._trigger = function _trigger (component, eventName, sender, options, element)
-		{
-
-			options = Object.assign({}, options);
-			options["sender"] = sender;
-			element = ( element ? element : component );
-			var e = null;
-
-			try
-			{
-				e = new CustomEvent(eventName, { detail: options });
-			}
-			catch(error)
-			{
-				e  = document.createEvent('CustomEvent');
-				e.initCustomEvent(eventName, false, false, options);
-			}
-
-			element.dispatchEvent(e);
-
-			// return the promise if exists
-			return Util.safeGet(element, "__bm_eventinfo.promises." + eventName) || Promise.resolve();
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Trigger the event asynchronously.
-		 *
-		 * @param	{Component}		component				Component.
-		 * @param	{String}		eventName				Event name to trigger.
-		 * @param	{Object}		sender					Object which triggered the event.
-		 * @param	{Object}		options					Event parameter options.
-		 */
-		EventOrganizer._triggerAsync = function _triggerAsync (component, eventName, sender, options, element)
-		{
-
-			options = options || {};
-			options["async"] = true;
-
-			return EventOrganizer._trigger.call(component, component, eventName, sender, options, element);
-
-		};
-
-		// -----------------------------------------------------------------------------
-
-		/**
-		 * Get an event handler from a handler info object.
-		 *
-		 * @param	{Component}		component				Component.
-		 * @param	{Object/Function/String}	handlerInfo	Handler info.
-		 */
-		EventOrganizer._getEventHandler = function _getEventHandler (component, handlerInfo)
-		{
-
-			var handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
-
-			if ( typeof handler === "string" )
-			{
-				handler = component[handler];
-			}
-
-			return handler;
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Privates
-		// -------------------------------------------------------------------------
-
-		//@@@ fix
-		/**
-		 * Set html elements event handlers.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{HTMLElement}	rootNode			A root node to search elements.
-		 * @param	{String}		elementName			Element name.
-		 * @param	{Object}		elementInfo			Element info.
-		 *
-		 * @return 	{Array}			Target node list.
-		 */
-		EventOrganizer.__getTargetElements = function __getTargetElements (component, rootNode, elementName, elementInfo)
-		{
-
-			var elements;
-
-			if (elementInfo["rootNode"])
-			{
-				if (elementInfo["rootNode"] == "this" || elementInfo["rootNode"] == component.tagName.toLowerCase())
-				{
-					elements = [rootNode];
-				}
-				else
-				{
-					elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
-				}
-			}
-			else if (elementName == "this" || elementName == component.tagName.toLowerCase())
-			{
-				elements = [rootNode];
-			}
-			else
-			{
-				elements = rootNode.querySelectorAll("#" + elementName);
-			}
-
-			return elements;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if the given handler is already installed.
-		 *
-		 * @param	{HTMLElement}	element				HTMLElement to check.
-		 * @param	{String}		eventName			Event name.
-		 * @param	{Function}		handler				Event handler.
-		 *
-		 * @return 	{Boolean}		True if already installed.
-		 */
-		EventOrganizer.__isHandlerInstalled = function __isHandlerInstalled (element, eventName, handler)
-		{
-
-			var isInstalled = false;
-			var listeners = Util.safeGet(element.__bm_eventinfo, "listeners." + eventName);
-
-			if (listeners)
-			{
-				for (var i = 0; i < listeners.length; i++)
-				{
-					if (listeners[i]["handler"] === handler)
-					{
-						isInstalled = true;
-						break;
-					}
-				}
-			}
-
-			return isInstalled;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Call event handlers.
-		 *
-		 * This function is registered as event listener by element.addEventListener(),
-		 * so "this" is HTML element that triggered the event.
-		 *
-		 * @param	{Object}		e						Event parameter.
-		 */
-		EventOrganizer.__callEventHandler = function __callEventHandler (e)
-		{
-			var this$1 = this;
-
-
-			var listeners = Util.safeGet(this, "__bm_eventinfo.listeners." + e.type);
-			var sender = Util.safeGet(e, "detail.sender", this);
-			var component = Util.safeGet(this, "__bm_eventinfo.component");
-
-			// Check if handler is already running
-			if (Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) == "handling")
-			{
-				throw new Error(("Event handler is already running. name=" + (this.tagName) + ", eventName=" + (e.type)));
-			}
-
-			Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
-
-			if (Util.safeGet(e, "detail.async", false) == false)
-			{
-				// Wait previous handler
-				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(function (result) {
-					Util.safeSet(this$1, "__bm_eventinfo.promises." + e.type, null);
-					Util.safeSet(this$1, "__bm_eventinfo.statuses." + e.type, "");
-
-					return result;
-				});
-			}
-			else
-			{
-				// Does not wait previous handler
-				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
-				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
-			}
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Call event handlers.
-		 *
-		 * @param	{Object}		e						Event parameter.
-		 * @param	{Object}		sender					Sender object.
-		 * @param	{Object}		component				Target component.
-		 * @param	{Object}		listener				Listers info.
-		 */
-		EventOrganizer.__handle = function __handle (e, sender, component, listeners)
-		{
-
-			var chain = Promise.resolve();
-			var results = [];
-			var stopPropagation = false;
-
-			var loop = function ( i ) {
-				// Options set on addEventHandler()
-				var ex = {
-					"component": component,
-					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
-				};
-
-				// Execute handler
-				chain = chain.then(function (result) {
-					results.push(result);
-
-					var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
-					return listeners[i]["handler"].call(bindTo, sender, e, ex);
-				});
-
-				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
-			};
-
-			for (var i = 0; i < listeners.length; i++)
-			loop( i );
-
-			if (stopPropagation)
-			{
-				e.stopPropagation();
-			}
-
-			return chain.then(function (result) {
-				results.push(result);
-
-				return results;
-			});
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Call event handlers (Async).
-		 *
-		 * @param	{Object}		e						Event parameter.
-		 * @param	{Object}		sender					Sender object.
-		 * @param	{Object}		component				Target component.
-		 * @param	{Object}		listener				Listers info.
-		 */
-		EventOrganizer.__handleAsync = function __handleAsync (e, sender, component, listeners)
-		{
-
-			var stopPropagation = false;
-
-			for (var i = 0; i < listeners.length; i++)
-			{
-				// Options set on addEventHandler()
-				var ex = {
-					"component": component,
-					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
-				};
-
-				// Execute handler
-				var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
-				listeners[i]["handler"].call(bindTo, sender, e, ex);
-
-				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
-			}
-
-			if (stopPropagation)
-			{
-				e.stopPropagation();
-			}
-
-			return Promise.resolve();
-
-		};
-
-		return EventOrganizer;
-	}(Organizer));
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Pad class
+	//	SettingManager class
 	// =============================================================================
 
 	// -----------------------------------------------------------------------------
@@ -3111,217 +4350,64 @@
 	/**
 	 * Constructor.
 	 */
-	function Pad()
+	function SettingManager()
 	{
 
 		// super()
-		return Reflect.construct(Component, [], this.constructor);
+		return Reflect.construct(HTMLElement, [], this.constructor);
 
 	}
 
-	ClassUtil.inherit(Pad, Component);
-	customElements.define("bm-pad", Pad);
+	ClassUtil.inherit(SettingManager, Component);
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Get component settings.
+	 *
+	 * @return  {Object}		Options.
+	 */
+	SettingManager.prototype._getSettings = function()
+	{
+
+		return {
+			"settings": {
+				"name":					"SettingManager",
+				"autoSetup":			false,
+			}
+		};
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	customElements.define("bm-setting", SettingManager);
+
+	// =============================================================================
+
+	// =============================================================================
+	//	TagLoader class
+	// =============================================================================
+
+	// -----------------------------------------------------------------------------
+	//  Constructor
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Constructor.
+	 */
+	function TagLoader()
+	{
+
+		// super()
+		return Reflect.construct(HTMLElement, [], this.constructor);
+
+	}
+
+	ClassUtil.inherit(TagLoader, Component);
 
 	// -----------------------------------------------------------------------------
 	//  Methods
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Open pad.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.open = function(options)
-	{
-		var this$1 = this;
-
-
-		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.open(): Opening pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
-			return this$1.changeState("opening");
-		}).then(function () {
-			return this$1.switchTemplate(this$1._settings.get("settings.templateName"));
-		}).then(function () {
-			return this$1.trigger("beforeOpen", sender, options);
-		}).then(function () {
-			var autoSetupOnOpen = this$1._settings.get("settings.autoSetupOnOpen");
-			var autoSetup = this$1._settings.get("settings.autoSetup");
-			if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
-			{
-				return this$1.setup(options);
-			}
-		}).then(function () {
-			if (this$1._settings.get("settings.autoRefresh"))
-			{
-				return this$1.refresh(options);
-			}
-		}).then(function () {
-			return this$1.trigger("doOpen", sender, options);
-		}).then(function () {
-			return this$1.trigger("afterOpen", sender, options);
-		}).then(function () {
-			console.debug(("Pad.open(): Opened pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
-			return this$1.changeState("opened");
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Open pad modally.
-	 *
-	 * @param	{array}			options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.openModal = function(options)
-	{
-		var this$1 = this;
-
-
-		console.debug(("Pad.openModal(): Opening pad modally. name=" + (this.name) + ", id=" + (this.id)));
-
-		return new Promise(function (resolve, reject) {
-			this$1._isModal = true;
-			this$1._modalResult = {"result":false};
-			this$1._modalPromise = { "resolve": resolve, "reject": reject };
-			this$1.open(options);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Close pad.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.close = function(options)
-	{
-		var this$1 = this;
-
-
-		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.close(): Closing pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
-			return this$1.changeState("closing");
-		}).then(function () {
-			return this$1.trigger("beforeClose", sender, options);
-		}).then(function () {
-			return this$1.trigger("doClose", sender, options);
-		}).then(function () {
-			return this$1.trigger("afterClose", sender, options);
-		}).then(function () {
-			if (this$1._isModal)
-			{
-				this$1._modalPromise.resolve(this$1._modalResult);
-			}
-		}).then(function () {
-			console.debug(("Pad.close(): Closed pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
-			return this$1.changeState("closed");
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Refresh pad.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.refresh = function(options)
-	{
-		var this$1 = this;
-
-
-		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.refresh(): Refreshing pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
-			return this$1.trigger("beforeRefresh", sender, options);
-		}).then(function () {
-			if (this$1._settings.get("settings.autoFill"))
-			{
-				return this$1.fill(options);
-			}
-		}).then(function () {
-			return this$1.trigger("doRefresh", sender, options);
-		}).then(function () {
-			return this$1.trigger("afterRefresh", sender, options);
-		}).then(function () {
-			console.debug(("Pad.refresh(): Refreshed pad. name=" + (this$1.name) + ", id=" + (this$1.id)));
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Change template html.
-	 *
-	 * @param	{String}		templateName		Template name.
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.switchTemplate = function(templateName, options)
-	{
-		var this$1 = this;
-
-
-		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
-
-		if (this.isActiveTemplate(templateName))
-		{
-			return Promise.resolve();
-		}
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.switchTemplate(): Switching template. name=" + (this$1.name) + ", templateName=" + templateName + ", id=" + (this$1.id)));
-			return this$1.addTemplate(templateName, {"rootNode":this$1._settings.get("settings.rootNode"), "templateNode":this$1._settings.get("settings.templateNode")});
-		}).then(function () {
-			var path = Util.concatPath([this$1._settings.get("system.appBaseUrl", ""), this$1._settings.get("system.componentPath", "")]);
-			var splitComponent = this$1._settings.get("system.splitComponent", false);
-			return this$1.loadTags(this$1, path, {"splitComponent":splitComponent});
-		}).then(function () {
-			return this$1.callOrganizers("afterAppend", this$1._settings.items);
-		}).then(function () {
-			return this$1.trigger("afterAppend", sender, options);
-		}).then(function () {
-			console.debug(("Pad.switchTemplate(): Switched template. name=" + (this$1.name) + ", templateName=" + templateName + ", id=" + (this$1.id)));
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Fill.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.fill = function(options)
-	{
-	};
-
 	// -----------------------------------------------------------------------------
 
 	/**
@@ -3331,7 +4417,7 @@
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	Pad.prototype.start = function(settings)
+	TagLoader.prototype.start = function(settings)
 	{
 		var this$1 = this;
 
@@ -3339,995 +4425,30 @@
 		// Defaults
 		var defaults = {
 			"settings": {
-				"autoSetupOnStart":false,
-				"autoOpen": true,
-				"autoClose": true,
-				"autoRefresh": true,
-				"autoFill": true,
+				"name": "TagLoader",
 			},
-			"organizers":{
-				"TemplateOrganizer": "",
-			}
 		};
-		settings = Util.deepMerge(defaults, settings);
+		settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
 
-		return Promise.resolve().then(function () {
-			// super()
-			return Component.prototype.start.call(this$1, settings);
-		}).then(function (newSettings) {
-			settings = newSettings;
-
-			// Open
-			if (this$1._settings.get("settings.autoOpen"))
+		// super()
+		return BITSMIST.v1.Component.prototype.start.call(this, settings).then(function () {
+			if (document.readyState !== "loading")
 			{
-				return this$1.open(settings);
+				AutoloadOrganizer.load(document.body, this$1.settings);
+			}
+			else
+			{
+				document.addEventListener("DOMContentLoaded", function () {
+					AutoloadOrganizer.load(document.body, this$1.settings);
+				});
 			}
 		});
 
 	};
 
-	// =============================================================================
+	// -----------------------------------------------------------------------------
 
-	// =============================================================================
-	//	Template organizer class
-	// =============================================================================
-
-	var TemplateOrganizer = /*@__PURE__*/(function (Organizer) {
-		function TemplateOrganizer () {
-			Organizer.apply(this, arguments);
-		}
-
-		if ( Organizer ) TemplateOrganizer.__proto__ = Organizer;
-		TemplateOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		TemplateOrganizer.prototype.constructor = TemplateOrganizer;
-
-		TemplateOrganizer.globalInit = function globalInit ()
-		{
-
-			// Add methods
-			Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); };
-			Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); };
-			Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActive(this, templateName); };
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Init.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		TemplateOrganizer.init = function init (conditions, component, setttings)
-		{
-
-			// Init vars
-			component._templates = {};
-
-			// Set defaults if not set already
-			component.settings.set("settings.templateName", component.settings.get("settings.templateName", component.tagName.toLowerCase()));
-
-			// Load settings from attributes
-			TemplateOrganizer.__loadAttrSettings(component);
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Organize.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		TemplateOrganizer.organize = function organize (conditions, component, settings)
-		{
-
-			var templates = settings["templates"];
-			if (templates)
-			{
-				Object.keys(templates).forEach(function (key) {
-					var templateInfo = TemplateOrganizer.__getTemplateInfo(component, key);
-					templateInfo["html"] = templates[key];
-				});
-			}
-
-			return settings;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Clear.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		TemplateOrganizer.clear = function clear (component)
-		{
-
-			component._templates = {};
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if event is target.
-		 *
-		 * @param	{String}		conditions			Event name.
-		 * @param	{Object}		organizerInfo		Organizer info.
-		 * @param	{Component}		component			Component.
-		 *
-		 * @return 	{Boolean}		True if it is target.
-		 */
-		TemplateOrganizer.isTarget = function isTarget (conditions, organizerInfo, component)
-		{
-
-			var ret = false;
-
-			if (component instanceof BITSMIST.v1.Pad)
-			{
-				ret = Organizer.isTarget.call(this, conditions, organizerInfo, component);
-				/*
-				if (conditions == "*" || conditions == "beforeStart")
-				{
-					ret = true;
-				}
-				*/
-			}
-
-			return ret;
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if the template is active.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		templateName		Template name.
-		 *
-		 * @return  {Boolean}		True when active.
-		 */
-		TemplateOrganizer._isActive = function _isActive (component, templateName)
-		{
-
-			var ret = false;
-
-			var templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
-			if (templateInfo["isAppended"])
-			{
-				ret = true;
-			}
-
-			return ret;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Add a component to parent component.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		templateName		Template name.
-		 * @param	{Object}		options				Options for the template.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		TemplateOrganizer._addTemplate = function _addTemplate (component, templateName, options)
-		{
-
-			var templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
-			if (templateInfo["isAppended"])
-			{
-				throw new ReferenceError(("Template already appended. name=" + (component.name) + ", templateName=" + templateName));
-			}
-
-			return Promise.resolve().then(function () {
-				var path = Util.concatPath([
-					component.settings.get("system.appBaseUrl", ""),
-					component.settings.get("system.templatePath", ""),
-					component.settings.get("settings.path", "")
-				]);
-				return TemplateOrganizer._loadTemplate(component, templateInfo, path);
-			}).then(function () {
-				if (component.settings.get("settings.templateNode"))
-				{
-					TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("settings.templateNode"));
-				}
-
-				return TemplateOrganizer.__applyTemplate(component, templateInfo);
-			}).then(function () {
-				if (component._templates[component.settings.get("settings.templateName")])
-				{
-					component._templates[component.settings.get("settings.templateName")]["isAppended"] = false;
-				}
-				component._templates[templateName]["isAppended"] = true;
-				component.settings.set("settings.templateName", templateName);
-			});
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load the template html.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{Object}		templateInfo		Template info.
-		 * @param	{String}		path				Path to template.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		TemplateOrganizer._loadTemplate = function _loadTemplate (component, templateInfo, path)
-		{
-
-			return TemplateOrganizer.__autoLoadTemplate(component, templateInfo, path);
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Clone the component.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		templateName		Template name.
-		 *
-		 * @return  {Object}		Cloned component.
-		 */
-		TemplateOrganizer._clone = function _clone (component, templateName)
-		{
-
-			templateName = templateName || component._settings.get("settings.templateName");
-			var templateInfo = component._templates[templateName];
-
-			if (!templateInfo)
-			{
-				throw new ReferenceError(("Template not loaded. name=" + (component.name) + ", templateName=" + templateName));
-			}
-
-			var clone;
-			if (templateInfo["node"])
-			{
-				// template is a template tag
-				clone = document.importNode(templateInfo["node"], true);
-			}
-			else
-			{
-				// template is not a template tag
-				var ele = document.createElement("div");
-				ele.innerHTML = templateInfo["html"];
-
-				clone = ele.firstElementChild;
-			}
-
-			return clone;
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Privates
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load the template html if not loaded yet.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{Object}		templateInfo		Template info.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		TemplateOrganizer.__autoLoadTemplate = function __autoLoadTemplate (component, templateInfo, path)
-		{
-
-			console.debug(("TemplateOrganizer.__autoLoadTemplate(): Auto loading template. name=" + (component.name) + ", templateName=" + (templateInfo["name"]) + ", id=" + (component.id)));
-
-			var promise;
-
-			if (templateInfo["html"] || templateInfo["node"])
-			{
-				console.debug(("TemplateOrganizer.__autoLoadTemplate(): Template Already exists. name=" + (component.name) + ", templateName=" + (templateInfo["name"]) + ", id=" + (component.id)) );
-			}
-			else
-			{
-				var url = Util.concatPath([path, templateInfo["name"] + ".html"]);
-
-				promise = TemplateOrganizer.__loadTemplateFile(url).then(function (template) {
-					templateInfo["html"] = template;
-				});
-			}
-
-			return Promise.all([promise]).then(function () {
-				if (!templateInfo["isLoaded"])
-				{
-					return component.trigger("afterLoadTemplate", component);
-				}
-			}).then(function () {
-				templateInfo["isLoaded"] = true;
-			});
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load the template html.
-		 *
-		 * @param	{String}		url					Template url.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		TemplateOrganizer.__loadTemplateFile = function __loadTemplateFile (url)
-		{
-
-			console.debug(("TemplateOrganzier.loadTemplate(): Loading template. url=" + url));
-
-			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then(function (xhr) {
-				console.debug(("TemplateOrganzier.loadTemplate(): Loaded template. url=" + url));
-
-				return xhr.responseText;
-			});
-
-		};
-
-		// -----------------------------------------------------------------------------
-
-		/**
-		 * Returns templateInfo for the specified templateName. Create one if not exists.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		templateName		Template name.
-		 *
-		 * @return  {Object}		Template info.
-		 */
-		TemplateOrganizer.__getTemplateInfo = function __getTemplateInfo (component, templateName)
-		{
-
-			if (!component._templates[templateName])
-			{
-				component._templates[templateName] = {};
-				component._templates[templateName]["name"] = templateName;
-				component._templates[templateName]["html"] = "";
-				component._templates[templateName]["isAppended"] = false;
-				component._templates[templateName]["isLoaded"] = false;
-			}
-
-			return component._templates[templateName];
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Store a template node.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{Object}		templateInfo		Template info.
-		 * @param	{String}		templateNodeName	Template node name.
-		 */
-		TemplateOrganizer.__storeTemplateNode = function __storeTemplateNode (component, templateInfo, templateNodeName)
-		{
-
-			var rootNode = document.querySelector(templateNodeName);
-			if (!rootNode)
-			{
-				throw new ReferenceError(("Root node does not exist. name=" + (component.name) + ", rootNode=" + templateNodeName + ", templateName=" + (templateInfo["name"])));
-			}
-
-			rootNode.insertAdjacentHTML("afterbegin", templateInfo["html"]);
-			var node = rootNode.children[0];
-			templateInfo["node"] = ('content' in node ? node.content : node);
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Apply template.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{Object}		templateInfo		Template info.
-		 */
-		TemplateOrganizer.__applyTemplate = function __applyTemplate (component, templateInfo)
-		{
-
-			if (templateInfo["node"])
-			{
-				var clone = TemplateOrganizer.clone(component, templateInfo["name"]);
-				component.insertBefore(clone, component.firstChild);
-			}
-			else
-			{
-				component.innerHTML = templateInfo["html"];
-			}
-
-			console.debug(("TemplateOrganizer.__applyTemplate(): Applied template. name=" + (component.name) + ", templateName=" + (templateInfo["name"]) + ", id=" + (component.id)));
-
-		};
-
-		// -----------------------------------------------------------------------------
-
-		/**
-		 * Get settings from element's attribute.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		TemplateOrganizer.__loadAttrSettings = function __loadAttrSettings (component)
-		{
-
-			/*
-			// Get template path from attribute
-			if (component.hasAttribute("bm-templatepath"))
-			{
-				component.settings.set("system.templatePath", component.getAttribute("bm-templatepath"));
-			}
-
-			// Get template name from attribute
-			if (component.hasAttribute("bm-templatename"))
-			{
-				component.settings.set("templateName", component.getAttribute("bbmmplatename"));
-			}
-
-			// Get template ref from templateref
-			if (component.hasAttribute("bm-templateref"))
-			{
-				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-templateref"));
-				component.settings.set("system.templatePath", arr[0]);
-				component.settings.set("templateName", arr[1].replace(".html", ""));
-			}
-			*/
-
-		};
-
-		return TemplateOrganizer;
-	}(Organizer));
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Component organizer class
-	// =============================================================================
-
-	var ComponentOrganizer = /*@__PURE__*/(function (Organizer) {
-		function ComponentOrganizer () {
-			Organizer.apply(this, arguments);
-		}
-
-		if ( Organizer ) ComponentOrganizer.__proto__ = Organizer;
-		ComponentOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		ComponentOrganizer.prototype.constructor = ComponentOrganizer;
-
-		ComponentOrganizer.globalInit = function globalInit (targetClass)
-		{
-
-			// Add methods
-			Pad.prototype.loadTags = ComponentOrganizer.loadTags;
-
-			// Init vars
-			ComponentOrganizer.__classes = new Store();
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Init.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		ComponentOrganizer.init = function init (conditions, component, settings)
-		{
-
-			// Add properties
-			Object.defineProperty(component, 'components', {
-				get: function get() { return this._components; },
-			});
-
-			// Add methods
-			component.addComponent = function(componentName, settings, sync) { return ComponentOrganizer._addComponent(this, componentName, settings, sync); };
-
-			// Init vars
-			component._components = {};
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Organize.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		ComponentOrganizer.organize = function organize (conditions, component, settings)
-		{
-
-			var chain = Promise.resolve();
-
-			// Load molds
-			var molds = settings["molds"];
-			if (molds)
-			{
-				Object.keys(molds).forEach(function (moldName) {
-					chain = chain.then(function () {
-						return ComponentOrganizer._addComponent(component, moldName, molds[moldName], "opened");
-					});
-				});
-			}
-
-			// Load components
-			var components = settings["components"];
-			if (components)
-			{
-				Object.keys(components).forEach(function (componentName) {
-					chain = chain.then(function () {
-						return ComponentOrganizer._addComponent(component, componentName, components[componentName]);
-					});
-				});
-			}
-
-			return chain.then(function () {
-				return settings;
-			});
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Clear.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		ComponentOrganizer.clear = function clear (component)
-		{
-
-			Object.keys(component.components).forEach(function (key) {
-				component.components[key].parentNode.removeChild(component._components[key]);
-			});
-
-			component._components = {};
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if event is target.
-		 *
-		 * @param	{String}		conditions			Event name.
-		 * @param	{Object}		organizerInfo		Organizer info.
-		 * @param	{Component}		component			Component.
-		 *
-		 * @return 	{Boolean}		True if it is target.
-		 */
-		ComponentOrganizer.isTarget = function isTarget (conditions, organizerInfo, component)
-		{
-
-			var ret = false;
-
-			if (conditions == "beforeStart")
-			{
-				if (!(component instanceof BITSMIST.v1.Pad))
-				{
-					ret = true;
-				}
-			}
-			else
-			{
-				ret = Organizer.isTarget.call(this, conditions, organizerInfo, component);
-			}
-
-			return ret;
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Add a component to parent component.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		componentName		Component name.
-		 * @param	{Object}		settings			Settings for the component.
-		 * @param	{Boolean}		sync				Wait for the component to become the state.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		ComponentOrganizer._addComponent = function _addComponent (component, componentName, settings, sync)
-		{
-
-			var path = Util.concatPath([
-				component.settings.get("system.appBaseUrl", ""),
-				component.settings.get("system.componentPath", ""),
-				Util.safeGet(settings, "settings.path", "")
-			]);
-			var className = Util.safeGet(settings, "settings.className") || componentName;
-			var tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
-
-			return Promise.resolve().then(function () {
-				// Load component
-				var autoLoad = Util.safeGet(settings, "settings.autoLoad", component.settings.get("system.autoLoad", true));
-				var splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
-				var options = { "autoLoad":autoLoad, "splitComponent":splitComponent };
-				return ComponentOrganizer._loadComponent(className, path, settings, options, tagName);
-			}).then(function () {
-				// Insert tag
-				if (Util.safeGet(settings, "settings.rootNode") && !component.components[componentName])
-				{
-					component.components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
-				}
-			}).then(function () {
-				// Expose component
-				var expose = Util.safeGet(settings, "settings.expose");
-				if (expose)
-				{
-					var exposeName = ( expose === true ? componentName : expose );
-					Object.defineProperty(component.__proto__, exposeName, {
-						get: function get() { return this.components[componentName]; }
-					});
-				}
-			}).then(function () {
-				// Wait for the added component to be ready
-				if (sync || Util.safeGet(settings, "settings.sync"))
-				{
-					sync = sync || Util.safeGet(settings, "settings.sync"); // sync precedes settings["sync"]
-					var state = (sync === true ? "started" : sync);
-					var c = className.split(".");
-					return component.waitFor([{"name":c[c.length - 1], "state":state}]);
-				}
-			});
-
-		};
-
-		// -----------------------------------------------------------------------------
-
-		/**
-		 * Load scripts for tags which has bm-autoload attribute.
-		 *
-		 * @param	{HTMLElement}	rootNode			Target node.
-		 * @param	{String}		path				Base path prepend to each element's path.
-		 * @param	{Object}		options				Load Options.
-		 * @param	{String}		target				Target elements.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		ComponentOrganizer.loadTags = function loadTags (rootNode, basePath, options, target)
-		{
-
-			console.debug(("ComponentOrganizer._loadTags(): Loading tags. rootNode=" + rootNode + ", basePath=" + basePath));
-
-			var promises = [];
-			var targets = ( target ?
-				document.querySelectorAll(target) :
-				rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])")
-			);
-
-			targets.forEach(function (element) {
-				element.setAttribute("bm-autoloaded", "");
-
-				var href = element.getAttribute("bm-autoload");
-				var className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
-				var path = element.getAttribute("bm-path") || "";
-				var split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
-				var morph = ( element.hasAttribute("bm-automorph") ?
-					( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
-					false
-				);
-				var settings = {"settings":{"morph":morph}};
-				var loadOptions = {"splitComponent":split, "autoLoad": true};
-
-				if (href)
-				{
-					var arr = Util.getFilenameAndPathFromUrl(href);
-					path = arr[0];
-					if (href.slice(-3).toLowerCase() == ".js")
-					{
-						settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
-					}
-					else if (href.slice(-5).toLowerCase() == ".html")
-					{
-						settings["settings"]["morph"] = true;
-					}
-				}
-				else
-				{
-					path = Util.concatPath([basePath, path]);
-				}
-
-				promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
-			});
-
-			return Promise.all(promises);
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load the template html.
-		 *
-		 * @param	{String}		className			Class name.
-		 * @param	{String}		path				Path to component.
-		 * @param	{Object}		settings			Component settings.
-		 * @param	{Object}		options				Load options.
-		 * @param	{String}		tagName				Component's tag name
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		ComponentOrganizer._loadComponent = function _loadComponent (className, path, settings, options, tagName)
-		{
-
-			var morph = Util.safeGet(settings, "settings.morph");
-			if (morph)
-			{
-				// Define empty class
-				console.debug(("ComponentOrganizer._loadComponent(): Creating empty component. className=" + className + ", path=" + path + ", tagName=" + tagName));
-
-				var classDef = ( morph === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(morph) );
-				if (!customElements.get(tagName.toLowerCase()))
-				{
-					ClassUtil.newComponent(classDef, settings, tagName, className);
-				}
-			}
-			else
-			{
-				if (options["autoLoad"])
-				{
-					// Load component script
-					return ComponentOrganizer.__autoloadComponent(className, path, settings, options);
-				}
-			}
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Privates
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if the class exists.
-		 *
-		 * @param	{String}		className			Class name.
-		 *
-		 * @return  {Bool}			True if exists.
-		 */
-		ComponentOrganizer.__isLoadedClass = function __isLoadedClass (className)
-		{
-
-			var ret = false;
-
-			if (ComponentOrganizer.__classes.get(className, {})["state"] == "loaded")
-			{
-				ret = true;
-			}
-			else if (ClassUtil.getClass(className))
-			{
-				ret = true;
-			}
-
-			return ret;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load the component if not loaded yet.
-		 *
-		 * @param	{String}		className			Component class name.
-		 * @param	{String}		path				Path to component.
-		 * @param	{Object}		settings			Component settings.
-		 * @param	{Object}		options				Load Options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		ComponentOrganizer.__autoloadComponent = function __autoloadComponent (className, path, settings, options)
-		{
-
-			console.debug(("ComponentOrganizer.__autoLoadComponent(): Auto loading component. className=" + className + ", path=" + path));
-
-			var promise;
-			var tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
-			var fileName = Util.safeGet(settings, "settings.fileName", tagName);
-
-			if (ComponentOrganizer.__isLoadedClass(className) || customElements.get(tagName))
-			{
-				// Already loaded
-				console.debug(("ComponentOrganizer.__autoLoadComponent(): Component Already exists. className=" + className));
-				ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded"});
-				promise = Promise.resolve();
-			}
-			else if (ComponentOrganizer.__classes.get(className, {})["state"] == "loading")
-			{
-				// Already loading
-				console.debug(("ComponentOrganizer.__autoLoadComponent(): Component Already loading. className=" + className));
-				promise = ComponentOrganizer.__classes.get(className)["promise"];
-			}
-			else
-			{
-				// Not loaded
-				ComponentOrganizer.__classes.mergeSet(className, {"state":"loading"});
-				promise = ComponentOrganizer.__loadComponentScript(fileName, path, options).then(function () {
-					ComponentOrganizer.__classes.mergeSet(className, {"state":"loaded", "promise":null});
-				});
-				ComponentOrganizer.__classes.mergeSet(className, {"promise":promise});
-			}
-
-			return promise;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load the component js files.
-		 *
-		 * @param	{String}		className			Class name.
-		 * @param	{String}		path				Path to component.
-		 * @param	{Object}		options				Load Options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		ComponentOrganizer.__loadComponentScript = function __loadComponentScript (fileName, path, options)
-		{
-
-			console.debug(("ComponentOrganizer.__loadComponentScript(): Loading script. fileName=" + fileName + ", path=" + path));
-
-			var url1 = Util.concatPath([path, fileName + ".js"]);
-			var url2 = Util.concatPath([path, fileName + ".settings.js"]);
-
-			return Promise.resolve().then(function () {
-				return AjaxUtil.loadScript(url1);
-			}).then(function () {
-				if (options["splitComponent"])
-				{
-					return AjaxUtil.loadScript(url2);
-				}
-			}).then(function () {
-				console.debug(("ComponentOrganizer.__loadComponentScript(): Loaded script. fileName=" + fileName));
-			});
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Insert a tag and return the inserted component.
-		 *
-		 * @param	{String}		tagName				Tagname.
-		 * @param	{Object}		settings			Component settings.
-		 *
-		 * @return  {Component}		Component.
-		 */
-		ComponentOrganizer.__insertTag = function __insertTag (component, tagName, settings)
-		{
-
-			var addedComponent;
-
-			// Check root node
-			var root = component._rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
-			if (!root)
-			{
-				throw new ReferenceError(("Root node does not exist. name=" + (component.name) + ", tagName=" + tagName + ", rootNode=" + (Util.safeGet(settings, "settings.rootNode"))));
-			}
-
-			// Build tag
-			var tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
-
-			// Insert tag
-			if (Util.safeGet(settings, "settings.overwrite"))
-			{
-				root.outerHTML = tag;
-				addedComponent = root;
-			}
-			else
-			{
-				root.insertAdjacentHTML("afterbegin", tag);
-				addedComponent = root.children[0];
-			}
-
-			// Inject settings to added component
-			addedComponent._injectSettings = function(oldSettings){
-				var newSettings;
-
-				// super()
-				if (addedComponent._super.prototype._injectSettings)
-				{
-					newSettings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(this, oldSettings));
-				}
-				else
-				{
-					newSettings = {};
-				}
-
-				return Util.deepMerge(newSettings, settings);
-			};
-
-			return addedComponent;
-
-		};
-
-		return ComponentOrganizer;
-	}(Organizer));
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Autoload organizer class
-	// =============================================================================
-
-	var AutoloadOrganizer = /*@__PURE__*/(function (Organizer) {
-		function AutoloadOrganizer () {
-			Organizer.apply(this, arguments);
-		}
-
-		if ( Organizer ) AutoloadOrganizer.__proto__ = Organizer;
-		AutoloadOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		AutoloadOrganizer.prototype.constructor = AutoloadOrganizer;
-
-		AutoloadOrganizer.organize = function organize (conditions, component, settings)
-		{
-
-			if (document.readyState !== 'loading')
-			{
-				AutoloadOrganizer._load.call(component, component);
-			}
-			else
-			{
-				document.addEventListener('DOMContentLoaded', function () {
-					AutoloadOrganizer._load.call(component, component);
-				});
-			}
-
-			return settings;
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		* Load components.
-		*
-		* @param	{Component}		component			Component.
-		*/
-		AutoloadOrganizer._load = function _load (component)
-		{
-
-			var path = Util.concatPath([component.settings.get("system.appBaseUrl", ""), component.settings.get("system.componentPath", "")]);
-			var splitComponent = component.settings.get("system.splitComponent", false);
-			var target = component.getAttribute("bm-target");
-
-			ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent}, target);
-
-		};
-
-		return AutoloadOrganizer;
-	}(Organizer));
+	customElements.define("bm-tagloader", TagLoader);
 
 	// =============================================================================
 	/**
@@ -4347,16 +4468,17 @@
 	OrganizerOrganizer.globalInit();
 	window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
 	SettingOrganizer.globalInit();
-	OrganizerOrganizer.organizers.set("StateOrganizer", {"object":StateOrganizer, "targetWords":"waitFor", "targetEvents":["afterAppend"], "order":200});
-	window.BITSMIST.v1.StateOrganizer = StateOrganizer;
-	OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend"], "order":300});
-	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
-	OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart"], "order":600});
+	window.BITSMIST.v1.settings = SettingOrganizer.globalSettings;
+	OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart"], "order":1000});
 	window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
-	OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetWords":"autoloads", "targetEvents":["beforeStart"], "order":700});
+	OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend"], "order":2000});
+	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
+	OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend"], "order":3000});
 	window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
-	OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":"components","targetEvents":["afterAppend"], "order":800});
+	OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":"components","targetEvents":["afterAppend", "afterSpecLoad"], "order":4000});
 	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
+	OrganizerOrganizer.organizers.set("StateOrganizer", {"object":StateOrganizer, "targetWords":"waitFor", "targetEvents":"*", "order":5000});
+	window.BITSMIST.v1.StateOrganizer = StateOrganizer;
 	window.BITSMIST.v1.Pad = Pad;
 	window.BITSMIST.v1.Store = Store;
 	window.BITSMIST.v1.OrganizerStore = OrganizerStore;
@@ -4364,42 +4486,6 @@
 	window.BITSMIST.v1.AjaxUtil = AjaxUtil;
 	window.BITSMIST.v1.ClassUtil = ClassUtil;
 	window.BITSMIST.v1.Util = Util;
-
-	// Settings
-
-	BITSMIST.v1.settings = SettingOrganizer.globalSettings;
-	ClassUtil.newComponent(Component, {
-		"settings": {
-			"name":					"SettingManager",
-			"loadGlobalSettings":	true,
-		}
-	}, "bm-setting", "SettingManager");
-
-	// Tag loader
-
-	ClassUtil.newComponent(Component, {
-		"settings": {
-			"name":					"TagLoader",
-			"autoSetup":			false,
-		},
-		"organizers": {
-			"AutoloadOrganizer":	""
-		}
-	}, "bm-tagloader", "TagLoader");
-
-	// Load tags
-
-	document.addEventListener('DOMContentLoaded', function () {
-		if (BITSMIST.v1.settings.get("system.autoLoadOnStartup", true))
-		{
-			var path = Util.concatPath([
-				BITSMIST.v1.settings.get("system.appBaseUrl", ""),
-				BITSMIST.v1.settings.get("system.componentPath", "")
-			]);
-			var splitComponent = BITSMIST.v1.settings.get("system.splitComponent", false);
-			ComponentOrganizer.loadTags(document, path, {"splitComponent":splitComponent});
-		}
-	});
 
 }());
 //# sourceMappingURL=bitsmist-js_v1.js.map
