@@ -58,6 +58,7 @@ Pad.prototype.start = function(settings)
 			"triggerAppendOnStart": false,
 		},
 		"organizers":{
+			"AutoloadOrganizer": {"settings":{"attach":true}},
 			"TemplateOrganizer": {"settings":{"attach":true}},
 		}
 	};
@@ -239,10 +240,6 @@ Pad.prototype.switchTemplate = function(templateName, options)
 	return Promise.resolve().then(() => {
 		console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 		return this.addTemplate(templateName, {"rootNode":this._settings.get("settings.rootNode"), "templateNode":this._settings.get("settings.templateNode")});
-	}).then(() => {
-		let path = Util.concatPath([this._settings.get("system.appBaseUrl", ""), this._settings.get("system.componentPath", "")]);
-		let splitComponent = this._settings.get("system.splitComponent", false);
-		return this.loadTags(this, path, {"splitComponent":splitComponent});
 	}).then(() => {
 		return this.callOrganizers("afterAppend", this._settings.items);
 	}).then(() => {
