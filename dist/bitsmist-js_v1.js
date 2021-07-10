@@ -1301,9 +1301,9 @@
 			xhr.addEventListener("load", function () {
 				if (xhr.status == 200 || xhr.status == 201)
 				{
-					setTimeout(function (){
+	//				setTimeout(()=>{
 					resolve(xhr);
-					}, 500);
+	//				}, 500);
 				}
 				else
 				{
@@ -1344,9 +1344,9 @@
 					script = undefined;
 
 					if(!isAbort) {
-						setTimeout(function (){
+	//					setTimeout(()=>{
 						resolve();
-						}, 500);
+	//					}, 500);
 					}
 				}
 			};
