@@ -9,7 +9,7 @@ BitsmistJS is a Web Components-based javascript framework.
 - **Autoloading:** Files are loaded automatically when needed.
 - **Event-driven:** Easy to find where the handling code is.
 
-## Installtion
+## Installation
 
 ### CDN
 
