@@ -48,6 +48,7 @@ export default class StateOrganizer extends Organizer
 		StateOrganizer.__waitingListIndexName = new Map();
 		StateOrganizer.__waitingListIndexId = new Map();
 		StateOrganizer.__waitingListIndexNone = [];	Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
+		StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); }
 
 	}
 
@@ -148,7 +149,7 @@ export default class StateOrganizer extends Organizer
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
 				setTimeout(() => {
-					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${JSON.stringify(waitlist)}, name=${component.name}.`);
+					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${JSON.stringify(waitlist)}, name=${component && component.name}.`);
 				}, timeout);
 			});
 			waitInfo["promise"] = promise;
@@ -414,11 +415,9 @@ export default class StateOrganizer extends Organizer
 	 *
 	 * @param	{Object}		waitInfo			Wait info.
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		state				State.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	//static __addToWaitingList(waitInfo, component, state)
 	static __addToWaitingList(waitInfo, component)
 	{
 
@@ -430,6 +429,9 @@ export default class StateOrganizer extends Organizer
 		let waitlist = waitInfo["waitlist"];
 		for (let i = 0; i < waitlist.length; i++)
 		{
+			// Set default state when not specified
+			waitlist[i]["state"] = waitlist[i]["state"] || "opened";
+
 			// Index for component id + state
 			if (waitlist[i].id)
 			{
@@ -500,7 +502,7 @@ export default class StateOrganizer extends Organizer
 		else if (waitlistItem["rootNode"])
 		{
 			let element = document.querySelector(waitlistItem["rootNode"]);
-			if (element)
+			if (element && element.uniqueId)
 			{
 				componentInfo = StateOrganizer.__components.get(element.uniqueId);
 			}
@@ -561,9 +563,6 @@ export default class StateOrganizer extends Organizer
 	 */
 	static __isReady(waitlistItem, componentInfo)
 	{
-
-		// Set defaults when not specified
-		waitlistItem["state"] = waitlistItem["state"] || "opened";
 
 		// Check component
 		let isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
