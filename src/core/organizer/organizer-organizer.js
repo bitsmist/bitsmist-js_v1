@@ -178,7 +178,7 @@ export default class OrganizerOrganizer extends Organizer
 			return OrganizerOrganizer.organize("*", component, newSettings);
 		}).then((newSettings) => {
 			// Call organizers
-			let chain = Promise.resolve(settings);
+			let chain = Promise.resolve(newSettings);
 			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
 				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
 				{
