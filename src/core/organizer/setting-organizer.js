@@ -92,8 +92,8 @@ export default class SettingOrganizer extends Organizer
 	{
 
 		return Promise.resolve().then(() => {
-			// Load extra settings
-			return SettingOrganizer.__loadExtraSettings(component, "setting");
+			// Load external settings
+			return SettingOrganizer.__loadExternalSettings(component, "setting");
 		}).then((extraSettings) => {
 			if (extraSettings)
 			{
@@ -154,25 +154,45 @@ export default class SettingOrganizer extends Organizer
 	 *
 	 * @param	{String}		settingName			Setting name.
 	 * @param	{String}		path				Path to setting file.
+	 * @param	{String}		path				Type of setting file.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadSetting(settingName, path)
+	static _loadSetting(settingName, path, type)
 	{
 
-		let url = Util.concatPath([path, settingName + ".js"]);
+		type = type || "js";
+		let url = Util.concatPath([path, settingName + "." + type]);
 		let settings;
 
 		console.debug(`SettingOrganizer._loadSetting(): Loading settings. url=${url}`);
+
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`SettingOrganizer._loadSetting(): Loaded settings. url=${url}`);
-			try
+
+			switch (type)
 			{
-				settings = JSON.parse(xhr.responseText);
-			}
-			catch(e)
-			{
-				throw new SyntaxError(`Illegal json string. url=${url}`);
+			case "json":
+				try
+				{
+					settings = JSON.parse(xhr.responseText);
+				}
+				catch(e)
+				{
+					if (e instanceof SyntaxError)
+					{
+						throw new SyntaxError(`Illegal json string. url=${url}, message=${e.message}`);
+					}
+					else
+					{
+						throw e;
+					}
+				}
+				break;
+			case "js":
+			default:
+				settings = Function('"use strict";return (' + xhr.responseText + ')')();
+				break;
 			}
 
 			return settings;
@@ -221,14 +241,14 @@ export default class SettingOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load an extra setting file.
+	 * Load an external setting file.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		settingName			Setting name.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __loadExtraSettings(component, settingName)
+	static __loadExternalSettings(component, settingName)
 	{
 
 		let name, path;
