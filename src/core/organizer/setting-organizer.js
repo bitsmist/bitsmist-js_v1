@@ -146,8 +146,6 @@ export default class SettingOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
-	//  Protected
-	// -------------------------------------------------------------------------
 
 	/**
 	 * Load setting file.
@@ -158,17 +156,17 @@ export default class SettingOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadSetting(settingName, path, type)
+	static loadSetting(settingName, path, type)
 	{
 
 		type = type || "js";
 		let url = Util.concatPath([path, settingName + "." + type]);
 		let settings;
 
-		console.debug(`SettingOrganizer._loadSetting(): Loading settings. url=${url}`);
+		console.debug(`SettingOrganizer.loadSetting(): Loading settings. url=${url}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SettingOrganizer._loadSetting(): Loaded settings. url=${url}`);
+			console.debug(`SettingOrganizer.loadSetting(): Loaded settings. url=${url}`);
 
 			switch (type)
 			{
@@ -200,6 +198,8 @@ export default class SettingOrganizer extends Organizer
 
 	}
 
+	// -------------------------------------------------------------------------
+	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
@@ -271,7 +271,7 @@ export default class SettingOrganizer extends Organizer
 
 		if (name || path)
 		{
-			return SettingOrganizer._loadSetting(name, path);
+			return SettingOrganizer.loadSetting(name, path);
 		}
 
 	}
