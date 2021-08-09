@@ -234,11 +234,11 @@ Component.prototype.stop = function(options)
 		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopping");
 	}).then(() => {
-		return this.trigger("beforeStop", sender, options);
+		return this.trigger("beforeStop", sender, {"options":options});
 	}).then(() => {
-		return this.trigger("doStop", sender, options);
+		return this.trigger("doStop", sender, {"options":options});
 	}).then(() => {
-		return this.trigger("afterStop", sender, options);
+		return this.trigger("afterStop", sender, {"options":options});
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopped");
@@ -263,11 +263,11 @@ Component.prototype.setup = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
-		return this.trigger("beforeSetup", sender, options);
+		return this.trigger("beforeSetup", sender, {"options":options});
 	}).then(() => {
-		return this.trigger("doSetup", sender, options);
+		return this.trigger("doSetup", sender, {"options":options});
 	}).then(() => {
-		return this.trigger("afterSetup", sender, options);
+		return this.trigger("afterSetup", sender, {"options":options});
 	}).then(() => {
 		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 	});

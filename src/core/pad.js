@@ -100,7 +100,7 @@ Pad.prototype.open = function(options)
 	}).then(() => {
 		return this.switchTemplate(Util.safeGet(options, "templateName", this._settings.get("settings.templateName")));
 	}).then(() => {
-		return this.trigger("beforeOpen", sender, options);
+		return this.trigger("beforeOpen", sender, {"options":options});
 	}).then(() => {
 		let autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetupOnOpen"));
 		let autoSetup = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetup"));
@@ -114,9 +114,9 @@ Pad.prototype.open = function(options)
 			return this.refresh(options);
 		}
 	}).then(() => {
-		return this.trigger("doOpen", sender, options);
+		return this.trigger("doOpen", sender, {"options":options});
 	}).then(() => {
-		return this.trigger("afterOpen", sender, options);
+		return this.trigger("afterOpen", sender, {"options":options});
 	}).then(() => {
 		console.debug(`Pad.open(): Opened pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opened");
@@ -166,11 +166,11 @@ Pad.prototype.close = function(options)
 		console.debug(`Pad.close(): Closing pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("closing");
 	}).then(() => {
-		return this.trigger("beforeClose", sender, options);
+		return this.trigger("beforeClose", sender, {"options":options});
 	}).then(() => {
-		return this.trigger("doClose", sender, options);
+		return this.trigger("doClose", sender, {"options":options});
 	}).then(() => {
-		return this.trigger("afterClose", sender, options);
+		return this.trigger("afterClose", sender, {"options":options});
 	}).then(() => {
 		if (this._isModal)
 		{
@@ -200,16 +200,16 @@ Pad.prototype.refresh = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
-		return this.trigger("beforeRefresh", sender, options);
+		return this.trigger("beforeRefresh", sender, {"options":options});
 	}).then(() => {
 		if (Util.safeGet(options, "autoFill", this._settings.get("settings.autoFill")))
 		{
 			return this.fill(options);
 		}
 	}).then(() => {
-		return this.trigger("doRefresh", sender, options);
+		return this.trigger("doRefresh", sender, {"options":options});
 	}).then(() => {
-		return this.trigger("afterRefresh", sender, options);
+		return this.trigger("afterRefresh", sender, {"options":options});
 	}).then(() => {
 		console.debug(`Pad.refresh(): Refreshed pad. name=${this.name}, id=${this.id}`);
 	});
@@ -243,7 +243,7 @@ Pad.prototype.switchTemplate = function(templateName, options)
 	}).then(() => {
 		return this.callOrganizers("afterAppend", this._settings.items);
 	}).then(() => {
-		return this.trigger("afterAppend", sender, options);
+		return this.trigger("afterAppend", sender, {"options":options});
 	}).then(() => {
 		console.debug(`Pad.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 	});
