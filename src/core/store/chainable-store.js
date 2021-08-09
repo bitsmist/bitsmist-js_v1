@@ -52,7 +52,7 @@ export default class ChainableStore extends Store
 	/**
 	 * Items.
 	 *
-	 * @type	{String}
+	 * @type	{Object}
 	 */
 	get items()
 	{
@@ -76,6 +76,20 @@ export default class ChainableStore extends Store
 	{
 
 		this._items = Object.assign({}, value);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Local items.
+	 *
+	 * @type	{Object}
+	 */
+	get localItems()
+	{
+
+		return this.clone();
 
 	}
 
