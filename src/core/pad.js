@@ -82,6 +82,42 @@ Pad.prototype.start = function(settings)
 // -----------------------------------------------------------------------------
 
 /**
+ * Change template html.
+ *
+ * @param	{String}		templateName		Template name.
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Pad.prototype.switchTemplate = function(templateName, options)
+{
+
+	options = Object.assign({}, options);
+	let sender = ( options["sender"] ? options["sender"] : this );
+
+	if (this.isActiveTemplate(templateName))
+	{
+		return Promise.resolve();
+	}
+
+	return Promise.resolve().then(() => {
+		console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+		return this.addTemplate(templateName);
+	}).then(() => {
+		return this.applyTemplate(templateName);
+	}).then(() => {
+		return this.callOrganizers("afterAppend", this._settings.items);
+	}).then(() => {
+		return this.trigger("afterAppend", sender, {"options":options});
+	}).then(() => {
+		console.debug(`Pad.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Open pad.
  *
  * @param	{Object}		options				Options.
@@ -202,6 +238,13 @@ Pad.prototype.refresh = function(options)
 		console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", sender, {"options":options});
 	}).then(() => {
+		return this.trigger("doTarget", sender, {"options":options});
+	}).then(() => {
+		if (Util.safeGet(options, "autoFetch", this._settings.get("settings.autoFetch")))
+		{
+			return this.fetch(options);
+		}
+	}).then(() => {
 		if (Util.safeGet(options, "autoFill", this._settings.get("settings.autoFill")))
 		{
 			return this.fill(options);
@@ -219,33 +262,29 @@ Pad.prototype.refresh = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Change template html.
+ * Fetch data.
  *
- * @param	{String}		templateName		Template name.
  * @param	{Object}		options				Options.
  *
  * @return  {Promise}		Promise.
  */
-Pad.prototype.switchTemplate = function(templateName, options)
+Pad.prototype.fetch = function(options)
 {
 
 	options = Object.assign({}, options);
 	let sender = ( options["sender"] ? options["sender"] : this );
 
-	if (this.isActiveTemplate(templateName))
-	{
-		return Promise.resolve();
-	}
-
 	return Promise.resolve().then(() => {
-		console.debug(`Pad.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-		return this.addTemplate(templateName, {"rootNode":this._settings.get("settings.rootNode"), "templateNode":this._settings.get("settings.templateNode")});
+		console.debug(`Pad.fetch(): fetching data. name=${this.name}, id=${this.id}`);
+		return this.trigger("beforeFetch", sender, {"options":options});
 	}).then(() => {
-		return this.callOrganizers("afterAppend", this._settings.items);
+		return this.callOrganizers("doFetch", options);
 	}).then(() => {
-		return this.trigger("afterAppend", sender, {"options":options});
+		return this.trigger("doFetch", sender, {"options":options});
 	}).then(() => {
-		console.debug(`Pad.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+		return this.trigger("afterFetch", sender, {"options":options});
+	}).then(() => {
+		console.debug(`Pad.fetch(): Fetched data. name=${this.name}, id=${this.id}`);
 	});
 
 }
@@ -260,6 +299,19 @@ Pad.prototype.switchTemplate = function(templateName, options)
  * @return  {Promise}		Promise.
  */
 Pad.prototype.fill = function(options)
+{
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Clear pad.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Pad.prototype.clear = function(options)
 {
 }
 
