@@ -31,9 +31,11 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		// Add methods
+		Pad.prototype.getTemplateInfo = function(templateName) { return TemplateOrganizer._getTemplateInfo(this, templateName); }
 		Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
+		Pad.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
 		Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
-		Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActive(this, templateName); }
+		Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActiveTemplate(this, templateName); }
 
 	}
 
@@ -53,6 +55,7 @@ export default class TemplateOrganizer extends Organizer
 
 		// Init vars
 		component._templates = {};
+		component._activeTemplateName = "";
 
 		// Set defaults if not set already
 		component.settings.set("settings.templateName", component.settings.get("settings.templateName", component.tagName.toLowerCase()));
@@ -76,16 +79,19 @@ export default class TemplateOrganizer extends Organizer
 	static organize(conditions, component, settings)
 	{
 
+		let promises = [];
 		let templates = settings["templates"];
 		if (templates)
 		{
-			Object.keys(templates).forEach((key) => {
-				let templateInfo = TemplateOrganizer.__getTemplateInfo(component, key);
-				templateInfo["html"] = templates[key];
+			Object.keys(templates).forEach((templateName) => {
+				let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
+				promises.push(TemplateOrganizer.__getTemplate(component, conditions, templates[templateName], templateInfo));
 			});
 		}
 
-		return settings;
+		return Promise.all(promises).then(() => {
+			return settings;
+		});
 
 	}
 
@@ -115,7 +121,7 @@ export default class TemplateOrganizer extends Organizer
 	 *
 	 * @return  {Boolean}		True when active.
 	 */
-	static _isActive(component, templateName)
+	static _isActiveTemplate(component, templateName)
 	{
 
 		let ret = false;
@@ -133,11 +139,11 @@ export default class TemplateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Add a component to parent component.
+	 * Add a template.
 	 *
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		templateName		Template name.
-	 * @param	{Object}		options				Options for the template.
+	 * @param	{Object}		options				Options for adding a template.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
@@ -159,16 +165,45 @@ export default class TemplateOrganizer extends Organizer
 			{
 				TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("settings.templateNode"));
 			}
-
-			return TemplateOrganizer.__applyTemplate(component, templateInfo);
-		}).then(() => {
-			if (component._templates[component.settings.get("settings.templateName")])
-			{
-				component._templates[component.settings.get("settings.templateName")]["isAppended"] = false;
-			}
-			component._templates[templateName]["isAppended"] = true;
-			component.settings.set("settings.templateName", templateName);
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Apply template.
+	 *
+	 * @param	{Component}		component			Parent component.
+	 * @param	{String}		templateName		Template name.
+	 */
+	static _applyTemplate(component, templateName)
+	{
+
+		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
+		Util.assert(!templateInfo["isAppended"], `TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}`, ReferenceError);
+
+		if (templateInfo["node"])
+		{
+			// Template node
+			let clone = TemplateOrganizer.clone(component, templateInfo["name"]);
+			component.insertBefore(clone, component.firstChild);
+		}
+		else
+		{
+			// HTML
+			component.innerHTML = templateInfo["html"];
+		}
+
+		// Change active template
+		if (component._templates[component.settings.get("settings.templateName")])
+		{
+			component._templates[component.settings.get("settings.templateName")]["isAppended"] = false;
+		}
+		templateInfo["isAppended"] = true;
+		component.settings.set("settings.templateName", templateName);
+
+		console.debug(`TemplateOrganizer._applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
 
 	}
 
@@ -211,12 +246,12 @@ export default class TemplateOrganizer extends Organizer
 		let clone;
 		if (templateInfo["node"])
 		{
-			// template is a template tag
+			// A template tag
 			clone = document.importNode(templateInfo["node"], true);
 		}
 		else
 		{
-			// template is not a template tag
+			// Not a template tag
 			let ele = document.createElement("div");
 			ele.innerHTML = templateInfo["html"];
 
@@ -339,31 +374,6 @@ export default class TemplateOrganizer extends Organizer
 
 	}
 
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Apply template.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{Object}		templateInfo		Template info.
-	 */
-	static __applyTemplate(component, templateInfo)
-	{
-
-		if (templateInfo["node"])
-		{
-			let clone = TemplateOrganizer.clone(component, templateInfo["name"]);
-			component.insertBefore(clone, component.firstChild);
-		}
-		else
-		{
-			component.innerHTML = templateInfo["html"];
-		}
-
-		console.debug(`TemplateOrganizer.__applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
-
-	}
-
 	// -----------------------------------------------------------------------------
 
 	/**
@@ -395,6 +405,48 @@ export default class TemplateOrganizer extends Organizer
 			component.settings.set("templateName", arr[1].replace(".html", ""));
 		}
 		*/
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get a template html according to settings.
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static __getTemplate(component, conditions, settings, templateInfo)
+	{
+
+		let promise = Promise.resolve();
+		let dataType = settings["type"];
+
+		if (conditions == "beforeStart")
+		{
+			switch (dataType) {
+			case "html":
+				templateInfo["html"] = settings["html"];
+				break;
+			case "url":
+				//todo
+				promise = TemplateOrganizer.loadTemplate(component, templateInfo, settings["url"]).then((html) => {
+					templateInfo["html"] = html;
+				});
+				break;
+			}
+		}
+		else if (conditions == "afterAppend")
+		{
+			switch (dataType) {
+			case "node":
+				templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
+				break;
+			}
+		}
+
+		return promise;
 
 	}
 

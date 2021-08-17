@@ -31,7 +31,7 @@ SettingOrganizer.globalInit();
 window.BITSMIST.v1.settings = SettingOrganizer.globalSettings;
 
 import TemplateOrganizer from "./organizer/template-organizer.js";
-OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart"], "order":1000});
+OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart", "afterAppend"], "order":1000});
 window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 
 import EventOrganizer from "./organizer/event-organizer.js";
