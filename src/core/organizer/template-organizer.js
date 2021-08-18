@@ -31,7 +31,6 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		// Add methods
-		Pad.prototype.getTemplateInfo = function(templateName) { return TemplateOrganizer._getTemplateInfo(this, templateName); }
 		Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
 		Pad.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
 		Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
@@ -126,8 +125,7 @@ export default class TemplateOrganizer extends Organizer
 
 		let ret = false;
 
-		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
-		if (templateInfo["isAppended"])
+		if (component._activeTemplateName === templateName)
 		{
 			ret = true;
 		}
@@ -151,7 +149,11 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
-		Util.assert(!templateInfo["isAppended"], `TemplateOrganizer._addTemplate(): Template already appended. name=${component.name}, templateName=${templateName}`, ReferenceError);
+		if (templateInfo["isLoaded"])
+		{
+			console.debug(`TemplateOrganizer._addTemplate(): Template already loaded. name=${component.name}, templateName=${templateName}`);
+			return Promise.resolve();
+		}
 
 		return Promise.resolve().then(() => {
 			let path = Util.concatPath([
@@ -180,9 +182,13 @@ export default class TemplateOrganizer extends Organizer
 	static _applyTemplate(component, templateName)
 	{
 
-		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
-		Util.assert(!templateInfo["isAppended"], `TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}`, ReferenceError);
+		if (component._activeTemplateName == templateName)
+		{
+			console.debug(`TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}`);
+			return Promise.resolve();
+		}
 
+		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
 		if (templateInfo["node"])
 		{
 			// Template node
@@ -196,12 +202,7 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		// Change active template
-		if (component._templates[component.settings.get("settings.templateName")])
-		{
-			component._templates[component.settings.get("settings.templateName")]["isAppended"] = false;
-		}
-		templateInfo["isAppended"] = true;
-		component.settings.set("settings.templateName", templateName);
+		component._activeTemplateName = templateName;
 
 		console.debug(`TemplateOrganizer._applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
 
@@ -345,7 +346,6 @@ export default class TemplateOrganizer extends Organizer
 			component._templates[templateName] = {};
 			component._templates[templateName]["name"] = templateName;
 			component._templates[templateName]["html"] = "";
-			component._templates[templateName]["isAppended"] = false;
 			component._templates[templateName]["isLoaded"] = false;
 		}
 
