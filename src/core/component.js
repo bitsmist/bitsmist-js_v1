@@ -44,11 +44,7 @@ Component.prototype.connectedCallback = function()
 
 	if (!this.isInitialized())
 	{
-		return this.start();
-	}
-	else
-	{
-		return Promise.resolve();
+		this.start();
 	}
 
 }
@@ -63,11 +59,7 @@ Component.prototype.disconnectedCallback = function()
 
 	if (this._settings.get("settings.autoStop"))
 	{
-		return this.stop();
-	}
-	else
-	{
-		return Promise.resolve();
+		this.stop();
 	}
 
 }
@@ -197,9 +189,6 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("afterStart", this);
 	}).then(() => {
-		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
-		return this.changeState("started");
-	}).then(() => {
 		let triggerAppendOnStart = this._settings.get("settings.triggerAppendOnStart");
 		if (triggerAppendOnStart)
 		{
@@ -207,6 +196,9 @@ Component.prototype.start = function(settings)
 				return this.callOrganizers("afterAppend", settings);
 			}).then(() => {
 				return this.trigger("afterAppend", this, settings);
+			}).then(() => {
+				console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
+				return this.changeState("started");
 			});
 		}
 	}).then(() => {
