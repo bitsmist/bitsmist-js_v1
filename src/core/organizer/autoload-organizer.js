@@ -52,9 +52,9 @@ export default class AutoloadOrganizer extends Organizer
 	static organize(conditions, component, settings)
 	{
 
-		this.load(component.rootElement, component.settings);
-
-		return settings;
+		return AutoloadOrganizer.load(component.rootElement, component.settings).then(() => {
+			return settings;
+		});
 
 	}
 
@@ -69,7 +69,7 @@ export default class AutoloadOrganizer extends Organizer
 		let path = Util.concatPath([settings.get("system.appBaseUrl", ""), settings.get("system.componentPath", "")]);
 		let splitComponent = settings.get("system.splitComponent", false);
 
-		ComponentOrganizer.loadTags(rootNode, path, {"splitComponent":splitComponent});
+		return ComponentOrganizer.loadTags(rootNode, path, {"splitComponent":splitComponent});
 
 	}
 
