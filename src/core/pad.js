@@ -67,13 +67,16 @@ Pad.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 		// super()
 		return Component.prototype.start.call(this, settings);
-	}).then((newSettings) => {
-		settings = newSettings;
-
+	}).then(() => {
+		return this.switchTemplate(this._settings.get("settings.templateName"));
+	}).then(() => {
+		console.debug(`Pad.start(): Started pad. name=${this.name}, id=${this.id}`);
+		return this.changeState("started");
+	}).then(() => {
 		// Open
 		if (this._settings.get("settings.autoOpen"))
 		{
-			return this.open(settings);
+			return this.open();
 		}
 	});
 
@@ -133,8 +136,6 @@ Pad.prototype.open = function(options)
 	return Promise.resolve().then(() => {
 		console.debug(`Pad.open(): Opening pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opening");
-	}).then(() => {
-		return this.switchTemplate(Util.safeGet(options, "templateName", this._settings.get("settings.templateName")));
 	}).then(() => {
 		return this.trigger("beforeOpen", sender, {"options":options});
 	}).then(() => {
