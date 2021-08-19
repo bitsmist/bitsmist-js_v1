@@ -82,8 +82,25 @@ export default class TemplateOrganizer extends Organizer
 		if (templates)
 		{
 			Object.keys(templates).forEach((templateName) => {
-				let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
-				promises.push(TemplateOrganizer.__getTemplate(component, conditions, templates[templateName], templateInfo));
+				if (conditions == "beforeStart")
+				{
+					switch (templates[templateName]["type"])
+					{
+						case "html":
+						case "url":
+							promises.push(TemplateOrganizer._addTemplate(component, templateName));
+							break;
+					}
+				}
+				else if (conditions == "afterAppend")
+				{
+					switch (templates[templateName]["type"])
+					{
+						case "node":
+							promises.push(TemplateOrganizer._addTemplate(component, templateName));
+							break;
+					}
+				}
 			});
 		}
 
@@ -145,26 +162,16 @@ export default class TemplateOrganizer extends Organizer
 	static _addTemplate(component, templateName, options)
 	{
 
-		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
+		let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
+
 		if (templateInfo["isLoaded"])
+		//if (templateInfo["isLoaded"] && options && !options["forceLoad"])
 		{
 			console.debug(`TemplateOrganizer._addTemplate(): Template already loaded. name=${component.name}, templateName=${templateName}`);
 			return Promise.resolve();
 		}
 
-		return Promise.resolve().then(() => {
-			let path = Util.concatPath([
-				component.settings.get("system.appBaseUrl", ""),
-				component.settings.get("system.templatePath", ""),
-				component.settings.get("settings.path", "")
-			]);
-			return TemplateOrganizer._loadTemplate(component, templateInfo, path);
-		}).then(() => {
-			if (component.settings.get("settings.templateNode"))
-			{
-				TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("settings.templateNode"));
-			}
-		});
+		return TemplateOrganizer.__getTemplate(component, component.settings.get("templates." + templateInfo.name, {}), templateInfo);
 
 	}
 
@@ -185,7 +192,10 @@ export default class TemplateOrganizer extends Organizer
 			return Promise.resolve();
 		}
 
-		let templateInfo = TemplateOrganizer.__getTemplateInfo(component, templateName);
+		let templateInfo = component._templates[templateName];
+
+		Util.assert(templateInfo,`TemplateOrganizer._applyTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}`, ReferenceError);
+
 		if (templateInfo["node"])
 		{
 			// Template node
@@ -205,23 +215,6 @@ export default class TemplateOrganizer extends Organizer
 
 	}
 
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load the template html.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{Object}		templateInfo		Template info.
-	 * @param	{String}		path				Path to template.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _loadTemplate(component, templateInfo, path)
-	{
-
-		return TemplateOrganizer.__autoLoadTemplate(component, templateInfo, path);
-
-	}
 
 	// -------------------------------------------------------------------------
 
@@ -265,47 +258,6 @@ export default class TemplateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the template html if not loaded yet.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{Object}		templateInfo		Template info.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static __autoLoadTemplate(component, templateInfo, path)
-	{
-
-		console.debug(`TemplateOrganizer.__autoLoadTemplate(): Auto loading template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
-
-		let promise;
-
-		if (templateInfo["html"] || templateInfo["node"])
-		{
-			console.debug(`TemplateOrganizer.__autoLoadTemplate(): Template Already exists. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`, );
-		}
-		else
-		{
-			let url = Util.concatPath([path, templateInfo["name"] + ".html"]);
-
-			promise = TemplateOrganizer.__loadTemplateFile(url).then((template) => {
-				templateInfo["html"] = template;
-			});
-		}
-
-		return Promise.all([promise]).then(() => {
-			if (!templateInfo["isLoaded"])
-			{
-				return component.trigger("afterLoadTemplate", component);
-			}
-		}).then(() => {
-			templateInfo["isLoaded"] = true;
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Load the template html.
 	 *
 	 * @param	{String}		url					Template url.
@@ -328,14 +280,14 @@ export default class TemplateOrganizer extends Organizer
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Returns templateInfo for the specified templateName. Create one if not exists.
+	 * Returns a new template info object.
 	 *
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		templateName		Template name.
 	 *
 	 * @return  {Object}		Template info.
 	 */
-	static __getTemplateInfo(component, templateName)
+	static __createTemplateInfo(component, templateName)
 	{
 
 		if (!component._templates[templateName])
@@ -363,7 +315,7 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		let rootNode = document.querySelector(templateNodeName);
-		Util.assert(rootNode, `TemplateOrganizer._addTemplate(): Root node does not exist. name=${component.name}, rootNode=${templateNodeName}, templateName=${templateInfo["name"]}`, ReferenceError);
+		Util.assert(rootNode, `TemplateOrganizer._storeTemplate(): Root node does not exist. name=${component.name}, rootNode=${templateNodeName}, templateName=${templateInfo["name"]}`, ReferenceError);
 
 		rootNode.insertAdjacentHTML("afterbegin", templateInfo["html"]);
 		let node = rootNode.children[0];
@@ -414,36 +366,44 @@ export default class TemplateOrganizer extends Organizer
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static __getTemplate(component, conditions, settings, templateInfo)
+	static __getTemplate(component, settings, templateInfo)
 	{
 
 		let promise = Promise.resolve();
-		let dataType = settings["type"];
+		let html;
 
-		if (conditions == "beforeStart")
-		{
-			switch (dataType) {
-			case "html":
-				templateInfo["html"] = settings["html"];
-				break;
-			case "url":
-				//todo
-				promise = TemplateOrganizer.loadTemplate(component, templateInfo, settings["url"]).then((html) => {
-					templateInfo["html"] = html;
-				});
-				break;
-			}
-		}
-		else if (conditions == "afterAppend")
-		{
-			switch (dataType) {
-			case "node":
-				templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
-				break;
-			}
+		switch (settings["type"]) {
+		case "html":
+			templateInfo["html"] = settings["html"];
+			break;
+		case "node":
+			templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
+			break;
+		case "url":
+		default:
+			let path = Util.concatPath([
+				component.settings.get("system.appBaseUrl", ""),
+				component.settings.get("system.templatePath", ""),
+				component.settings.get("settings.path", "")
+			]);
+			let url = Util.concatPath([path, templateInfo["name"] + ".html"]);
+
+			promise = TemplateOrganizer.__loadTemplateFile(url).then((template) => {
+				templateInfo["html"] = template;
+				/*
+			}).then(() => {
+				if (component.settings.get("settings.templateNode"))
+				{
+					TemplateOrganizer.__storeTemplateNode(component, templateInfo, component.settings.get("settings.templateNode"));
+				}
+				*/
+			});
+			break;
 		}
 
-		return promise;
+		return promise.then(() => {
+			templateInfo["isLoaded"] = true;
+		});
 
 	}
 
