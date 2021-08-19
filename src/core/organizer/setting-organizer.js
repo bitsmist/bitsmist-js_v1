@@ -10,7 +10,6 @@
 
 import AjaxUtil from "../util/ajax-util.js";
 import ChainableStore from "../store/chainable-store.js";
-import Component from "../component.js";
 import Organizer from "./organizer.js";
 import Util from "../util/util.js";
 
@@ -32,7 +31,7 @@ export default class SettingOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(Component.prototype, "settings", {
+		Object.defineProperty(targetClass.prototype, "settings", {
 			get() { return this._settings; },
 		});
 
