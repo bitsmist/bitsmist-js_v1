@@ -49,13 +49,12 @@ export default class SettingOrganizer extends Organizer
 	/**
 	 * Init.
 	 *
-	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(conditions, component, settings)
+	static init(component, settings)
 	{
 
 		// Init vars
@@ -102,18 +101,6 @@ export default class SettingOrganizer extends Organizer
 
 			// Load settings from attributes
 			SettingOrganizer.__loadAttrSettings(component);
-		}).then(() => {
-			// Load global settings
-			let load = component.settings.get("settings.loadGlobalSettings");
-			if (load)
-			{
-				// Load global settings
-				SettingOrganizer.__globalSettings.merge(component.settings.items["globals"]);
-
-				return SettingOrganizer._load(component).then((settings) => {
-					SettingOrganizer.__globalSettings.merge(settings);
-				});
-			}
 		}).then(() => {
 			return component.settings.items;
 		});
@@ -195,44 +182,6 @@ export default class SettingOrganizer extends Organizer
 
 			return settings;
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	* Load items.
-	*
-	* @param	{Object}		options				Options.
-	*
-	* @return  {Promise}		Promise.
-	*/
-	static _load(component, options)
-	{
-
-		let sender = ( options && options["sender"] ? options["sender"] : component );
-
-		return component.trigger("doLoadStore", sender);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	* Save items.
-	*
-	* @param	{Object}		options				Options.
-	*
-	* @return  {Promise}		Promise.
-	*/
-	static _save(component, options)
-	{
-
-		let sender = ( options && options["sender"] ? options["sender"] : component );
-
-		return component.trigger("doSaveStore", sender, {"data":PreferenceOrganizer.__preferences.items});
 
 	}
 
