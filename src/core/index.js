@@ -23,11 +23,11 @@ window.BITSMIST.v1.Organizer = Organizer;
 
 import OrganizerOrganizer from "./organizer/organizer-organizer.js";
 window.BITSMIST.v1.OrganizerOrganizer = OrganizerOrganizer;
-OrganizerOrganizer.globalInit();
+OrganizerOrganizer.globalInit(Component);
 
 import SettingOrganizer from "./organizer/setting-organizer.js";
 window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
-SettingOrganizer.globalInit();
+SettingOrganizer.globalInit(Component);
 window.BITSMIST.v1.settings = SettingOrganizer.globalSettings;
 
 import TemplateOrganizer from "./organizer/template-organizer.js";
