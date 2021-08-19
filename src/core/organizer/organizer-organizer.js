@@ -8,10 +8,8 @@
  */
 // =============================================================================
 
-import Component from "../component";
 import Organizer from "./organizer";
 import OrganizerStore from "../store/organizer-store";
-import SettingOrganizer from "./setting-organizer";
 import Util from "../util/util";
 
 // =============================================================================
@@ -28,17 +26,18 @@ export default class OrganizerOrganizer extends Organizer
 	/**
 	 * Global init.
 	 */
-	static globalInit()
+	static globalInit(targetClass)
 	{
 
 		// Add properties
-		Object.defineProperty(Component.prototype, "organizers", {
+		Object.defineProperty(targetClass.prototype, "organizers", {
 			get() { return this._organizers; },
 		});
 
 		// Add methods
-		Component.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer._callOrganizers(this, condition, settings); }
-		Component.prototype.initOrganizers = function(settings) { return OrganizerOrganizer._initOrganizers(this, settings); }
+		targetClass.prototype.addOrganizers = function(settings) { return OrganizerOrganizer._addOrganizers(this, settings); }
+		targetClass.prototype.initOrganizers = function(settings) { return OrganizerOrganizer._initOrganizers(this, settings); }
+		targetClass.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer._callOrganizers(this, condition, settings); }
 
 		// Init vars
 		OrganizerOrganizer.__organizers = new OrganizerStore();
@@ -60,6 +59,31 @@ export default class OrganizerOrganizer extends Organizer
 	 * @return 	{Promise}		Promise.
 	 */
 	static organize(conditions, component, settings)
+	{
+
+		return OrganizerOrganizer._addOrganizers(component, settings);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clear.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static clear(component)
+	{
+
+		component._organizers = {};
+
+	}
+
+	// ------------------------------------------------------------------------
+	//  Protected
+	// ------------------------------------------------------------------------
+
+	static _addOrganizers(component, settings)
 	{
 
 		let targets = {};
@@ -97,36 +121,18 @@ export default class OrganizerOrganizer extends Organizer
 		OrganizerOrganizer._sortItems(targets).forEach((key) => {
 			chain = chain.then(() => {
 				component._organizers[key] = Object.assign({}, OrganizerOrganizer.__organizers.items[key], Util.safeGet(settings, "organizers." + key));
-				return component._organizers[key].object.init("*", component, settings);
+				return component._organizers[key].object.init(component, settings);
 			});
 		});
 
-		return chain.then(() => {
-			return settings;
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-
-		component._organizers = {};
+		return chain;
 
 	}
 
 	// ------------------------------------------------------------------------
-	//  Protected
-	// ------------------------------------------------------------------------
 
 	/**
-	 * Call organizers.
+	 * Init organizers.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
@@ -139,13 +145,8 @@ export default class OrganizerOrganizer extends Organizer
 		// Init
 		component._organizers = {};
 
-		return Promise.resolve().then(() => {
-			// Init setting organizer
-			return SettingOrganizer.init("*", component, settings);
-		}).then(() => {
-			// Add organizers
-			return OrganizerOrganizer.organize("*", component, settings);
-		});
+		// Add organizers
+		return OrganizerOrganizer.organize("*", component, settings);
 
 	}
 
@@ -163,33 +164,18 @@ export default class OrganizerOrganizer extends Organizer
 	static _callOrganizers(component, conditions, settings)
 	{
 
-		return Promise.resolve().then(() => {
-			// Load settings
-			if (SettingOrganizer.isTarget(conditions))
-			{
-				return SettingOrganizer.organize(conditions, component, settings);
-			}
-			else
-			{
-				return settings;
-			}
-		}).then((newSettings) => {
-			// Add organizers
-			return OrganizerOrganizer.organize("*", component, newSettings);
-		}).then((newSettings) => {
-			// Call organizers
-			let chain = Promise.resolve(newSettings);
-			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
-				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
-				{
-					chain = chain.then((newSettings) => {
-						return component._organizers[key].object.organize(conditions, component, newSettings);
-					});
-				}
-			});
+		let chain = Promise.resolve();
 
-			return chain;
+		OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
+			if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
+			{
+				chain = chain.then(() => {
+					return component._organizers[key].object.organize(conditions, component, settings);
+				});
+			}
 		});
+
+		return chain;
 
 	}
 

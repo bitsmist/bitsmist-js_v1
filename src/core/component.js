@@ -9,6 +9,8 @@
 // =============================================================================
 
 import ClassUtil from "./util/class-util.js";
+import OrganizerOrganizer from "./organizer/organizer-organizer.js";
+import SettingOrganizer from "./organizer/setting-organizer.js";
 import Util from "./util/util.js";
 
 // =============================================================================
@@ -164,25 +166,26 @@ Component.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
-		return this.initOrganizers(newSettings);
-	// }).then(() => {
-		// suspend
-		// return ( this.hasAttribute("bm-suspend") || this._settings.get("autoSuspend") ? this.suspend("start") : null );
+		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
+	}).then(() => {
+		return this.initOrganizers(this._settings.items);
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
 	}).then(() => {
+		return SettingOrganizer.organize("beforeStart", this, this._settings.items);
+	}).then(() => {
+		return this.addOrganizers(this._settings.items);
+	}).then(() => {
 		return this.callOrganizers("beforeStart", this._settings.items);
 	}).then((newSettings) => {
-		settings = newSettings
-
 		return this.trigger("beforeStart", this);
 	}).then(() => {
 		let autoSetupOnStart = this._settings.get("settings.autoSetupOnStart");
 		let autoSetup = this._settings.get("settings.autoSetup");
 		if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
 		{
-			return this.setup(settings);
+			return this.setup(this._settings.items);
 		}
 	}).then(() => {
 		return this.callOrganizers("afterStart", this._settings.items);
@@ -193,16 +196,14 @@ Component.prototype.start = function(settings)
 		if (triggerAppendOnStart)
 		{
 			return Promise.resolve().then(() => {
-				return this.callOrganizers("afterAppend", settings);
+				return this.callOrganizers("afterAppend", this._settings.items);
 			}).then(() => {
-				return this.trigger("afterAppend", this, settings);
+				return this.trigger("afterAppend", this, this._settings.items);
 			}).then(() => {
 				console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 				return this.changeState("started");
 			});
 		}
-	}).then(() => {
-		return settings;
 	});
 
 }
