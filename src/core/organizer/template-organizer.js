@@ -43,13 +43,12 @@ export default class TemplateOrganizer extends Organizer
 	/**
 	 * Init.
 	 *
-	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(conditions, component, setttings)
+	static init(component, setttings)
 	{
 
 		// Init vars

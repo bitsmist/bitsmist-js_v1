@@ -10,7 +10,6 @@
 
 import AjaxUtil from "../util/ajax-util.js";
 import ClassUtil from "../util/class-util.js";
-import Component from "../component.js";
 import Organizer from "./organizer.js";
 import Pad from "../pad.js";
 import Store from "../store/store.js";
@@ -46,13 +45,12 @@ export default class ComponentOrganizer extends Organizer
 	/**
 	 * Init.
 	 *
-	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(conditions, component, settings)
+	static init(component, settings)
 	{
 
 		// Add properties

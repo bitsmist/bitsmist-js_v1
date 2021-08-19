@@ -57,13 +57,12 @@ export default class StateOrganizer extends Organizer
 	/**
 	 * Init.
 	 *
-	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(conditions, component, settings)
+	static init(component, settings)
 	{
 
 		// Init vars
