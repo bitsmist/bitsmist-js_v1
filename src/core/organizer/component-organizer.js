@@ -104,9 +104,7 @@ export default class ComponentOrganizer extends Organizer
 			});
 		}
 
-		return chain.then(() => {
-			return settings;
-		});
+		return chain;
 
 	}
 

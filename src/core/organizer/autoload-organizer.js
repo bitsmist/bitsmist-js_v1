@@ -52,9 +52,7 @@ export default class AutoloadOrganizer extends Organizer
 	static organize(conditions, component, settings)
 	{
 
-		return AutoloadOrganizer.load(component.rootElement, component.settings).then(() => {
-			return settings;
-		});
+		return AutoloadOrganizer.load(component.rootElement, component.settings);
 
 	}
 

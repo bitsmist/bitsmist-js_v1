@@ -99,9 +99,7 @@ export default class StateOrganizer extends Organizer
 			}
 		}
 
-		return promise.then(() => {
-			return settings;
-		});
+		return promise;
 
 	}
 

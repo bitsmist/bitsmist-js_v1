@@ -71,8 +71,6 @@ export default class EventOrganizer extends Organizer
 			});
 		}
 
-		return settings;
-
 	}
 
 	// -------------------------------------------------------------------------

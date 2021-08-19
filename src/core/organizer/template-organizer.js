@@ -87,9 +87,7 @@ export default class TemplateOrganizer extends Organizer
 			});
 		}
 
-		return Promise.all(promises).then(() => {
-			return settings;
-		});
+		return Promise.all(promises);
 
 	}
 
