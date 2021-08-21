@@ -153,6 +153,17 @@ Pad.prototype.open = function(options)
 	}).then(() => {
 		return this.trigger("doOpen", sender, {"options":options});
 	}).then(() => {
+		// Auto focus
+		let autoFocus = this._settings.get("settings.autoFocus");
+		if (autoFocus)
+		{
+			let target = ( autoFocus === true ? this : this.querySelector(autoFocus) );
+			if (target)
+			{
+				target.focus();
+			}
+		}
+	}).then(() => {
 		return this.trigger("afterOpen", sender, {"options":options});
 	}).then(() => {
 		console.debug(`Pad.open(): Opened pad. name=${this.name}, id=${this.id}`);
