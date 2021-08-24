@@ -50,16 +50,17 @@ Pad.prototype.start = function(settings)
 	// Defaults
 	let defaults = {
 		"settings": {
-			"autoClose": true,
-			"autoFill": true,
-			"autoOpen": true,
-			"autoRefresh": true,
-			"autoSetupOnStart": false,
-			"triggerAppendOnStart": false,
+			"autoClose":			true,
+			"autoFill":				true,
+			"autoOpen":				true,
+			"autoRefresh":			true,
+			"autoSetupOnStart":		false,
+			"autoPostStart":		false,
+			"triggerAppendOnStart":	false,
 		},
 		"organizers":{
-			"AutoloadOrganizer": {"settings":{"attach":true}},
-			"TemplateOrganizer": {"settings":{"attach":true}},
+			"AutoloadOrganizer":	{"settings":{"attach":true}},
+			"TemplateOrganizer":	{"settings":{"attach":true}},
 		}
 	};
 	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
@@ -70,8 +71,7 @@ Pad.prototype.start = function(settings)
 	}).then(() => {
 		return this.switchTemplate(this._settings.get("settings.templateName"));
 	}).then(() => {
-		console.debug(`Pad.start(): Started pad. name=${this.name}, id=${this.id}`);
-		return this.changeState("started");
+		return this._postStart();
 	}).then(() => {
 		// Open
 		if (this._settings.get("settings.autoOpen"))

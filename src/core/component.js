@@ -145,15 +145,16 @@ Component.prototype.start = function(settings)
 	// Defaults
 	let defaults = {
 		"settings": {
-			"autoSetup": true,
-			"autoStop": true,
+			"autoSetup":			true,
+			"autoPostStart":		true,
+			"autoStop":				true,
 			"triggerAppendOnStart": true,
-			"useGlobalSettings": true,
+			"useGlobalSettings":	true,
 		},
 		"organizers": {
-			"OrganizerOrganizer": {"settings":{"attach":true}},
-			"SettingOrganizer": {"settings":{"attach":true}},
-			"StateOrganizer": {"settings":{"attach":true}},
+			"OrganizerOrganizer":	{"settings":{"attach":true}},
+			"SettingOrganizer":		{"settings":{"attach":true}},
+			"StateOrganizer":		{"settings":{"attach":true}},
 		}
 	};
 	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
@@ -164,45 +165,13 @@ Component.prototype.start = function(settings)
 	this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
 
 	return Promise.resolve().then(() => {
-		return this._injectSettings(settings);
-	}).then((newSettings) => {
-		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
+		return this._initStart(settings);
 	}).then(() => {
-		return this.initOrganizers(this._settings.items);
+		return this._preStart();
 	}).then(() => {
-		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
-		return this.changeState("starting");
-	}).then(() => {
-		return SettingOrganizer.organize("beforeStart", this, this._settings.items);
-	}).then(() => {
-		return this.addOrganizers(this._settings.items);
-	}).then(() => {
-		return this.callOrganizers("beforeStart", this._settings.items);
-	}).then((newSettings) => {
-		return this.trigger("beforeStart", this);
-	}).then(() => {
-		let autoSetupOnStart = this._settings.get("settings.autoSetupOnStart");
-		let autoSetup = this._settings.get("settings.autoSetup");
-		if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
+		if (this._settings.get("settings.autoPostStart"))
 		{
-			return this.setup(this._settings.items);
-		}
-	}).then(() => {
-		return this.callOrganizers("afterStart", this._settings.items);
-	}).then(() => {
-		return this.trigger("afterStart", this);
-	}).then(() => {
-		let triggerAppendOnStart = this._settings.get("settings.triggerAppendOnStart");
-		if (triggerAppendOnStart)
-		{
-			return Promise.resolve().then(() => {
-				return this.callOrganizers("afterAppend", this._settings.items);
-			}).then(() => {
-				return this.trigger("afterAppend", this, this._settings.items);
-			}).then(() => {
-				console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
-				return this.changeState("started");
-			});
+			return this._postStart();
 		}
 	});
 
@@ -296,6 +265,91 @@ Component.prototype._getSettings = function()
 {
 
 	return {};
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Initialize start processing.
+ *
+ * @param	{Object}		settings			Settings.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype._initStart = function(settings)
+{
+
+	return Promise.resolve().then(() => {
+		return this._injectSettings(settings);
+	}).then((newSettings) => {
+		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
+	}).then(() => {
+		return this.initOrganizers(this._settings.items);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Pre start processing.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype._preStart = function()
+{
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
+		return this.changeState("starting");
+	}).then(() => {
+		return SettingOrganizer.organize("beforeStart", this, this._settings.items);
+	}).then(() => {
+		return this.addOrganizers(this._settings.items);
+	}).then(() => {
+		return this.callOrganizers("beforeStart", this._settings.items);
+	}).then((newSettings) => {
+		return this.trigger("beforeStart", this);
+	}).then(() => {
+		let autoSetupOnStart = this._settings.get("settings.autoSetupOnStart");
+		let autoSetup = this._settings.get("settings.autoSetup");
+		if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
+		{
+			return this.setup(this._settings.items);
+		}
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Post start processing.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype._postStart = function()
+{
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
+		return this.changeState("started");
+	}).then(() => {
+		return this.callOrganizers("afterStart", this._settings.items);
+	}).then(() => {
+		return this.trigger("afterStart", this);
+	}).then(() => {
+		let triggerAppendOnStart = this._settings.get("settings.triggerAppendOnStart");
+		if (triggerAppendOnStart)
+		{
+			return Promise.resolve().then(() => {
+				return this.callOrganizers("afterAppend", this._settings.items);
+			}).then(() => {
+				return this.trigger("afterAppend", this, this._settings.items);
+			});
+		}
+	});
 
 }
 
