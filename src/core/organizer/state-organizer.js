@@ -427,7 +427,7 @@ export default class StateOrganizer extends Organizer
 		for (let i = 0; i < waitlist.length; i++)
 		{
 			// Set default state when not specified
-			waitlist[i]["state"] = waitlist[i]["state"] || "opened";
+			waitlist[i]["state"] = waitlist[i]["state"] || "started";
 
 			// Index for component id + state
 			if (waitlist[i].id)
