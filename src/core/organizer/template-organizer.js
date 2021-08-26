@@ -171,7 +171,7 @@ export default class TemplateOrganizer extends Organizer
 			return Promise.resolve();
 		}
 
-		return TemplateOrganizer.__getTemplate(component, component.settings.get("templates." + templateInfo.name, {}), templateInfo);
+		return TemplateOrganizer.__getTemplate(component, component.settings.get("templates." + templateName, {}), templateInfo);
 
 	}
 
