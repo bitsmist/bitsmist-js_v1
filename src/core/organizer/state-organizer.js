@@ -41,13 +41,14 @@ export default class StateOrganizer extends Organizer
 		Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); }
 		Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
 		Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
+		//Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
 
 		// Init vars
 		StateOrganizer.__components = new Store();
 		StateOrganizer.__waitingList = new Store();
 		StateOrganizer.__waitingListIndexName = new Map();
 		StateOrganizer.__waitingListIndexId = new Map();
-		StateOrganizer.__waitingListIndexNone = [];	Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
+		StateOrganizer.__waitingListIndexNone = [];
 		StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); }
 
 	}
@@ -630,6 +631,7 @@ export default class StateOrganizer extends Organizer
 	static __isStateMatch(currentState, expectedState)
 	{
 
+		expectedState = expectedState || "started"; // Default is "started"
 		let isMatch = true;
 
 		switch (expectedState)
