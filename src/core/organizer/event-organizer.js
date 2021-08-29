@@ -63,7 +63,6 @@ export default class EventOrganizer extends Organizer
 	{
 
 		let events = settings["events"];
-
 		if (events)
 		{
 			Object.keys(events).forEach((elementName) => {
@@ -93,7 +92,6 @@ export default class EventOrganizer extends Organizer
 
 		// Get handler
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-		Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. componentName=${component.name}, eventName=${eventName}`, TypeError);
 
 		// Init holder object for the element
 		if (!element.__bm_eventinfo)
@@ -173,7 +171,7 @@ export default class EventOrganizer extends Organizer
 	static _initEvents(component, elementName, handlerInfo, rootNode)
 	{
 
-		rootNode = ( rootNode ? rootNode : component.rootElement );
+		rootNode = ( rootNode ? rootNode : component );
 		handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
 
 		// Get target elements
@@ -189,16 +187,16 @@ export default class EventOrganizer extends Organizer
 		if (handlerInfo["handlers"])
 		{
 			Object.keys(handlerInfo["handlers"]).forEach((eventName) => {
-				let arr = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
+				let handlers = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
 
-				for (let i = 0; i < arr.length; i++)
+				for (let i = 0; i < handlers.length; i++)
 				{
-					let handler = component.getEventHandler(arr[i]);
+					let handler = component.getEventHandler(handlers[i]);
 					for (let j = 0; j < elements.length; j++)
 					{
 						if (!EventOrganizer.__isHandlerInstalled(elements[j], eventName, handler, component))
 						{
-							component.addEventHandler(eventName, arr[i], elements[j]);
+							component.addEventHandler(eventName, handlers[i], elements[j]);
 						}
 					}
 				}
@@ -274,11 +272,6 @@ export default class EventOrganizer extends Organizer
 	{
 
 		let handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
-
-		if ( typeof handler === "string" )
-		{
-			handler = component[handler];
-		}
 
 		return handler;
 
@@ -379,7 +372,8 @@ export default class EventOrganizer extends Organizer
 		let component = Util.safeGet(this, "__bm_eventinfo.component");
 
 		// Check if handler is already running
-		Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
+		//Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
+		Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, "warn");
 
 		Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
 
@@ -389,8 +383,6 @@ export default class EventOrganizer extends Organizer
 			this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then((result) => {
 				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
 				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
-
-				return result;
 			});
 		}
 		else
@@ -417,7 +409,6 @@ export default class EventOrganizer extends Organizer
 	{
 
 		let chain = Promise.resolve();
-		let results = [];
 		let stopPropagation = false;
 
 		for (let i = 0; i < listeners.length; i++)
@@ -428,12 +419,15 @@ export default class EventOrganizer extends Organizer
 				"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 			}
 
-			// Execute handler
-			chain = chain.then((result) => {
-				results.push(result);
+			chain = chain.then(() => {
+				// Get a handler
+				let handler = listeners[i]["handler"];
+				handler = ( typeof handler === "string" ? component[handler] : handler );
+				Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. componentName=${component.name}, eventName=${e.type}`, TypeError);
 
+				// Execute handler
 				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
-				return listeners[i]["handler"].call(bindTo, sender, e, ex);
+				return handler.call(bindTo, sender, e, ex);
 			});
 
 			stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
@@ -444,11 +438,7 @@ export default class EventOrganizer extends Organizer
 			e.stopPropagation();
 		}
 
-		return chain.then((result) => {
-			results.push(result);
-
-			return results;
-		});
+		return chain;
 
 	}
 
@@ -475,9 +465,14 @@ export default class EventOrganizer extends Organizer
 				"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 			}
 
+			// Get a handler
+			let handler = listeners[i]["handler"];
+			handler = ( typeof handler === "string" ? component[handler] : handler );
+			Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. componentName=${component.name}, eventName=${e.type}`, TypeError);
+
 			// Execute handler
 			let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
-			listeners[i]["handler"].call(bindTo, sender, e, ex);
+			handler.call(bindTo, sender, e, ex);
 
 			stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)
 		}
