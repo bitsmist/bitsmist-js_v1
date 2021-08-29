@@ -412,15 +412,23 @@ export default class Util
 
 		if (!conditions)
 		{
-			let e = new error(msg);
+			if (typeof error === "function")
+			{
+				let e = new error(msg);
 
-			// Remove last stack (assert() itself)
-			let stacks = e.stack.split("\n");
-			stacks.splice(1, 1);
-			e.stack = stacks.join("\n");
+				// Remove last stack (assert() itself)
+				let stacks = e.stack.split("\n");
+				stacks.splice(1, 1);
+				e.stack = stacks.join("\n");
 
-			throw e;
+				throw e;
+			}
+			else
+			{
+				console[error](msg);
+			}
 		}
 
 	}
+
 }
