@@ -140,7 +140,7 @@ export default class SettingOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadSetting(settingName, path, type)
+	static loadSetting(component, settingName, path, type)
 	{
 
 		type = type || "js";
@@ -173,7 +173,7 @@ export default class SettingOrganizer extends Organizer
 				break;
 			case "js":
 			default:
-				settings = Function('"use strict";return (' + xhr.responseText + ')')();
+				settings = Function('"use strict";return (' + xhr.responseText + ')').call(component);
 				break;
 			}
 
@@ -217,7 +217,7 @@ export default class SettingOrganizer extends Organizer
 
 		if (name || path)
 		{
-			return SettingOrganizer.loadSetting(name, path);
+			return SettingOrganizer.loadSetting(component, name, path);
 		}
 
 	}
