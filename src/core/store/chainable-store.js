@@ -50,7 +50,7 @@ export default class ChainableStore extends Store
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Items.
+	 * Items (Override).
 	 *
 	 * @type	{Object}
 	 */
@@ -98,6 +98,27 @@ export default class ChainableStore extends Store
 	// -------------------------------------------------------------------------
 
 	/**
+     * Clone contents as an object (Override).
+     *
+	 * @return  {Object}		Cloned items.
+     */
+	clone()
+	{
+
+		if (this._chain)
+		{
+			return Util.deepClone(this._chain.clone(), this._items);
+		}
+		else
+		{
+			return Store.prototype.clone.call(this);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
      * Chain another store.
      *
 	 * @param	{Object}		component			Component to attach.
@@ -116,7 +137,7 @@ export default class ChainableStore extends Store
 
 	/**
 	 * Get a value from store. Return default value when specified key is not available.
-	 * If chained, chained store is also considiered.
+	 * If chained, chained store is also considiered (Override).
 	 *
 	 * @param	{String}		key					Key to get.
 	 * @param	{Object}		defaultValue		Value returned when key is not found.
@@ -194,9 +215,9 @@ export default class ChainableStore extends Store
 		{
 			result = store2._getLocal(key);
 		}
-		else if (store1 && store1.has(key))
+		else if (store1)
 		{
-			result = store1._getLocal(key);
+			result = store1.get(key, defaultValue);
 		}
 
 		return result;
