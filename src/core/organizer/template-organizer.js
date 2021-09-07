@@ -229,7 +229,7 @@ export default class TemplateOrganizer extends Organizer
 	static _clone(component, templateName)
 	{
 
-		templateName = templateName || component._settings.get("settings.templateName");
+		templateName = templateName || component.settings.get("settings.templateName");
 		let templateInfo = component._templates[templateName];
 
 		Util.assert(templateInfo,`TemplateOrganizer._addTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}`, ReferenceError);
