@@ -14,7 +14,7 @@ import Store from "../store/store.js";
 import Util from "../util/util.js";
 
 // =============================================================================
-//	Waitfor organizer class
+//	State organizer class
 // =============================================================================
 
 export default class StateOrganizer extends Organizer
@@ -125,17 +125,17 @@ export default class StateOrganizer extends Organizer
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Array}			waitlist			Components to wait.
-	 * @param	{integer}		timeout				Timeout in milliseconds.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _waitFor(component, waitlist, timeout)
+	static _waitFor(component, waitlist, options)
 	{
 
 		let promise;
-		timeout = ( timeout ? timeout : 10000 );
-
-		let waitInfo = {"waiter":component, "waitlist":waitlist.slice()};
+		let timeout = ( options && options["timeout"] ? options["timeout"] : 10000 );
+		let waiter = ( options && options["waiter"] ? options["waiter"] : component );
+		let waitInfo = {"waiter":waiter, "waitlist":waitlist.slice()};
 
 		if (StateOrganizer.__isAllReady(waitInfo))
 		{
@@ -147,7 +147,8 @@ export default class StateOrganizer extends Organizer
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
 				setTimeout(() => {
-					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${component && component.name}.`);
+					let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
+					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}.`);
 				}, timeout);
 			});
 			waitInfo["promise"] = promise;
