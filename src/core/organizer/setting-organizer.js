@@ -58,7 +58,7 @@ export default class SettingOrganizer extends Organizer
 
 		// Init vars
 		component._settings = new ChainableStore({"items":settings});
-		component.settings.merge(component._getSettings());
+		component._settings.merge(component._getSettings());
 
 		// Overwrite name if specified
 		let name = component.settings.get("settings.name");
@@ -95,7 +95,7 @@ export default class SettingOrganizer extends Organizer
 		}).then((extraSettings) => {
 			if (extraSettings)
 			{
-				component.settings.merge(extraSettings);
+				component._settings.merge(extraSettings);
 			}
 
 			// Load settings from attributes
@@ -236,16 +236,16 @@ export default class SettingOrganizer extends Organizer
 		if (component.getAttribute("bm-autoload"))
 		{
 			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
-			component.settings.set("system.appBaseUrl", "");
-			component.settings.set("system.templatePath", arr[0]);
-			component.settings.set("system.componentPath", arr[0]);
-			component.settings.set("settings.path", "");
+			component._settings.set("system.appBaseUrl", "");
+			component._settings.set("system.templatePath", arr[0]);
+			component._settings.set("system.componentPath", arr[0]);
+			component._settings.set("settings.path", "");
 		}
 
 		// Get path from attribute
 		if (component.hasAttribute("bm-path"))
 		{
-			component.settings.set("settings.path", component.getAttribute("bm-path"));
+			component._settings.set("settings.path", component.getAttribute("bm-path"));
 		}
 
 		// Get settings from the attribute
@@ -258,7 +258,7 @@ export default class SettingOrganizer extends Organizer
 		if (dataSettings)
 		{
 			let settings = {"settings": JSON.parse(dataSettings)};
-			component.settings.merge(settings);
+			component._settings.merge(settings);
 		}
 
 	}
