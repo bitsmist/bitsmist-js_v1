@@ -48,7 +48,7 @@ export default class StateOrganizer extends Organizer
 		StateOrganizer.__waitingList = new Store();
 		StateOrganizer.__waitingListIndexName = new Map();
 		StateOrganizer.__waitingListIndexId = new Map();
-		StateOrganizer.__waitingListIndexNone = [];
+		StateOrganizer.__waitingListIndexNone = new Map();
 		StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); }
 
 	}
@@ -147,7 +147,7 @@ export default class StateOrganizer extends Organizer
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
 				setTimeout(() => {
-					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${JSON.stringify(waitlist)}, name=${component && component.name}.`);
+					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${component && component.name}.`);
 				}, timeout);
 			});
 			waitInfo["promise"] = promise;
@@ -361,14 +361,24 @@ export default class StateOrganizer extends Organizer
 
 		// Process name index
 		let names = StateOrganizer.__waitingListIndexName.get(component.name + "." + state);
-		StateOrganizer.__processIndex(names);
+		if (names && names.length > 0)
+		{
+			StateOrganizer.__processIndex(names);
+		}
 
 		// Process ID index
 		let ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + state);
-		StateOrganizer.__processIndex(ids);
+		if (ids && ids.length > 0)
+		{
+			StateOrganizer.__processIndex(ids);
+		}
 
 		// Process non indexables
-		StateOrganizer.__processIndex(StateOrganizer.__waitingListIndexNone);
+		let list = StateOrganizer.__waitingListIndexNone.get("none");
+		if (list && list.length > 0)
+		{
+			StateOrganizer.__processIndex(list);
+		}
 
 	}
 
@@ -382,24 +392,22 @@ export default class StateOrganizer extends Organizer
 	static __processIndex(list)
 	{
 
-		if (list)
+		for (let i = 0; i < list.length; i++)
 		{
-			for (let i = 0; i < list.length; i++)
+			let id = list[i];
+
+			if (id)
 			{
-				let id = list[i];
+				let waitInfo = StateOrganizer.__waitingList.get(id);
 
-				if (id)
+				if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
 				{
-					let waitInfo = StateOrganizer.__waitingList.get(id);
+					// Remove from waiting list
+					StateOrganizer.__waitingList.get(id).resolve();
+					StateOrganizer.__waitingList.remove(id);
 
-					if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
-					{
-						StateOrganizer.__waitingList.get(id).resolve();
-						StateOrganizer.__waitingList.remove(id);
-
-						// delete from index
-						list[i] = null;
-					}
+					// Remove from index
+					StateOrganizer.__removeFromIndex(list, id);
 				}
 			}
 		}
@@ -416,7 +424,8 @@ export default class StateOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __addToWaitingList(waitInfo, component)
+	//static __addToWaitingList(waitInfo, component)
+	static __addToWaitingList(waitInfo)
 	{
 
 		// Add wait info to the waiting list.
@@ -443,7 +452,7 @@ export default class StateOrganizer extends Organizer
 			// Not indexable
 			else
 			{
-				StateOrganizer.__waitingListIndexNone.push(id);
+				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexNone, "none", id);
 			}
 		}
 
@@ -461,12 +470,36 @@ export default class StateOrganizer extends Organizer
 	static __addToIndex(index, key, id)
 	{
 
-		if (!index.get(key))
+		let list = index.get(key);
+		if (!list)
 		{
-			index.set(key, [])
+			list = [];
+			index.set(key, list)
 		}
 
-		index.get(key).push(id);
+		if (list.indexOf(id) == -1)
+		{
+			list.push(id);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Remove id from a waiting list index.
+	 *
+	 * @param	{Array}			list				List of ids.
+	 * @param	{String}		id					Waiting list id.
+	 */
+	static __removeFromIndex(list, id)
+	{
+
+		let index = list.indexOf(id);
+		if (index > -1)
+		{
+			list.splice(index);
+		}
 
 	}
 
@@ -504,6 +537,11 @@ export default class StateOrganizer extends Organizer
 			{
 				componentInfo = StateOrganizer.__components.get(element.uniqueId);
 			}
+		}
+		else if (waitlistItem["object"])
+		{
+			let element = waitlistItem["object"];
+			componentInfo = StateOrganizer.__components.get(element.uniqueId);
 		}
 
 		return componentInfo;
@@ -685,5 +723,33 @@ export default class StateOrganizer extends Organizer
 		}
 
 	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Dump wait list as string.
+	 *
+	 * @param	{Array}			Wait list.
+	 *
+	 * @return  {String}		Wait list string.
+	 */
+	static __dumpWaitlist(waitlist)
+	{
+
+		let result = "";
+
+		for (let i = 0; i < waitlist.length; i++)
+		{
+			let id = ( waitlist[i].id ? "id:" + waitlist[i].id : "" );
+			let name = ( waitlist[i].name ? "name:" + waitlist[i].name : "" );
+			let object = ( waitlist[i].object ? "element:" + waitlist[i].object.tagName : "" );
+			let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode : "" );
+			result += "{" + (id + " " + name + " " + object + " " + node).trim() + "}";
+		}
+
+		return "[" + result + "]";
+
+	}
+
 
 }
