@@ -32,7 +32,7 @@ export default class AutoloadOrganizer extends Organizer
 		document.addEventListener("DOMContentLoaded", () => {
 			if (BITSMIST.v1.settings.get("organizers.AutoloadOrganizer.settings.autoLoadOnStartup", true))
 			{
-				this.load(document.body, BITSMIST.v1.settings)
+				this.load(document.body, BITSMIST.v1.settings, {"waitForTags":false})
 			}
 		});
 
@@ -59,15 +59,16 @@ export default class AutoloadOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	* Load all tags.
-	*/
-	static load(rootNode, settings)
+	 * Load all tags.
+	 */
+	static load(rootNode, settings, options)
 	{
 
 		let path = Util.concatPath([settings.get("system.appBaseUrl", ""), settings.get("system.componentPath", "")]);
-		let splitComponent = settings.get("system.splitComponent", false);
+		let splitComponent = Util.safeGet(options, "splitComponent", settings.get("system.splitComponent", false));
+		let waitForTags = Util.safeGet(options, "waitForTags", settings.get("system.waitForTags", true));
 
-		return ComponentOrganizer.loadTags(rootNode, path, {"splitComponent":splitComponent});
+		return ComponentOrganizer.loadTags(rootNode, path, {"splitComponent":splitComponent, "waitForTags":waitForTags});
 
 	}
 

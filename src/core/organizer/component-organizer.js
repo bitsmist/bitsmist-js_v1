@@ -193,6 +193,7 @@ export default class ComponentOrganizer extends Organizer
 		console.debug(`ComponentOrganizer._loadTags(): Loading tags. rootNode=${rootNode.tagName}, basePath=${basePath}`);
 
 		let promises = [];
+		let waitList = [];
 		let targets = rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
 
 		targets.forEach((element) => {
@@ -228,9 +229,20 @@ export default class ComponentOrganizer extends Organizer
 			}
 
 			promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
+
+			let waitItem = {"object":element, "state":"started"};
+			waitList.push(waitItem);
 		});
 
-		return Promise.all(promises);
+		let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
+
+		return Promise.all(promises).then(() => {
+			if (waitFor && waitList.length > 0)
+			{
+				// Wait for elements to become "started"
+				return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
+			}
+		});
 
 	}
 
