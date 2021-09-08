@@ -167,6 +167,8 @@ Component.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 		return this._initStart(settings);
 	}).then(() => {
+		return this.pause();
+	}).then(() => {
 		return this._preStart();
 	}).then(() => {
 		if (this._settings.get("settings.autoPostStart"))
@@ -193,6 +195,8 @@ Component.prototype.stop = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
+		return this.pause();
+	}).then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopping");
 	}).then(() => {
@@ -224,6 +228,8 @@ Component.prototype.setup = function(options)
 	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
+		return this.pause();
+	}).then(() => {
 		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 		return this.trigger("beforeSetup", sender, {"options":options});
 	}).then(() => {

@@ -41,9 +41,11 @@ export default class StateOrganizer extends Organizer
 		Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); }
 		Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
 		Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
-		//Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
+		Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
+		Component.prototype.pause = function(state) { return StateOrganizer._pause(this, state); }
 
 		// Init vars
+		StateOrganizer.__suspend = {};
 		StateOrganizer.__components = new Store();
 		StateOrganizer.__waitingList = new Store();
 		StateOrganizer.__waitingListIndexName = new Map();
@@ -68,7 +70,7 @@ export default class StateOrganizer extends Organizer
 
 		// Init vars
 		component._state = "";
-		//component._suspend = {};
+		component._suspend = {};
 
 		// Load settings from attributes
 		StateOrganizer.__loadAttrSettings(component);
@@ -113,6 +115,36 @@ export default class StateOrganizer extends Organizer
 	{
 
 		this.__waitingList.clear();
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Suspend all components at a specified state.
+	 *
+	 * @param	{String}		state				Component state.
+	 */
+	static globalSuspend(state)
+	{
+
+		StateOrganizer.__suspend[state] = StateOrganizer._createSuspendInfo(state);
+		StateOrganizer.__suspend[state].state = "pending";
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Resume all components at a specified state.
+	 *
+	 * @param	{String}		state				Component state.
+	 */
+	static globalResume(state)
+	{
+
+		StateOrganizer.__suspend[state].resolve();
+		StateOrganizer.__suspend[state].state = "resolved";
 
 	}
 
@@ -251,34 +283,23 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Change component state and check waiting list.
+	 * Suspend a component at a specified state.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		state				Component state.
-	 *
-	 * @return  {Promise}		Promise.
 	 */
 	static _suspend(component, state)
 	{
 
-		let suspendInfo = {};
-
-		let promise = new Promise((resolve, reject) => {
-			suspendInfo["resolve"] = resolve;
-			suspendInfo["reject"] = reject;
-		});
-		suspendInfo["promise"] = promise;
-
-		component._suspend[state] = suspendInfo;
-
-		return promise;
+		component._suspend[state] = StateOrganizer._createSuspendInfo();
+	 	component._suspend[state].state = "pending";
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Change component state and check waiting list.
+	 * Resume a component at a specified state.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		state				Component state.
@@ -286,7 +307,39 @@ export default class StateOrganizer extends Organizer
 	static _resume(component, state)
 	{
 
-		component._suspend[state].resolve();
+	 	component._suspend[state].resolve();
+	 	component._suspend[state].state = "resolved";
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Pause a component if it is suspended.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		state				Component state.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _pause(component, state)
+	{
+
+		let ret = [];
+
+		// Globally suspended?
+		if (StateOrganizer.__suspend[state] && StateOrganizer.__suspend[state].state == "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
+		{
+			ret.push(StateOrganizer.__suspend[state].promise);
+		}
+
+		// Component suspended?
+		if (component._suspend[state] && component._suspend[state].state == "pending")
+		{
+			ret.push(component._suspend[state].promise);
+		}
+
+		return Promise.all(ret);
 
 	}
 
@@ -396,20 +449,16 @@ export default class StateOrganizer extends Organizer
 		for (let i = 0; i < list.length; i++)
 		{
 			let id = list[i];
+			let waitInfo = StateOrganizer.__waitingList.get(id);
 
-			if (id)
+			if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
 			{
-				let waitInfo = StateOrganizer.__waitingList.get(id);
+				// Remove from waiting list
+				StateOrganizer.__waitingList.get(id).resolve();
+				StateOrganizer.__waitingList.remove(id);
 
-				if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
-				{
-					// Remove from waiting list
-					StateOrganizer.__waitingList.get(id).resolve();
-					StateOrganizer.__waitingList.remove(id);
-
-					// Remove from index
-					StateOrganizer.__removeFromIndex(list, id);
-				}
+				// Remove from index
+				StateOrganizer.__removeFromIndex(list, id);
 			}
 		}
 
@@ -752,5 +801,27 @@ export default class StateOrganizer extends Organizer
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Create a suspend info object.
+	 *
+	 * @return  {Object}		Suspend info.
+	 */
+	static _createSuspendInfo()
+	{
+
+		let suspendInfo = {};
+
+		let promise = new Promise((resolve, reject) => {
+			suspendInfo["resolve"] = resolve;
+			suspendInfo["reject"] = reject;
+			suspendInfo["state"] = "pending";
+		});
+		suspendInfo["promise"] = promise;
+
+		return suspendInfo;
+
+	}
 
 }
