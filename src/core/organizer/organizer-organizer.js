@@ -95,8 +95,8 @@ export default class OrganizerOrganizer extends Organizer
 
 		let organizer = OrganizerOrganizer.organizers.get(organizerName);
 
-		let ret1 = Util.assert(organizer, `Organizer not found. organizerName=${organizerName}`);
-		let ret2 = Util.assert(["targetEvents", "targetWords"].indexOf(targetName) > -1, `Target name is invalid. targetName=${targetName}`);
+		let ret1 = Util.warn(organizer, `Organizer not found. organizerName=${organizerName}`);
+		let ret2 = Util.warn(["targetEvents", "targetWords"].indexOf(targetName) > -1, `Target name is invalid. targetName=${targetName}`);
 
 		if (ret1 && ret2)
 		{
