@@ -446,6 +446,8 @@ export default class StateOrganizer extends Organizer
 	static __processIndex(list)
 	{
 
+		let removeList = [];
+
 		for (let i = 0; i < list.length; i++)
 		{
 			let id = list[i];
@@ -457,9 +459,15 @@ export default class StateOrganizer extends Organizer
 				StateOrganizer.__waitingList.get(id).resolve();
 				StateOrganizer.__waitingList.remove(id);
 
-				// Remove from index
-				StateOrganizer.__removeFromIndex(list, id);
+				// Add to remove list
+				removeList.push(id);
 			}
+		}
+
+		// Remove from index;
+		for (let i = removeList.length - 1; i >= 0; i--)
+		{
+			StateOrganizer.__removeFromIndex(list, removeList[i]);
 		}
 
 	}
