@@ -79,6 +79,39 @@ export default class OrganizerOrganizer extends Organizer
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Add target words/events to oragnizer's settings.
+	 *
+	 * @param	{String}		organizerName		Organizer name.
+	 * @param	{String}		targetname			Target setting name. "words" or "events".
+	 * @param	{Array/String}	targets				Values to add.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static addTarget(organizerName, targetName, targets)
+	{
+
+		let organizer = OrganizerOrganizer.organizers.get(organizerName);
+
+		let ret1 = Util.assert(organizer, `Organizer not found. organizerName=${organizerName}`);
+		let ret2 = Util.assert(["targetEvents", "targetWords"].indexOf(targetName) > -1, `Target name is invalid. targetName=${targetName}`);
+
+		if (ret1 && ret2)
+		{
+			if (Array.isArray(targets))
+			{
+				organizer[targetName] = organizer[targetName].concat(targets);
+			}
+			else
+			{
+				organizer[targetName].push(targets);
+			}
+		}
+
+	}
+
 	// ------------------------------------------------------------------------
 	//  Protected
 	// ------------------------------------------------------------------------
