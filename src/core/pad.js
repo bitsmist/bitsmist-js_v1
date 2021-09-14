@@ -51,6 +51,7 @@ Pad.prototype.start = function(settings)
 	let defaults = {
 		"settings": {
 			"autoClose":			true,
+			"autoFetch":			true,
 			"autoFill":				true,
 			"autoOpen":				true,
 			"autoRefresh":			true,
@@ -96,7 +97,6 @@ Pad.prototype.switchTemplate = function(templateName, options)
 {
 
 	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
 
 	if (this.isActiveTemplate(templateName))
 	{
@@ -111,7 +111,7 @@ Pad.prototype.switchTemplate = function(templateName, options)
 	}).then(() => {
 		return this.callOrganizers("afterAppend", this._settings.items);
 	}).then(() => {
-		return this.trigger("afterAppend", sender, {"options":options});
+		return this.trigger("afterAppend", options);
 	}).then(() => {
 		console.debug(`Pad.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 	});
@@ -131,7 +131,6 @@ Pad.prototype.open = function(options)
 {
 
 	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
 		return this.pause();
@@ -139,7 +138,7 @@ Pad.prototype.open = function(options)
 		console.debug(`Pad.open(): Opening pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opening");
 	}).then(() => {
-		return this.trigger("beforeOpen", sender, {"options":options});
+		return this.trigger("beforeOpen", options);
 	}).then(() => {
 		let autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetupOnOpen"));
 		let autoSetup = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetup"));
@@ -153,7 +152,7 @@ Pad.prototype.open = function(options)
 			return this.refresh(options);
 		}
 	}).then(() => {
-		return this.trigger("doOpen", sender, {"options":options});
+		return this.trigger("doOpen", options);
 	}).then(() => {
 		// Auto focus
 		let autoFocus = this._settings.get("settings.autoFocus");
@@ -166,7 +165,7 @@ Pad.prototype.open = function(options)
 			}
 		}
 	}).then(() => {
-		return this.trigger("afterOpen", sender, {"options":options});
+		return this.trigger("afterOpen", options);
 	}).then(() => {
 		console.debug(`Pad.open(): Opened pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opened");
@@ -210,7 +209,6 @@ Pad.prototype.close = function(options)
 {
 
 	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
 		return this.pause();
@@ -218,11 +216,11 @@ Pad.prototype.close = function(options)
 		console.debug(`Pad.close(): Closing pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("closing");
 	}).then(() => {
-		return this.trigger("beforeClose", sender, {"options":options});
+		return this.trigger("beforeClose", options);
 	}).then(() => {
-		return this.trigger("doClose", sender, {"options":options});
+		return this.trigger("doClose", options);
 	}).then(() => {
-		return this.trigger("afterClose", sender, {"options":options});
+		return this.trigger("afterClose", options);
 	}).then(() => {
 		if (this._isModal)
 		{
@@ -248,15 +246,14 @@ Pad.prototype.refresh = function(options)
 {
 
 	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
 		return this.pause();
 	}).then(() => {
 		console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
-		return this.trigger("beforeRefresh", sender, {"options":options});
+		return this.trigger("beforeRefresh", options);
 	}).then(() => {
-		return this.trigger("doTarget", sender, {"options":options});
+		return this.trigger("doTarget", options);
 	}).then(() => {
 		if (Util.safeGet(options, "autoFetch", this._settings.get("settings.autoFetch")))
 		{
@@ -268,9 +265,9 @@ Pad.prototype.refresh = function(options)
 			return this.fill(options);
 		}
 	}).then(() => {
-		return this.trigger("doRefresh", sender, {"options":options});
+		return this.trigger("doRefresh", options);
 	}).then(() => {
-		return this.trigger("afterRefresh", sender, {"options":options});
+		return this.trigger("afterRefresh", options);
 	}).then(() => {
 		console.debug(`Pad.refresh(): Refreshed pad. name=${this.name}, id=${this.id}`);
 	});
@@ -290,19 +287,18 @@ Pad.prototype.fetch = function(options)
 {
 
 	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
 		return this.pause();
 	}).then(() => {
 		console.debug(`Pad.fetch(): fetching data. name=${this.name}, id=${this.id}`);
-		return this.trigger("beforeFetch", sender, {"options":options});
+		return this.trigger("beforeFetch", options);
 	}).then(() => {
 		return this.callOrganizers("doFetch", options);
 	}).then(() => {
-		return this.trigger("doFetch", sender, {"options":options});
+		return this.trigger("doFetch", options);
 	}).then(() => {
-		return this.trigger("afterFetch", sender, {"options":options});
+		return this.trigger("afterFetch", options);
 	}).then(() => {
 		console.debug(`Pad.fetch(): Fetched data. name=${this.name}, id=${this.id}`);
 	});

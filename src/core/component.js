@@ -192,7 +192,6 @@ Component.prototype.stop = function(options)
 {
 
 	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
 		return this.pause();
@@ -200,11 +199,11 @@ Component.prototype.stop = function(options)
 		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopping");
 	}).then(() => {
-		return this.trigger("beforeStop", sender, {"options":options});
+		return this.trigger("beforeStop", options);
 	}).then(() => {
-		return this.trigger("doStop", sender, {"options":options});
+		return this.trigger("doStop", options);
 	}).then(() => {
-		return this.trigger("afterStop", sender, {"options":options});
+		return this.trigger("afterStop", options);
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopped");
@@ -225,17 +224,16 @@ Component.prototype.setup = function(options)
 {
 
 	options = Object.assign({}, options);
-	let sender = ( options["sender"] ? options["sender"] : this );
 
 	return Promise.resolve().then(() => {
 		return this.pause();
 	}).then(() => {
 		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
-		return this.trigger("beforeSetup", sender, {"options":options});
+		return this.trigger("beforeSetup", options);
 	}).then(() => {
-		return this.trigger("doSetup", sender, {"options":options});
+		return this.trigger("doSetup", options);
 	}).then(() => {
-		return this.trigger("afterSetup", sender, {"options":options});
+		return this.trigger("afterSetup", options);
 	}).then(() => {
 		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 	});
@@ -316,7 +314,7 @@ Component.prototype._preStart = function()
 	}).then(() => {
 		return this.callOrganizers("beforeStart", this._settings.items);
 	}).then((newSettings) => {
-		return this.trigger("beforeStart", this);
+		return this.trigger("beforeStart");
 	}).then(() => {
 		let autoSetupOnStart = this._settings.get("settings.autoSetupOnStart");
 		let autoSetup = this._settings.get("settings.autoSetup");
@@ -344,7 +342,7 @@ Component.prototype._postStart = function()
 	}).then(() => {
 		return this.callOrganizers("afterStart", this._settings.items);
 	}).then(() => {
-		return this.trigger("afterStart", this);
+		return this.trigger("afterStart");
 	}).then(() => {
 		let triggerAppendOnStart = this._settings.get("settings.triggerAppendOnStart");
 		if (triggerAppendOnStart)
@@ -352,7 +350,7 @@ Component.prototype._postStart = function()
 			return Promise.resolve().then(() => {
 				return this.callOrganizers("afterAppend", this._settings.items);
 			}).then(() => {
-				return this.trigger("afterAppend", this, this._settings.items);
+				return this.trigger("afterAppend", this._settings.items);
 			});
 		}
 	});

@@ -36,11 +36,11 @@ export default class EventOrganizer extends Organizer
 		Component.prototype.addEventHandler = function(eventName, handlerInfo, element, bindTo) {
 			EventOrganizer._addEventHandler(this, element, eventName, handlerInfo, bindTo);
 		}
-		Component.prototype.trigger = function(eventName, sender, options, element) {
-			return EventOrganizer._trigger(this, eventName, sender, options, element)
+		Component.prototype.trigger = function(eventName, options, element) {
+			return EventOrganizer._trigger(this, eventName, options, element)
 		}
-		Component.prototype.triggerAsync = function(eventName, sender, options, element) {
-			return EventOrganizer._triggerAsync(this, eventName, sender, options, element)
+		Component.prototype.triggerAsync = function(eventName, options, element) {
+			return EventOrganizer._triggerAsync(this, eventName, options, element)
 		}
 		Component.prototype.getEventHandler = function(handlerInfo) {
 			return EventOrganizer._getEventHandler(this, handlerInfo)
@@ -176,12 +176,7 @@ export default class EventOrganizer extends Organizer
 
 		// Get target elements
 		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
-		/*
-		if (elements.length == 0)
-		{
-			throw TypeError(`No elements for the event found. componentName=${component.name}, elementName=${elementName}`);
-		}
-		*/
+		//Util.assert(elements.length > 0, `No elements for the event found. componentName=${component.name}, elementName=${elementName}`, TypeError);
 
 		// Set event handlers
 		if (handlerInfo["handlers"])
@@ -212,14 +207,14 @@ export default class EventOrganizer extends Organizer
 	 *
 	 * @param	{Component}		component				Component.
 	 * @param	{String}		eventName				Event name to trigger.
-	 * @param	{Object}		sender					Object which triggered the event.
 	 * @param	{Object}		options					Event parameter options.
+	 * @param	{HTMLElement}	element					HTML element.
 	 */
-	static _trigger(component, eventName, sender, options, element)
+	static _trigger(component, eventName, options, element)
 	{
 
 		options = Object.assign({}, options);
-		options["sender"] = sender;
+		options["sender"] = options["sender"] || component;
 		element = ( element ? element : component );
 		let e = null;
 
@@ -247,16 +242,16 @@ export default class EventOrganizer extends Organizer
 	 *
 	 * @param	{Component}		component				Component.
 	 * @param	{String}		eventName				Event name to trigger.
-	 * @param	{Object}		sender					Object which triggered the event.
 	 * @param	{Object}		options					Event parameter options.
+	 * @param	{HTMLElement}	element					HTML element.
 	 */
-	static _triggerAsync(component, eventName, sender, options, element)
+	static _triggerAsync(component, eventName, options, element)
 	{
 
 		options = options || {};
 		options["async"] = true;
 
-		return EventOrganizer._trigger.call(component, component, eventName, sender, options, element);
+		return EventOrganizer._trigger.call(component, component, eventName, options, element);
 
 	}
 
