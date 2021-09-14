@@ -412,22 +412,44 @@ export default class Util
 
 		if (!conditions)
 		{
-			if (typeof error === "function")
-			{
-				let e = new error(msg);
+			let e = new error(msg);
 
-				// Remove last stack (assert() itself)
-				let stacks = e.stack.split("\n");
-				stacks.splice(1, 1);
-				e.stack = stacks.join("\n");
+			// Remove last stack (assert() itself)
+			let stacks = e.stack.split("\n");
+			stacks.splice(1, 1);
+			e.stack = stacks.join("\n");
 
-				throw e;
-			}
-			else
-			{
-				console[error](msg);
-			}
+			throw e;
 		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Warns when condition failed.
+	 *
+	 * @param	{Boolean}		conditions			Conditions.
+	 * @param	{String}		Message				Error message.
+	 * @param	{String}		level				Warn level.
+	 * @param	{Options}		options				Options.
+	 *
+	 * @return 	{Boolean}		True if it is upper case.
+	 */
+	static warn(conditions, msg, level, options)
+	{
+
+		let ret = true;
+
+		if (!conditions)
+		{
+			level = level || "warn";
+			console[level](msg);
+
+			ret = false;
+		}
+
+		return ret;
 
 	}
 
