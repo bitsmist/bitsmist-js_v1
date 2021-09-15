@@ -35,6 +35,8 @@ export default class TemplateOrganizer extends Organizer
 		Pad.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
 		Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
 		Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActiveTemplate(this, templateName); }
+		Pad.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); }
+		Pad.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); }
 
 	}
 
@@ -104,7 +106,12 @@ export default class TemplateOrganizer extends Organizer
 			});
 		}
 
-		return Promise.all(promises);
+		return Promise.all(promises).then(() => {
+			if (conditions == "afterAppend")
+			{
+				TemplateOrganizer._hideConditionalElements(component);
+			}
+		});
 
 	}
 
@@ -252,6 +259,61 @@ export default class TemplateOrganizer extends Organizer
 		return clone;
 
 	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Show "bm-visible" elements if condition passed.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		item				Item used to judge condition.
+	 */
+	static _showConditionalElements(component, item)
+	{
+
+		// Get elements with bm-visible attribute
+		let elements = Util.scopedSelectorAll(component, "[bm-visible]");
+
+		// Show elements
+		elements.forEach((element) => {
+			let condition = element.getAttribute("bm-visible");
+			if (Util.safeEval(condition, item, item))
+			{
+				console.log("@@showing", component.name, element, item);
+				element.style.display = "block";
+			}
+			else
+			{
+				element.style.display = "none";
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Hide "bm-visible" elements.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		item				Item used to judge condition.
+	 */
+	static _hideConditionalElements(component, item)
+	{
+
+		// Get elements with bm-visible attribute
+		let elements = Util.scopedSelectorAll(component, "[bm-visible]");
+
+		// Hide elements
+		elements.forEach((element) => {
+			console.log("@@hiding", component.name, element);
+			element.style.display = "none";
+			// backup current display style
+			element.style.display = "none";
+		});
+
+	}
+
 
 	// -------------------------------------------------------------------------
 	//  Privates
