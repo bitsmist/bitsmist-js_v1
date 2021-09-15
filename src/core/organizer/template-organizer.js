@@ -279,8 +279,7 @@ export default class TemplateOrganizer extends Organizer
 			let condition = element.getAttribute("bm-visible");
 			if (Util.safeEval(condition, item, item))
 			{
-				console.log("@@showing", component.name, element, item);
-				element.style.display = "block";
+				element.style.display = ( element.__bm_displayinfo ? element.__bm_displayinfo : "block" );
 			}
 			else
 			{
@@ -306,9 +305,7 @@ export default class TemplateOrganizer extends Organizer
 
 		// Hide elements
 		elements.forEach((element) => {
-			console.log("@@hiding", component.name, element);
-			element.style.display = "none";
-			// backup current display style
+			element.__bm_displayinfo = ( element.currentStyle ? element.currentStyle.display : getComputedStyle(element, null).display); // backup current display style
 			element.style.display = "none";
 		});
 
