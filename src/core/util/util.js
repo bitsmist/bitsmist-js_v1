@@ -16,14 +16,14 @@ export default class Util
 {
 
 	/**
-	* Get an value from store. Return default value when specified key is not available.
-	*
-	* @param	{Object}		store				Object that holds keys/values.
-	* @param	{String}		key					Key to get.
-	* @param	{Object}		defaultValue		Value returned when key is not found.
-	*
-	* @return  {*}				Value.
-	*/
+	 * Get an value from store. Return default value when specified key is not available.
+	 *
+	 * @param	{Object}		store				Object that holds keys/values.
+	 * @param	{String}		key					Key to get.
+	 * @param	{Object}		defaultValue		Value returned when key is not found.
+	 *
+	 * @return  {*}				Value.
+	 */
 	static safeGet(store, key, defaultValue)
 	{
 
@@ -57,12 +57,12 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Set an value to store.
-	*
-	* @param	{Object}		store				Object that holds keys/values.
-	* @param	{String}		key					Key to store.
-	* @param	{Object}		value				Value to store.
-	*/
+	 * Set an value to store.
+	 *
+	 * @param	{Object}		store				Object that holds keys/values.
+	 * @param	{String}		key					Key to store.
+	 * @param	{Object}		value				Value to store.
+	 */
 	static safeSet(store, key, value)
 	{
 
@@ -92,13 +92,13 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Check if the store has specified key.
-	*
-	* @param	{Object}		store				Store.
-	* @param	{String}		key					Key to check.
-	*
-	* @return	{Boolean}		True:exists, False:not exists.
-	*/
+	 * Check if the store has specified key.
+	 *
+	 * @param	{Object}		store				Store.
+	 * @param	{String}		key					Key to check.
+	 *
+	 * @return	{Boolean}		True:exists, False:not exists.
+	 */
 	static safeHas(store, key)
 	{
 
@@ -125,12 +125,41 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Concatenat path strings appending trainling "/" when needed.
-	*
-	* @param	{Array}			paths				Paths.
-	*
-	* @return	{String}		Concatenated paths
-	*/
+ 	 * Execute Javascript code from string.
+	 *
+	 * @param	{String}		code				Code to execute.
+	 * @param	{Object}		context				Context refered as "this" inside the code.
+	 * @param	{Object}		parameters			Parameters passed to the code.
+	 *
+	 * @return	{*}				Result of eval.
+	 */
+	static safeEval(code, context, parameters)
+	{
+
+		let names;
+		let values = [];
+
+		if (parameters)
+		{
+			names = Object.keys(parameters).join(",");
+			Object.keys(parameters).forEach((key) => {
+				values.push(parameters[key]);
+			});
+		}
+
+		return Function(names, '"use strict";return (' + code + ')').apply(context, values);
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Concatenat path strings appending trainling "/" when needed.
+	 *
+	 * @param	{Array}			paths				Paths.
+	 *
+	 * @return	{String}		Concatenated paths
+	 */
 	static concatPath(paths)
 	{
 
@@ -412,6 +441,7 @@ export default class Util
 
 		if (!conditions)
 		{
+			error = error || Error;
 			let e = new error(msg);
 
 			// Remove last stack (assert() itself)
@@ -450,6 +480,60 @@ export default class Util
 		}
 
 		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Return a promise that resolved after random milliseconds.
+	 *
+	 * @param	{Integer}		max					Maximum time in milliseconds.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static randomWait(max)
+	{
+
+		let timeout = Math.floor(Math.random() * max);
+
+		return new Promise((resolve, reject) => {
+			setTimeout(() => {
+				resolve();
+			}, timeout);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Execute query on root node excluding nested components inside.
+	 *
+	 * @param	{HTMLElement}	rootNode			Root node.
+	 * @param	{String}		query				Query.
+	 *
+	 * @return  {Array}			Array of matched elements.
+	 */
+	static scopedSelectorAll(rootNode, query)
+	{
+
+		// Set temp id
+		let guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+		rootNode.setAttribute("__bm_tempid", guid);
+
+		// Build query
+		let attr = "[__bm_tempid='" + guid + "'] ";
+		let newQuery = attr + query.replace(",", ", " + attr).replace(":not(", ":not(" + attr) + ":not(" + attr + "[thisis='component'] " + query + ")";
+
+		// Query
+		let elements = rootNode.querySelectorAll(newQuery);
+		elements = Array.prototype.slice.call(elements, 0);
+
+		// Remove temp id
+		rootNode.removeAttribute("__bm_tempid");
+
+		return elements;
 
 	}
 
