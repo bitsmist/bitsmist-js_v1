@@ -46,6 +46,12 @@ export default class EventOrganizer extends Organizer
 			return EventOrganizer._getEventHandler(this, handlerInfo)
 		}
 
+		// Add properties
+		Component.prototype._eventResult;
+		Object.defineProperty(Component, 'eventResult', {
+			get() { return this._eventResult; },
+		})
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -215,6 +221,8 @@ export default class EventOrganizer extends Organizer
 
 		options = Object.assign({}, options);
 		options["sender"] = options["sender"] || component;
+		component._eventResult = {};
+		options["result"] = component._eventResult;
 		element = ( element ? element : component );
 		let e = null;
 
