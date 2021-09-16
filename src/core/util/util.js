@@ -524,7 +524,7 @@ export default class Util
 
 		// Build query
 		let attr = "[__bm_tempid='" + guid + "'] ";
-		let newQuery = attr + query.replace(",", ", " + attr).replace(":not(", ":not(" + attr) + ":not(" + attr + "[thisis='component'] " + query + ")";
+		let newQuery = attr + query.replace(",", ", " + attr).replace(":not(", ":not(" + attr) + ":not(" + attr + "[bm-powered] " + query + ")";
 
 		// Query
 		let elements = rootNode.querySelectorAll(newQuery);
