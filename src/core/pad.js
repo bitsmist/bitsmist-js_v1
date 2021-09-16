@@ -140,6 +140,10 @@ Pad.prototype.open = function(options)
 	}).then(() => {
 		return this.trigger("beforeOpen", options);
 	}).then(() => {
+		// Hide conditional elements
+		this.hideConditionalElements();
+
+		// Setup
 		let autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetupOnOpen"));
 		let autoSetup = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetup"));
 		if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
@@ -147,6 +151,7 @@ Pad.prototype.open = function(options)
 			return this.setup(options);
 		}
 	}).then(() => {
+		// Refresh
 		if (Util.safeGet(options, "autoRefresh", this._settings.get("settings.autoRefresh")))
 		{
 			return this.refresh(options);
@@ -255,11 +260,16 @@ Pad.prototype.refresh = function(options)
 	}).then(() => {
 		return this.trigger("doTarget", options);
 	}).then(() => {
+		// Fetch
 		if (Util.safeGet(options, "autoFetch", this._settings.get("settings.autoFetch")))
 		{
 			return this.fetch(options);
 		}
 	}).then(() => {
+		// Show condtional elements
+		this.showConditionalElements(this.item);
+	}).then(() => {
+		// Fill
 		if (Util.safeGet(options, "autoFill", this._settings.get("settings.autoFill")))
 		{
 			return this.fill(options);

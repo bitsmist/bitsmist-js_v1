@@ -106,12 +106,7 @@ export default class TemplateOrganizer extends Organizer
 			});
 		}
 
-		return Promise.all(promises).then(() => {
-			if (conditions == "afterAppend")
-			{
-				TemplateOrganizer._hideConditionalElements(component);
-			}
-		});
+		return Promise.all(promises);
 
 	}
 
