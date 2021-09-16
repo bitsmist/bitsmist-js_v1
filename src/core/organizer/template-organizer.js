@@ -279,7 +279,7 @@ export default class TemplateOrganizer extends Organizer
 			let condition = element.getAttribute("bm-visible");
 			if (Util.safeEval(condition, item, item))
 			{
-				element.style.display = ( element.__bm_displayinfo ? element.__bm_displayinfo : "block" );
+				element.style.removeProperty("display");
 			}
 			else
 			{
@@ -295,9 +295,8 @@ export default class TemplateOrganizer extends Organizer
 	 * Hide "bm-visible" elements.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		item				Item used to judge condition.
 	 */
-	static _hideConditionalElements(component, item)
+	static _hideConditionalElements(component)
 	{
 
 		// Get elements with bm-visible attribute
@@ -305,7 +304,6 @@ export default class TemplateOrganizer extends Organizer
 
 		// Hide elements
 		elements.forEach((element) => {
-			element.__bm_displayinfo = ( element.currentStyle ? element.currentStyle.display : getComputedStyle(element, null).display); // backup current display style
 			element.style.display = "none";
 		});
 
