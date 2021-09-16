@@ -160,6 +160,7 @@ Component.prototype.start = function(settings)
 	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
 
 	// Init vars
+	this.setAttribute("bm-powered", "");
 	this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 	this._name = this.constructor.name;
 	this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
@@ -237,6 +238,22 @@ Component.prototype.setup = function(options)
 	}).then(() => {
 		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Execute query on this component excluding nested components inside.
+ *
+ * @param	{String}		query				Query.
+ *
+ * @return  {Array}			Array of matched elements.
+ */
+Component.prototype.scopedSelectorAll = function(query)
+{
+
+	return Util.scopedSelectorAll(this, query);
 
 }
 
