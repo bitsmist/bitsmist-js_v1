@@ -556,7 +556,7 @@ export default class StateOrganizer extends Organizer
 		let index = list.indexOf(id);
 		if (index > -1)
 		{
-			list.splice(index);
+			list.splice(index, 1);
 		}
 
 	}
