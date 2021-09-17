@@ -35,7 +35,7 @@ OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganiz
 window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 
 import EventOrganizer from "./organizer/event-organizer.js";
-OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend"], "order":2000});
+OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend", "afterSpecLoad"], "order":2000});
 window.BITSMIST.v1.EventOrganizer = EventOrganizer;
 
 import AutoloadOrganizer from "./organizer/autoload-organizer.js";
@@ -43,7 +43,7 @@ OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganiz
 window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
 
 import ComponentOrganizer from "./organizer/component-organizer.js";
-OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterAppend"], "order":4000});
+OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterAppend", "afterSpecLoad"], "order":4000});
 window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 
 import StateOrganizer from "./organizer/state-organizer.js";
