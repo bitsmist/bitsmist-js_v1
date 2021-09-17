@@ -80,7 +80,7 @@ export default class Store
 	set filter(value)
 	{
 
-		Util.assert(typeof value === "function", `Store.filter: Filter is not a function. filter=${value}`, TypeError);
+		Util.assert(typeof value === "function", `Store.filter(setter): Filter is not a function. filter=${value}`, TypeError);
 
 		this._filter = value;
 
@@ -103,7 +103,7 @@ export default class Store
 	set merger(value)
 	{
 
-		Util.assert(typeof value === "function", `Store.merger: Merger is not a function. filter=${value}`, TypeError);
+		Util.assert(typeof value === "function", `Store.merger(setter): Merger is not a function. filter=${value}`, TypeError);
 
 		this._merger = value;
 
