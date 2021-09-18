@@ -95,9 +95,11 @@ export default class EventOrganizer extends Organizer
 	{
 
 		element = element || component;
+		let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 		// Get handler
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
+		Util.assert(handler, `EventOrganizer._addEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
 
 		// Init holder object for the element
 		if (!element.__bm_eventinfo)
@@ -110,13 +112,13 @@ export default class EventOrganizer extends Organizer
 		if (!listeners[eventName])
 		{
 			listeners[eventName] = [];
-			element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerInfo["listenerOptions"]);
+			element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerOptions["listnerOptions"]);
 		}
 
-		listeners[eventName].push({"handler":handler, "options":Object.assign({}, handlerInfo["options"]), "bindTo":bindTo, "order":order});
+		listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo, "order":order});
 
 		// Stable sort by order
-		let order = Util.safeGet(handlerInfo, "order");
+		let order = Util.safeGet(handlerOptions, "order");
 		listeners[eventName].sort((a, b) => {
 			if (a.order == b.order)		return 0;
 			else if (a.order > b.order)	return 1;
@@ -182,7 +184,7 @@ export default class EventOrganizer extends Organizer
 
 		// Get target elements
 		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
-		//Util.assert(elements.length > 0, `No elements for the event found. componentName=${component.name}, elementName=${elementName}`, TypeError);
+		//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. componentName=${component.name}, elementName=${elementName}`, TypeError);
 
 		// Set event handlers
 		if (handlerInfo["handlers"])
