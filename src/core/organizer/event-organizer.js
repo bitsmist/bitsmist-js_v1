@@ -120,7 +120,7 @@ export default class EventOrganizer extends Organizer
 		// Stable sort by order
 		let order = Util.safeGet(handlerOptions, "order");
 		listeners[eventName].sort((a, b) => {
-			if (a.order == b.order)		return 0;
+			if (a.order === b.order)		return 0;
 			else if (a.order > b.order)	return 1;
 			else 						return -1
 		});
@@ -151,7 +151,7 @@ export default class EventOrganizer extends Organizer
 			let index = -1;
 			for (let i = 0; i < listeners.length; i++)
 			{
-				if (listeners["handler"] == handler)
+				if (listeners["handler"] === handler)
 				{
 					index = i;
 					break;
@@ -304,7 +304,7 @@ export default class EventOrganizer extends Organizer
 
 		if (elementInfo["rootNode"])
 		{
-			if (elementInfo["rootNode"] == "this" || elementInfo["rootNode"] == component.tagName.toLowerCase())
+			if (elementInfo["rootNode"] === "this" || elementInfo["rootNode"] === component.tagName.toLowerCase())
 			{
 				elements = [rootNode];
 			}
@@ -313,7 +313,7 @@ export default class EventOrganizer extends Organizer
 				elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
 			}
 		}
-		else if (elementName == "this" || elementName == component.tagName.toLowerCase())
+		else if (elementName === "this" || elementName === component.tagName.toLowerCase())
 		{
 			elements = [rootNode];
 		}
@@ -382,7 +382,7 @@ export default class EventOrganizer extends Organizer
 
 		Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
 
-		if (Util.safeGet(e, "detail.async", false) == false)
+		if (Util.safeGet(e, "detail.async", false) === false)
 		{
 			// Wait previous handler
 			this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then((result) => {

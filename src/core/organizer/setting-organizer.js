@@ -118,7 +118,7 @@ export default class SettingOrganizer extends Organizer
 	static isTarget(conditions, organizerInfo, component)
 	{
 
-		if (conditions == "beforeStart")
+		if (conditions === "beforeStart")
 		{
 			return true;
 		}

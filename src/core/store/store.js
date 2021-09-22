@@ -156,7 +156,7 @@ export default class Store
 
 		for (let i = 0; i < items.length; i++)
 		{
-			if (items[i] && typeof items[i] == "object")
+			if (items[i] && typeof items[i] === "object")
 			{
 				merger(this._items, items[i]);
 			}
@@ -194,7 +194,7 @@ export default class Store
 
 		let holder = ( key ? this.get(key) : this._items );
 
-		if (holder && typeof holder == "object" && value && typeof value == "object")
+		if (holder && typeof holder === "object" && value && typeof value === "object")
 		{
 			Util.deepMerge(holder, value);
 		}

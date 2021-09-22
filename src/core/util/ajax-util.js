@@ -59,7 +59,7 @@ export default class AjaxUtil
 
 			// callback (load)
 			xhr.addEventListener("load", () => {
-				if (xhr.status == 200 || xhr.status == 201)
+				if (xhr.status === 200 || xhr.status === 201)
 				{
 					resolve(xhr);
 				}

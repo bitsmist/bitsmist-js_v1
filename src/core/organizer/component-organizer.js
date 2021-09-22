@@ -214,11 +214,11 @@ export default class ComponentOrganizer extends Organizer
 			{
 				let arr = Util.getFilenameAndPathFromUrl(href);
 				path = arr[0];
-				if (href.slice(-3).toLowerCase() == ".js")
+				if (href.slice(-3).toLowerCase() === ".js")
 				{
 					settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
 				}
-				else if (href.slice(-5).toLowerCase() == ".html")
+				else if (href.slice(-5).toLowerCase() === ".html")
 				{
 					settings["settings"]["autoMorph"] = true;
 				}
@@ -301,7 +301,7 @@ export default class ComponentOrganizer extends Organizer
 
 		let ret = false;
 
-		if (ComponentOrganizer.__classes.get(className, {})["state"] == "loaded")
+		if (ComponentOrganizer.__classes.get(className, {})["state"] === "loaded")
 		{
 			ret = true;
 		}
@@ -342,7 +342,7 @@ export default class ComponentOrganizer extends Organizer
 			ComponentOrganizer.__classes.set(className, {"state":"loaded"});
 			promise = Promise.resolve();
 		}
-		else if (ComponentOrganizer.__classes.get(className, {})["state"] == "loading")
+		else if (ComponentOrganizer.__classes.get(className, {})["state"] === "loading")
 		{
 			// Already loading
 			console.debug(`ComponentOrganizer.__autoLoadComponent(): Component Already loading. className=${className}`);

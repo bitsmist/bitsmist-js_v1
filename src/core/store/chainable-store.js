@@ -164,7 +164,7 @@ export default class ChainableStore extends Store
 
 		let holder = ( key ? this._getLocal(key) : this._items );
 
-		if (typeof holder == "object")
+		if (typeof holder === "object")
 		{
 			Util.deepMerge(holder, value);
 		}

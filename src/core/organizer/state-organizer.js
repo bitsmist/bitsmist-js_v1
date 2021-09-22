@@ -235,22 +235,22 @@ export default class StateOrganizer extends Organizer
 	static _waitForTransitionableState(component, newState)
 	{
 
-		if (newState == "starting")
+		if (newState === "starting")
 		{
 			return StateOrganizer._waitForSingle(component, "instantiated");
 		}
 
-		if (newState == "stopping")
+		if (newState === "stopping")
 		{
 			return StateOrganizer._waitForSingle(component, "instantiated");
 		}
 
-		if (newState == "opening")
+		if (newState === "opening")
 		{
 			return StateOrganizer._waitForSingle(component, "started");
 		}
 
-		if (newState == "closing")
+		if (newState === "closing")
 		{
 			return StateOrganizer._waitForSingle(component, "opened");
 		}
@@ -328,13 +328,13 @@ export default class StateOrganizer extends Organizer
 		let ret = [];
 
 		// Globally suspended?
-		if (StateOrganizer.__suspend[state] && StateOrganizer.__suspend[state].state == "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
+		if (StateOrganizer.__suspend[state] && StateOrganizer.__suspend[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
 		{
 			ret.push(StateOrganizer.__suspend[state].promise);
 		}
 
 		// Component suspended?
-		if (component._suspend[state] && component._suspend[state].state == "pending")
+		if (component._suspend[state] && component._suspend[state].state === "pending")
 		{
 			ret.push(component._suspend[state].promise);
 		}
@@ -358,9 +358,9 @@ export default class StateOrganizer extends Organizer
 		let ret = false;
 
 		if (component.state &&
-			component.state != "starting" &&
-			component.state != "stopping" &&
-			component.state != "stopped"
+			component.state !== "starting" &&
+			component.state !== "stopping" &&
+			component.state !== "stopped"
 		)
 		{
 			ret = true;
@@ -387,14 +387,14 @@ export default class StateOrganizer extends Organizer
 
 		let ret = true;
 
-		if (currentState && currentState.slice(-3) == "ing")
+		if (currentState && currentState.slice(-3) === "ing")
 		{
 			if(
-				( currentState == "stopping" && newState != "stopped") ||
-				( currentState == "starting" && newState != "started") ||
-				( currentState == "opening" && (newState != "opened" && newState != "opening") ) ||
-				( currentState == "closing" && newState != "closed") ||
-				( currentState == "stopping" && (newState != "stopped" && newState != "closing") )
+				( currentState === "stopping" && newState !== "stopped") ||
+				( currentState === "starting" && newState !== "started") ||
+				( currentState === "opening" && (newState !== "opened" && newState !== "opening") ) ||
+				( currentState === "closing" && newState !== "closed") ||
+				( currentState === "stopping" && (newState !== "stopped" && newState !== "closing") )
 			)
 			{
 				ret = false;
@@ -535,7 +535,7 @@ export default class StateOrganizer extends Organizer
 			index.set(key, list)
 		}
 
-		if (list.indexOf(id) == -1)
+		if (list.indexOf(id) === -1)
 		{
 			list.push(id);
 		}
@@ -582,7 +582,7 @@ export default class StateOrganizer extends Organizer
 		else if (waitlistItem["name"])
 		{
 			Object.keys(StateOrganizer.__components.items).forEach((key) => {
-				if (waitlistItem["name"] == StateOrganizer.__components.get(key).object.name)
+				if (waitlistItem["name"] === StateOrganizer.__components.get(key).object.name)
 				{
 					componentInfo = StateOrganizer.__components.get(key);
 				}
@@ -693,13 +693,13 @@ export default class StateOrganizer extends Organizer
 		}
 
 		// check name
-		if (waitlistItem["name"] && componentInfo["object"].name != waitlistItem["name"])
+		if (waitlistItem["name"] && componentInfo["object"].name !== waitlistItem["name"])
 		{
 			isMatch = false;
 		}
 
 		// check id
-		if (waitlistItem["id"] && componentInfo["object"].uniqueId != waitlistItem["id"])
+		if (waitlistItem["id"] && componentInfo["object"].uniqueId !== waitlistItem["id"])
 		{
 			isMatch = false;
 		}
@@ -734,18 +734,18 @@ export default class StateOrganizer extends Organizer
 		{
 			case "started":
 				if (
-					currentState != "opening" &&
-					currentState != "opened" &&
-					currentState != "closing" &&
-					currentState != "closed" &&
-					currentState != "started"
+					currentState !== "opening" &&
+					currentState !== "opened" &&
+					currentState !== "closing" &&
+					currentState !== "closed" &&
+					currentState !== "started"
 				)
 				{
 					isMatch = false;
 				}
 				break;
 			default:
-				if (currentState != expectedState)
+				if (currentState !== expectedState)
 				{
 					isMatch = false;
 				}

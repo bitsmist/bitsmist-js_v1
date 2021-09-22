@@ -169,13 +169,13 @@ export default class Util
 		{
 			if (paths[i])
 			{
-				if (path.slice(path.length - 1) == "/" && paths[i].slice(0, 1) == "/")
+				if (path.slice(path.length - 1) === "/" && paths[i].slice(0, 1) === "/")
 				{
 					// "---/" and "/---"
 					// Remove an extra slash
 					path += paths[i].slice(1);
 				}
-				else if (path.slice(path.length - 1) == "/" || paths[i].slice(0, 1) == "/")
+				else if (path.slice(path.length - 1) === "/" || paths[i].slice(0, 1) === "/")
 				{
 					// "---/" or "/---"
 					// Just concat
@@ -420,7 +420,7 @@ export default class Util
 	static __isUpper(c)
 	{
 
-		return c == c.toUpperCase() && c != c.toLowerCase();
+		return c === c.toUpperCase() && c !== c.toLowerCase();
 
 	}
 

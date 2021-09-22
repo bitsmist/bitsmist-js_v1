@@ -84,7 +84,7 @@ export default class TemplateOrganizer extends Organizer
 		if (templates)
 		{
 			Object.keys(templates).forEach((templateName) => {
-				if (conditions == "beforeStart")
+				if (conditions === "beforeStart")
 				{
 					switch (templates[templateName]["type"])
 					{
@@ -94,7 +94,7 @@ export default class TemplateOrganizer extends Organizer
 							break;
 					}
 				}
-				else if (conditions == "afterAppend")
+				else if (conditions === "afterAppend")
 				{
 					switch (templates[templateName]["type"])
 					{
@@ -188,7 +188,7 @@ export default class TemplateOrganizer extends Organizer
 	static _applyTemplate(component, templateName)
 	{
 
-		if (component._activeTemplateName == templateName)
+		if (component._activeTemplateName === templateName)
 		{
 			console.debug(`TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}`);
 			return Promise.resolve();
