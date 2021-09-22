@@ -147,10 +147,10 @@ export default class SettingOrganizer extends Organizer
 		let url = Util.concatPath([path, settingName + "." + type]);
 		let settings;
 
-		console.debug(`SettingOrganizer.loadSetting(): Loading settings. url=${url}`);
+		console.debug(`SettingOrganizer.loadSetting(): Loading settings. name=${component.name}, url=${url}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SettingOrganizer.loadSetting(): Loaded settings. url=${url}`);
+			console.debug(`SettingOrganizer.loadSetting(): Loaded settings. name=${component.name}, url=${url}`);
 
 			switch (type)
 			{

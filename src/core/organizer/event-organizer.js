@@ -143,7 +143,7 @@ export default class EventOrganizer extends Organizer
 		element = element || component;
 
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-		Util.assert(typeof handler === "function", `EventOrganizer._removeEventHandler(): Event handler is not a function. componentName=${component.name}, eventName=${eventName}`, TypeError);
+		Util.assert(typeof handler === "function", `EventOrganizer._removeEventHandler(): Event handler is not a function. name=${component.name}, eventName=${eventName}`, TypeError);
 
 		let listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
 		if (listeners)
@@ -184,7 +184,7 @@ export default class EventOrganizer extends Organizer
 
 		// Get target elements
 		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
-		//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. componentName=${component.name}, elementName=${elementName}`, TypeError);
+		//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
 
 		// Set event handlers
 		if (handlerInfo["handlers"])
@@ -428,7 +428,7 @@ export default class EventOrganizer extends Organizer
 				// Get a handler
 				let handler = listeners[i]["handler"];
 				handler = ( typeof handler === "string" ? component[handler] : handler );
-				Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. componentName=${component.name}, eventName=${e.type}`, TypeError);
+				Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
 
 				// Execute handler
 				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
@@ -473,7 +473,7 @@ export default class EventOrganizer extends Organizer
 			// Get a handler
 			let handler = listeners[i]["handler"];
 			handler = ( typeof handler === "string" ? component[handler] : handler );
-			Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. componentName=${component.name}, eventName=${e.type}`, TypeError);
+			Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
 
 			// Execute handler
 			let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
