@@ -237,7 +237,7 @@ export default class ComponentOrganizer extends Organizer
 		let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
 
 		return Promise.all(promises).then(() => {
-			if (waitFor && waitList.length > 0)
+			if (waitFor)
 			{
 				// Wait for elements to become "started"
 				return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
