@@ -807,10 +807,10 @@ export default class StateOrganizer extends Organizer
 			let object = ( waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "" );
 			let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "" );
 			let state = (waitlist[i].state ? "state:" + waitlist[i].state: "" );
-			result += "\t{" + id + name + object + node + state + "},";
+			result += "\n\t{" + id + name + object + node + state + "},";
 		}
 
-		return "[\n" + result + "\n]";
+		return "[" + result + "\n]";
 
 	}
 
