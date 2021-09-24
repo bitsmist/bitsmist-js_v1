@@ -492,10 +492,10 @@ export default class Util
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static randomWait(max)
+	static randomWait(max, fixed)
 	{
 
-		let timeout = Math.floor(Math.random() * max);
+		let timeout = ( fixed ? max : Math.floor(Math.random() * max ) );
 
 		return new Promise((resolve, reject) => {
 			setTimeout(() => {
