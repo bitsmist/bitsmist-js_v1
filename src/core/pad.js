@@ -133,8 +133,6 @@ Pad.prototype.open = function(options)
 	options = Object.assign({}, options);
 
 	return Promise.resolve().then(() => {
-		return this.pause();
-	}).then(() => {
 		console.debug(`Pad.open(): Opening pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("opening");
 	}).then(() => {
@@ -216,8 +214,6 @@ Pad.prototype.close = function(options)
 	options = Object.assign({}, options);
 
 	return Promise.resolve().then(() => {
-		return this.pause();
-	}).then(() => {
 		console.debug(`Pad.close(): Closing pad. name=${this.name}, id=${this.id}`);
 		return this.changeState("closing");
 	}).then(() => {
@@ -253,8 +249,6 @@ Pad.prototype.refresh = function(options)
 	options = Object.assign({}, options);
 
 	return Promise.resolve().then(() => {
-		return this.pause();
-	}).then(() => {
 		console.debug(`Pad.refresh(): Refreshing pad. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", options);
 	}).then(() => {
@@ -299,9 +293,7 @@ Pad.prototype.fetch = function(options)
 	options = Object.assign({}, options);
 
 	return Promise.resolve().then(() => {
-		return this.pause();
-	}).then(() => {
-		console.debug(`Pad.fetch(): fetching data. name=${this.name}, id=${this.id}`);
+		console.debug(`Pad.fetch(): Fetching data. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeFetch", options);
 	}).then(() => {
 		return this.callOrganizers("doFetch", options);
