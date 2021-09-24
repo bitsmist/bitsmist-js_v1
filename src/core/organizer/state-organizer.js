@@ -45,7 +45,7 @@ export default class StateOrganizer extends Organizer
 		Component.prototype.pause = function(state) { return StateOrganizer._pause(this, state); }
 
 		// Init vars
-		StateOrganizer.__suspend = {};
+		StateOrganizer.__suspends = {};
 		StateOrganizer.__components = new Store();
 		StateOrganizer.__waitingList = new Store();
 		StateOrganizer.__waitingListIndexName = new Map();
@@ -70,7 +70,7 @@ export default class StateOrganizer extends Organizer
 
 		// Init vars
 		component._state = "";
-		component._suspend = {};
+		component._suspends = {};
 
 		// Load settings from attributes
 		StateOrganizer.__loadAttrSettings(component);
@@ -128,8 +128,8 @@ export default class StateOrganizer extends Organizer
 	static globalSuspend(state)
 	{
 
-		StateOrganizer.__suspend[state] = StateOrganizer._createSuspendInfo(state);
-		StateOrganizer.__suspend[state].state = "pending";
+		StateOrganizer.__suspends[state] = StateOrganizer._createSuspendInfo(state);
+		StateOrganizer.__suspends[state].state = "pending";
 
 	}
 
@@ -143,8 +143,8 @@ export default class StateOrganizer extends Organizer
 	static globalResume(state)
 	{
 
-		StateOrganizer.__suspend[state].resolve();
-		StateOrganizer.__suspend[state].state = "resolved";
+		StateOrganizer.__suspends[state].resolve();
+		StateOrganizer.__suspends[state].state = "resolved";
 
 	}
 
@@ -175,6 +175,7 @@ export default class StateOrganizer extends Organizer
 		}
 		else
 		{
+			// Create a promise that is resolved when waiting is completed.
 			promise = new Promise((resolve, reject) => {
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
@@ -185,7 +186,7 @@ export default class StateOrganizer extends Organizer
 			});
 			waitInfo["promise"] = promise;
 
-			//StateOrganizer.__addToWaitingList(waitInfo, component, state);
+			// Add to info to a waiting list.
 			StateOrganizer.__addToWaitingList(waitInfo, component);
 		}
 
@@ -291,8 +292,8 @@ export default class StateOrganizer extends Organizer
 	static _suspend(component, state)
 	{
 
-		component._suspend[state] = StateOrganizer._createSuspendInfo();
-	 	component._suspend[state].state = "pending";
+		component._suspends[state] = StateOrganizer._createSuspendInfo();
+	 	component._suspends[state].state = "pending";
 
 	}
 
@@ -307,8 +308,8 @@ export default class StateOrganizer extends Organizer
 	static _resume(component, state)
 	{
 
-	 	component._suspend[state].resolve();
-	 	component._suspend[state].state = "resolved";
+	 	component._suspends[state].resolve();
+	 	component._suspends[state].state = "resolved";
 
 	}
 
@@ -328,15 +329,15 @@ export default class StateOrganizer extends Organizer
 		let ret = [];
 
 		// Globally suspended?
-		if (StateOrganizer.__suspend[state] && StateOrganizer.__suspend[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
+		if (StateOrganizer.__suspends[state] && StateOrganizer.__suspends[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
 		{
-			ret.push(StateOrganizer.__suspend[state].promise);
+			ret.push(StateOrganizer.__suspends[state].promise);
 		}
 
 		// Component suspended?
-		if (component._suspend[state] && component._suspend[state].state === "pending")
+		if (component._suspends[state] && component._suspends[state].state === "pending")
 		{
-			ret.push(component._suspend[state].promise);
+			ret.push(component._suspends[state].promise);
 		}
 
 		return Promise.all(ret);
@@ -599,7 +600,10 @@ export default class StateOrganizer extends Organizer
 		else if (waitlistItem["object"])
 		{
 			let element = waitlistItem["object"];
-			componentInfo = StateOrganizer.__components.get(element.uniqueId);
+			if (element.uniqueId)
+			{
+				componentInfo = StateOrganizer.__components.get(element.uniqueId);
+			}
 		}
 
 		return componentInfo;
@@ -798,14 +802,15 @@ export default class StateOrganizer extends Organizer
 
 		for (let i = 0; i < waitlist.length; i++)
 		{
-			let id = ( waitlist[i].id ? "id:" + waitlist[i].id : "" );
-			let name = ( waitlist[i].name ? "name:" + waitlist[i].name : "" );
-			let object = ( waitlist[i].object ? "element:" + waitlist[i].object.tagName : "" );
-			let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode : "" );
-			result += "{" + (id + " " + name + " " + object + " " + node).trim() + "}";
+			let id = ( waitlist[i].id ? "id:" + waitlist[i].id + "," : "" );
+			let name = ( waitlist[i].name ? "name:" + waitlist[i].name + "," : "" );
+			let object = ( waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "" );
+			let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "" );
+			let state = (waitlist[i].state ? "state:" + waitlist[i].state: "" );
+			result += "\t{" + id + name + object + node + state + "},";
 		}
 
-		return "[" + result + "]";
+		return "[\n" + result + "\n]";
 
 	}
 
