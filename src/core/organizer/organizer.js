@@ -81,7 +81,7 @@ export default class Organizer
 	static isTarget(conditions, organizerInfo, component)
 	{
 
-		if (organizerInfo["targetEvents"] === "*")
+		if (organizerInfo["targetEvents"].indexOf("*") > -1)
 		{
 			return true;
 		}
