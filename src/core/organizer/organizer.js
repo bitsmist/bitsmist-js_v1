@@ -59,6 +59,21 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Unorganize.
+	 *
+	 * @param	{Object}		conditions			Conditions.
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static unorganize(conditions, component, settings)
+	{
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Clear.
 	 *
 	 * @param	{Component}		component			Component.
