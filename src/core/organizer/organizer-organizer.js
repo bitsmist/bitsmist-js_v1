@@ -38,6 +38,7 @@ export default class OrganizerOrganizer extends Organizer
 		targetClass.prototype.addOrganizers = function(settings) { return OrganizerOrganizer._addOrganizers(this, settings); }
 		targetClass.prototype.initOrganizers = function(settings) { return OrganizerOrganizer._initOrganizers(this, settings); }
 		targetClass.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer._callOrganizers(this, condition, settings); }
+		targetClass.prototype.clearOrganizers = function(condition, settings) { return OrganizerOrganizer._clearOrganizers(this, condition, settings); }
 
 		// Init vars
 		OrganizerOrganizer.__organizers = new OrganizerStore();
@@ -204,6 +205,35 @@ export default class OrganizerOrganizer extends Organizer
 			{
 				chain = chain.then(() => {
 					return component._organizers[key].object.organize(conditions, component, settings);
+				});
+			}
+		});
+
+		return chain;
+
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Clear organizers.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		conditions			Conditions.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static _clearOrganizers(component, conditions, settings)
+	{
+
+		let chain = Promise.resolve();
+
+		OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
+			if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
+			{
+				chain = chain.then(() => {
+					return component._organizers[key].object.unorganize(conditions, component, settings);
 				});
 			}
 		});
