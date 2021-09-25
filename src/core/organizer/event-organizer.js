@@ -45,6 +45,9 @@ export default class EventOrganizer extends Organizer
 		Component.prototype.getEventHandler = function(handlerInfo) {
 			return EventOrganizer._getEventHandler(this, handlerInfo)
 		}
+		Component.prototype.removeEventHandler = function(eventName, handlerInfo, element) {
+			return EventOrganizer._removeEventHandler(this, element, eventName, handlerInfo)
+		}
 
 		// Add properties
 		Component.prototype._eventResult;
@@ -73,6 +76,30 @@ export default class EventOrganizer extends Organizer
 		{
 			Object.keys(events).forEach((elementName) => {
 				EventOrganizer._initEvents(component, elementName, events[elementName]);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Unorganize.
+	 *
+	 * @param	{Object}		conditions			Conditions.
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static unorganize(conditions, component, settings)
+	{
+
+		let events = settings["events"];
+		if (events)
+		{
+			Object.keys(events).forEach((elementName) => {
+				EventOrganizer._removeEvents(component, elementName, events[elementName]);
 			});
 		}
 
@@ -142,25 +169,20 @@ export default class EventOrganizer extends Organizer
 
 		element = element || component;
 
+		// Get handler
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-		Util.assert(typeof handler === "function", `EventOrganizer._removeEventHandler(): Event handler is not a function. name=${component.name}, eventName=${eventName}`, TypeError);
+		Util.assert(handler, `EventOrganizer._removeEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
 
 		let listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
 		if (listeners)
 		{
-			let index = -1;
-			for (let i = 0; i < listeners.length; i++)
+			for (let i = listeners.length - 1; i >= 0; i--)
 			{
-				if (listeners["handler"] === handler)
+				if (listeners[i]["handler"] === handler)
 				{
-					index = i;
+					listeners.splice(i, 1);
 					break;
 				}
-			}
-
-			if (index > -1)
-			{
-				element.__bm_eventinfo.listeners = array.splice(index, 1);
 			}
 		}
 
@@ -201,6 +223,45 @@ export default class EventOrganizer extends Organizer
 						{
 							component.addEventHandler(eventName, handlers[i], elements[j]);
 						}
+					}
+				}
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Remove event handlers from the element.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		elementName			Element name.
+	 * @param	{Options}		options				Options.
+	 * @param	{HTMLElement}	rootNode			Root node of elements.
+	 */
+	static _removeEvents(component, elementName, handlerInfo, rootNode)
+	{
+
+		rootNode = ( rootNode ? rootNode : component );
+		handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
+
+		// Get target elements
+		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+
+		// Remove event handlers
+		if (handlerInfo["handlers"])
+		{
+			Object.keys(handlerInfo["handlers"]).forEach((eventName) => {
+				let handlers = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
+				for (let i = 0; i < handlers.length; i++)
+				{
+					let handler = component.getEventHandler(handlers[i]);
+					handler = ( typeof handler === "string" ? component[handler] : handler );
+
+					for (let j = 0; j < elements.length; j++)
+					{
+						component.removeEventHandler(eventName, handlers[i], elements[j]);
 					}
 				}
 			});
