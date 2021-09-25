@@ -111,6 +111,24 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Organize.
+	 *
+	 * @param	{Object}		conditions			Conditions.
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static unorganize(conditions, component, settings)
+	{
+
+		ComponentOrganizer.clear(component);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Clear.
 	 *
 	 * @param	{Component}		component			Component.
