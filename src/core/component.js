@@ -59,7 +59,7 @@ Component.prototype.connectedCallback = function()
 Component.prototype.disconnectedCallback = function()
 {
 
-	if (this._settings.get("settings.autoStop"))
+	if (this.settings.get("settings.autoStop"))
 	{
 		this.stop();
 	}
@@ -147,6 +147,7 @@ Component.prototype.start = function(settings)
 		"settings": {
 			"autoSetup":			true,
 			"autoPostStart":		true,
+			"autoRefreshOnStart":	false,
 			"autoStop":				true,
 			"triggerAppendOnStart": true,
 			"useGlobalSettings":	true,
@@ -155,6 +156,8 @@ Component.prototype.start = function(settings)
 			"OrganizerOrganizer":	{"settings":{"attach":true}},
 			"SettingOrganizer":		{"settings":{"attach":true}},
 			"StateOrganizer":		{"settings":{"attach":true}},
+			"EventOrganizer":		{"settings":{"attach":true}},
+			"AutoloadOrganizer":	{"settings":{"attach":true}},
 		}
 	};
 	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
@@ -170,9 +173,15 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this._preStart();
 	}).then(() => {
-		if (this._settings.get("settings.autoPostStart"))
+		if (this.settings.get("settings.autoPostStart"))
 		{
 			return this._postStart();
+		}
+	}).then(() => {
+		// Refresh
+		if (this.settings.get("settings.autoRefreshOnStart"))
+		{
+			return this.refresh();
 		}
 	});
 
@@ -231,6 +240,71 @@ Component.prototype.setup = function(options)
 		return this.trigger("afterSetup", options);
 	}).then(() => {
 		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}`);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Refresh component.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.refresh = function(options)
+{
+
+	options = Object.assign({}, options);
+
+	return Promise.resolve().then(() => {
+		if (this.name == "Router") console.log(`Component.refresh(): Refreshing component. name=${this.name}`);
+		console.debug(`Component.refresh(): Refreshing component. name=${this.name}`);
+		return this.trigger("beforeRefresh", options);
+	}).then(() => {
+		return this.trigger("doTarget", options);
+	}).then(() => {
+		// Fetch
+		if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
+		{
+			return this.fetch(options);
+		}
+	}).then(() => {
+		return this.trigger("doRefresh", options);
+	}).then(() => {
+		return this.trigger("afterRefresh", options);
+	}).then(() => {
+		console.debug(`Component.refresh(): Refreshed component. name=${this.name}`);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Fetch data.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.fetch = function(options)
+{
+
+	options = Object.assign({}, options);
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
+		return this.trigger("beforeFetch", options);
+	}).then(() => {
+		return this.callOrganizers("doFetch", options);
+	}).then(() => {
+		return this.trigger("doFetch", options);
+	}).then(() => {
+		return this.trigger("afterFetch", options);
+	}).then(() => {
+		console.debug(`Component.fetch(): Fetched data. name=${this.name}`);
 	});
 
 }
@@ -300,7 +374,7 @@ Component.prototype._initStart = function(settings)
 	}).then((newSettings) => {
 		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
 	}).then(() => {
-		return this.initOrganizers(this._settings.items);
+		return this.initOrganizers(this.settings.items);
 	});
 
 }
@@ -319,28 +393,28 @@ Component.prototype._preStart = function()
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
 	}).then(() => {
-		return SettingOrganizer.organize("beforeStart", this, this._settings.items);
+		return SettingOrganizer.organize("beforeStart", this, this.settings.items);
 	}).then(() => {
-		return this.addOrganizers(this._settings.items);
+		return this.addOrganizers(this.settings.items);
 	}).then(() => {
-		return this.callOrganizers("beforeStart", this._settings.items);
+		return this.callOrganizers("beforeStart", this.settings.items);
 	}).then((newSettings) => {
 		return this.trigger("beforeStart");
 	}).then(() => {
-		let autoSetupOnStart = this._settings.get("settings.autoSetupOnStart");
-		let autoSetup = this._settings.get("settings.autoSetup");
+		let autoSetupOnStart = this.settings.get("settings.autoSetupOnStart");
+		let autoSetup = this.settings.get("settings.autoSetup");
 		if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
 		{
-			return this.setup(this._settings.items);
+			return this.setup(this.settings.items);
 		}
 	}).then(() => {
-		let triggerAppendOnStart = this._settings.get("settings.triggerAppendOnStart");
+		let triggerAppendOnStart = this.settings.get("settings.triggerAppendOnStart");
 		if (triggerAppendOnStart)
 		{
 			return Promise.resolve().then(() => {
-				return this.callOrganizers("afterAppend", this._settings.items);
+				return this.callOrganizers("afterAppend", this.settings.items);
 			}).then(() => {
-				return this.trigger("afterAppend", this._settings.items);
+				return this.trigger("afterAppend", this.settings.items);
 			});
 		}
 	});
@@ -361,7 +435,7 @@ Component.prototype._postStart = function()
 		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
 	}).then(() => {
-		return this.callOrganizers("afterStart", this._settings.items);
+		return this.callOrganizers("afterStart", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterStart");
 	});
