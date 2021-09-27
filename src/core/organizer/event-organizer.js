@@ -50,10 +50,27 @@ export default class EventOrganizer extends Organizer
 		}
 
 		// Add properties
-		Component.prototype._eventResult;
-		Object.defineProperty(Component, 'eventResult', {
+		Object.defineProperty(Component.prototype, 'eventResult', {
 			get() { return this._eventResult; },
 		})
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Init.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static init(component, settings)
+	{
+
+		// Init vars
+		component._eventResult = {};
 
 	}
 
