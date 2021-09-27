@@ -34,6 +34,22 @@ export default function Pad()
 ClassUtil.inherit(Pad, Component);
 
 // -----------------------------------------------------------------------------
+//  Setter/Getter
+// -----------------------------------------------------------------------------
+
+/**
+ * Component name.
+ *
+ * @type	{String}
+ */
+Object.defineProperty(Component.prototype, 'modalResult', {
+	get()
+	{
+		return this._modalResult;
+	}
+})
+
+// -----------------------------------------------------------------------------
 //  Methods
 // -----------------------------------------------------------------------------
 
@@ -55,6 +71,7 @@ Pad.prototype.start = function(settings)
 			"autoFill":				true,
 			"autoOpen":				true,
 			"autoRefresh":			true,
+			"autoRefreshOnStart":	false,
 			"autoSetupOnStart":		false,
 			"autoPostStart":		false,
 			"triggerAppendOnStart":	false,
@@ -70,12 +87,12 @@ Pad.prototype.start = function(settings)
 		// super()
 		return Component.prototype.start.call(this, settings);
 	}).then(() => {
-		return this.switchTemplate(this._settings.get("settings.templateName"));
+		return this.switchTemplate(this.settings.get("settings.templateName"));
 	}).then(() => {
 		return this._postStart();
 	}).then(() => {
 		// Open
-		if (this._settings.get("settings.autoOpen"))
+		if (this.settings.get("settings.autoOpen"))
 		{
 			return this.open();
 		}
@@ -109,7 +126,7 @@ Pad.prototype.switchTemplate = function(templateName, options)
 	}).then(() => {
 		return this.applyTemplate(templateName);
 	}).then(() => {
-		return this.callOrganizers("afterAppend", this._settings.items);
+		return this.callOrganizers("afterAppend", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterAppend", options);
 	}).then(() => {
@@ -142,15 +159,15 @@ Pad.prototype.open = function(options)
 		this.hideConditionalElements();
 
 		// Setup
-		let autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetupOnOpen"));
-		let autoSetup = Util.safeGet(options, "autoSetupOnOpen", this._settings.get("settings.autoSetup"));
+		let autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this.settings.get("settings.autoSetupOnOpen"));
+		let autoSetup = Util.safeGet(options, "autoSetupOnOpen", this.settings.get("settings.autoSetup"));
 		if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
 		{
 			return this.setup(options);
 		}
 	}).then(() => {
 		// Refresh
-		if (Util.safeGet(options, "autoRefresh", this._settings.get("settings.autoRefresh")))
+		if (Util.safeGet(options, "autoRefresh", this.settings.get("settings.autoRefresh")))
 		{
 			return this.refresh(options);
 		}
@@ -158,7 +175,7 @@ Pad.prototype.open = function(options)
 		return this.trigger("doOpen", options);
 	}).then(() => {
 		// Auto focus
-		let autoFocus = this._settings.get("settings.autoFocus");
+		let autoFocus = this.settings.get("settings.autoFocus");
 		if (autoFocus)
 		{
 			let target = ( autoFocus === true ? this : this.querySelector(autoFocus) );
@@ -255,7 +272,7 @@ Pad.prototype.refresh = function(options)
 		return this.trigger("doTarget", options);
 	}).then(() => {
 		// Fetch
-		if (Util.safeGet(options, "autoFetch", this._settings.get("settings.autoFetch")))
+		if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
 		{
 			return this.fetch(options);
 		}
@@ -264,7 +281,7 @@ Pad.prototype.refresh = function(options)
 		this.showConditionalElements(this.item);
 	}).then(() => {
 		// Fill
-		if (Util.safeGet(options, "autoFill", this._settings.get("settings.autoFill")))
+		if (Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))
 		{
 			return this.fill(options);
 		}
@@ -274,35 +291,6 @@ Pad.prototype.refresh = function(options)
 		return this.trigger("afterRefresh", options);
 	}).then(() => {
 		console.debug(`Pad.refresh(): Refreshed pad. name=${this.name}, id=${this.id}`);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Fetch data.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Pad.prototype.fetch = function(options)
-{
-
-	options = Object.assign({}, options);
-
-	return Promise.resolve().then(() => {
-		console.debug(`Pad.fetch(): Fetching data. name=${this.name}, id=${this.id}`);
-		return this.trigger("beforeFetch", options);
-	}).then(() => {
-		return this.callOrganizers("doFetch", options);
-	}).then(() => {
-		return this.trigger("doFetch", options);
-	}).then(() => {
-		return this.trigger("afterFetch", options);
-	}).then(() => {
-		console.debug(`Pad.fetch(): Fetched data. name=${this.name}, id=${this.id}`);
 	});
 
 }
