@@ -30,6 +30,10 @@ export default class TemplateOrganizer extends Organizer
 	static globalInit()
 	{
 
+		// Add properties
+		Object.defineProperty(Pad.prototype, 'templates', { get() { return this._templates; }, });
+		Object.defineProperty(Pad.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
+
 		// Add methods
 		Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
 		Pad.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
