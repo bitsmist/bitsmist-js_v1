@@ -61,16 +61,16 @@ export default class SettingOrganizer extends Organizer
 		component._settings.merge(component._getSettings());
 
 		// Overwrite name if specified
-		let name = component.settings.get("settings.name");
+		let name = component._settings.get("settings.name");
 		if (name)
 		{
 			component._name = name;
 		}
 
 		// Chain global settings
-		if (component.settings.get("settings.useGlobalSettings"))
+		if (component._settings.get("settings.useGlobalSettings"))
 		{
-			component.settings.chain(SettingOrganizer.globalSettings);
+			component._settings.chain(SettingOrganizer.globalSettings);
 		}
 
 	}
@@ -250,8 +250,8 @@ export default class SettingOrganizer extends Organizer
 
 		// Get settings from the attribute
 
-		let dataSettings = ( document.querySelector(component.settings.get("settings.rootNode")) ?
-			document.querySelector(component.settings.get("settings.rootNode")).getAttribute("bm-settings") :
+		let dataSettings = ( document.querySelector(component._settings.get("settings.rootNode")) ?
+			document.querySelector(component._settings.get("settings.rootNode")).getAttribute("bm-settings") :
 			component.getAttribute("bm-settings")
 		);
 

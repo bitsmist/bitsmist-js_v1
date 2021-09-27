@@ -272,9 +272,9 @@ export default class StateOrganizer extends Organizer
 	static _changeState(component, state)
 	{
 
-		Util.assert(StateOrganizer.__isTransitionable(component.state, state), `StateOrganizer._changeState(): Illegal transition. name=${component.name}, fromState=${component.state}, toState=${state}, id=${component.id}`, Error);
+		Util.assert(StateOrganizer.__isTransitionable(component._state, state), `StateOrganizer._changeState(): Illegal transition. name=${component.name}, fromState=${component._state}, toState=${state}, id=${component.id}`, Error);
 
-		component.state = state;
+		component._state = state;
 		StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
 
 		StateOrganizer.__processWaitingList(component, state);
@@ -358,10 +358,10 @@ export default class StateOrganizer extends Organizer
 
 		let ret = false;
 
-		if (component.state &&
-			component.state !== "starting" &&
-			component.state !== "stopping" &&
-			component.state !== "stopped"
+		if (component._state &&
+			component._state !== "starting" &&
+			component._state !== "stopping" &&
+			component._state !== "stopped"
 		)
 		{
 			ret = true;

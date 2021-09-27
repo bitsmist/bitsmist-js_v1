@@ -32,9 +32,6 @@ export default class ComponentOrganizer extends Organizer
 	static globalInit(targetClass)
 	{
 
-		// Add methods
-		Pad.prototype.loadTags = ComponentOrganizer.loadTags;
-
 		// Init vars
 		ComponentOrganizer.__classes = new Store();
 
@@ -59,6 +56,7 @@ export default class ComponentOrganizer extends Organizer
 		});
 
 		// Add methods
+		component.loadTags = ComponentOrganizer.loadTags;
 		component.addComponent = function(componentName, settings, sync) { return ComponentOrganizer._addComponent(this, componentName, settings, sync); }
 
 		// Init vars
@@ -136,8 +134,8 @@ export default class ComponentOrganizer extends Organizer
 	static clear(component)
 	{
 
-		Object.keys(component.components).forEach((key) => {
-			component.components[key].parentNode.removeChild(component._components[key]);
+		Object.keys(component._components).forEach((key) => {
+			component._components[key].parentNode.removeChild(component._components[key]);
 		});
 
 		component._components = {};
@@ -177,9 +175,9 @@ export default class ComponentOrganizer extends Organizer
 			return ComponentOrganizer._loadComponent(className, path, settings, options, tagName);
 		}).then(() => {
 			// Insert tag
-			if (Util.safeGet(settings, "settings.rootNode") && !component.components[componentName])
+			if (Util.safeGet(settings, "settings.rootNode") && !component._components[componentName])
 			{
-				component.components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
+				component._components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
 			}
 		}).then(() => {
 			// Wait for the added component to be ready
@@ -428,7 +426,7 @@ export default class ComponentOrganizer extends Organizer
 		let addedComponent;
 
 		// Check root node
-		let root = component._rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
+		let root = component.rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
 		Util.assert(root, `ComponentOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`, ReferenceError);
 
 		// Build tag
