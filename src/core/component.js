@@ -259,7 +259,6 @@ Component.prototype.refresh = function(options)
 	options = Object.assign({}, options);
 
 	return Promise.resolve().then(() => {
-		if (this.name == "Router") console.log(`Component.refresh(): Refreshing component. name=${this.name}`);
 		console.debug(`Component.refresh(): Refreshing component. name=${this.name}`);
 		return this.trigger("beforeRefresh", options);
 	}).then(() => {
