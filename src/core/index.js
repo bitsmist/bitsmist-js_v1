@@ -30,25 +30,25 @@ window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
 SettingOrganizer.globalInit(Component);
 window.BITSMIST.v1.settings = SettingOrganizer.globalSettings;
 
+import StateOrganizer from "./organizer/state-organizer.js";
+OrganizerOrganizer.organizers.set("StateOrganizer", {"object":StateOrganizer, "targetWords":"waitFor", "targetEvents":"*", "order":100});
+window.BITSMIST.v1.StateOrganizer = StateOrganizer;
+
 import TemplateOrganizer from "./organizer/template-organizer.js";
-OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart", "afterAppend"], "order":1000});
+OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart", "afterAppend"], "order":200});
 window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 
 import EventOrganizer from "./organizer/event-organizer.js";
-OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend", "afterSpecLoad"], "order":2000});
+OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend", "afterSpecLoad"], "order":210});
 window.BITSMIST.v1.EventOrganizer = EventOrganizer;
 
 import AutoloadOrganizer from "./organizer/autoload-organizer.js";
-OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend"], "order":3000});
+OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend"], "order":400});
 window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
 
 import ComponentOrganizer from "./organizer/component-organizer.js";
-OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterAppend", "afterSpecLoad"], "order":4000});
+OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterStart"], "order":410});
 window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
-
-import StateOrganizer from "./organizer/state-organizer.js";
-OrganizerOrganizer.organizers.set("StateOrganizer", {"object":StateOrganizer, "targetWords":"waitFor", "targetEvents":"*", "order":5000});
-window.BITSMIST.v1.StateOrganizer = StateOrganizer;
 
 // Pad
 
