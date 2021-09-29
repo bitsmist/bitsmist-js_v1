@@ -34,9 +34,9 @@ export default class Store
 		this._options = Object.assign({}, options);
 
 		// Init
-		this.items = Util.safeGet(options, "items");
-		this.filter = Util.safeGet(options, "filter", () => { return true; } );
-		this.merger = Util.safeGet(options, "merger", Util.deepMerge );
+		this.items = Util.safeGet(this._options, "items");
+		this.filter = Util.safeGet(this._options, "filter", () => { return true; } );
+		this.merger = Util.safeGet(this._options, "merger", Util.deepMerge );
 
 	}
 
@@ -192,16 +192,7 @@ export default class Store
 	set(key, value, options)
 	{
 
-		let holder = ( key ? this.get(key) : this._items );
-
-		if (holder && typeof holder === "object" && value && typeof value === "object")
-		{
-			Util.deepMerge(holder, value);
-		}
-		else
-		{
-			Util.safeSet(this._items, key, value);
-		}
+		Util.safeMerge(this._items, key, value);
 
 	}
 
