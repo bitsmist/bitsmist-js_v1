@@ -37,7 +37,7 @@ export default class ChainableStore extends Store
 		this.chain;
 
 		// Chain
-		let chain = Util.safeGet(options, "chain");
+		let chain = Util.safeGet(this._options, "chain");
 		if (chain)
 		{
 			this.chain(chain);
@@ -127,7 +127,7 @@ export default class ChainableStore extends Store
 	chain(store)
 	{
 
-		Util.assert(store instanceof ChainableStore, "ChainableStore.chain(): Parameter must be a ChainableStore.", TypeError);
+		Util.assert(store instanceof ChainableStore, `ChainableStore.chain(): "store" parameter must be a ChainableStore.`, TypeError);
 
 		this._chain = store;
 
@@ -147,7 +147,40 @@ export default class ChainableStore extends Store
 	get(key, defaultValue)
 	{
 
-		return this._getChainedItem(this._chain, this, key, defaultValue);
+		let result = defaultValue;
+
+		if (this.has(key))
+		{
+			result = Store.prototype.get.call(this, key, defaultValue);
+		}
+		else if (this._chain)
+		{
+			result = this._chain.get(key, defaultValue);
+		}
+
+		return result;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Merge items.
+	 *
+	 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
+	 * @param	{Function}		merger				Merge function.
+	 */
+	merge(newItems, merger)
+	{
+
+		if (this._options["writeThrough"])
+		{
+			this._chain.merge(newItems, merger);
+		}
+		else
+		{
+			Store.prototype.merge.call(this, newItems, merger);
+		}
 
 	}
 
@@ -162,65 +195,14 @@ export default class ChainableStore extends Store
 	set(key, value, options)
 	{
 
-		let holder = ( key ? this._getLocal(key) : this._items );
-
-		if (typeof holder === "object")
+		if (Util.safeGet(options, "writeThrough", this._options["writeThrough"]))
 		{
-			Util.deepMerge(holder, value);
+			this._chain.set(key, value, options);
 		}
 		else
 		{
-			Util.safeSet(this._items, key, value);
+			Store.prototype.set.call(this, key, value);
 		}
-
-	}
-
-	// -------------------------------------------------------------------------
-	// 	Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	* Get an value from store. Return default value when specified key is not available.
-	* Ignore chain.
-	*
-	* @param	{String}		key					Key to get.
-	* @param	{Object}		defaultValue		Value returned when key is not found.
-	*
-	* @return  {*}				Value.
-	*/
-	_getLocal(key, defaultValue)
-	{
-
-		return Util.safeGet(this._items, key, defaultValue);
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	* Get an value from stores. Return default value when specified key is not available.
-	* If both store1 and store2 has the key, store2 precedes store1.
-	*
-	* @param	{String}		key					Key to get.
-	* @param	{Object}		defaultValue		Value returned when key is not found.
-	*
-	* @return  {*}				Value.
-	*/
-	_getChainedItem(store1, store2, key, defaultValue)
-	{
-
-		let result = defaultValue;
-
-		if (store2 && store2.has(key))
-		{
-			result = store2._getLocal(key);
-		}
-		else if (store1)
-		{
-			result = store1.get(key, defaultValue);
-		}
-
-		return result;
 
 	}
 
