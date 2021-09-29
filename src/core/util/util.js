@@ -27,14 +27,12 @@ export default class Util
 	static safeGet(store, key, defaultValue)
 	{
 
-		let result = defaultValue;
-
 		let current = store;
 		let found = true;
 		let items = key.split(".");
 		for (let i = 0; i < items.length; i++)
 		{
-			if (typeof current === "object" && items[i] in current)
+			if (current && typeof current === "object" && items[i] in current)
 			{
 				current = current[items[i]];
 			}
@@ -45,12 +43,7 @@ export default class Util
 			}
 		}
 
-		if (found)
-		{
-			result = current;
-		}
-
-		return result;
+		return ( found ? current : defaultValue);
 
 	}
 
@@ -66,24 +59,65 @@ export default class Util
 	static safeSet(store, key, value)
 	{
 
-		let prevKey;
 		let current = store;
 		let items = key.split(".");
 		for (let i = 0; i < items.length - 1; i++)
 		{
-			Util.assert(typeof current === "object", `Util.safeSet(): Key already exists. key=${key}, existingKey=${prevKey}, existingValue=${current}`, TypeError);
+			Util.assert(current && typeof current === "object",
+				`Util.safeSet(): Key already exists. key=${key}, existingKey=${( i > 0 ? items[i-1] : "" )}, existingValue=${current}`, TypeError);
 
 			if (!(items[i] in current))
 			{
 				current[items[i]] = {}
 			}
 
-			prevKey = items[i];
 			current = current[items[i]];
 		}
 
-		Util.assert(typeof current === "object", `Util.safeSet(): Key already exists. key=${key}, existingKey=${prevKey}, existingValue=${current}`, TypeError);
 		current[items[items.length - 1]] = value;
+
+		return store;
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Set an value to store. Unlike safeSet() if both the existing value and
+	 * the value is an object, it merges them instead of overwrite it.
+	 *
+	 * @param	{Object}		store				Object that holds keys/values.
+	 * @param	{String}		key					Key to store.
+	 * @param	{Object}		value				Value to store.
+	 */
+	static safeMerge(store, key, value)
+	{
+
+		let current = store;
+		let items = key.split(".");
+		for (let i = 0; i < items.length - 1; i++)
+		{
+			Util.assert(current && typeof current === "object",
+				`Util.safeSet(): Key already exists. key=${key}, existingKey=${( i > 0 ? items[i-1] : "" )}, existingValue=${current}`, TypeError);
+
+			if (!(items[i] in current))
+			{
+				current[items[i]] = {}
+			}
+
+			current = current[items[i]];
+		}
+
+		// Overwrite/Merge value
+		let lastWord = items[items.length - 1];
+		if (current[lastWord] && (typeof current[lastWord] === "object") && value && (typeof value === "object"))
+		{
+			Util.deepMerge(current[lastWord], value);
+		}
+		else
+		{
+			current[lastWord] = value;
+		}
 
 		return store;
 
@@ -107,7 +141,7 @@ export default class Util
 		let items = key.split(".");
 		for (let i = 0; i < items.length; i++)
 		{
-			if (typeof current === "object" && items[i] in current)
+			if (current && typeof current === "object" && items[i] in current)
 			{
 				current = current[items[i]];
 			}
@@ -213,7 +247,7 @@ export default class Util
 	static deepMerge(obj1, obj2)
 	{
 
-		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepMerge(): Parameters must be an object.", TypeError);
+		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", `Util.deepMerge(): "obj1" and "obj2" parameters must be an object.`, TypeError);
 
 		Object.keys(obj2).forEach((key) => {
 			// array <--- *
@@ -256,7 +290,7 @@ export default class Util
 	static deepClone(obj1, obj2)
 	{
 
-		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepClone(): Parameters must be an object.", TypeError);
+		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", `Util.deepMerge(): "obj1" and "obj2" parameters must be an object.`, TypeError);
 
 		Object.keys(obj2).forEach((key) => {
 			// array <--- *
@@ -312,7 +346,7 @@ export default class Util
 	static deepCloneArray(arr)
 	{
 
-		Util.assert(Array.isArray(arr), "Util.deepCloneArray(): Parameter must be an array.", TypeError);
+		Util.assert(Array.isArray(arr), `Util.deepCloneArray(): "arr" parameter must be an array.`, TypeError);
 
 		let result = [];
 
