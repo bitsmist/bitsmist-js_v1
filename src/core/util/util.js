@@ -549,26 +549,34 @@ export default class Util
 	 *
 	 * @return  {Array}			Array of matched elements.
 	 */
-	static scopedSelectorAll(rootNode, query)
-	{
+    static scopedSelectorAll(rootNode, query)
+    {
 
-		// Set temp id
-		let guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-		rootNode.setAttribute("__bm_tempid", guid);
+        // Set temp id
+        let guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+        rootNode.setAttribute("__bm_tempid", guid);
+        let id = "[__bm_tempid='" + guid + "'] ";
 
-		// Build query
-		let attr = "[__bm_tempid='" + guid + "'] ";
-		let newQuery = attr + query.replace(",", ", " + attr).replace(":not(", ":not(" + attr) + ":not(" + attr + "[bm-powered] " + query + ")";
+        // Query to select all
+        let newQuery = id + query.replace(",", "," + id);
+        let allElements = rootNode.querySelectorAll(newQuery);
 
-		// Query
-		let elements = rootNode.querySelectorAll(newQuery);
-		elements = Array.prototype.slice.call(elements, 0);
+		// Query to select descendant of other component
+        let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
+        let removeElements = rootNode.querySelectorAll(removeQuery);
 
-		// Remove temp id
-		rootNode.removeAttribute("__bm_tempid");
+		// Remove elements descendant of other component
+        let setAll = new Set(allElements);
+        let setRemove = new Set(removeElements);
+        setRemove.forEach((item) => {
+            setAll.delete(item);
+        });
 
-		return elements;
+        // Remove temp id
+        rootNode.removeAttribute("__bm_tempid");
 
-	}
+        return Array.from(setAll);
+
+    }
 
 }
