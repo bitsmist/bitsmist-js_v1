@@ -20,14 +20,12 @@
 	Util.safeGet = function safeGet (store, key, defaultValue)
 	{
 
-		var result = defaultValue;
-
 		var current = store;
 		var found = true;
 		var items = key.split(".");
 		for (var i = 0; i < items.length; i++)
 		{
-			if (typeof current === "object" && items[i] in current)
+			if (current && typeof current === "object" && items[i] in current)
 			{
 				current = current[items[i]];
 			}
@@ -38,44 +36,37 @@
 			}
 		}
 
-		if (found)
-		{
-			result = current;
-		}
-
-		return result;
+		return ( found ? current : defaultValue);
 
 	};
 
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Set an value to store.
-	*
-	* @param{Object}	store			Object that holds keys/values.
-	* @param{String}	key				Key to store.
-	* @param{Object}	value			Value to store.
-	*/
+		 * Set an value to store.
+		 *
+		 * @param{Object}	store			Object that holds keys/values.
+		 * @param{String}	key				Key to store.
+		 * @param{Object}	value			Value to store.
+		 */
 	Util.safeSet = function safeSet (store, key, value)
 	{
 
-		var prevKey;
 		var current = store;
 		var items = key.split(".");
 		for (var i = 0; i < items.length - 1; i++)
 		{
-			Util.assert(typeof current === "object", ("Util.safeSet(): Key already exists. key=" + key + ", existingKey=" + prevKey + ", existingValue=" + current), TypeError);
+			Util.assert(current && typeof current === "object",
+				("Util.safeSet(): Key already exists. key=" + key + ", existingKey=" + (( i > 0 ? items[i-1] : "" )) + ", existingValue=" + current), TypeError);
 
 			if (!(items[i] in current))
 			{
 				current[items[i]] = {};
 			}
 
-			prevKey = items[i];
 			current = current[items[i]];
 		}
 
-		Util.assert(typeof current === "object", ("Util.safeSet(): Key already exists. key=" + key + ", existingKey=" + prevKey + ", existingValue=" + current), TypeError);
 		current[items[items.length - 1]] = value;
 
 		return store;
@@ -85,13 +76,56 @@
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Check if the store has specified key.
-	*
-	* @param{Object}	store			Store.
-	* @param{String}	key				Key to check.
-	*
-	* @return{Boolean}	True:exists, False:not exists.
-	*/
+		 * Set an value to store. Unlike safeSet() if both the existing value and
+		 * the value is an object, it merges them instead of overwrite it.
+		 *
+		 * @param{Object}	store			Object that holds keys/values.
+		 * @param{String}	key				Key to store.
+		 * @param{Object}	value			Value to store.
+		 */
+	Util.safeMerge = function safeMerge (store, key, value)
+	{
+
+		var current = store;
+		var items = key.split(".");
+		for (var i = 0; i < items.length - 1; i++)
+		{
+			Util.assert(current && typeof current === "object",
+				("Util.safeSet(): Key already exists. key=" + key + ", existingKey=" + (( i > 0 ? items[i-1] : "" )) + ", existingValue=" + current), TypeError);
+
+			if (!(items[i] in current))
+			{
+				current[items[i]] = {};
+			}
+
+			current = current[items[i]];
+		}
+
+		// Overwrite/Merge value
+		var lastWord = items[items.length - 1];
+		if (current[lastWord] && (typeof current[lastWord] === "object") && value && (typeof value === "object"))
+		{
+			Util.deepMerge(current[lastWord], value);
+		}
+		else
+		{
+			current[lastWord] = value;
+		}
+
+		return store;
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+		 * Check if the store has specified key.
+		 *
+		 * @param{Object}	store			Store.
+		 * @param{String}	key				Key to check.
+		 *
+		 * @return{Boolean}	True:exists, False:not exists.
+		 */
 	Util.safeHas = function safeHas (store, key)
 	{
 
@@ -100,7 +134,7 @@
 		var items = key.split(".");
 		for (var i = 0; i < items.length; i++)
 		{
-			if (typeof current === "object" && items[i] in current)
+			if (current && typeof current === "object" && items[i] in current)
 			{
 				current = current[items[i]];
 			}
@@ -118,12 +152,41 @@
 	// -----------------------------------------------------------------------------
 
 	/**
-	* Concatenat path strings appending trainling "/" when needed.
-	*
-	* @param{Array}		paths			Paths.
-	*
-	* @return{String}	Concatenated paths
-	*/
+	 	 * Execute Javascript code from string.
+		 *
+		 * @param{String}	code			Code to execute.
+		 * @param{Object}	context			Context refered as "this" inside the code.
+		 * @param{Object}	parameters		Parameters passed to the code.
+		 *
+		 * @return{*}			Result of eval.
+		 */
+	Util.safeEval = function safeEval (code, context, parameters)
+	{
+
+		var names;
+		var values = [];
+
+		if (parameters)
+		{
+			names = Object.keys(parameters).join(",");
+			Object.keys(parameters).forEach(function (key) {
+				values.push(parameters[key]);
+			});
+		}
+
+		return Function(names, '"use strict";return (' + code + ')').apply(context, values);
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+		 * Concatenat path strings appending trainling "/" when needed.
+		 *
+		 * @param{Array}		paths			Paths.
+		 *
+		 * @return{String}	Concatenated paths
+		 */
 	Util.concatPath = function concatPath (paths)
 	{
 
@@ -133,13 +196,13 @@
 		{
 			if (paths[i])
 			{
-				if (path.slice(path.length - 1) == "/" && paths[i].slice(0, 1) == "/")
+				if (path.slice(path.length - 1) === "/" && paths[i].slice(0, 1) === "/")
 				{
 					// "---/" and "/---"
 					// Remove an extra slash
 					path += paths[i].slice(1);
 				}
-				else if (path.slice(path.length - 1) == "/" || paths[i].slice(0, 1) == "/")
+				else if (path.slice(path.length - 1) === "/" || paths[i].slice(0, 1) === "/")
 				{
 					// "---/" or "/---"
 					// Just concat
@@ -177,7 +240,7 @@
 	Util.deepMerge = function deepMerge (obj1, obj2)
 	{
 
-		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepMerge(): Parameters must be an object.", TypeError);
+		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepMerge(): \"obj1\" and \"obj2\" parameters must be an object.", TypeError);
 
 		Object.keys(obj2).forEach(function (key) {
 			// array <--- *
@@ -220,7 +283,7 @@
 	Util.deepClone = function deepClone (obj1, obj2)
 	{
 
-		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepClone(): Parameters must be an object.", TypeError);
+		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepMerge(): \"obj1\" and \"obj2\" parameters must be an object.", TypeError);
 
 		Object.keys(obj2).forEach(function (key) {
 			// array <--- *
@@ -276,7 +339,7 @@
 	Util.deepCloneArray = function deepCloneArray (arr)
 	{
 
-		Util.assert(Array.isArray(arr), "Util.deepCloneArray(): Parameter must be an array.", TypeError);
+		Util.assert(Array.isArray(arr), "Util.deepCloneArray(): \"arr\" parameter must be an array.", TypeError);
 
 		var result = [];
 
@@ -384,7 +447,7 @@
 	Util.__isUpper = function __isUpper (c)
 	{
 
-		return c == c.toUpperCase() && c != c.toLowerCase();
+		return c === c.toUpperCase() && c !== c.toLowerCase();
 
 	};
 
@@ -405,6 +468,7 @@
 
 		if (!conditions)
 		{
+			error = error || Error;
 			var e = new error(msg);
 
 			// Remove last stack (assert() itself)
@@ -416,6 +480,97 @@
 		}
 
 	};
+
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Warns when condition failed.
+		 *
+		 * @param{Boolean}	conditions		Conditions.
+		 * @param{String}	Message			Error message.
+		 * @param{String}	level			Warn level.
+		 * @param{Options}	options			Options.
+		 *
+		 * @return {Boolean}	True if it is upper case.
+		 */
+	Util.warn = function warn (conditions, msg, level, options)
+	{
+
+		var ret = true;
+
+		if (!conditions)
+		{
+			level = level || "warn";
+			console[level](msg);
+
+			ret = false;
+		}
+
+		return ret;
+
+	};
+
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Return a promise that resolved after random milliseconds.
+		 *
+		 * @param{Integer}	max				Maximum time in milliseconds.
+		 *
+		 * @return {Promise}	Promise.
+		 */
+	Util.randomWait = function randomWait (max, fixed)
+	{
+
+		var timeout = ( fixed ? max : Math.floor(Math.random() * max ) );
+
+		return new Promise(function (resolve, reject) {
+			setTimeout(function () {
+				resolve();
+			}, timeout);
+		});
+
+	};
+
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Execute query on root node excluding nested components inside.
+		 *
+		 * @param{HTMLElement}rootNode		Root node.
+		 * @param{String}	query			Query.
+		 *
+		 * @return  {Array}		Array of matched elements.
+		 */
+	    Util.scopedSelectorAll = function scopedSelectorAll (rootNode, query)
+	    {
+
+	        // Set temp id
+	        var guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+	        rootNode.setAttribute("__bm_tempid", guid);
+	        var id = "[__bm_tempid='" + guid + "'] ";
+
+	        // Query to select all
+	        var newQuery = id + query.replace(",", "," + id);
+	        var allElements = rootNode.querySelectorAll(newQuery);
+
+		// Query to select descendant of other component
+	        var removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
+	        var removeElements = rootNode.querySelectorAll(removeQuery);
+
+		// Remove elements descendant of other component
+	        var setAll = new Set(allElements);
+	        var setRemove = new Set(removeElements);
+	        setRemove.forEach(function (item) {
+	            setAll.delete(item);
+	        });
+
+	        // Remove temp id
+	        rootNode.removeAttribute("__bm_tempid");
+
+	        return Array.from(setAll);
+
+	    };
 
 	// =============================================================================
 
@@ -595,6 +750,21 @@
 	// -------------------------------------------------------------------------
 
 	/**
+		 * Unorganize.
+		 *
+		 * @param{Object}	conditions		Conditions.
+		 * @param{Component}	component		Component.
+		 * @param{Object}	settings		Settings.
+		 *
+		 * @return {Promise}	Promise.
+		 */
+	Organizer.unorganize = function unorganize (conditions, component, settings)
+	{
+	};
+
+	// -------------------------------------------------------------------------
+
+	/**
 		 * Clear.
 		 *
 		 * @param{Component}	component		Component.
@@ -617,7 +787,7 @@
 	Organizer.isTarget = function isTarget (conditions, organizerInfo, component)
 	{
 
-		if (organizerInfo["targetEvents"] == "*")
+		if (organizerInfo["targetEvents"].indexOf("*") > -1)
 		{
 			return true;
 		}
@@ -660,9 +830,9 @@
 		this._options = Object.assign({}, options);
 
 		// Init
-		this.items = Util.safeGet(options, "items");
-		this.filter = Util.safeGet(options, "filter", function () { return true; } );
-		this.merger = Util.safeGet(options, "merger", Util.deepMerge );
+		this.items = Util.safeGet(this._options, "items");
+		this.filter = Util.safeGet(this._options, "filter", function () { return true; } );
+		this.merger = Util.safeGet(this._options, "merger", Util.deepMerge );
 
 	};
 
@@ -708,7 +878,7 @@
 	prototypeAccessors.filter.set = function (value)
 	{
 
-		Util.assert(typeof value === "function", ("Store.filter: Filter is not a function. filter=" + value), TypeError);
+		Util.assert(typeof value === "function", ("Store.filter(setter): Filter is not a function. filter=" + value), TypeError);
 
 		this._filter = value;
 
@@ -731,7 +901,7 @@
 	prototypeAccessors.merger.set = function (value)
 	{
 
-		Util.assert(typeof value === "function", ("Store.merger: Merger is not a function. filter=" + value), TypeError);
+		Util.assert(typeof value === "function", ("Store.merger(setter): Merger is not a function. filter=" + value), TypeError);
 
 		this._merger = value;
 
@@ -784,7 +954,7 @@
 
 		for (var i = 0; i < items.length; i++)
 		{
-			if (items[i] && typeof items[i] == "object")
+			if (items[i] && typeof items[i] === "object")
 			{
 				merger(this._items, items[i]);
 			}
@@ -820,16 +990,7 @@
 	Store.prototype.set = function set (key, value, options)
 	{
 
-		var holder = ( key ? this.get(key) : this._items );
-
-		if (holder && typeof holder == "object" && value && typeof value == "object")
-		{
-			Util.deepMerge(holder, value);
-		}
-		else
-		{
-			Util.safeSet(this._items, key, value);
-		}
+		Util.safeMerge(this._items, key, value);
 
 	};
 
@@ -980,6 +1141,7 @@
 			targetClass.prototype.addOrganizers = function(settings) { return OrganizerOrganizer._addOrganizers(this, settings); };
 			targetClass.prototype.initOrganizers = function(settings) { return OrganizerOrganizer._initOrganizers(this, settings); };
 			targetClass.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer._callOrganizers(this, condition, settings); };
+			targetClass.prototype.clearOrganizers = function(condition, settings) { return OrganizerOrganizer._clearOrganizers(this, condition, settings); };
 
 			// Init vars
 			OrganizerOrganizer.__organizers = new OrganizerStore();
@@ -1018,6 +1180,39 @@
 		{
 
 			component._organizers = {};
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Add target words/events to oragnizer's settings.
+		 *
+		 * @param	{String}		organizerName		Organizer name.
+		 * @param	{String}		targetname			Target setting name. "words" or "events".
+		 * @param	{Array/String}	targets				Values to add.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		OrganizerOrganizer.addTarget = function addTarget (organizerName, targetName, targets)
+		{
+
+			var organizer = OrganizerOrganizer.organizers.get(organizerName);
+
+			var ret1 = Util.warn(organizer, ("Organizer not found. organizerName=" + organizerName));
+			var ret2 = Util.warn(["targetEvents", "targetWords"].indexOf(targetName) > -1, ("Target name is invalid. targetName=" + targetName));
+
+			if (ret1 && ret2)
+			{
+				if (Array.isArray(targets))
+				{
+					organizer[targetName] = organizer[targetName].concat(targets);
+				}
+				else
+				{
+					organizer[targetName].push(targets);
+				}
+			}
 
 		};
 
@@ -1124,6 +1319,35 @@
 		// ------------------------------------------------------------------------
 
 		/**
+		 * Clear organizers.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		OrganizerOrganizer._clearOrganizers = function _clearOrganizers (component, conditions, settings)
+		{
+
+			var chain = Promise.resolve();
+
+			OrganizerOrganizer._sortItems(component._organizers).forEach(function (key) {
+				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
+				{
+					chain = chain.then(function () {
+						return component._organizers[key].object.unorganize(conditions, component, settings);
+					});
+				}
+			});
+
+			return chain;
+
+		};
+
+		// ------------------------------------------------------------------------
+
+		/**
 		 * Sort item keys.
 		 *
 		 * @param	{Object}		observerInfo		Observer info.
@@ -1181,11 +1405,9 @@
 
 			// callback (load)
 			xhr.addEventListener("load", function () {
-				if (xhr.status == 200 || xhr.status == 201)
+				if (xhr.status === 200 || xhr.status === 201)
 				{
-	//				setTimeout(()=>{
 					resolve(xhr);
-	//				}, 200);
 				}
 				else
 				{
@@ -1226,9 +1448,7 @@
 					script = undefined;
 
 					if(!isAbort) {
-	//				setTimeout(()=>{
 						resolve();
-	//				}, 200);
 					}
 				}
 			};
@@ -1255,7 +1475,7 @@
 			this.chain;
 
 			// Chain
-			var chain = Util.safeGet(options, "chain");
+			var chain = Util.safeGet(this._options, "chain");
 			if (chain)
 			{
 				this.chain(chain);
@@ -1274,7 +1494,7 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Items.
+		 * Items (Override).
 		 *
 		 * @type	{Object}
 		 */
@@ -1322,6 +1542,27 @@
 		// -------------------------------------------------------------------------
 
 		/**
+	     * Clone contents as an object (Override).
+	     *
+		 * @return  {Object}		Cloned items.
+	     */
+		ChainableStore.prototype.clone = function clone ()
+		{
+
+			if (this._chain)
+			{
+				return Util.deepClone(this._chain.clone(), this._items);
+			}
+			else
+			{
+				return Store.prototype.clone.call(this);
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
 	     * Chain another store.
 	     *
 		 * @param	{Object}		component			Component to attach.
@@ -1330,7 +1571,7 @@
 		ChainableStore.prototype.chain = function chain (store)
 		{
 
-			Util.assert(store instanceof ChainableStore, "ChainableStore.chain(): Parameter must be a ChainableStore.", TypeError);
+			Util.assert(store instanceof ChainableStore, "ChainableStore.chain(): \"store\" parameter must be a ChainableStore.", TypeError);
 
 			this._chain = store;
 
@@ -1340,7 +1581,7 @@
 
 		/**
 		 * Get a value from store. Return default value when specified key is not available.
-		 * If chained, chained store is also considiered.
+		 * If chained, chained store is also considiered (Override).
 		 *
 		 * @param	{String}		key					Key to get.
 		 * @param	{Object}		defaultValue		Value returned when key is not found.
@@ -1350,7 +1591,40 @@
 		ChainableStore.prototype.get = function get (key, defaultValue)
 		{
 
-			return this._getChainedItem(this._chain, this, key, defaultValue);
+			var result = defaultValue;
+
+			if (this.has(key))
+			{
+				result = Store.prototype.get.call(this, key, defaultValue);
+			}
+			else if (this._chain)
+			{
+				result = this._chain.get(key, defaultValue);
+			}
+
+			return result;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Merge items.
+		 *
+		 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
+		 * @param	{Function}		merger				Merge function.
+		 */
+		ChainableStore.prototype.merge = function merge (newItems, merger)
+		{
+
+			if (this._options["writeThrough"])
+			{
+				this._chain.merge(newItems, merger);
+			}
+			else
+			{
+				Store.prototype.merge.call(this, newItems, merger);
+			}
 
 		};
 
@@ -1365,65 +1639,14 @@
 		ChainableStore.prototype.set = function set (key, value, options)
 		{
 
-			var holder = ( key ? this._getLocal(key) : this._items );
-
-			if (typeof holder == "object")
+			if (Util.safeGet(options, "writeThrough", this._options["writeThrough"]))
 			{
-				Util.deepMerge(holder, value);
+				this._chain.set(key, value, options);
 			}
 			else
 			{
-				Util.safeSet(this._items, key, value);
+				Store.prototype.set.call(this, key, value);
 			}
-
-		};
-
-		// -------------------------------------------------------------------------
-		// 	Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		* Get an value from store. Return default value when specified key is not available.
-		* Ignore chain.
-		*
-		* @param	{String}		key					Key to get.
-		* @param	{Object}		defaultValue		Value returned when key is not found.
-		*
-		* @return  {*}				Value.
-		*/
-		ChainableStore.prototype._getLocal = function _getLocal (key, defaultValue)
-		{
-
-			return Util.safeGet(this._items, key, defaultValue);
-
-		};
-
-		// -----------------------------------------------------------------------------
-
-		/**
-		* Get an value from stores. Return default value when specified key is not available.
-		* If both store1 and store2 has the key, store2 precedes store1.
-		*
-		* @param	{String}		key					Key to get.
-		* @param	{Object}		defaultValue		Value returned when key is not found.
-		*
-		* @return  {*}				Value.
-		*/
-		ChainableStore.prototype._getChainedItem = function _getChainedItem (store1, store2, key, defaultValue)
-		{
-
-			var result = defaultValue;
-
-			if (store2 && store2.has(key))
-			{
-				result = store2._getLocal(key);
-			}
-			else if (store1 && store1.has(key))
-			{
-				result = store1._getLocal(key);
-			}
-
-			return result;
 
 		};
 
@@ -1478,19 +1701,19 @@
 
 			// Init vars
 			component._settings = new ChainableStore({"items":settings});
-			component.settings.merge(component._getSettings());
+			component._settings.merge(component._getSettings());
 
 			// Overwrite name if specified
-			var name = component.settings.get("settings.name");
+			var name = component._settings.get("settings.name");
 			if (name)
 			{
 				component._name = name;
 			}
 
 			// Chain global settings
-			if (component.settings.get("settings.useGlobalSettings"))
+			if (component._settings.get("settings.useGlobalSettings"))
 			{
-				component.settings.chain(SettingOrganizer.globalSettings);
+				component._settings.chain(SettingOrganizer.globalSettings);
 			}
 
 		};
@@ -1515,7 +1738,7 @@
 			}).then(function (extraSettings) {
 				if (extraSettings)
 				{
-					component.settings.merge(extraSettings);
+					component._settings.merge(extraSettings);
 				}
 
 				// Load settings from attributes
@@ -1538,7 +1761,7 @@
 		SettingOrganizer.isTarget = function isTarget (conditions, organizerInfo, component)
 		{
 
-			if (conditions == "beforeStart")
+			if (conditions === "beforeStart")
 			{
 				return true;
 			}
@@ -1560,17 +1783,17 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		SettingOrganizer.loadSetting = function loadSetting (settingName, path, type)
+		SettingOrganizer.loadSetting = function loadSetting (component, settingName, path, type)
 		{
 
 			type = type || "js";
 			var url = Util.concatPath([path, settingName + "." + type]);
 			var settings;
 
-			console.debug(("SettingOrganizer.loadSetting(): Loading settings. url=" + url));
+			console.debug(("SettingOrganizer.loadSetting(): Loading settings. name=" + (component.name) + ", url=" + url));
 
 			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then(function (xhr) {
-				console.debug(("SettingOrganizer.loadSetting(): Loaded settings. url=" + url));
+				console.debug(("SettingOrganizer.loadSetting(): Loaded settings. name=" + (component.name) + ", url=" + url));
 
 				switch (type)
 				{
@@ -1593,7 +1816,7 @@
 					break;
 				case "js":
 				default:
-					settings = Function('"use strict";return (' + xhr.responseText + ')')();
+					settings = Function('"use strict";return (' + xhr.responseText + ')').call(component);
 					break;
 				}
 
@@ -1637,7 +1860,7 @@
 
 			if (name || path)
 			{
-				return SettingOrganizer.loadSetting(name, path);
+				return SettingOrganizer.loadSetting(component, name, path);
 			}
 
 		};
@@ -1656,29 +1879,29 @@
 			if (component.getAttribute("bm-autoload"))
 			{
 				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
-				component.settings.set("system.appBaseUrl", "");
-				component.settings.set("system.templatePath", arr[0]);
-				component.settings.set("system.componentPath", arr[0]);
-				component.settings.set("settings.path", "");
+				component._settings.set("system.appBaseUrl", "");
+				component._settings.set("system.templatePath", arr[0]);
+				component._settings.set("system.componentPath", arr[0]);
+				component._settings.set("settings.path", "");
 			}
 
 			// Get path from attribute
 			if (component.hasAttribute("bm-path"))
 			{
-				component.settings.set("settings.path", component.getAttribute("bm-path"));
+				component._settings.set("settings.path", component.getAttribute("bm-path"));
 			}
 
 			// Get settings from the attribute
 
-			var dataSettings = ( document.querySelector(component.settings.get("settings.rootNode")) ?
-				document.querySelector(component.settings.get("settings.rootNode")).getAttribute("bm-settings") :
+			var dataSettings = ( document.querySelector(component._settings.get("settings.rootNode")) ?
+				document.querySelector(component._settings.get("settings.rootNode")).getAttribute("bm-settings") :
 				component.getAttribute("bm-settings")
 			);
 
 			if (dataSettings)
 			{
 				var settings = {"settings": JSON.parse(dataSettings)};
-				component.settings.merge(settings);
+				component._settings.merge(settings);
 			}
 
 		};
@@ -1734,7 +1957,7 @@
 	Component.prototype.disconnectedCallback = function()
 	{
 
-		if (this._settings.get("settings.autoStop"))
+		if (this.settings.get("settings.autoStop"))
 		{
 			this.stop();
 		}
@@ -1824,6 +2047,7 @@
 			"settings": {
 				"autoSetup":			true,
 				"autoPostStart":		true,
+				"autoRefreshOnStart":	false,
 				"autoStop":				true,
 				"triggerAppendOnStart": true,
 				"useGlobalSettings":	true,
@@ -1832,11 +2056,14 @@
 				"OrganizerOrganizer":	{"settings":{"attach":true}},
 				"SettingOrganizer":		{"settings":{"attach":true}},
 				"StateOrganizer":		{"settings":{"attach":true}},
+				"EventOrganizer":		{"settings":{"attach":true}},
+				"AutoloadOrganizer":	{"settings":{"attach":true}},
 			}
 		};
 		settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
 
 		// Init vars
+		this.setAttribute("bm-powered", "");
 		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 		this._name = this.constructor.name;
 		this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
@@ -1846,9 +2073,15 @@
 		}).then(function () {
 			return this$1$1._preStart();
 		}).then(function () {
-			if (this$1$1._settings.get("settings.autoPostStart"))
+			if (this$1$1.settings.get("settings.autoPostStart"))
 			{
 				return this$1$1._postStart();
+			}
+		}).then(function () {
+			// Refresh
+			if (this$1$1.settings.get("settings.autoRefreshOnStart"))
+			{
+				return this$1$1.refresh();
 			}
 		});
 
@@ -1869,17 +2102,16 @@
 
 
 		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
 
 		return Promise.resolve().then(function () {
 			console.debug(("Component.stop(): Stopping component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.changeState("stopping");
 		}).then(function () {
-			return this$1$1.trigger("beforeStop", sender, {"options":options});
+			return this$1$1.trigger("beforeStop", options);
 		}).then(function () {
-			return this$1$1.trigger("doStop", sender, {"options":options});
+			return this$1$1.trigger("doStop", options);
 		}).then(function () {
-			return this$1$1.trigger("afterStop", sender, {"options":options});
+			return this$1$1.trigger("afterStop", options);
 		}).then(function () {
 			console.debug(("Component.stop(): Stopped component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.changeState("stopped");
@@ -1902,18 +2134,101 @@
 
 
 		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
 
 		return Promise.resolve().then(function () {
 			console.debug(("Component.setup(): Setting up component. name=" + (this$1$1.name) + ", state=" + (this$1$1.state) + ", id=" + (this$1$1.id)));
-			return this$1$1.trigger("beforeSetup", sender, {"options":options});
+			return this$1$1.trigger("beforeSetup", options);
 		}).then(function () {
-			return this$1$1.trigger("doSetup", sender, {"options":options});
+			return this$1$1.trigger("doSetup", options);
 		}).then(function () {
-			return this$1$1.trigger("afterSetup", sender, {"options":options});
+			return this$1$1.trigger("afterSetup", options);
 		}).then(function () {
 			console.debug(("Component.setup(): Set up component. name=" + (this$1$1.name) + ", state=" + (this$1$1.state) + ", id=" + (this$1$1.id)));
 		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Refresh component.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Component.prototype.refresh = function(options)
+	{
+		var this$1$1 = this;
+
+
+		options = Object.assign({}, options);
+
+		return Promise.resolve().then(function () {
+			console.debug(("Component.refresh(): Refreshing component. name=" + (this$1$1.name)));
+			return this$1$1.trigger("beforeRefresh", options);
+		}).then(function () {
+			return this$1$1.trigger("doTarget", options);
+		}).then(function () {
+			// Fetch
+			if (Util.safeGet(options, "autoFetch", this$1$1.settings.get("settings.autoFetch")))
+			{
+				return this$1$1.fetch(options);
+			}
+		}).then(function () {
+			return this$1$1.trigger("doRefresh", options);
+		}).then(function () {
+			return this$1$1.trigger("afterRefresh", options);
+		}).then(function () {
+			console.debug(("Component.refresh(): Refreshed component. name=" + (this$1$1.name)));
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Fetch data.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Component.prototype.fetch = function(options)
+	{
+		var this$1$1 = this;
+
+
+		options = Object.assign({}, options);
+
+		return Promise.resolve().then(function () {
+			console.debug(("Component.fetch(): Fetching data. name=" + (this$1$1.name)));
+			return this$1$1.trigger("beforeFetch", options);
+		}).then(function () {
+			return this$1$1.callOrganizers("doFetch", options);
+		}).then(function () {
+			return this$1$1.trigger("doFetch", options);
+		}).then(function () {
+			return this$1$1.trigger("afterFetch", options);
+		}).then(function () {
+			console.debug(("Component.fetch(): Fetched data. name=" + (this$1$1.name)));
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Execute query on this component excluding nested components inside.
+	 *
+	 * @param	{String}		query				Query.
+	 *
+	 * @return  {Array}			Array of matched elements.
+	 */
+	Component.prototype.scopedSelectorAll = function(query)
+	{
+
+		return Util.scopedSelectorAll(this, query);
 
 	};
 
@@ -1968,7 +2283,7 @@
 		}).then(function (newSettings) {
 			return SettingOrganizer.init(this$1$1, newSettings); // now settings are included in this.settings
 		}).then(function () {
-			return this$1$1.initOrganizers(this$1$1._settings.items);
+			return this$1$1.initOrganizers(this$1$1.settings.items);
 		});
 
 	};
@@ -1989,19 +2304,29 @@
 			console.debug(("Component.start(): Starting component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.changeState("starting");
 		}).then(function () {
-			return SettingOrganizer.organize("beforeStart", this$1$1, this$1$1._settings.items);
+			return SettingOrganizer.organize("beforeStart", this$1$1, this$1$1.settings.items);
 		}).then(function () {
-			return this$1$1.addOrganizers(this$1$1._settings.items);
+			return this$1$1.addOrganizers(this$1$1.settings.items);
 		}).then(function () {
-			return this$1$1.callOrganizers("beforeStart", this$1$1._settings.items);
+			return this$1$1.callOrganizers("beforeStart", this$1$1.settings.items);
 		}).then(function (newSettings) {
-			return this$1$1.trigger("beforeStart", this$1$1);
+			return this$1$1.trigger("beforeStart");
 		}).then(function () {
-			var autoSetupOnStart = this$1$1._settings.get("settings.autoSetupOnStart");
-			var autoSetup = this$1$1._settings.get("settings.autoSetup");
+			var autoSetupOnStart = this$1$1.settings.get("settings.autoSetupOnStart");
+			var autoSetup = this$1$1.settings.get("settings.autoSetup");
 			if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
 			{
-				return this$1$1.setup(this$1$1._settings.items);
+				return this$1$1.setup(this$1$1.settings.items);
+			}
+		}).then(function () {
+			var triggerAppendOnStart = this$1$1.settings.get("settings.triggerAppendOnStart");
+			if (triggerAppendOnStart)
+			{
+				return Promise.resolve().then(function () {
+					return this$1$1.callOrganizers("afterAppend", this$1$1.settings.items);
+				}).then(function () {
+					return this$1$1.trigger("afterAppend", this$1$1.settings.items);
+				});
 			}
 		});
 
@@ -2023,19 +2348,9 @@
 			console.debug(("Component.start(): Started component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.changeState("started");
 		}).then(function () {
-			return this$1$1.callOrganizers("afterStart", this$1$1._settings.items);
+			return this$1$1.callOrganizers("afterStart", this$1$1.settings.items);
 		}).then(function () {
-			return this$1$1.trigger("afterStart", this$1$1);
-		}).then(function () {
-			var triggerAppendOnStart = this$1$1._settings.get("settings.triggerAppendOnStart");
-			if (triggerAppendOnStart)
-			{
-				return Promise.resolve().then(function () {
-					return this$1$1.callOrganizers("afterAppend", this$1$1._settings.items);
-				}).then(function () {
-					return this$1$1.trigger("afterAppend", this$1$1, this$1$1._settings.items);
-				});
-			}
+			return this$1$1.trigger("afterStart");
 		});
 
 	};
@@ -2043,6 +2358,834 @@
 	// -----------------------------------------------------------------------------
 
 	customElements.define("bm-component", Component);
+
+	// =============================================================================
+
+	// =============================================================================
+	//	State organizer class
+	// =============================================================================
+
+	var StateOrganizer = /*@__PURE__*/(function (Organizer) {
+		function StateOrganizer () {
+			Organizer.apply(this, arguments);
+		}
+
+		if ( Organizer ) StateOrganizer.__proto__ = Organizer;
+		StateOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
+		StateOrganizer.prototype.constructor = StateOrganizer;
+
+		StateOrganizer.globalInit = function globalInit ()
+		{
+
+			// Add properties
+			Object.defineProperty(Component.prototype, "state", {
+				get: function get() { return this._state; },
+				set: function set(value) { this._state = value; }
+			});
+
+			// Add methods
+			Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); };
+			Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); };
+			Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); };
+			Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); };
+			Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); };
+			Component.prototype.pause = function(state) { return StateOrganizer._pause(this, state); };
+
+			// Init vars
+			StateOrganizer.__suspends = {};
+			StateOrganizer.__components = new Store();
+			StateOrganizer.__waitingList = new Store();
+			StateOrganizer.__waitingListIndexName = new Map();
+			StateOrganizer.__waitingListIndexId = new Map();
+			StateOrganizer.__waitingListIndexNone = new Map();
+			StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); };
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Init.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		StateOrganizer.init = function init (component, settings)
+		{
+
+			// Init vars
+			component._state = "";
+			component._suspends = {};
+
+			// Load settings from attributes
+			StateOrganizer.__loadAttrSettings(component);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Organize.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		StateOrganizer.organize = function organize (conditions, component, settings)
+		{
+
+			var promise = Promise.resolve();
+
+			var waitFor = settings["waitFor"];
+			if (waitFor)
+			{
+				if (waitFor[conditions])
+				{
+					promise = StateOrganizer._waitFor(component, waitFor[conditions], component.settings.get("system.waitforTimeout"));
+				}
+			}
+
+			return promise;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Clear.
+		 */
+		StateOrganizer.clear = function clear ()
+		{
+
+			this.__waitingList.clear();
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Suspend all components at a specified state.
+		 *
+		 * @param	{String}		state				Component state.
+		 */
+		StateOrganizer.globalSuspend = function globalSuspend (state)
+		{
+
+			StateOrganizer.__suspends[state] = StateOrganizer._createSuspendInfo(state);
+			StateOrganizer.__suspends[state].state = "pending";
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Resume all components at a specified state.
+		 *
+		 * @param	{String}		state				Component state.
+		 */
+		StateOrganizer.globalResume = function globalResume (state)
+		{
+
+			StateOrganizer.__suspends[state].resolve();
+			StateOrganizer.__suspends[state].state = "resolved";
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Protected
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Wait for components to become specific states.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{Array}			waitlist			Components to wait.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		StateOrganizer._waitFor = function _waitFor (component, waitlist, options)
+		{
+
+			var promise;
+			var timeout = ( options && options["timeout"] ? options["timeout"] : 10000 );
+			var waiter = ( options && options["waiter"] ? options["waiter"] : component );
+			var waitInfo = {"waiter":waiter, "waitlist":waitlist.slice()};
+
+			if (StateOrganizer.__isAllReady(waitInfo))
+			{
+				promise = Promise.resolve();
+			}
+			else
+			{
+				// Create a promise that is resolved when waiting is completed.
+				promise = new Promise(function (resolve, reject) {
+					waitInfo["resolve"] = resolve;
+					waitInfo["reject"] = reject;
+					setTimeout(function () {
+						var name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
+						reject(("StateOrganizer._waitFor(): Timed out after " + timeout + " milliseconds waiting for " + (StateOrganizer.__dumpWaitlist(waitlist)) + ", name=" + name + "."));
+					}, timeout);
+				});
+				waitInfo["promise"] = promise;
+
+				// Add to info to a waiting list.
+				StateOrganizer.__addToWaitingList(waitInfo, component);
+			}
+
+			return promise;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Wait for a component to become specific state.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		state				state.
+		 * @param	{integer}		timeout				Timeout in milliseconds.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		StateOrganizer._waitForSingle = function _waitForSingle (component, state, timeout)
+		{
+
+			var componentInfo = StateOrganizer.__components.get(component.uniqueId);
+			var waitlistItem = {"id":component.uniqueId, "state":state};
+
+			if (StateOrganizer.__isReady(waitlistItem, componentInfo))
+			{
+				return Promise.resolve();
+			}
+			else
+			{
+				return StateOrganizer.waitFor(component, [waitlistItem], timeout);
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Wait for a component to become transitionable state.
+		 *
+		 * @param	{Object}		component			Component to register.
+		 * @param	{String}		newState			New state.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		/*
+		static _waitForTransitionableState(component, newState)
+		{
+
+			if (newState === "starting")
+			{
+				return StateOrganizer._waitForSingle(component, "instantiated");
+			}
+
+			if (newState === "stopping")
+			{
+				return StateOrganizer._waitForSingle(component, "instantiated");
+			}
+
+			if (newState === "opening")
+			{
+				return StateOrganizer._waitForSingle(component, "started");
+			}
+
+			if (newState === "closing")
+			{
+				return StateOrganizer._waitForSingle(component, "opened");
+			}
+
+		}
+		*/
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Change component state and check waiting list.
+		 *
+		 * @param	{Component}		component			Component to register.
+		 * @param	{String}		state				Component state.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		StateOrganizer._changeState = function _changeState (component, state)
+		{
+
+			Util.assert(StateOrganizer.__isTransitionable(component._state, state), ("StateOrganizer._changeState(): Illegal transition. name=" + (component.name) + ", fromState=" + (component._state) + ", toState=" + state + ", id=" + (component.id)), Error);
+
+			component._state = state;
+			StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
+
+			StateOrganizer.__processWaitingList(component, state);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Suspend a component at a specified state.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		state				Component state.
+		 */
+		StateOrganizer._suspend = function _suspend (component, state)
+		{
+
+			component._suspends[state] = StateOrganizer._createSuspendInfo();
+		 	component._suspends[state].state = "pending";
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Resume a component at a specified state.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		state				Component state.
+		 */
+		StateOrganizer._resume = function _resume (component, state)
+		{
+
+		 	component._suspends[state].resolve();
+		 	component._suspends[state].state = "resolved";
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Pause a component if it is suspended.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		state				Component state.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		StateOrganizer._pause = function _pause (component, state)
+		{
+
+			var ret = [];
+
+			// Globally suspended?
+			if (StateOrganizer.__suspends[state] && StateOrganizer.__suspends[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
+			{
+				ret.push(StateOrganizer.__suspends[state].promise);
+			}
+
+			// Component suspended?
+			if (component._suspends[state] && component._suspends[state].state === "pending")
+			{
+				ret.push(component._suspends[state].promise);
+			}
+
+			return Promise.all(ret);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the componenet is initialized.
+		 *
+		 * @param	{Component}		component			Parent component.
+		 *
+		 * @return  {Boolean}		True when initialized.
+		 */
+		StateOrganizer._isInitialized = function _isInitialized (component)
+		{
+
+			var ret = false;
+
+			if (component._state &&
+				component._state !== "starting" &&
+				component._state !== "stopping" &&
+				component._state !== "stopped"
+			)
+			{
+				ret = true;
+			}
+
+			return ret;
+
+		};
+
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check whether changing curren state to new state is allowed.
+		 *
+		 * @param	{String}		currentState		Current state.
+		 * @param	{String}		newState			New state.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		StateOrganizer.__isTransitionable = function __isTransitionable (currentState, newState)
+		{
+
+			var ret = true;
+
+			if (currentState && currentState.slice(-3) === "ing")
+			{
+				if(
+					( currentState === "stopping" && newState !== "stopped") ||
+					( currentState === "starting" && newState !== "started") ||
+					( currentState === "opening" && (newState !== "opened" && newState !== "opening") ) ||
+					( currentState === "closing" && newState !== "closed") ||
+					( currentState === "stopping" && (newState !== "stopped" && newState !== "closing") )
+				)
+				{
+					ret = false;
+				}
+			}
+
+			return ret;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check wait list and resolve() if components are ready.
+		 */
+		StateOrganizer.__processWaitingList = function __processWaitingList (component, state)
+		{
+
+			// Process name index
+			var names = StateOrganizer.__waitingListIndexName.get(component.name + "." + state);
+			if (names && names.length > 0)
+			{
+				StateOrganizer.__processIndex(names);
+			}
+
+			// Process ID index
+			var ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + state);
+			if (ids && ids.length > 0)
+			{
+				StateOrganizer.__processIndex(ids);
+			}
+
+			// Process non indexables
+			var list = StateOrganizer.__waitingListIndexNone.get("none");
+			if (list && list.length > 0)
+			{
+				StateOrganizer.__processIndex(list);
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Process waiting list index.
+		 *
+		 * @param	{Array}			list				List of indexed waiting list id.
+		 */
+		StateOrganizer.__processIndex = function __processIndex (list)
+		{
+
+			var removeList = [];
+
+			for (var i = 0; i < list.length; i++)
+			{
+				var id = list[i];
+				StateOrganizer.__waitingList.get(id);
+
+				if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
+				{
+					// Remove from waiting list
+					StateOrganizer.__waitingList.get(id).resolve();
+					StateOrganizer.__waitingList.remove(id);
+
+					// Add to remove list
+					removeList.push(id);
+				}
+			}
+
+			// Remove from index;
+			for (var i$1 = removeList.length - 1; i$1 >= 0; i$1--)
+			{
+				StateOrganizer.__removeFromIndex(list, removeList[i$1]);
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Add wait info to the waiting list.
+		 *
+		 * @param	{Object}		waitInfo			Wait info.
+		 * @param	{Component}		component			Component.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		//static __addToWaitingList(waitInfo, component)
+		StateOrganizer.__addToWaitingList = function __addToWaitingList (waitInfo)
+		{
+
+			// Add wait info to the waiting list.
+			var id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+			StateOrganizer.__waitingList.set(id, waitInfo);
+
+			// Create index for faster processing
+			var waitlist = waitInfo["waitlist"];
+			for (var i = 0; i < waitlist.length; i++)
+			{
+				// Set default state when not specified
+				waitlist[i]["state"] = waitlist[i]["state"] || "started";
+
+				// Index for component id + state
+				if (waitlist[i].id)
+				{
+					StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].state, id);
+				}
+				// Index for component name + state
+				else if (waitlist[i].name)
+				{
+					StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].state, id);
+				}
+				// Not indexable
+				else
+				{
+					StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexNone, "none", id);
+				}
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Add id to a waiting list index.
+		 *
+		 * @param	{Map}			index				Waiting list index.
+		 * @param	{String}		key					Index key.
+		 * @param	{String}		id					Waiting list id.
+		 */
+		StateOrganizer.__addToIndex = function __addToIndex (index, key, id)
+		{
+
+			var list = index.get(key);
+			if (!list)
+			{
+				list = [];
+				index.set(key, list);
+			}
+
+			if (list.indexOf(id) === -1)
+			{
+				list.push(id);
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Remove id from a waiting list index.
+		 *
+		 * @param	{Array}			list				List of ids.
+		 * @param	{String}		id					Waiting list id.
+		 */
+		StateOrganizer.__removeFromIndex = function __removeFromIndex (list, id)
+		{
+
+			var index = list.indexOf(id);
+			if (index > -1)
+			{
+				list.splice(index, 1);
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get component info from wait list item.
+		 *
+		 * @param	{Object}		waitlistItem		Wait list item.
+		 *
+		 * @return  {Boolean}		True if ready.
+		 */
+		StateOrganizer.__getComponentInfo = function __getComponentInfo (waitlistItem)
+		{
+
+			var componentInfo;
+
+			if (waitlistItem["id"])
+			{
+				componentInfo = StateOrganizer.__components.get(waitlistItem["id"]);
+			}
+			else if (waitlistItem["name"])
+			{
+				Object.keys(StateOrganizer.__components.items).forEach(function (key) {
+					if (waitlistItem["name"] === StateOrganizer.__components.get(key).object.name)
+					{
+						componentInfo = StateOrganizer.__components.get(key);
+					}
+				});
+			}
+			else if (waitlistItem["rootNode"])
+			{
+				var element = document.querySelector(waitlistItem["rootNode"]);
+				if (element && element.uniqueId)
+				{
+					componentInfo = StateOrganizer.__components.get(element.uniqueId);
+				}
+			}
+			else if (waitlistItem["object"])
+			{
+				var element$1 = waitlistItem["object"];
+				if (element$1.uniqueId)
+				{
+					componentInfo = StateOrganizer.__components.get(element$1.uniqueId);
+				}
+			}
+
+			return componentInfo;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if all components are ready.
+		 *
+		 * @param	{Object}		waitInfo			Wait info.
+		 *
+		 * @return  {Boolean}		True if ready.
+		 */
+		StateOrganizer.__isAllReady = function __isAllReady (waitInfo)
+		{
+
+			var result = true;
+			var waitlist = waitInfo["waitlist"];
+
+			for (var i = 0; i < waitlist.length; i++)
+			{
+				var match = false;
+				var componentInfo = this.__getComponentInfo(waitlist[i]);
+				if (componentInfo)
+				{
+					if (StateOrganizer.__isReady(waitlist[i], componentInfo))
+					{
+						match = true;
+					}
+				}
+
+				// If one fails all fail
+				if (!match)
+				{
+					result = false;
+					break;
+				}
+			}
+
+			return result;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if a component is ready.
+		 *
+		 * @param	{Object}		waitlistItem		Wait list item.
+		 * @param	{Object}		componentInfo		Registered component info.
+		 *
+		 * @return  {Boolean}		True if ready.
+		 */
+		StateOrganizer.__isReady = function __isReady (waitlistItem, componentInfo)
+		{
+
+			// Check component
+			var isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
+
+			// Check state
+			if (isMatch)
+			{
+				isMatch = StateOrganizer.__isStateMatch(componentInfo["state"], waitlistItem["state"]);
+			}
+
+			return isMatch;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if component match.
+		 *
+		 * @param	{Object}		componentInfo		Registered component info.
+		 * @param	{Object}		waitlistItem		Wait list item.
+		 *
+		 * @return  {Boolean}		True if match.
+		 */
+		StateOrganizer.__isComponentMatch = function __isComponentMatch (componentInfo, waitlistItem)
+		{
+
+			var isMatch = true;
+
+			// check instance
+			if (waitlistItem["component"] && componentInfo["object"] !== waitlistItem["component"])
+			{
+				isMatch = false;
+			}
+
+			// check name
+			if (waitlistItem["name"] && componentInfo["object"].name !== waitlistItem["name"])
+			{
+				isMatch = false;
+			}
+
+			// check id
+			if (waitlistItem["id"] && componentInfo["object"].uniqueId !== waitlistItem["id"])
+			{
+				isMatch = false;
+			}
+
+			// check node
+			if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
+			{
+				isMatch = false;
+			}
+
+			return isMatch;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if state match.
+		 *
+		 * @param	{String}		currentState		Current state.
+		 * @param	{String}		expectedState		Expected state.
+		 *
+		 * @return  {Boolean}		True if match.
+		 */
+		StateOrganizer.__isStateMatch = function __isStateMatch (currentState, expectedState)
+		{
+
+			expectedState = expectedState || "started"; // Default is "started"
+			var isMatch = true;
+
+			switch (expectedState)
+			{
+				case "started":
+					if (
+						currentState !== "opening" &&
+						currentState !== "opened" &&
+						currentState !== "closing" &&
+						currentState !== "closed" &&
+						currentState !== "started"
+					)
+					{
+						isMatch = false;
+					}
+					break;
+				default:
+					if (currentState !== expectedState)
+					{
+						isMatch = false;
+					}
+					break;
+			}
+
+			return isMatch;
+
+		};
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Get settings from element's attribute.
+		 *
+		 * @param	{Component}		component			Component.
+		 */
+		StateOrganizer.__loadAttrSettings = function __loadAttrSettings (component)
+		{
+
+			// Get waitFor from attribute
+
+			if (component.hasAttribute("bm-waitfor"))
+			{
+				var waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"started"};
+				component.settings.merge({"waitFor": [waitInfo]});
+			}
+
+			if (component.hasAttribute("bm-waitfornode"))
+			{
+				var waitInfo$1 = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"started"};
+				component.settings.merge({"waitFor": [waitInfo$1]});
+			}
+
+		};
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Dump wait list as string.
+		 *
+		 * @param	{Array}			Wait list.
+		 *
+		 * @return  {String}		Wait list string.
+		 */
+		StateOrganizer.__dumpWaitlist = function __dumpWaitlist (waitlist)
+		{
+
+			var result = "";
+
+			for (var i = 0; i < waitlist.length; i++)
+			{
+				var id = ( waitlist[i].id ? "id:" + waitlist[i].id + "," : "" );
+				var name = ( waitlist[i].name ? "name:" + waitlist[i].name + "," : "" );
+				var object = ( waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "" );
+				var node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "" );
+				var state = (waitlist[i].state ? "state:" + waitlist[i].state: "" );
+				result += "\n\t{" + id + name + object + node + state + "},";
+			}
+
+			return "[" + result + "\n]";
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Create a suspend info object.
+		 *
+		 * @return  {Object}		Suspend info.
+		 */
+		StateOrganizer._createSuspendInfo = function _createSuspendInfo ()
+		{
+
+			var suspendInfo = {};
+
+			var promise = new Promise(function (resolve, reject) {
+				suspendInfo["resolve"] = resolve;
+				suspendInfo["reject"] = reject;
+				suspendInfo["state"] = "pending";
+			});
+			suspendInfo["promise"] = promise;
+
+			return suspendInfo;
+
+		};
+
+		return StateOrganizer;
+	}(Organizer));
 
 	// =============================================================================
 
@@ -2068,6 +3211,22 @@
 	ClassUtil.inherit(Pad, Component);
 
 	// -----------------------------------------------------------------------------
+	//  Setter/Getter
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Component name.
+	 *
+	 * @type	{String}
+	 */
+	Object.defineProperty(Component.prototype, 'modalResult', {
+		get: function get()
+		{
+			return this._modalResult;
+		}
+	});
+
+	// -----------------------------------------------------------------------------
 	//  Methods
 	// -----------------------------------------------------------------------------
 
@@ -2087,9 +3246,11 @@
 		var defaults = {
 			"settings": {
 				"autoClose":			true,
+				"autoFetch":			true,
 				"autoFill":				true,
 				"autoOpen":				true,
 				"autoRefresh":			true,
+				"autoRefreshOnStart":	false,
 				"autoSetupOnStart":		false,
 				"autoPostStart":		false,
 				"triggerAppendOnStart":	false,
@@ -2105,12 +3266,12 @@
 			// super()
 			return Component.prototype.start.call(this$1$1, settings);
 		}).then(function () {
-			return this$1$1.switchTemplate(this$1$1._settings.get("settings.templateName"));
+			return this$1$1.switchTemplate(this$1$1.settings.get("settings.templateName"));
 		}).then(function () {
 			return this$1$1._postStart();
 		}).then(function () {
 			// Open
-			if (this$1$1._settings.get("settings.autoOpen"))
+			if (this$1$1.settings.get("settings.autoOpen"))
 			{
 				return this$1$1.open();
 			}
@@ -2134,7 +3295,6 @@
 
 
 		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
 
 		if (this.isActiveTemplate(templateName))
 		{
@@ -2147,9 +3307,9 @@
 		}).then(function () {
 			return this$1$1.applyTemplate(templateName);
 		}).then(function () {
-			return this$1$1.callOrganizers("afterAppend", this$1$1._settings.items);
+			return this$1$1.callOrganizers("afterAppend", this$1$1.settings.items);
 		}).then(function () {
-			return this$1$1.trigger("afterAppend", sender, {"options":options});
+			return this$1$1.trigger("afterAppend", options);
 		}).then(function () {
 			console.debug(("Pad.switchTemplate(): Switched template. name=" + (this$1$1.name) + ", templateName=" + templateName + ", id=" + (this$1$1.id)));
 		});
@@ -2171,30 +3331,34 @@
 
 
 		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
 
 		return Promise.resolve().then(function () {
 			console.debug(("Pad.open(): Opening pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.changeState("opening");
 		}).then(function () {
-			return this$1$1.trigger("beforeOpen", sender, {"options":options});
+			return this$1$1.trigger("beforeOpen", options);
 		}).then(function () {
-			var autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this$1$1._settings.get("settings.autoSetupOnOpen"));
-			var autoSetup = Util.safeGet(options, "autoSetupOnOpen", this$1$1._settings.get("settings.autoSetup"));
+			// Hide conditional elements
+			this$1$1.hideConditionalElements();
+
+			// Setup
+			var autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this$1$1.settings.get("settings.autoSetupOnOpen"));
+			var autoSetup = Util.safeGet(options, "autoSetupOnOpen", this$1$1.settings.get("settings.autoSetup"));
 			if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
 			{
 				return this$1$1.setup(options);
 			}
 		}).then(function () {
-			if (Util.safeGet(options, "autoRefresh", this$1$1._settings.get("settings.autoRefresh")))
+			// Refresh
+			if (Util.safeGet(options, "autoRefresh", this$1$1.settings.get("settings.autoRefresh")))
 			{
 				return this$1$1.refresh(options);
 			}
 		}).then(function () {
-			return this$1$1.trigger("doOpen", sender, {"options":options});
+			return this$1$1.trigger("doOpen", options);
 		}).then(function () {
 			// Auto focus
-			var autoFocus = this$1$1._settings.get("settings.autoFocus");
+			var autoFocus = this$1$1.settings.get("settings.autoFocus");
 			if (autoFocus)
 			{
 				var target = ( autoFocus === true ? this$1$1 : this$1$1.querySelector(autoFocus) );
@@ -2204,7 +3368,7 @@
 				}
 			}
 		}).then(function () {
-			return this$1$1.trigger("afterOpen", sender, {"options":options});
+			return this$1$1.trigger("afterOpen", options);
 		}).then(function () {
 			console.debug(("Pad.open(): Opened pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.changeState("opened");
@@ -2252,17 +3416,16 @@
 
 
 		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
 
 		return Promise.resolve().then(function () {
 			console.debug(("Pad.close(): Closing pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.changeState("closing");
 		}).then(function () {
-			return this$1$1.trigger("beforeClose", sender, {"options":options});
+			return this$1$1.trigger("beforeClose", options);
 		}).then(function () {
-			return this$1$1.trigger("doClose", sender, {"options":options});
+			return this$1$1.trigger("doClose", options);
 		}).then(function () {
-			return this$1$1.trigger("afterClose", sender, {"options":options});
+			return this$1$1.trigger("afterClose", options);
 		}).then(function () {
 			if (this$1$1._isModal)
 			{
@@ -2290,61 +3453,33 @@
 
 
 		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
 
 		return Promise.resolve().then(function () {
 			console.debug(("Pad.refresh(): Refreshing pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.trigger("beforeRefresh", sender, {"options":options});
+			return this$1$1.trigger("beforeRefresh", options);
 		}).then(function () {
-			return this$1$1.trigger("doTarget", sender, {"options":options});
+			return this$1$1.trigger("doTarget", options);
 		}).then(function () {
-			if (Util.safeGet(options, "autoFetch", this$1$1._settings.get("settings.autoFetch")))
+			// Fetch
+			if (Util.safeGet(options, "autoFetch", this$1$1.settings.get("settings.autoFetch")))
 			{
 				return this$1$1.fetch(options);
 			}
 		}).then(function () {
-			if (Util.safeGet(options, "autoFill", this$1$1._settings.get("settings.autoFill")))
+			// Show condtional elements
+			this$1$1.showConditionalElements(this$1$1.item);
+		}).then(function () {
+			// Fill
+			if (Util.safeGet(options, "autoFill", this$1$1.settings.get("settings.autoFill")))
 			{
 				return this$1$1.fill(options);
 			}
 		}).then(function () {
-			return this$1$1.trigger("doRefresh", sender, {"options":options});
+			return this$1$1.trigger("doRefresh", options);
 		}).then(function () {
-			return this$1$1.trigger("afterRefresh", sender, {"options":options});
+			return this$1$1.trigger("afterRefresh", options);
 		}).then(function () {
 			console.debug(("Pad.refresh(): Refreshed pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Fetch data.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.fetch = function(options)
-	{
-		var this$1$1 = this;
-
-
-		options = Object.assign({}, options);
-		var sender = ( options["sender"] ? options["sender"] : this );
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.fetch(): fetching data. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.trigger("beforeFetch", sender, {"options":options});
-		}).then(function () {
-			return this$1$1.callOrganizers("doFetch", options);
-		}).then(function () {
-			return this$1$1.trigger("doFetch", sender, {"options":options});
-		}).then(function () {
-			return this$1$1.trigger("afterFetch", sender, {"options":options});
-		}).then(function () {
-			console.debug(("Pad.fetch(): Fetched data. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 		});
 
 	};
@@ -2397,11 +3532,17 @@
 		TemplateOrganizer.globalInit = function globalInit ()
 		{
 
+			// Add properties
+			Object.defineProperty(Pad.prototype, 'templates', { get: function get() { return this._templates; }, });
+			Object.defineProperty(Pad.prototype, 'activeTemplateName', { get: function get() { return this._activeTemplateName; }, set: function set(value) { this._activeTemplateName = value; } });
+
 			// Add methods
 			Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); };
 			Pad.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); };
 			Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); };
 			Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActiveTemplate(this, templateName); };
+			Pad.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); };
+			Pad.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); };
 
 		};
 
@@ -2449,7 +3590,7 @@
 			if (templates)
 			{
 				Object.keys(templates).forEach(function (templateName) {
-					if (conditions == "beforeStart")
+					if (conditions === "beforeStart")
 					{
 						switch (templates[templateName]["type"])
 						{
@@ -2459,7 +3600,7 @@
 								break;
 						}
 					}
-					else if (conditions == "afterAppend")
+					else if (conditions === "afterAppend")
 					{
 						switch (templates[templateName]["type"])
 						{
@@ -2553,7 +3694,7 @@
 		TemplateOrganizer._applyTemplate = function _applyTemplate (component, templateName)
 		{
 
-			if (component._activeTemplateName == templateName)
+			if (component._activeTemplateName === templateName)
 			{
 				console.debug(("TemplateOrganizer._applyTemplate(): Template already applied. name=" + (component.name) + ", templateName=" + templateName));
 				return Promise.resolve();
@@ -2596,7 +3737,7 @@
 		TemplateOrganizer._clone = function _clone (component, templateName)
 		{
 
-			templateName = templateName || component._settings.get("settings.templateName");
+			templateName = templateName || component.settings.get("settings.templateName");
 			var templateInfo = component._templates[templateName];
 
 			Util.assert(templateInfo,("TemplateOrganizer._addTemplate(): Template not loaded. name=" + (component.name) + ", templateName=" + templateName), ReferenceError);
@@ -2617,6 +3758,55 @@
 			}
 
 			return clone;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Show "bm-visible" elements if condition passed.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		item				Item used to judge condition.
+		 */
+		TemplateOrganizer._showConditionalElements = function _showConditionalElements (component, item)
+		{
+
+			// Get elements with bm-visible attribute
+			var elements = Util.scopedSelectorAll(component, "[bm-visible]");
+
+			// Show elements
+			elements.forEach(function (element) {
+				var condition = element.getAttribute("bm-visible");
+				if (Util.safeEval(condition, item, item))
+				{
+					element.style.removeProperty("display");
+				}
+				else
+				{
+					element.style.display = "none";
+				}
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Hide "bm-visible" elements.
+		 *
+		 * @param	{Component}		component			Component.
+		 */
+		TemplateOrganizer._hideConditionalElements = function _hideConditionalElements (component)
+		{
+
+			// Get elements with bm-visible attribute
+			var elements = Util.scopedSelectorAll(component, "[bm-visible]");
+
+			// Hide elements
+			elements.forEach(function (element) {
+				element.style.display = "none";
+			});
 
 		};
 
@@ -2801,15 +3991,41 @@
 			Component.prototype.addEventHandler = function(eventName, handlerInfo, element, bindTo) {
 				EventOrganizer._addEventHandler(this, element, eventName, handlerInfo, bindTo);
 			};
-			Component.prototype.trigger = function(eventName, sender, options, element) {
-				return EventOrganizer._trigger(this, eventName, sender, options, element)
+			Component.prototype.trigger = function(eventName, options, element) {
+				return EventOrganizer._trigger(this, eventName, options, element)
 			};
-			Component.prototype.triggerAsync = function(eventName, sender, options, element) {
-				return EventOrganizer._triggerAsync(this, eventName, sender, options, element)
+			Component.prototype.triggerAsync = function(eventName, options, element) {
+				return EventOrganizer._triggerAsync(this, eventName, options, element)
 			};
 			Component.prototype.getEventHandler = function(handlerInfo) {
 				return EventOrganizer._getEventHandler(this, handlerInfo)
 			};
+			Component.prototype.removeEventHandler = function(eventName, handlerInfo, element) {
+				return EventOrganizer._removeEventHandler(this, element, eventName, handlerInfo)
+			};
+
+			// Add properties
+			Object.defineProperty(Component.prototype, 'eventResult', {
+				get: function get() { return this._eventResult; },
+			});
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Init.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		EventOrganizer.init = function init (component, settings)
+		{
+
+			// Init vars
+			component._eventResult = {};
 
 		};
 
@@ -2828,11 +4044,34 @@
 		{
 
 			var events = settings["events"];
-
 			if (events)
 			{
 				Object.keys(events).forEach(function (elementName) {
 					EventOrganizer._initEvents(component, elementName, events[elementName]);
+				});
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Unorganize.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		EventOrganizer.unorganize = function unorganize (conditions, component, settings)
+		{
+
+			var events = settings["events"];
+			if (events)
+			{
+				Object.keys(events).forEach(function (elementName) {
+					EventOrganizer._removeEvents(component, elementName, events[elementName]);
 				});
 			}
 
@@ -2855,10 +4094,11 @@
 		{
 
 			element = element || component;
+			var handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 			// Get handler
 			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
-			Util.assert(typeof handler === "function", ("EventOrganizer._addEventHandler(): Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName), TypeError);
+			Util.assert(handler, ("EventOrganizer._addEventHandler(): handler not found. name=" + (component.name) + ", eventName=" + eventName));
 
 			// Init holder object for the element
 			if (!element.__bm_eventinfo)
@@ -2871,15 +4111,15 @@
 			if (!listeners[eventName])
 			{
 				listeners[eventName] = [];
-				element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerInfo["listenerOptions"]);
+				element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerOptions["listnerOptions"]);
 			}
 
-			listeners[eventName].push({"handler":handler, "options":Object.assign({}, handlerInfo["options"]), "bindTo":bindTo, "order":order});
+			listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo, "order":order});
 
 			// Stable sort by order
-			var order = Util.safeGet(handlerInfo, "order");
+			var order = Util.safeGet(handlerOptions, "order");
 			listeners[eventName].sort(function (a, b) {
-				if (a.order == b.order)		{ return 0; }
+				if (a.order === b.order)		{ return 0; }
 				else if (a.order > b.order)	{ return 1; }
 				else 						{ return -1 }
 			});
@@ -2901,25 +4141,20 @@
 
 			element = element || component;
 
+			// Get handler
 			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
-			Util.assert(typeof handler === "function", ("EventOrganizer._removeEventHandler(): Event handler is not a function. componentName=" + (component.name) + ", eventName=" + eventName), TypeError);
+			Util.assert(handler, ("EventOrganizer._removeEventHandler(): handler not found. name=" + (component.name) + ", eventName=" + eventName));
 
 			var listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
 			if (listeners)
 			{
-				var index = -1;
-				for (var i = 0; i < listeners.length; i++)
+				for (var i = listeners.length - 1; i >= 0; i--)
 				{
-					if (listeners["handler"] == handler)
+					if (listeners[i]["handler"] === handler)
 					{
-						index = i;
+						listeners.splice(i, 1);
 						break;
 					}
-				}
-
-				if (index > -1)
-				{
-					element.__bm_eventinfo.listeners = array.splice(index, 1);
 				}
 			}
 
@@ -2938,33 +4173,67 @@
 		EventOrganizer._initEvents = function _initEvents (component, elementName, handlerInfo, rootNode)
 		{
 
-			rootNode = ( rootNode ? rootNode : component.rootElement );
+			rootNode = ( rootNode ? rootNode : component );
 			handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
 
 			// Get target elements
 			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
-			/*
-			if (elements.length == 0)
-			{
-				throw TypeError(`No elements for the event found. componentName=${component.name}, elementName=${elementName}`);
-			}
-			*/
+			//DebugUtil.assert(elements.length > 0, `EventOrganizer._initEvents(): No elements found. name=${component.name}, elementName=${elementName}`, TypeError);
 
 			// Set event handlers
 			if (handlerInfo["handlers"])
 			{
 				Object.keys(handlerInfo["handlers"]).forEach(function (eventName) {
-					var arr = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
+					var handlers = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
 
-					for (var i = 0; i < arr.length; i++)
+					for (var i = 0; i < handlers.length; i++)
 					{
-						var handler = component.getEventHandler(arr[i]);
+						var handler = component.getEventHandler(handlers[i]);
 						for (var j = 0; j < elements.length; j++)
 						{
 							if (!EventOrganizer.__isHandlerInstalled(elements[j], eventName, handler, component))
 							{
-								component.addEventHandler(eventName, arr[i], elements[j]);
+								component.addEventHandler(eventName, handlers[i], elements[j]);
 							}
+						}
+					}
+				});
+			}
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Remove event handlers from the element.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		elementName			Element name.
+		 * @param	{Options}		options				Options.
+		 * @param	{HTMLElement}	rootNode			Root node of elements.
+		 */
+		EventOrganizer._removeEvents = function _removeEvents (component, elementName, handlerInfo, rootNode)
+		{
+
+			rootNode = ( rootNode ? rootNode : component );
+			handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
+
+			// Get target elements
+			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+
+			// Remove event handlers
+			if (handlerInfo["handlers"])
+			{
+				Object.keys(handlerInfo["handlers"]).forEach(function (eventName) {
+					var handlers = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
+					for (var i = 0; i < handlers.length; i++)
+					{
+						var handler = component.getEventHandler(handlers[i]);
+						handler = ( typeof handler === "string" ? component[handler] : handler );
+
+						for (var j = 0; j < elements.length; j++)
+						{
+							component.removeEventHandler(eventName, handlers[i], elements[j]);
 						}
 					}
 				});
@@ -2979,14 +4248,16 @@
 		 *
 		 * @param	{Component}		component				Component.
 		 * @param	{String}		eventName				Event name to trigger.
-		 * @param	{Object}		sender					Object which triggered the event.
 		 * @param	{Object}		options					Event parameter options.
+		 * @param	{HTMLElement}	element					HTML element.
 		 */
-		EventOrganizer._trigger = function _trigger (component, eventName, sender, options, element)
+		EventOrganizer._trigger = function _trigger (component, eventName, options, element)
 		{
 
 			options = Object.assign({}, options);
-			options["sender"] = sender;
+			options["sender"] = options["sender"] || component;
+			component._eventResult = {};
+			options["result"] = component._eventResult;
 			element = ( element ? element : component );
 			var e = null;
 
@@ -3014,16 +4285,16 @@
 		 *
 		 * @param	{Component}		component				Component.
 		 * @param	{String}		eventName				Event name to trigger.
-		 * @param	{Object}		sender					Object which triggered the event.
 		 * @param	{Object}		options					Event parameter options.
+		 * @param	{HTMLElement}	element					HTML element.
 		 */
-		EventOrganizer._triggerAsync = function _triggerAsync (component, eventName, sender, options, element)
+		EventOrganizer._triggerAsync = function _triggerAsync (component, eventName, options, element)
 		{
 
 			options = options || {};
 			options["async"] = true;
 
-			return EventOrganizer._trigger.call(component, component, eventName, sender, options, element);
+			return EventOrganizer._trigger.call(component, component, eventName, options, element);
 
 		};
 
@@ -3039,11 +4310,6 @@
 		{
 
 			var handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
-
-			if ( typeof handler === "string" )
-			{
-				handler = component[handler];
-			}
 
 			return handler;
 
@@ -3071,7 +4337,7 @@
 
 			if (elementInfo["rootNode"])
 			{
-				if (elementInfo["rootNode"] == "this" || elementInfo["rootNode"] == component.tagName.toLowerCase())
+				if (elementInfo["rootNode"] === "this" || elementInfo["rootNode"] === component.tagName.toLowerCase())
 				{
 					elements = [rootNode];
 				}
@@ -3080,7 +4346,7 @@
 					elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
 				}
 			}
-			else if (elementName == "this" || elementName == component.tagName.toLowerCase())
+			else if (elementName === "this" || elementName === component.tagName.toLowerCase())
 			{
 				elements = [rootNode];
 			}
@@ -3146,18 +4412,17 @@
 			var component = Util.safeGet(this, "__bm_eventinfo.component");
 
 			// Check if handler is already running
-			Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", ("EventOrganizer.__callEventHandler(): Event handler is already running. name=" + (this.tagName) + ", eventName=" + (e.type)), Error);
+			//DebugUtil.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
+			Util.warn(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", ("EventOrganizer.__callEventHandler(): Event handler is already running. name=" + (this.tagName) + ", eventName=" + (e.type)));
 
 			Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
 
-			if (Util.safeGet(e, "detail.async", false) == false)
+			if (Util.safeGet(e, "detail.async", false) === false)
 			{
 				// Wait previous handler
 				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(function (result) {
 					Util.safeSet(this$1$1, "__bm_eventinfo.promises." + e.type, null);
 					Util.safeSet(this$1$1, "__bm_eventinfo.statuses." + e.type, "");
-
-					return result;
 				});
 			}
 			else
@@ -3184,7 +4449,6 @@
 		{
 
 			var chain = Promise.resolve();
-			var results = [];
 			var stopPropagation = false;
 
 			var loop = function ( i ) {
@@ -3194,12 +4458,15 @@
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 				};
 
-				// Execute handler
-				chain = chain.then(function (result) {
-					results.push(result);
+				chain = chain.then(function () {
+					// Get a handler
+					var handler = listeners[i]["handler"];
+					handler = ( typeof handler === "string" ? component[handler] : handler );
+					Util.assert(typeof handler === "function", ("EventOrganizer._addEventHandler(): Event handler is not a function. name=" + (component.name) + ", eventName=" + (e.type)), TypeError);
 
+					// Execute handler
 					var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
-					return listeners[i]["handler"].call(bindTo, sender, e, ex);
+					return handler.call(bindTo, sender, e, ex);
 				});
 
 				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
@@ -3213,11 +4480,7 @@
 				e.stopPropagation();
 			}
 
-			return chain.then(function (result) {
-				results.push(result);
-
-				return results;
-			});
+			return chain;
 
 		};
 
@@ -3244,9 +4507,14 @@
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 				};
 
+				// Get a handler
+				var handler = listeners[i]["handler"];
+				handler = ( typeof handler === "string" ? component[handler] : handler );
+				Util.assert(typeof handler === "function", ("EventOrganizer._addEventHandler(): Event handler is not a function. name=" + (component.name) + ", eventName=" + (e.type)), TypeError);
+
 				// Execute handler
 				var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
-				listeners[i]["handler"].call(bindTo, sender, e, ex);
+				handler.call(bindTo, sender, e, ex);
 
 				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
 			}
@@ -3281,9 +4549,6 @@
 		ComponentOrganizer.globalInit = function globalInit (targetClass)
 		{
 
-			// Add methods
-			Pad.prototype.loadTags = ComponentOrganizer.loadTags;
-
 			// Init vars
 			ComponentOrganizer.__classes = new Store();
 
@@ -3308,6 +4573,7 @@
 			});
 
 			// Add methods
+			component.loadTags = ComponentOrganizer.loadTags;
 			component.addComponent = function(componentName, settings, sync) { return ComponentOrganizer._addComponent(this, componentName, settings, sync); };
 
 			// Init vars
@@ -3360,6 +4626,24 @@
 		// -------------------------------------------------------------------------
 
 		/**
+		 * Organize.
+		 *
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		ComponentOrganizer.unorganize = function unorganize (conditions, component, settings)
+		{
+
+			ComponentOrganizer.clear(component);
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
 		 * Clear.
 		 *
 		 * @param	{Component}		component			Component.
@@ -3367,8 +4651,8 @@
 		ComponentOrganizer.clear = function clear (component)
 		{
 
-			Object.keys(component.components).forEach(function (key) {
-				component.components[key].parentNode.removeChild(component._components[key]);
+			Object.keys(component._components).forEach(function (key) {
+				component._components[key].parentNode.removeChild(component._components[key]);
 			});
 
 			component._components = {};
@@ -3408,9 +4692,9 @@
 				return ComponentOrganizer._loadComponent(className, path, settings, options, tagName);
 			}).then(function () {
 				// Insert tag
-				if (Util.safeGet(settings, "settings.rootNode") && !component.components[componentName])
+				if (Util.safeGet(settings, "settings.rootNode") && !component._components[componentName])
 				{
-					component.components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
+					component._components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
 				}
 			}).then(function () {
 				// Wait for the added component to be ready
@@ -3442,6 +4726,7 @@
 			console.debug(("ComponentOrganizer._loadTags(): Loading tags. rootNode=" + (rootNode.tagName) + ", basePath=" + basePath));
 
 			var promises = [];
+			var waitList = [];
 			var targets = rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
 
 			targets.forEach(function (element) {
@@ -3462,11 +4747,11 @@
 				{
 					var arr = Util.getFilenameAndPathFromUrl(href);
 					path = arr[0];
-					if (href.slice(-3).toLowerCase() == ".js")
+					if (href.slice(-3).toLowerCase() === ".js")
 					{
 						settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
 					}
-					else if (href.slice(-5).toLowerCase() == ".html")
+					else if (href.slice(-5).toLowerCase() === ".html")
 					{
 						settings["settings"]["autoMorph"] = true;
 					}
@@ -3477,9 +4762,20 @@
 				}
 
 				promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
+
+				var waitItem = {"object":element, "state":"started"};
+				waitList.push(waitItem);
 			});
 
-			return Promise.all(promises);
+			var waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
+
+			return Promise.all(promises).then(function () {
+				if (waitFor)
+				{
+					// Wait for elements to become "started"
+					return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
+				}
+			});
 
 		};
 
@@ -3538,7 +4834,7 @@
 
 			var ret = false;
 
-			if (ComponentOrganizer.__classes.get(className, {})["state"] == "loaded")
+			if (ComponentOrganizer.__classes.get(className, {})["state"] === "loaded")
 			{
 				ret = true;
 			}
@@ -3579,7 +4875,7 @@
 				ComponentOrganizer.__classes.set(className, {"state":"loaded"});
 				promise = Promise.resolve();
 			}
-			else if (ComponentOrganizer.__classes.get(className, {})["state"] == "loading")
+			else if (ComponentOrganizer.__classes.get(className, {})["state"] === "loading")
 			{
 				// Already loading
 				console.debug(("ComponentOrganizer.__autoLoadComponent(): Component Already loading. className=" + className));
@@ -3647,8 +4943,8 @@
 			var addedComponent;
 
 			// Check root node
-			var root = component._rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
-			Util.assert(root, ("Root node does not exist. name=" + (component.name) + ", tagName=" + tagName + ", rootNode=" + (Util.safeGet(settings, "settings.rootNode"))), ReferenceError);
+			var root = component.rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
+			Util.assert(root, ("ComponentOrganizer.__insertTag(): Root node does not exist. name=" + (component.name) + ", tagName=" + tagName + ", rootNode=" + (Util.safeGet(settings, "settings.rootNode"))), ReferenceError);
 
 			// Build tag
 			var tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
@@ -3703,7 +4999,7 @@
 			document.addEventListener("DOMContentLoaded", function () {
 				if (BITSMIST.v1.settings.get("organizers.AutoloadOrganizer.settings.autoLoadOnStartup", true))
 				{
-					this$1$1.load(document.body, BITSMIST.v1.settings);
+					this$1$1.load(document.body, BITSMIST.v1.settings, {"waitForTags":false});
 				}
 			});
 
@@ -3730,694 +5026,20 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		* Load all tags.
-		*/
-		AutoloadOrganizer.load = function load (rootNode, settings)
+		 * Load all tags.
+		 */
+		AutoloadOrganizer.load = function load (rootNode, settings, options)
 		{
 
 			var path = Util.concatPath([settings.get("system.appBaseUrl", ""), settings.get("system.componentPath", "")]);
-			var splitComponent = settings.get("system.splitComponent", false);
+			var splitComponent = Util.safeGet(options, "splitComponent", settings.get("system.splitComponent", false));
+			var waitForTags = Util.safeGet(options, "waitForTags", settings.get("system.waitForTags", true));
 
-			return ComponentOrganizer.loadTags(rootNode, path, {"splitComponent":splitComponent});
+			return ComponentOrganizer.loadTags(rootNode, path, {"splitComponent":splitComponent, "waitForTags":waitForTags});
 
 		};
 
 		return AutoloadOrganizer;
-	}(Organizer));
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Waitfor organizer class
-	// =============================================================================
-
-	var StateOrganizer = /*@__PURE__*/(function (Organizer) {
-		function StateOrganizer () {
-			Organizer.apply(this, arguments);
-		}
-
-		if ( Organizer ) StateOrganizer.__proto__ = Organizer;
-		StateOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		StateOrganizer.prototype.constructor = StateOrganizer;
-
-		StateOrganizer.globalInit = function globalInit ()
-		{
-
-			// Add properties
-			Object.defineProperty(Component.prototype, "state", {
-				get: function get() { return this._state; },
-				set: function set(value) { this._state = value; }
-			});
-
-			// Add methods
-			Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); };
-			Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); };
-			Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); };
-			Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); };
-
-			// Init vars
-			StateOrganizer.__components = new Store();
-			StateOrganizer.__waitingList = new Store();
-			StateOrganizer.__waitingListIndexName = new Map();
-			StateOrganizer.__waitingListIndexId = new Map();
-			StateOrganizer.__waitingListIndexNone = [];	Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); };
-			StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); };
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Init.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		StateOrganizer.init = function init (component, settings)
-		{
-
-			// Init vars
-			component._state = "";
-			//component._suspend = {};
-
-			// Load settings from attributes
-			StateOrganizer.__loadAttrSettings(component);
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Organize.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		StateOrganizer.organize = function organize (conditions, component, settings)
-		{
-
-			var promise = Promise.resolve();
-
-			var waitFor = settings["waitFor"];
-			if (waitFor)
-			{
-				if (waitFor[conditions])
-				{
-					promise = StateOrganizer._waitFor(component, waitFor[conditions], component.settings.get("system.waitforTimeout"));
-				}
-			}
-
-			return promise;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Clear.
-		 */
-		StateOrganizer.clear = function clear ()
-		{
-
-			this.__waitingList.clear();
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Wait for components to become specific states.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Array}			waitlist			Components to wait.
-		 * @param	{integer}		timeout				Timeout in milliseconds.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		StateOrganizer._waitFor = function _waitFor (component, waitlist, timeout)
-		{
-
-			var promise;
-			timeout = ( timeout ? timeout : 10000 );
-
-			var waitInfo = {"waiter":component, "waitlist":waitlist.slice()};
-
-			if (StateOrganizer.__isAllReady(waitInfo))
-			{
-				promise = Promise.resolve();
-			}
-			else
-			{
-				promise = new Promise(function (resolve, reject) {
-					waitInfo["resolve"] = resolve;
-					waitInfo["reject"] = reject;
-					setTimeout(function () {
-						reject(("StateOrganizer._waitFor(): Timed out after " + timeout + " milliseconds waiting for " + (JSON.stringify(waitlist)) + ", name=" + (component && component.name) + "."));
-					}, timeout);
-				});
-				waitInfo["promise"] = promise;
-
-				//StateOrganizer.__addToWaitingList(waitInfo, component, state);
-				StateOrganizer.__addToWaitingList(waitInfo, component);
-			}
-
-			return promise;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Wait for a component to become specific state.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		state				state.
-		 * @param	{integer}		timeout				Timeout in milliseconds.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		StateOrganizer._waitForSingle = function _waitForSingle (component, state, timeout)
-		{
-
-			var componentInfo = StateOrganizer.__components.get(component.uniqueId);
-			var waitlistItem = {"id":component.uniqueId, "state":state};
-
-			if (StateOrganizer.__isReady(waitlistItem, componentInfo))
-			{
-				return Promise.resolve();
-			}
-			else
-			{
-				return StateOrganizer.waitFor(component, [waitlistItem], timeout);
-			}
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Wait for a component to become transitionable state.
-		 *
-		 * @param	{Object}		component			Component to register.
-		 * @param	{String}		newState			New state.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		/*
-		static _waitForTransitionableState(component, newState)
-		{
-
-			if (newState == "starting")
-			{
-				return StateOrganizer._waitForSingle(component, "instantiated");
-			}
-
-			if (newState == "stopping")
-			{
-				return StateOrganizer._waitForSingle(component, "instantiated");
-			}
-
-			if (newState == "opening")
-			{
-				return StateOrganizer._waitForSingle(component, "started");
-			}
-
-			if (newState == "closing")
-			{
-				return StateOrganizer._waitForSingle(component, "opened");
-			}
-
-		}
-		*/
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Change component state and check waiting list.
-		 *
-		 * @param	{Component}		component			Component to register.
-		 * @param	{String}		state				Component state.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		StateOrganizer._changeState = function _changeState (component, state)
-		{
-
-			Util.assert(StateOrganizer.__isTransitionable(component.state, state), ("StateOrganizer._changeState(): Illegal transition. name=" + (component.name) + ", fromState=" + (component.state) + ", toState=" + state + ", id=" + (component.id)), Error);
-
-			component.state = state;
-			StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
-
-			StateOrganizer.__processWaitingList(component, state);
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Change component state and check waiting list.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		state				Component state.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		StateOrganizer._suspend = function _suspend (component, state)
-		{
-
-			var suspendInfo = {};
-
-			var promise = new Promise(function (resolve, reject) {
-				suspendInfo["resolve"] = resolve;
-				suspendInfo["reject"] = reject;
-			});
-			suspendInfo["promise"] = promise;
-
-			component._suspend[state] = suspendInfo;
-
-			return promise;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Change component state and check waiting list.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		state				Component state.
-		 */
-		StateOrganizer._resume = function _resume (component, state)
-		{
-
-			component._suspend[state].resolve();
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if the componenet is initialized.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 *
-		 * @return  {Boolean}		True when initialized.
-		 */
-		StateOrganizer._isInitialized = function _isInitialized (component)
-		{
-
-			var ret = false;
-
-			if (component.state &&
-				component.state != "starting" &&
-				component.state != "stopping" &&
-				component.state != "stopped"
-			)
-			{
-				ret = true;
-			}
-
-			return ret;
-
-		};
-
-		// -------------------------------------------------------------------------
-		//  Privates
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check whether changing curren state to new state is allowed.
-		 *
-		 * @param	{String}		currentState		Current state.
-		 * @param	{String}		newState			New state.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		StateOrganizer.__isTransitionable = function __isTransitionable (currentState, newState)
-		{
-
-			var ret = true;
-
-			if (currentState && currentState.slice(-3) == "ing")
-			{
-				if(
-					( currentState == "stopping" && newState != "stopped") ||
-					( currentState == "starting" && newState != "started") ||
-					( currentState == "opening" && (newState != "opened" && newState != "opening") ) ||
-					( currentState == "closing" && newState != "closed") ||
-					( currentState == "stopping" && (newState != "stopped" && newState != "closing") )
-				)
-				{
-					ret = false;
-				}
-			}
-
-			return ret;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check wait list and resolve() if components are ready.
-		 */
-		StateOrganizer.__processWaitingList = function __processWaitingList (component, state)
-		{
-
-			// Process name index
-			var names = StateOrganizer.__waitingListIndexName.get(component.name + "." + state);
-			StateOrganizer.__processIndex(names);
-
-			// Process ID index
-			var ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + state);
-			StateOrganizer.__processIndex(ids);
-
-			// Process non indexables
-			StateOrganizer.__processIndex(StateOrganizer.__waitingListIndexNone);
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Process waiting list index.
-		 *
-		 * @param	{Array}			list				List of indexed waiting list id.
-		 */
-		StateOrganizer.__processIndex = function __processIndex (list)
-		{
-
-			if (list)
-			{
-				for (var i = 0; i < list.length; i++)
-				{
-					var id = list[i];
-
-					if (id)
-					{
-						StateOrganizer.__waitingList.get(id);
-
-						if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
-						{
-							StateOrganizer.__waitingList.get(id).resolve();
-							StateOrganizer.__waitingList.remove(id);
-
-							// delete from index
-							list[i] = null;
-						}
-					}
-				}
-			}
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Add wait info to the waiting list.
-		 *
-		 * @param	{Object}		waitInfo			Wait info.
-		 * @param	{Component}		component			Component.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		StateOrganizer.__addToWaitingList = function __addToWaitingList (waitInfo, component)
-		{
-
-			// Add wait info to the waiting list.
-			var id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-			StateOrganizer.__waitingList.set(id, waitInfo);
-
-			// Create index for faster processing
-			var waitlist = waitInfo["waitlist"];
-			for (var i = 0; i < waitlist.length; i++)
-			{
-				// Set default state when not specified
-				waitlist[i]["state"] = waitlist[i]["state"] || "started";
-
-				// Index for component id + state
-				if (waitlist[i].id)
-				{
-					StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].state, id);
-				}
-				// Index for component name + state
-				else if (waitlist[i].name)
-				{
-					StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].state, id);
-				}
-				// Not indexable
-				else
-				{
-					StateOrganizer.__waitingListIndexNone.push(id);
-				}
-			}
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Add id to a waiting list index.
-		 *
-		 * @param	{Map}			index				Waiting list index.
-		 * @param	{String}		key					Index key.
-		 * @param	{String}		id					Waiting list id.
-		 */
-		StateOrganizer.__addToIndex = function __addToIndex (index, key, id)
-		{
-
-			if (!index.get(key))
-			{
-				index.set(key, []);
-			}
-
-			index.get(key).push(id);
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Get component info from wait list item.
-		 *
-		 * @param	{Object}		waitlistItem		Wait list item.
-		 *
-		 * @return  {Boolean}		True if ready.
-		 */
-		StateOrganizer.__getComponentInfo = function __getComponentInfo (waitlistItem)
-		{
-
-			var componentInfo;
-
-			if (waitlistItem["id"])
-			{
-				componentInfo = StateOrganizer.__components.get(waitlistItem["id"]);
-			}
-			else if (waitlistItem["name"])
-			{
-				Object.keys(StateOrganizer.__components.items).forEach(function (key) {
-					if (waitlistItem["name"] == StateOrganizer.__components.get(key).object.name)
-					{
-						componentInfo = StateOrganizer.__components.get(key);
-					}
-				});
-			}
-			else if (waitlistItem["rootNode"])
-			{
-				var element = document.querySelector(waitlistItem["rootNode"]);
-				if (element && element.uniqueId)
-				{
-					componentInfo = StateOrganizer.__components.get(element.uniqueId);
-				}
-			}
-
-			return componentInfo;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if all components are ready.
-		 *
-		 * @param	{Object}		waitInfo			Wait info.
-		 *
-		 * @return  {Boolean}		True if ready.
-		 */
-		StateOrganizer.__isAllReady = function __isAllReady (waitInfo)
-		{
-
-			var result = true;
-			var waitlist = waitInfo["waitlist"];
-
-			for (var i = 0; i < waitlist.length; i++)
-			{
-				var match = false;
-				var componentInfo = this.__getComponentInfo(waitlist[i]);
-				if (componentInfo)
-				{
-					if (StateOrganizer.__isReady(waitlist[i], componentInfo))
-					{
-						match = true;
-					}
-				}
-
-				// If one fails all fail
-				if (!match)
-				{
-					result = false;
-					break;
-				}
-			}
-
-			return result;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if a component is ready.
-		 *
-		 * @param	{Object}		waitlistItem		Wait list item.
-		 * @param	{Object}		componentInfo		Registered component info.
-		 *
-		 * @return  {Boolean}		True if ready.
-		 */
-		StateOrganizer.__isReady = function __isReady (waitlistItem, componentInfo)
-		{
-
-			// Check component
-			var isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
-
-			// Check state
-			if (isMatch)
-			{
-				isMatch = StateOrganizer.__isStateMatch(componentInfo["state"], waitlistItem["state"]);
-			}
-
-			return isMatch;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if component match.
-		 *
-		 * @param	{Object}		componentInfo		Registered component info.
-		 * @param	{Object}		waitlistItem		Wait list item.
-		 *
-		 * @return  {Boolean}		True if match.
-		 */
-		StateOrganizer.__isComponentMatch = function __isComponentMatch (componentInfo, waitlistItem)
-		{
-
-			var isMatch = true;
-
-			// check instance
-			if (waitlistItem["component"] && componentInfo["object"] !== waitlistItem["component"])
-			{
-				isMatch = false;
-			}
-
-			// check name
-			if (waitlistItem["name"] && componentInfo["object"].name != waitlistItem["name"])
-			{
-				isMatch = false;
-			}
-
-			// check id
-			if (waitlistItem["id"] && componentInfo["object"].uniqueId != waitlistItem["id"])
-			{
-				isMatch = false;
-			}
-
-			// check node
-			if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
-			{
-				isMatch = false;
-			}
-
-			return isMatch;
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if state match.
-		 *
-		 * @param	{String}		currentState		Current state.
-		 * @param	{String}		expectedState		Expected state.
-		 *
-		 * @return  {Boolean}		True if match.
-		 */
-		StateOrganizer.__isStateMatch = function __isStateMatch (currentState, expectedState)
-		{
-
-			var isMatch = true;
-
-			switch (expectedState)
-			{
-				case "started":
-					if (
-						currentState != "opening" &&
-						currentState != "opened" &&
-						currentState != "closing" &&
-						currentState != "closed" &&
-						currentState != "started"
-					)
-					{
-						isMatch = false;
-					}
-					break;
-				default:
-					if (currentState != expectedState)
-					{
-						isMatch = false;
-					}
-					break;
-			}
-
-			return isMatch;
-
-		};
-
-		// -----------------------------------------------------------------------------
-
-		/**
-		 * Get settings from element's attribute.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		StateOrganizer.__loadAttrSettings = function __loadAttrSettings (component)
-		{
-
-			// Get waitFor from attribute
-
-			if (component.hasAttribute("bm-waitfor"))
-			{
-				var waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"started"};
-				component.settings.merge({"waitFor": [waitInfo]});
-			}
-
-			if (component.hasAttribute("bm-waitfornode"))
-			{
-				var waitInfo$1 = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"started"};
-				component.settings.merge({"waitFor": [waitInfo$1]});
-			}
-
-		};
-
-		return StateOrganizer;
 	}(Organizer));
 
 	// =============================================================================
@@ -4552,16 +5174,16 @@
 	window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
 	SettingOrganizer.globalInit(Component);
 	window.BITSMIST.v1.settings = SettingOrganizer.globalSettings;
-	OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart", "afterAppend"], "order":1000});
-	window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
-	OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend"], "order":2000});
-	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
-	OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend"], "order":3000});
-	window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
-	OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":"components","targetEvents":["afterAppend", "afterSpecLoad"], "order":4000});
-	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
-	OrganizerOrganizer.organizers.set("StateOrganizer", {"object":StateOrganizer, "targetWords":"waitFor", "targetEvents":"*", "order":5000});
+	OrganizerOrganizer.organizers.set("StateOrganizer", {"object":StateOrganizer, "targetWords":"waitFor", "targetEvents":"*", "order":100});
 	window.BITSMIST.v1.StateOrganizer = StateOrganizer;
+	OrganizerOrganizer.organizers.set("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart", "afterAppend"], "order":200});
+	window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
+	OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend", "afterSpecLoad"], "order":210});
+	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
+	OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend"], "order":400});
+	window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
+	OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterStart"], "order":410});
+	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 	window.BITSMIST.v1.Pad = Pad;
 	window.BITSMIST.v1.Store = Store;
 	window.BITSMIST.v1.OrganizerStore = OrganizerStore;
@@ -4570,5 +5192,5 @@
 	window.BITSMIST.v1.ClassUtil = ClassUtil;
 	window.BITSMIST.v1.Util = Util;
 
-}());
+})();
 //# sourceMappingURL=bitsmist-js_v1.js.map
