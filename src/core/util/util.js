@@ -181,7 +181,18 @@ export default class Util
 			});
 		}
 
-		return Function(names, '"use strict";return (' + code + ')').apply(context, values);
+		let ret = false;
+
+		try
+		{
+			ret = Function(names, '"use strict";return (' + code + ')').apply(context, values);
+		}
+		catch(e)
+		{
+			console.error(`Util.safeEval(): Exception occurred. code=${code}, error=${e}`);
+		}
+
+		return ret;
 
 	}
 
