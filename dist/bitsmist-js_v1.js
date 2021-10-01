@@ -524,28 +524,6 @@
 	// -------------------------------------------------------------------------
 
 	/**
-		 * Return a promise that resolved after random milliseconds.
-		 *
-		 * @param{Integer}	max				Maximum time in milliseconds.
-		 *
-		 * @return {Promise}	Promise.
-		 */
-	Util.randomWait = function randomWait (max, fixed)
-	{
-
-		var timeout = ( fixed ? max : Math.floor(Math.random() * max ) );
-
-		return new Promise(function (resolve, reject) {
-			setTimeout(function () {
-				resolve();
-			}, timeout);
-		});
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
 		 * Execute query on root node excluding nested components inside.
 		 *
 		 * @param{HTMLElement}rootNode		Root node.
@@ -576,12 +554,34 @@
 	            setAll.delete(item);
 	        });
 
+	//	console.log("@@@query", newQuery, removeQuery);
+
 	        // Remove temp id
 	        rootNode.removeAttribute("__bm_tempid");
 
 	        return Array.from(setAll);
 
 	    };
+
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Return a promise that resolved after specified milliseconds.
+		 *
+		 * @param{Number}	duration		Delay duration in milliseconds.
+		 *
+		 * @return {Promise}	Promise.
+		 */
+	Util.delay = function delay (duration)
+	{
+
+		return new Promise(function (resolve, reject) {
+			setTimeout(function () {
+				resolve();
+			}, duration);
+		});
+
+	};
 
 	// =============================================================================
 
@@ -1921,6 +1921,91 @@
 	}(Organizer));
 
 	// =============================================================================
+	/**
+	 * BitsmistJS - Javascript Web Client Framework
+	 *
+	 * @copyright		Masaki Yasutake
+	 * @link			https://bitsmist.com/
+	 * @license			https://github.com/bitsmist/bitsmist/blob/master/LICENSE
+	 */
+	// =============================================================================
+
+	// =============================================================================
+	//	Debug util class
+	// =============================================================================
+
+	var DebugUtil = function DebugUtil () {};
+
+	DebugUtil.assert = function assert (conditions, msg, error, options)
+	{
+
+		if (!conditions)
+		{
+			error = error || Error;
+			var e = new error(msg);
+
+			// Remove last stack (assert() itself)
+			var stacks = e.stack.split("\n");
+			stacks.splice(1, 1);
+			e.stack = stacks.join("\n");
+
+			throw e;
+		}
+
+	};
+
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Warns when condition failed.
+		 *
+		 * @param{Boolean}	conditions		Conditions.
+		 * @param{String}	Message			Error message.
+		 * @param{String}	level			Warn level.
+		 * @param{Options}	options			Options.
+		 *
+		 * @return {Boolean}	True if it is upper case.
+		 */
+	DebugUtil.warn = function warn (conditions, msg, level, options)
+	{
+
+		var ret = true;
+
+		if (!conditions)
+		{
+			level = level || "warn";
+			console[level](msg);
+
+			ret = false;
+		}
+
+		return ret;
+
+	};
+
+	// -------------------------------------------------------------------------
+
+	/**
+		 * Return a promise that resolved after random milliseconds.
+		 *
+		 * @param{Integer}	max				Maximum time in milliseconds.
+		 *
+		 * @return {Promise}	Promise.
+		 */
+	DebugUtil.randomWait = function randomWait (max, fixed)
+	{
+
+		var timeout = ( fixed ? max : Math.floor(Math.random() * max ) );
+
+		return new Promise(function (resolve, reject) {
+			setTimeout(function () {
+				resolve();
+			}, timeout);
+		});
+
+	};
+
+	// =============================================================================
 
 	// =============================================================================
 	//	Component class
@@ -2082,7 +2167,18 @@
 		return Promise.resolve().then(function () {
 			return this$1$1._initStart(settings);
 		}).then(function () {
+			/*
+			let delay = this.settings.get("settings.delay", 0);
+			if (delay > 0)
+			{
+				console.log("@@@delaying");
+				return Util.delay(delay);
+			}
+			*/
+		}).then(function () {
 			return this$1$1._preStart();
+		}).then(function () {
+			return DebugUtil.randomWait(1000);
 		}).then(function () {
 			if (this$1$1.settings.get("settings.autoPostStart"))
 			{
@@ -4726,7 +4822,7 @@
 		 * Load scripts for tags which has bm-autoload attribute.
 		 *
 		 * @param	{HTMLElement}	rootNode			Target node.
-		 * @param	{String}		path				Base path prepend to each element's path.
+		 * @param	{String}		basePath			Base path prepend to each element's path.
 		 * @param	{Object}		options				Load Options.
 		 *
 		 * @return  {Promise}		Promise.
@@ -4738,8 +4834,9 @@
 
 			var promises = [];
 			var waitList = [];
-			var targets = rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
 
+			// Load tags that has bm-autoload/bm-automorph attribute
+			var targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
 			targets.forEach(function (element) {
 				element.setAttribute("bm-autoloaded", "");
 
@@ -4778,9 +4875,18 @@
 				waitList.push(waitItem);
 			});
 
-			var waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
+			// Create waiting list to wait Bitsmist components that doesn't have data-autoload/data-automorph attribute
+			targets = rootNode.querySelectorAll("[bm-powered]:not([bm-autoloaded])");
+			targets.forEach(function (element) {
+				if (rootNode != element.rootElement)
+				{
+					var waitItem = {"object":element, "state":"started"};
+					waitList.push(waitItem);
+				}
+			});
 
 			return Promise.all(promises).then(function () {
+				var waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
 				if (waitFor)
 				{
 					// Wait for elements to become "started"
@@ -5010,6 +5116,7 @@
 			document.addEventListener("DOMContentLoaded", function () {
 				if (BITSMIST.v1.settings.get("organizers.AutoloadOrganizer.settings.autoLoadOnStartup", true))
 				{
+					console.log("@@@loading tags: global");
 					this$1$1.load(document.body, BITSMIST.v1.settings, {"waitForTags":false});
 				}
 			});
@@ -5030,6 +5137,7 @@
 		AutoloadOrganizer.organize = function organize (conditions, component, settings)
 		{
 
+			console.log("@@@loading tags:", component.name);
 			return AutoloadOrganizer.load(component.rootElement, component.settings);
 
 		};
