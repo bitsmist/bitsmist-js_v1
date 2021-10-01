@@ -524,6 +524,28 @@
 	// -------------------------------------------------------------------------
 
 	/**
+		 * Return a promise that resolved after random milliseconds.
+		 *
+		 * @param{Integer}	max				Maximum time in milliseconds.
+		 *
+		 * @return {Promise}	Promise.
+		 */
+	Util.randomWait = function randomWait (max, fixed)
+	{
+
+		var timeout = ( fixed ? max : Math.floor(Math.random() * max ) );
+
+		return new Promise(function (resolve, reject) {
+			setTimeout(function () {
+				resolve();
+			}, timeout);
+		});
+
+	};
+
+	// -------------------------------------------------------------------------
+
+	/**
 		 * Execute query on root node excluding nested components inside.
 		 *
 		 * @param{HTMLElement}rootNode		Root node.
@@ -554,34 +576,12 @@
 	            setAll.delete(item);
 	        });
 
-	//	console.log("@@@query", newQuery, removeQuery);
-
 	        // Remove temp id
 	        rootNode.removeAttribute("__bm_tempid");
 
 	        return Array.from(setAll);
 
 	    };
-
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Return a promise that resolved after specified milliseconds.
-		 *
-		 * @param{Number}	duration		Delay duration in milliseconds.
-		 *
-		 * @return {Promise}	Promise.
-		 */
-	Util.delay = function delay (duration)
-	{
-
-		return new Promise(function (resolve, reject) {
-			setTimeout(function () {
-				resolve();
-			}, duration);
-		});
-
-	};
 
 	// =============================================================================
 
@@ -1921,91 +1921,6 @@
 	}(Organizer));
 
 	// =============================================================================
-	/**
-	 * BitsmistJS - Javascript Web Client Framework
-	 *
-	 * @copyright		Masaki Yasutake
-	 * @link			https://bitsmist.com/
-	 * @license			https://github.com/bitsmist/bitsmist/blob/master/LICENSE
-	 */
-	// =============================================================================
-
-	// =============================================================================
-	//	Debug util class
-	// =============================================================================
-
-	var DebugUtil = function DebugUtil () {};
-
-	DebugUtil.assert = function assert (conditions, msg, error, options)
-	{
-
-		if (!conditions)
-		{
-			error = error || Error;
-			var e = new error(msg);
-
-			// Remove last stack (assert() itself)
-			var stacks = e.stack.split("\n");
-			stacks.splice(1, 1);
-			e.stack = stacks.join("\n");
-
-			throw e;
-		}
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Warns when condition failed.
-		 *
-		 * @param{Boolean}	conditions		Conditions.
-		 * @param{String}	Message			Error message.
-		 * @param{String}	level			Warn level.
-		 * @param{Options}	options			Options.
-		 *
-		 * @return {Boolean}	True if it is upper case.
-		 */
-	DebugUtil.warn = function warn (conditions, msg, level, options)
-	{
-
-		var ret = true;
-
-		if (!conditions)
-		{
-			level = level || "warn";
-			console[level](msg);
-
-			ret = false;
-		}
-
-		return ret;
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Return a promise that resolved after random milliseconds.
-		 *
-		 * @param{Integer}	max				Maximum time in milliseconds.
-		 *
-		 * @return {Promise}	Promise.
-		 */
-	DebugUtil.randomWait = function randomWait (max, fixed)
-	{
-
-		var timeout = ( fixed ? max : Math.floor(Math.random() * max ) );
-
-		return new Promise(function (resolve, reject) {
-			setTimeout(function () {
-				resolve();
-			}, timeout);
-		});
-
-	};
-
-	// =============================================================================
 
 	// =============================================================================
 	//	Component class
@@ -2167,18 +2082,7 @@
 		return Promise.resolve().then(function () {
 			return this$1$1._initStart(settings);
 		}).then(function () {
-			/*
-			let delay = this.settings.get("settings.delay", 0);
-			if (delay > 0)
-			{
-				console.log("@@@delaying");
-				return Util.delay(delay);
-			}
-			*/
-		}).then(function () {
 			return this$1$1._preStart();
-		}).then(function () {
-			return DebugUtil.randomWait(1000);
 		}).then(function () {
 			if (this$1$1.settings.get("settings.autoPostStart"))
 			{
@@ -4285,7 +4189,7 @@
 
 			// Get target elements
 			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
-			//DebugUtil.assert(elements.length > 0, `EventOrganizer._initEvents(): No elements found. name=${component.name}, elementName=${elementName}`, TypeError);
+			//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
 
 			// Set event handlers
 			if (handlerInfo["handlers"])
@@ -4519,7 +4423,7 @@
 			var component = Util.safeGet(this, "__bm_eventinfo.component");
 
 			// Check if handler is already running
-			//DebugUtil.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
+			//Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
 			Util.warn(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", ("EventOrganizer.__callEventHandler(): Event handler is already running. name=" + (this.tagName) + ", eventName=" + (e.type)));
 
 			Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
@@ -5116,7 +5020,6 @@
 			document.addEventListener("DOMContentLoaded", function () {
 				if (BITSMIST.v1.settings.get("organizers.AutoloadOrganizer.settings.autoLoadOnStartup", true))
 				{
-					console.log("@@@loading tags: global");
 					this$1$1.load(document.body, BITSMIST.v1.settings, {"waitForTags":false});
 				}
 			});
@@ -5137,7 +5040,6 @@
 		AutoloadOrganizer.organize = function organize (conditions, component, settings)
 		{
 
-			console.log("@@@loading tags:", component.name);
 			return AutoloadOrganizer.load(component.rootElement, component.settings);
 
 		};
