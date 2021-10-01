@@ -198,7 +198,7 @@ export default class ComponentOrganizer extends Organizer
 	 * Load scripts for tags which has bm-autoload attribute.
 	 *
 	 * @param	{HTMLElement}	rootNode			Target node.
-	 * @param	{String}		path				Base path prepend to each element's path.
+	 * @param	{String}		basePath			Base path prepend to each element's path.
 	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
@@ -210,8 +210,9 @@ export default class ComponentOrganizer extends Organizer
 
 		let promises = [];
 		let waitList = [];
-		let targets = rootNode.querySelectorAll("[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
 
+		// Load tags that has bm-autoload/bm-automorph attribute
+		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
 		targets.forEach((element) => {
 			element.setAttribute("bm-autoloaded", "");
 
@@ -250,9 +251,18 @@ export default class ComponentOrganizer extends Organizer
 			waitList.push(waitItem);
 		});
 
-		let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
+		// Create waiting list to wait Bitsmist components that doesn't have data-autoload/data-automorph attribute
+		targets = rootNode.querySelectorAll("[bm-powered]:not([bm-autoloaded])");
+		targets.forEach((element) => {
+			if (rootNode != element.rootElement)
+			{
+				let waitItem = {"object":element, "state":"started"};
+				waitList.push(waitItem);
+			}
+		});
 
 		return Promise.all(promises).then(() => {
+			let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
 			if (waitFor)
 			{
 				// Wait for elements to become "started"
