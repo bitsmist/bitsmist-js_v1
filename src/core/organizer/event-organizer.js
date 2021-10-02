@@ -91,13 +91,14 @@ export default class EventOrganizer extends Organizer
 		let events = settings["events"];
 		if (events)
 		{
-			Object.keys(events).forEach((elementName) => {
+			let targets = EventOrganizer.__filterElements(component, events, conditions);
+
+			Object.keys(targets).forEach((elementName) => {
 				EventOrganizer._initEvents(component, elementName, events[elementName]);
 			});
 		}
 
 	}
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -159,12 +160,13 @@ export default class EventOrganizer extends Organizer
 			element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerOptions["listnerOptions"]);
 		}
 
+		// Register listener info
 		listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo, "order":order});
 
 		// Stable sort by order
 		let order = Util.safeGet(handlerOptions, "order");
 		listeners[eventName].sort((a, b) => {
-			if (a.order === b.order)		return 0;
+			if (a.order === b.order)	return 0;
 			else if (a.order > b.order)	return 1;
 			else 						return -1
 		});
@@ -212,38 +214,29 @@ export default class EventOrganizer extends Organizer
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		elementName			Element name.
-	 * @param	{Options}		options				Options.
+	 * @param	{Object}		eventInfo			Event info.
 	 * @param	{HTMLElement}	rootNode			Root node of elements.
 	 */
-	static _initEvents(component, elementName, handlerInfo, rootNode)
+	static _initEvents(component, elementName, eventInfo, rootNode)
 	{
 
 		rootNode = ( rootNode ? rootNode : component );
-		handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
 
 		// Get target elements
-		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
 		//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
 
 		// Set event handlers
-		if (handlerInfo["handlers"])
-		{
-			Object.keys(handlerInfo["handlers"]).forEach((eventName) => {
-				let handlers = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
-
-				for (let i = 0; i < handlers.length; i++)
+		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
+			let handlers = ( Array.isArray(eventInfo["handlers"][eventName]) ? eventInfo["handlers"][eventName] : [eventInfo["handlers"][eventName]] );
+			for (let i = 0; i < handlers.length; i++)
+			{
+				for (let j = 0; j < elements.length; j++)
 				{
-					let handler = component.getEventHandler(handlers[i]);
-					for (let j = 0; j < elements.length; j++)
-					{
-						if (!EventOrganizer.__isHandlerInstalled(elements[j], eventName, handler, component))
-						{
-							component.addEventHandler(eventName, handlers[i], elements[j]);
-						}
-					}
+					component.addEventHandler(eventName, handlers[i], elements[j]);
 				}
-			});
-		}
+			}
+		});
 
 	}
 
@@ -254,35 +247,28 @@ export default class EventOrganizer extends Organizer
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		elementName			Element name.
-	 * @param	{Options}		options				Options.
+	 * @param	{Object}		eventInfo			Event info.
 	 * @param	{HTMLElement}	rootNode			Root node of elements.
 	 */
-	static _removeEvents(component, elementName, handlerInfo, rootNode)
+	static _removeEvents(component, elementName, eventInfo, rootNode)
 	{
 
 		rootNode = ( rootNode ? rootNode : component );
-		handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
 
 		// Get target elements
-		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
 
 		// Remove event handlers
-		if (handlerInfo["handlers"])
-		{
-			Object.keys(handlerInfo["handlers"]).forEach((eventName) => {
-				let handlers = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
-				for (let i = 0; i < handlers.length; i++)
+		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
+			let handlers = ( Array.isArray(eventInfo["handlers"][eventName]) ? eventInfo["handlers"][eventName] : [eventInfo["handlers"][eventName]] );
+			for (let i = 0; i < handlers.length; i++)
+			{
+				for (let j = 0; j < elements.length; j++)
 				{
-					let handler = component.getEventHandler(handlers[i]);
-					handler = ( typeof handler === "string" ? component[handler] : handler );
-
-					for (let j = 0; j < elements.length; j++)
-					{
-						component.removeEventHandler(eventName, handlers[i], elements[j]);
-					}
+					component.removeEventHandler(eventName, handlers[i], elements[j]);
 				}
-			});
-		}
+			}
+		});
 
 	}
 
@@ -364,9 +350,77 @@ export default class EventOrganizer extends Organizer
 	//  Privates
 	// -------------------------------------------------------------------------
 
-	//@@@ fix
 	/**
-	 * Set html elements event handlers.
+	 * Filter target elements according to a condition.
+	 *
+	 * @param	{Object}		component			Component.
+	 * @param	{Object}		eventInfo			Event settings.
+	 * @param	{Object}		conditions			Conditions.
+	 *
+	 * @return 	{Object}		Target elements.
+	 */
+	static __filterElements(component, eventInfo, conditions)
+	{
+
+		let keys;
+
+		switch (conditions)
+		{
+		case "beforeStart":
+			// Return events only for the component itself.
+			keys = Object.keys(eventInfo).filter((elementName) => {
+				return EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
+			});
+			break;
+		case "afterAppend":
+			// Return events only for elements inside the component.
+			keys = Object.keys(eventInfo).filter((elementName) => {
+				return !EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
+			});
+			break;
+		case "afterSpecLoad":
+			// Return all
+			keys = Object.keys(eventInfo);
+			break;
+		}
+
+		let targets = keys.reduce((result, key) => {
+			result[key] = eventInfo[key];
+			return result;
+		}, {});
+
+		return targets;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if a target element is component itself.
+	 *
+	 * @param	{String}		elementName			Element name.
+	 * @param	{Object}		elementInfo			Element info.
+	 *
+	 * @return 	{Boolean}			Target node list.
+	 */
+		static __isTargetSelf(elementName, eventInfo)
+	{
+
+		let ret = false;
+
+		if (elementName === "this" || eventInfo && eventInfo["rootNode"] === "this")
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get target elements for the eventInfo.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{HTMLElement}	rootNode			A root node to search elements.
@@ -375,29 +429,22 @@ export default class EventOrganizer extends Organizer
 	 *
 	 * @return 	{Array}			Target node list.
 	 */
-	static __getTargetElements(component, rootNode, elementName, elementInfo)
+	static __getTargetElements(component, rootNode, elementName, eventInfo)
 	{
 
 		let elements;
 
-		if (elementInfo["rootNode"])
-		{
-			if (elementInfo["rootNode"] === "this" || elementInfo["rootNode"] === component.tagName.toLowerCase())
-			{
-				elements = [rootNode];
-			}
-			else
-			{
-				elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
-			}
-		}
-		else if (elementName === "this" || elementName === component.tagName.toLowerCase())
+		if (EventOrganizer.__isTargetSelf(elementName, eventInfo))
 		{
 			elements = [rootNode];
 		}
+		else if (eventInfo && eventInfo["rootNode"])
+		{
+			elements = Util.scopedSelectorAll(rootNode, eventInfo["rootNode"]);
+		}
 		else
 		{
-			elements = rootNode.querySelectorAll("#" + elementName);
+			elements = Util.scopedSelectorAll(rootNode, "#" + elementName);
 		}
 
 		return elements;
@@ -496,7 +543,7 @@ export default class EventOrganizer extends Organizer
 
 		for (let i = 0; i < listeners.length; i++)
 		{
-			// Options set on addEventHandler()
+			// Options set in addEventHandler()
 			let ex = {
 				"component": component,
 				"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
