@@ -157,7 +157,6 @@ Component.prototype.start = function(settings)
 			"SettingOrganizer":		{"settings":{"attach":true}},
 			"StateOrganizer":		{"settings":{"attach":true}},
 			"EventOrganizer":		{"settings":{"attach":true}},
-			"AutoloadOrganizer":	{"settings":{"attach":true}},
 		}
 	};
 	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
