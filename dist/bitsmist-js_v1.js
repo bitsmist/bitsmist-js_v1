@@ -4057,13 +4057,14 @@
 			var events = settings["events"];
 			if (events)
 			{
-				Object.keys(events).forEach(function (elementName) {
+				var targets = EventOrganizer.__filterElements(component, events, conditions);
+
+				Object.keys(targets).forEach(function (elementName) {
 					EventOrganizer._initEvents(component, elementName, events[elementName]);
 				});
 			}
 
 		};
-
 		// -------------------------------------------------------------------------
 
 		/**
@@ -4125,12 +4126,13 @@
 				element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerOptions["listnerOptions"]);
 			}
 
+			// Register listener info
 			listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo, "order":order});
 
 			// Stable sort by order
 			var order = Util.safeGet(handlerOptions, "order");
 			listeners[eventName].sort(function (a, b) {
-				if (a.order === b.order)		{ return 0; }
+				if (a.order === b.order)	{ return 0; }
 				else if (a.order > b.order)	{ return 1; }
 				else 						{ return -1 }
 			});
@@ -4178,38 +4180,29 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 * @param	{String}		elementName			Element name.
-		 * @param	{Options}		options				Options.
+		 * @param	{Object}		eventInfo			Event info.
 		 * @param	{HTMLElement}	rootNode			Root node of elements.
 		 */
-		EventOrganizer._initEvents = function _initEvents (component, elementName, handlerInfo, rootNode)
+		EventOrganizer._initEvents = function _initEvents (component, elementName, eventInfo, rootNode)
 		{
 
 			rootNode = ( rootNode ? rootNode : component );
-			handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
 
 			// Get target elements
-			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
 			//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
 
 			// Set event handlers
-			if (handlerInfo["handlers"])
-			{
-				Object.keys(handlerInfo["handlers"]).forEach(function (eventName) {
-					var handlers = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
-
-					for (var i = 0; i < handlers.length; i++)
+			Object.keys(eventInfo["handlers"]).forEach(function (eventName) {
+				var handlers = ( Array.isArray(eventInfo["handlers"][eventName]) ? eventInfo["handlers"][eventName] : [eventInfo["handlers"][eventName]] );
+				for (var i = 0; i < handlers.length; i++)
+				{
+					for (var j = 0; j < elements.length; j++)
 					{
-						var handler = component.getEventHandler(handlers[i]);
-						for (var j = 0; j < elements.length; j++)
-						{
-							if (!EventOrganizer.__isHandlerInstalled(elements[j], eventName, handler, component))
-							{
-								component.addEventHandler(eventName, handlers[i], elements[j]);
-							}
-						}
+						component.addEventHandler(eventName, handlers[i], elements[j]);
 					}
-				});
-			}
+				}
+			});
 
 		};
 
@@ -4220,35 +4213,28 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 * @param	{String}		elementName			Element name.
-		 * @param	{Options}		options				Options.
+		 * @param	{Object}		eventInfo			Event info.
 		 * @param	{HTMLElement}	rootNode			Root node of elements.
 		 */
-		EventOrganizer._removeEvents = function _removeEvents (component, elementName, handlerInfo, rootNode)
+		EventOrganizer._removeEvents = function _removeEvents (component, elementName, eventInfo, rootNode)
 		{
 
 			rootNode = ( rootNode ? rootNode : component );
-			handlerInfo = (handlerInfo ? handlerInfo : component.settings.get("events." + elementName));
 
 			// Get target elements
-			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, handlerInfo);
+			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
 
 			// Remove event handlers
-			if (handlerInfo["handlers"])
-			{
-				Object.keys(handlerInfo["handlers"]).forEach(function (eventName) {
-					var handlers = ( Array.isArray(handlerInfo["handlers"][eventName]) ? handlerInfo["handlers"][eventName] : [handlerInfo["handlers"][eventName]] );
-					for (var i = 0; i < handlers.length; i++)
+			Object.keys(eventInfo["handlers"]).forEach(function (eventName) {
+				var handlers = ( Array.isArray(eventInfo["handlers"][eventName]) ? eventInfo["handlers"][eventName] : [eventInfo["handlers"][eventName]] );
+				for (var i = 0; i < handlers.length; i++)
+				{
+					for (var j = 0; j < elements.length; j++)
 					{
-						var handler = component.getEventHandler(handlers[i]);
-						handler = ( typeof handler === "string" ? component[handler] : handler );
-
-						for (var j = 0; j < elements.length; j++)
-						{
-							component.removeEventHandler(eventName, handlers[i], elements[j]);
-						}
+						component.removeEventHandler(eventName, handlers[i], elements[j]);
 					}
-				});
-			}
+				}
+			});
 
 		};
 
@@ -4330,9 +4316,77 @@
 		//  Privates
 		// -------------------------------------------------------------------------
 
-		//@@@ fix
 		/**
-		 * Set html elements event handlers.
+		 * Filter target elements according to a condition.
+		 *
+		 * @param	{Object}		component			Component.
+		 * @param	{Object}		eventInfo			Event settings.
+		 * @param	{Object}		conditions			Conditions.
+		 *
+		 * @return 	{Object}		Target elements.
+		 */
+		EventOrganizer.__filterElements = function __filterElements (component, eventInfo, conditions)
+		{
+
+			var keys;
+
+			switch (conditions)
+			{
+			case "beforeStart":
+				// Return events only for the component itself.
+				keys = Object.keys(eventInfo).filter(function (elementName) {
+					return EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
+				});
+				break;
+			case "afterAppend":
+				// Return events only for elements inside the component.
+				keys = Object.keys(eventInfo).filter(function (elementName) {
+					return !EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
+				});
+				break;
+			case "afterSpecLoad":
+				// Return all
+				keys = Object.keys(eventInfo);
+				break;
+			}
+
+			var targets = keys.reduce(function (result, key) {
+				result[key] = eventInfo[key];
+				return result;
+			}, {});
+
+			return targets;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if a target element is component itself.
+		 *
+		 * @param	{String}		elementName			Element name.
+		 * @param	{Object}		elementInfo			Element info.
+		 *
+		 * @return 	{Boolean}			Target node list.
+		 */
+			EventOrganizer.__isTargetSelf = function __isTargetSelf (elementName, eventInfo)
+		{
+
+			var ret = false;
+
+			if (elementName === "this" || eventInfo && eventInfo["rootNode"] === "this")
+			{
+				ret = true;
+			}
+
+			return ret;
+
+		};
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get target elements for the eventInfo.
 		 *
 		 * @param	{Component}		component			Component.
 		 * @param	{HTMLElement}	rootNode			A root node to search elements.
@@ -4341,29 +4395,22 @@
 		 *
 		 * @return 	{Array}			Target node list.
 		 */
-		EventOrganizer.__getTargetElements = function __getTargetElements (component, rootNode, elementName, elementInfo)
+		EventOrganizer.__getTargetElements = function __getTargetElements (component, rootNode, elementName, eventInfo)
 		{
 
 			var elements;
 
-			if (elementInfo["rootNode"])
-			{
-				if (elementInfo["rootNode"] === "this" || elementInfo["rootNode"] === component.tagName.toLowerCase())
-				{
-					elements = [rootNode];
-				}
-				else
-				{
-					elements = rootNode.querySelectorAll(elementInfo["rootNode"]);
-				}
-			}
-			else if (elementName === "this" || elementName === component.tagName.toLowerCase())
+			if (EventOrganizer.__isTargetSelf(elementName, eventInfo))
 			{
 				elements = [rootNode];
 			}
+			else if (eventInfo && eventInfo["rootNode"])
+			{
+				elements = Util.scopedSelectorAll(rootNode, eventInfo["rootNode"]);
+			}
 			else
 			{
-				elements = rootNode.querySelectorAll("#" + elementName);
+				elements = Util.scopedSelectorAll(rootNode, "#" + elementName);
 			}
 
 			return elements;
@@ -4463,7 +4510,7 @@
 			var stopPropagation = false;
 
 			var loop = function ( i ) {
-				// Options set on addEventHandler()
+				// Options set in addEventHandler()
 				var ex = {
 					"component": component,
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
