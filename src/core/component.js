@@ -159,7 +159,7 @@ Component.prototype.start = function(settings)
 			"EventOrganizer":		{"settings":{"attach":true}},
 		}
 	};
-	settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
+	settings = ( settings ? Util.deepMerge(defaults, settings) : defaults );
 
 	// Init vars
 	this.setAttribute("bm-powered", "");
