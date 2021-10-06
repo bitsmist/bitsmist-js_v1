@@ -392,10 +392,7 @@ export default class StateOrganizer extends Organizer
 		{
 			if(
 				( currentState === "stopping" && newState !== "stopped") ||
-				( currentState === "starting" && newState !== "started") ||
-				( currentState === "opening" && (newState !== "opened" && newState !== "opening") ) ||
-				( currentState === "closing" && newState !== "closed") ||
-				( currentState === "stopping" && (newState !== "stopped" && newState !== "closing") )
+				( currentState === "starting" && newState !== "started")
 			)
 			{
 				ret = false;
@@ -479,11 +476,7 @@ export default class StateOrganizer extends Organizer
 	 * Add wait info to the waiting list.
 	 *
 	 * @param	{Object}		waitInfo			Wait info.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return  {Promise}		Promise.
 	 */
-	//static __addToWaitingList(waitInfo, component)
 	static __addToWaitingList(waitInfo)
 	{
 
@@ -738,10 +731,6 @@ export default class StateOrganizer extends Organizer
 		{
 			case "started":
 				if (
-					currentState !== "opening" &&
-					currentState !== "opened" &&
-					currentState !== "closing" &&
-					currentState !== "closed" &&
 					currentState !== "started"
 				)
 				{

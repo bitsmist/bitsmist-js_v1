@@ -145,11 +145,11 @@ Component.prototype.start = function(settings)
 	// Defaults
 	let defaults = {
 		"settings": {
-			"autoSetup":			true,
+			"autoFetch":			true,
 			"autoPostStart":		true,
-			"autoRefreshOnStart":	false,
+			"autoRefresh":			true,
+			"autoSetup":			true,
 			"autoStop":				true,
-			"triggerAppendOnStart": true,
 			"useGlobalSettings":	true,
 		},
 		"organizers": {
@@ -175,12 +175,6 @@ Component.prototype.start = function(settings)
 		if (this.settings.get("settings.autoPostStart"))
 		{
 			return this._postStart();
-		}
-	}).then(() => {
-		// Refresh
-		if (this.settings.get("settings.autoRefreshOnStart"))
-		{
-			return this.refresh();
 		}
 	});
 
@@ -398,23 +392,6 @@ Component.prototype._preStart = function()
 		return this.callOrganizers("beforeStart", this.settings.items);
 	}).then((newSettings) => {
 		return this.trigger("beforeStart");
-	}).then(() => {
-		let autoSetupOnStart = this.settings.get("settings.autoSetupOnStart");
-		let autoSetup = this.settings.get("settings.autoSetup");
-		if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
-		{
-			return this.setup(this.settings.items);
-		}
-	}).then(() => {
-		let triggerAppendOnStart = this.settings.get("settings.triggerAppendOnStart");
-		if (triggerAppendOnStart)
-		{
-			return Promise.resolve().then(() => {
-				return this.callOrganizers("afterAppend", this.settings.items);
-			}).then(() => {
-				return this.trigger("afterAppend", this.settings.items);
-			});
-		}
 	});
 
 }
@@ -430,12 +407,25 @@ Component.prototype._postStart = function()
 {
 
 	return Promise.resolve().then(() => {
+		// Setup
+		let autoSetup = this.settings.get("settings.autoSetup");
+		if (autoSetup)
+		{
+			return this.setup(this.settings.items);
+		}
+	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
 	}).then(() => {
 		return this.callOrganizers("afterStart", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterStart");
+	}).then(() => {
+		// Refresh
+		if (this.settings.get("settings.autoRefresh"))
+		{
+			return this.refresh();
+		}
 	});
 
 }

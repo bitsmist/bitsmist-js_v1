@@ -66,15 +66,10 @@ Pad.prototype.start = function(settings)
 	// Defaults
 	let defaults = {
 		"settings": {
-			"autoClose":			true,
-			"autoFetch":			true,
 			"autoFill":				true,
-			"autoOpen":				true,
-			"autoRefresh":			true,
-			"autoRefreshOnStart":	false,
-			"autoSetupOnStart":		false,
+			"autoRefreshOnOpen":	true,
+			"autoSetupOnOpen":		true,
 			"autoPostStart":		false,
-			"triggerAppendOnStart":	false,
 		},
 		"organizers":{
 			"AutoloadOrganizer":	{"settings":{"attach":true}},
@@ -126,6 +121,8 @@ Pad.prototype.switchTemplate = function(templateName, options)
 	}).then(() => {
 		return this.applyTemplate(templateName);
 	}).then(() => {
+		this.hideConditionalElements();
+	}).then(() => {
 		return this.callOrganizers("afterAppend", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterAppend", options);
@@ -151,23 +148,16 @@ Pad.prototype.open = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Pad.open(): Opening pad. name=${this.name}, id=${this.id}`);
-		return this.changeState("opening");
-	}).then(() => {
 		return this.trigger("beforeOpen", options);
 	}).then(() => {
-		// Hide conditional elements
-		this.hideConditionalElements();
-
 		// Setup
-		let autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this.settings.get("settings.autoSetupOnOpen"));
-		let autoSetup = Util.safeGet(options, "autoSetupOnOpen", this.settings.get("settings.autoSetup"));
-		if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
+		if (Util.safeGet(options, "autoSetupOnOpen", this.settings.get("settings.autoSetupOnOpen")))
 		{
 			return this.setup(options);
 		}
 	}).then(() => {
 		// Refresh
-		if (Util.safeGet(options, "autoRefresh", this.settings.get("settings.autoRefresh")))
+		if (Util.safeGet(options, "autoRefreshOnOpen", this.settings.get("settings.autoRefreshOnOpen")))
 		{
 			return this.refresh(options);
 		}
@@ -188,7 +178,6 @@ Pad.prototype.open = function(options)
 		return this.trigger("afterOpen", options);
 	}).then(() => {
 		console.debug(`Pad.open(): Opened pad. name=${this.name}, id=${this.id}`);
-		return this.changeState("opened");
 	});
 
 }
@@ -232,8 +221,6 @@ Pad.prototype.close = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Pad.close(): Closing pad. name=${this.name}, id=${this.id}`);
-		return this.changeState("closing");
-	}).then(() => {
 		return this.trigger("beforeClose", options);
 	}).then(() => {
 		return this.trigger("doClose", options);
@@ -246,7 +233,6 @@ Pad.prototype.close = function(options)
 		}
 	}).then(() => {
 		console.debug(`Pad.close(): Closed pad. name=${this.name}, id=${this.id}`);
-		return this.changeState("closed");
 	});
 
 }

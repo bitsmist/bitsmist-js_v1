@@ -86,7 +86,7 @@ export default class ComponentOrganizer extends Organizer
 		{
 			Object.keys(molds).forEach((moldName) => {
 				chain = chain.then(() => {
-					return ComponentOrganizer._addComponent(component, moldName, molds[moldName], "opened");
+					return ComponentOrganizer._addComponent(component, moldName, molds[moldName], true);
 				});
 			});
 		}
