@@ -212,47 +212,21 @@ export default class ComponentOrganizer extends Organizer
 		let waitList = [];
 
 		// Load tags that has bm-autoload/bm-automorph attribute
-		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
+		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered])");
 		targets.forEach((element) => {
-			element.setAttribute("bm-autoloaded", "");
+			element.setAttribute("bm-autoloading", "");
 
-			let href = element.getAttribute("bm-autoload");
-			let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
-			let path = element.getAttribute("bm-path") || "";
-			let split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
-			let morph = ( element.hasAttribute("bm-automorph") ?
-				( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
-				false
-			);
-			let settings = {"settings":{"autoMorph":morph}};
-			let loadOptions = {"splitComponent":split, "autoLoad": true};
+			let promise = Promise.resolve().then(() => {
+				return ComponentOrganizer.__loadTag(element, basePath, options);
+			}).then(() => {
+				element.removeAttribute("bm-autoloading");
+			});
 
-			if (href)
-			{
-				let arr = Util.getFilenameAndPathFromUrl(href);
-				path = arr[0];
-				if (href.slice(-3).toLowerCase() === ".js")
-				{
-					settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
-				}
-				else if (href.slice(-5).toLowerCase() === ".html")
-				{
-					settings["settings"]["autoMorph"] = true;
-				}
-			}
-			else
-			{
-				path = Util.concatPath([basePath, path]);
-			}
-
-			promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
-
-			let waitItem = {"object":element, "state":"started"};
-			waitList.push(waitItem);
+			promises.push(promise);
 		});
 
-		// Create waiting list to wait Bitsmist components that doesn't have data-autoload/data-automorph attribute
-		targets = rootNode.querySelectorAll("[bm-powered]:not([bm-autoloaded])");
+		// Create waiting list to wait Bitsmist components
+		targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
 		targets.forEach((element) => {
 			if (rootNode != element.rootElement)
 			{
@@ -261,21 +235,69 @@ export default class ComponentOrganizer extends Organizer
 			}
 		});
 
+		// Wait for the elements to be loaded
 		return Promise.all(promises).then(() => {
 			let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
 			if (waitFor)
 			{
-				// Wait for elements to become "started"
+				// Wait for the elements to become "started"
 				return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
 			}
 		});
 
 	}
 
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Load a tag.
+	 *
+	 * @param	{HTMLElement}	element				Target element.
+	 * @param	{String}		basePath			Base path prepend to each element's path.
+	 * @param	{Object}		options				Load Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static __loadTag(element, basePath, options)
+	{
+
+		let href = element.getAttribute("bm-autoload");
+		let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
+		let path = element.getAttribute("bm-path") || "";
+		let split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
+		let morph = ( element.hasAttribute("bm-automorph") ?
+			( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
+			false
+		);
+		let settings = {"settings":{"autoMorph":morph}};
+		let loadOptions = {"splitComponent":split, "autoLoad": true};
+
+		if (href)
+		{
+			let arr = Util.getFilenameAndPathFromUrl(href);
+			path = arr[0];
+			if (href.slice(-3).toLowerCase() === ".js")
+			{
+				settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
+			}
+			else if (href.slice(-5).toLowerCase() === ".html")
+			{
+				settings["settings"]["autoMorph"] = true;
+			}
+		}
+		else
+		{
+			path = Util.concatPath([basePath, path]);
+		}
+
+		return ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName);
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the template html.
+	 * Load a component.
 	 *
 	 * @param	{String}		className			Class name.
 	 * @param	{String}		path				Path to component.
