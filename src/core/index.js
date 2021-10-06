@@ -43,7 +43,7 @@ OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "t
 window.BITSMIST.v1.EventOrganizer = EventOrganizer;
 
 import AutoloadOrganizer from "./organizer/autoload-organizer.js";
-OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend"], "order":400});
+OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend", "afterSpecLoad"], "order":400});
 window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
 
 import ComponentOrganizer from "./organizer/component-organizer.js";
