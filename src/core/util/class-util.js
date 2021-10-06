@@ -8,7 +8,6 @@
  */
 // =============================================================================
 
-//import Component from "../component.js"; // Importing component breaks this class. Do not import.
 import Util from "../util/util.js";
 
 // =============================================================================
