@@ -2070,7 +2070,7 @@
 				"EventOrganizer":		{"settings":{"attach":true}},
 			}
 		};
-		settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
+		settings = ( settings ? Util.deepMerge(defaults, settings) : defaults );
 
 		// Init vars
 		this.setAttribute("bm-powered", "");
@@ -4786,47 +4786,21 @@
 			var waitList = [];
 
 			// Load tags that has bm-autoload/bm-automorph attribute
-			var targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloaded]),[bm-automorph]:not([bm-autoloaded])");
+			var targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered])");
 			targets.forEach(function (element) {
-				element.setAttribute("bm-autoloaded", "");
+				element.setAttribute("bm-autoloading", "");
 
-				var href = element.getAttribute("bm-autoload");
-				var className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
-				var path = element.getAttribute("bm-path") || "";
-				var split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
-				var morph = ( element.hasAttribute("bm-automorph") ?
-					( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
-					false
-				);
-				var settings = {"settings":{"autoMorph":morph}};
-				var loadOptions = {"splitComponent":split, "autoLoad": true};
+				var promise = Promise.resolve().then(function () {
+					return ComponentOrganizer.__loadTag(element, basePath, options);
+				}).then(function () {
+					element.removeAttribute("bm-autoloading");
+				});
 
-				if (href)
-				{
-					var arr = Util.getFilenameAndPathFromUrl(href);
-					path = arr[0];
-					if (href.slice(-3).toLowerCase() === ".js")
-					{
-						settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
-					}
-					else if (href.slice(-5).toLowerCase() === ".html")
-					{
-						settings["settings"]["autoMorph"] = true;
-					}
-				}
-				else
-				{
-					path = Util.concatPath([basePath, path]);
-				}
-
-				promises.push(ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName));
-
-				var waitItem = {"object":element, "state":"started"};
-				waitList.push(waitItem);
+				promises.push(promise);
 			});
 
-			// Create waiting list to wait Bitsmist components that doesn't have data-autoload/data-automorph attribute
-			targets = rootNode.querySelectorAll("[bm-powered]:not([bm-autoloaded])");
+			// Create waiting list to wait Bitsmist components
+			targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
 			targets.forEach(function (element) {
 				if (rootNode != element.rootElement)
 				{
@@ -4835,21 +4809,69 @@
 				}
 			});
 
+			// Wait for the elements to be loaded
 			return Promise.all(promises).then(function () {
 				var waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
 				if (waitFor)
 				{
-					// Wait for elements to become "started"
+					// Wait for the elements to become "started"
 					return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
 				}
 			});
 
 		};
 
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Load a tag.
+		 *
+		 * @param	{HTMLElement}	element				Target element.
+		 * @param	{String}		basePath			Base path prepend to each element's path.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		ComponentOrganizer.__loadTag = function __loadTag (element, basePath, options)
+		{
+
+			var href = element.getAttribute("bm-autoload");
+			var className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
+			var path = element.getAttribute("bm-path") || "";
+			var split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
+			var morph = ( element.hasAttribute("bm-automorph") ?
+				( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
+				false
+			);
+			var settings = {"settings":{"autoMorph":morph}};
+			var loadOptions = {"splitComponent":split, "autoLoad": true};
+
+			if (href)
+			{
+				var arr = Util.getFilenameAndPathFromUrl(href);
+				path = arr[0];
+				if (href.slice(-3).toLowerCase() === ".js")
+				{
+					settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
+				}
+				else if (href.slice(-5).toLowerCase() === ".html")
+				{
+					settings["settings"]["autoMorph"] = true;
+				}
+			}
+			else
+			{
+				path = Util.concatPath([basePath, path]);
+			}
+
+			return ComponentOrganizer._loadComponent(className, path, settings, loadOptions, element.tagName);
+
+		};
+
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Load the template html.
+		 * Load a component.
 		 *
 		 * @param	{String}		className			Class name.
 		 * @param	{String}		path				Path to component.
@@ -5247,7 +5269,7 @@
 	window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 	OrganizerOrganizer.organizers.set("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend", "afterSpecLoad"], "order":210});
 	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
-	OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend"], "order":400});
+	OrganizerOrganizer.organizers.set("AutoloadOrganizer", {"object":AutoloadOrganizer, "targetEvents":["afterAppend", "afterSpecLoad"], "order":400});
 	window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
 	OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterStart"], "order":410});
 	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
