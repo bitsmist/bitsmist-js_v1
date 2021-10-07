@@ -44,10 +44,25 @@ ClassUtil.inherit(Component, HTMLElement);
 Component.prototype.connectedCallback = function()
 {
 
-	if (!this.isInitialized())
+	// Create a promise to prevent from start/stop while stopping/starting
+	if (!this._ready)
 	{
-		this.start();
+		this._ready = Promise.resolve();
 	}
+
+	// Start
+	this._ready = this._ready.then(() => {
+		if (!this._initialized || this.settings.get("settings.autoRestart"))
+		{
+			this._initialized = true;
+			return this.start();
+		}
+		else
+		{
+			console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}`);
+			return this.changeState("started");
+		}
+	});
 
 }
 
@@ -61,7 +76,9 @@ Component.prototype.disconnectedCallback = function()
 
 	if (this.settings.get("settings.autoStop"))
 	{
-		this.stop();
+		this._ready = this._ready.then(() => {
+			return this.stop();
+		});
 	}
 
 }
@@ -149,6 +166,7 @@ Component.prototype.start = function(settings)
 			"autoFill":				true,
 			"autoPostStart":		true,
 			"autoRefresh":			true,
+			"autoRestart":			false,
 			"autoSetup":			true,
 			"autoStop":				true,
 			"hasTemplate":			true,
