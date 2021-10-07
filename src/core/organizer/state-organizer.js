@@ -38,7 +38,6 @@ export default class StateOrganizer extends Organizer
 
 		// Add methods
 		Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); }
-		Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); }
 		Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
 		Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
 		Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
@@ -341,33 +340,6 @@ export default class StateOrganizer extends Organizer
 		}
 
 		return Promise.all(ret);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if the componenet is initialized.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 *
-	 * @return  {Boolean}		True when initialized.
-	 */
-	static _isInitialized(component)
-	{
-
-		let ret = false;
-
-		if (component._state &&
-			component._state !== "starting" &&
-			component._state !== "stopping" &&
-			component._state !== "stopped"
-		)
-		{
-			ret = true;
-		}
-
-		return ret;
 
 	}
 
