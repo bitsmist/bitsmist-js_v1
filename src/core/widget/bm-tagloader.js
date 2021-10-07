@@ -39,7 +39,7 @@ ClassUtil.inherit(TagLoader, Component);
 // -----------------------------------------------------------------------------
 
 /**
- * Start pad.
+ * Start components.
  *
  * @param	{Object}		settings			Settings.
  *

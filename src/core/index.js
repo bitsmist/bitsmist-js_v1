@@ -50,11 +50,6 @@ import ComponentOrganizer from "./organizer/component-organizer.js";
 OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterStart"], "order":410});
 window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 
-// Pad
-
-import Pad from "./pad.js";
-window.BITSMIST.v1.Pad = Pad;
-
 // Store
 
 import Store from "./store/store.js";

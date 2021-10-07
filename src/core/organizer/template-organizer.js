@@ -9,8 +9,8 @@
 // =============================================================================
 
 import AjaxUtil from "../util/ajax-util";
+import Component from "../component.js";
 import Organizer from "./organizer";
-import Pad from "../pad";
 import Util from "../util/util";
 
 // =============================================================================
@@ -31,16 +31,16 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(Pad.prototype, 'templates', { get() { return this._templates; }, });
-		Object.defineProperty(Pad.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
+		Object.defineProperty(Component.prototype, 'templates', { get() { return this._templates; }, });
+		Object.defineProperty(Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
 
 		// Add methods
-		Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
-		Pad.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
-		Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
-		Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActiveTemplate(this, templateName); }
-		Pad.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); }
-		Pad.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); }
+		Component.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
+		Component.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
+		Component.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
+		Component.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActiveTemplate(this, templateName); }
+		Component.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); }
+		Component.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); }
 
 	}
 
@@ -145,7 +145,7 @@ export default class TemplateOrganizer extends Organizer
 
 		let ret = false;
 
-		if (component._activeTemplateName === templateName)
+		if (component._activeTemplateName && component._activeTemplateName === templateName)
 		{
 			ret = true;
 		}

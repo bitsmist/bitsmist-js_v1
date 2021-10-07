@@ -146,10 +146,12 @@ Component.prototype.start = function(settings)
 	let defaults = {
 		"settings": {
 			"autoFetch":			true,
+			"autoFill":				true,
 			"autoPostStart":		true,
 			"autoRefresh":			true,
 			"autoSetup":			true,
 			"autoStop":				true,
+			"hasTemplate":			true,
 			"useGlobalSettings":	true,
 		},
 		"organizers": {
@@ -157,6 +159,8 @@ Component.prototype.start = function(settings)
 			"SettingOrganizer":		{"settings":{"attach":true}},
 			"StateOrganizer":		{"settings":{"attach":true}},
 			"EventOrganizer":		{"settings":{"attach":true}},
+			"AutoloadOrganizer":	{"settings":{"attach":true}},
+			"TemplateOrganizer":	{"settings":{"attach":true}},
 		}
 	};
 	settings = ( settings ? Util.deepMerge(defaults, settings) : defaults );
@@ -213,6 +217,43 @@ Component.prototype.stop = function(options)
 // -----------------------------------------------------------------------------
 
 /**
+ * Change template html.
+ *
+ * @param	{String}		templateName		Template name.
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.switchTemplate = function(templateName, options)
+{
+
+	options = Object.assign({}, options);
+
+	if (this.isActiveTemplate(templateName))
+	{
+		return Promise.resolve();
+	}
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+		return this.addTemplate(templateName);
+	}).then(() => {
+		return this.applyTemplate(templateName);
+	}).then(() => {
+		this.hideConditionalElements();
+	}).then(() => {
+		return this.callOrganizers("afterAppend", this.settings.items);
+	}).then(() => {
+		return this.trigger("afterAppend", options);
+	}).then(() => {
+		console.debug(`Component.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Apply settings.
  *
  * @param	{Object}		options				Options.
@@ -252,7 +293,7 @@ Component.prototype.refresh = function(options)
 	options = Object.assign({}, options);
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.refresh(): Refreshing component. name=${this.name}`);
+		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", options);
 	}).then(() => {
 		return this.trigger("doTarget", options);
@@ -263,11 +304,19 @@ Component.prototype.refresh = function(options)
 			return this.fetch(options);
 		}
 	}).then(() => {
+		this.showConditionalElements(this.item);
+	}).then(() => {
+		// Fill
+		if (Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))
+		{
+			return this.fill(options);
+		}
+	}).then(() => {
 		return this.trigger("doRefresh", options);
 	}).then(() => {
 		return this.trigger("afterRefresh", options);
 	}).then(() => {
-		console.debug(`Component.refresh(): Refreshed component. name=${this.name}`);
+		console.debug(`Component.refresh(): Refreshed component. name=${this.name}, id=${this.id}`);
 	});
 
 }
@@ -300,6 +349,33 @@ Component.prototype.fetch = function(options)
 	});
 
 }
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Fill component.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.fill = function(options)
+{
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Clear component.
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.clear = function(options)
+{
+}
+
 
 // -----------------------------------------------------------------------------
 
@@ -392,6 +468,25 @@ Component.prototype._preStart = function()
 		return this.callOrganizers("beforeStart", this.settings.items);
 	}).then((newSettings) => {
 		return this.trigger("beforeStart");
+	}).then(() => {
+		// Switch template
+		if (this.settings.get("settings.hasTemplate"))
+		{
+			return this.switchTemplate(this.settings.get("settings.templateName"));
+		}
+	}).then(() => {
+		// Setup
+		let autoSetup = this.settings.get("settings.autoSetup");
+		if (autoSetup)
+		{
+			return this.setup(this.settings.items);
+		}
+	}).then(() => {
+		// Refresh
+		if (this.settings.get("settings.autoRefresh"))
+		{
+			return this.refresh();
+		}
 	});
 
 }
@@ -407,25 +502,12 @@ Component.prototype._postStart = function()
 {
 
 	return Promise.resolve().then(() => {
-		// Setup
-		let autoSetup = this.settings.get("settings.autoSetup");
-		if (autoSetup)
-		{
-			return this.setup(this.settings.items);
-		}
-	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
 	}).then(() => {
 		return this.callOrganizers("afterStart", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterStart");
-	}).then(() => {
-		// Refresh
-		if (this.settings.get("settings.autoRefresh"))
-		{
-			return this.refresh();
-		}
 	});
 
 }

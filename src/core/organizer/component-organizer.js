@@ -11,7 +11,6 @@
 import AjaxUtil from "../util/ajax-util.js";
 import ClassUtil from "../util/class-util.js";
 import Organizer from "./organizer.js";
-import Pad from "../pad.js";
 import Store from "../store/store.js";
 import Util from "../util/util.js";
 
@@ -158,6 +157,8 @@ export default class ComponentOrganizer extends Organizer
 	 */
 	static _addComponent(component, componentName, settings, sync)
 	{
+
+		console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
 
 		let path = Util.concatPath([
 			component.settings.get("system.appBaseUrl", ""),
@@ -316,7 +317,7 @@ export default class ComponentOrganizer extends Organizer
 			// Define empty class
 			console.debug(`ComponentOrganizer._loadComponent(): Creating empty component. className=${className}, path=${path}, tagName=${tagName}`);
 
-			let classDef = ( morph === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(morph) );
+			let classDef = ( morph === true ?  BITSMIST.v1.Component : ClassUtil.getClass(morph) );
 			if (!customElements.get(tagName.toLowerCase()))
 			{
 				ClassUtil.newComponent(classDef, settings, tagName, className);
@@ -477,11 +478,14 @@ export default class ComponentOrganizer extends Organizer
 		}
 
 		// Inject settings to added component
-		addedComponent._injectSettings = function(oldSettings){
+		addedComponent._injectSettings = function(curSettings){
 			// super()
-			let newSettings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(addedComponent, oldSettings));
+			if (addedComponent._super && addedComponent._super.prototype._injectSettings)
+			{
+				curSettings = addedComponent._super.prototype._injectSettings.call(addedComponent, curSettings);
+			};
 
-			return Util.deepMerge(newSettings, settings);
+			return Util.deepMerge(curSettings, settings);
 		};
 
 		return addedComponent;
