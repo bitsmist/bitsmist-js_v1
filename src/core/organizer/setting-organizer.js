@@ -60,13 +60,6 @@ export default class SettingOrganizer extends Organizer
 		component._settings = new ChainableStore({"items":settings});
 		component._settings.merge(component._getSettings());
 
-		// Overwrite name if specified
-		let name = component._settings.get("settings.name");
-		if (name)
-		{
-			component._name = name;
-		}
-
 		// Chain global settings
 		if (component._settings.get("settings.useGlobalSettings"))
 		{
@@ -101,31 +94,6 @@ export default class SettingOrganizer extends Organizer
 			// Load settings from attributes
 			SettingOrganizer.__loadAttrSettings(component);
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Object}		organizerInfo		Organizer info.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, organizerInfo, component)
-	{
-
-		if (conditions === "beforeStart")
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
 
 	}
 
