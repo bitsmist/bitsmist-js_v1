@@ -1714,13 +1714,6 @@
 			component._settings = new ChainableStore({"items":settings});
 			component._settings.merge(component._getSettings());
 
-			// Overwrite name if specified
-			var name = component._settings.get("settings.name");
-			if (name)
-			{
-				component._name = name;
-			}
-
 			// Chain global settings
 			if (component._settings.get("settings.useGlobalSettings"))
 			{
@@ -1755,31 +1748,6 @@
 				// Load settings from attributes
 				SettingOrganizer.__loadAttrSettings(component);
 			});
-
-		};
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if event is target.
-		 *
-		 * @param	{String}		conditions			Event name.
-		 * @param	{Object}		organizerInfo		Organizer info.
-		 * @param	{Component}		component			Component.
-		 *
-		 * @return 	{Boolean}		True if it is target.
-		 */
-		SettingOrganizer.isTarget = function isTarget (conditions, organizerInfo, component)
-		{
-
-			if (conditions === "beforeStart")
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
 
 		};
 
@@ -1952,11 +1920,28 @@
 	 */
 	Component.prototype.connectedCallback = function()
 	{
+		var this$1$1 = this;
 
-		if (!this.isInitialized())
+
+		// Create a promise to prevent from start/stop while stopping/starting
+		if (!this._ready)
 		{
-			this.start();
+			this._ready = Promise.resolve();
 		}
+
+		// Start
+		this._ready = this._ready.then(function () {
+			if (!this$1$1._initialized || this$1$1.settings.get("settings.autoRestart"))
+			{
+				this$1$1._initialized = true;
+				return this$1$1.start();
+			}
+			else
+			{
+				console.debug(("Component.start(): Restarted component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
+				return this$1$1.changeState("started");
+			}
+		});
 
 	};
 
@@ -1967,10 +1952,14 @@
 	 */
 	Component.prototype.disconnectedCallback = function()
 	{
+		var this$1$1 = this;
+
 
 		if (this.settings.get("settings.autoStop"))
 		{
-			this.stop();
+			this._ready = this._ready.then(function () {
+				return this$1$1.stop();
+			});
 		}
 
 	};
@@ -2056,11 +2045,14 @@
 		// Defaults
 		var defaults = {
 			"settings": {
-				"autoSetup":			true,
+				"autoFetch":			true,
+				"autoFill":				true,
 				"autoPostStart":		true,
-				"autoRefreshOnStart":	false,
+				"autoRefresh":			true,
+				"autoRestart":			false,
+				"autoSetup":			true,
 				"autoStop":				true,
-				"triggerAppendOnStart": true,
+				"hasTemplate":			true,
 				"useGlobalSettings":	true,
 			},
 			"organizers": {
@@ -2068,6 +2060,8 @@
 				"SettingOrganizer":		{"settings":{"attach":true}},
 				"StateOrganizer":		{"settings":{"attach":true}},
 				"EventOrganizer":		{"settings":{"attach":true}},
+				"AutoloadOrganizer":	{"settings":{"attach":true}},
+				"TemplateOrganizer":	{"settings":{"attach":true}},
 			}
 		};
 		settings = ( settings ? Util.deepMerge(defaults, settings) : defaults );
@@ -2086,12 +2080,6 @@
 			if (this$1$1.settings.get("settings.autoPostStart"))
 			{
 				return this$1$1._postStart();
-			}
-		}).then(function () {
-			// Refresh
-			if (this$1$1.settings.get("settings.autoRefreshOnStart"))
-			{
-				return this$1$1.refresh();
 			}
 		});
 
@@ -2125,6 +2113,45 @@
 		}).then(function () {
 			console.debug(("Component.stop(): Stopped component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.changeState("stopped");
+		});
+
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Change template html.
+	 *
+	 * @param	{String}		templateName		Template name.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Component.prototype.switchTemplate = function(templateName, options)
+	{
+		var this$1$1 = this;
+
+
+		options = Object.assign({}, options);
+
+		if (this.activeTemplateName === templateName)
+		{
+			return Promise.resolve();
+		}
+
+		return Promise.resolve().then(function () {
+			console.debug(("Component.switchTemplate(): Switching template. name=" + (this$1$1.name) + ", templateName=" + templateName + ", id=" + (this$1$1.id)));
+			return this$1$1.addTemplate(templateName);
+		}).then(function () {
+			return this$1$1.applyTemplate(templateName);
+		}).then(function () {
+			this$1$1.hideConditionalElements();
+		}).then(function () {
+			return this$1$1.callOrganizers("afterAppend", this$1$1.settings.items);
+		}).then(function () {
+			return this$1$1.trigger("afterAppend", options);
+		}).then(function () {
+			console.debug(("Component.switchTemplate(): Switched template. name=" + (this$1$1.name) + ", templateName=" + templateName + ", id=" + (this$1$1.id)));
 		});
 
 	};
@@ -2175,7 +2202,7 @@
 		options = Object.assign({}, options);
 
 		return Promise.resolve().then(function () {
-			console.debug(("Component.refresh(): Refreshing component. name=" + (this$1$1.name)));
+			console.debug(("Component.refresh(): Refreshing component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 			return this$1$1.trigger("beforeRefresh", options);
 		}).then(function () {
 			return this$1$1.trigger("doTarget", options);
@@ -2186,11 +2213,19 @@
 				return this$1$1.fetch(options);
 			}
 		}).then(function () {
+			this$1$1.showConditionalElements(this$1$1.item);
+		}).then(function () {
+			// Fill
+			if (Util.safeGet(options, "autoFill", this$1$1.settings.get("settings.autoFill")))
+			{
+				return this$1$1.fill(options);
+			}
+		}).then(function () {
 			return this$1$1.trigger("doRefresh", options);
 		}).then(function () {
 			return this$1$1.trigger("afterRefresh", options);
 		}).then(function () {
-			console.debug(("Component.refresh(): Refreshed component. name=" + (this$1$1.name)));
+			console.debug(("Component.refresh(): Refreshed component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
 		});
 
 	};
@@ -2225,6 +2260,33 @@
 		});
 
 	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Fill component.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Component.prototype.fill = function(options)
+	{
+	};
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Clear component.
+	 *
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	Component.prototype.clear = function(options)
+	{
+	};
+
 
 	// -----------------------------------------------------------------------------
 
@@ -2293,6 +2355,8 @@
 		}).then(function (newSettings) {
 			return SettingOrganizer.init(this$1$1, newSettings); // now settings are included in this.settings
 		}).then(function () {
+			this$1$1._adjustSettings();
+
 			return this$1$1.initOrganizers(this$1$1.settings.items);
 		});
 
@@ -2319,24 +2383,26 @@
 			return this$1$1.addOrganizers(this$1$1.settings.items);
 		}).then(function () {
 			return this$1$1.callOrganizers("beforeStart", this$1$1.settings.items);
-		}).then(function (newSettings) {
+		}).then(function () {
 			return this$1$1.trigger("beforeStart");
 		}).then(function () {
-			var autoSetupOnStart = this$1$1.settings.get("settings.autoSetupOnStart");
+			// Switch template
+			if (this$1$1.settings.get("settings.hasTemplate"))
+			{
+				return this$1$1.switchTemplate(this$1$1.settings.get("settings.templateName"));
+			}
+		}).then(function () {
+			// Setup
 			var autoSetup = this$1$1.settings.get("settings.autoSetup");
-			if ( autoSetupOnStart || (autoSetupOnStart !== false && autoSetup) )
+			if (autoSetup)
 			{
 				return this$1$1.setup(this$1$1.settings.items);
 			}
 		}).then(function () {
-			var triggerAppendOnStart = this$1$1.settings.get("settings.triggerAppendOnStart");
-			if (triggerAppendOnStart)
+			// Refresh
+			if (this$1$1.settings.get("settings.autoRefresh"))
 			{
-				return Promise.resolve().then(function () {
-					return this$1$1.callOrganizers("afterAppend", this$1$1.settings.items);
-				}).then(function () {
-					return this$1$1.trigger("afterAppend", this$1$1.settings.items);
-				});
+				return this$1$1.refresh();
 			}
 		});
 
@@ -2367,6 +2433,30 @@
 
 	// -----------------------------------------------------------------------------
 
+	/**
+	 * Adjust default settings according to current setttings.
+	 *
+	 * @param	{Object}		settings			Settings.
+	 */
+	Component.prototype._adjustSettings = function()
+	{
+
+		// Overwrite name if specified
+		var name = this.settings.get("settings.name");
+		if (name)
+		{
+			this._name = name;
+		}
+
+		// Do not refresh/setup on start when component is morphing
+		if (this.settings.get("settings.autoMorph"))
+		{
+			this.settings.set("settings.autoRefresh", false);
+			this.settings.set("settings.autoSetup", false);
+		}
+
+	};
+
 	customElements.define("bm-component", Component);
 
 	// =============================================================================
@@ -2395,7 +2485,6 @@
 
 			// Add methods
 			Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); };
-			Component.prototype.isInitialized = function() { return StateOrganizer._isInitialized(this); };
 			Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); };
 			Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); };
 			Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); };
@@ -2702,33 +2791,6 @@
 		};
 
 		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if the componenet is initialized.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 *
-		 * @return  {Boolean}		True when initialized.
-		 */
-		StateOrganizer._isInitialized = function _isInitialized (component)
-		{
-
-			var ret = false;
-
-			if (component._state &&
-				component._state !== "starting" &&
-				component._state !== "stopping" &&
-				component._state !== "stopped"
-			)
-			{
-				ret = true;
-			}
-
-			return ret;
-
-		};
-
-		// -------------------------------------------------------------------------
 		//  Privates
 		// -------------------------------------------------------------------------
 
@@ -2749,10 +2811,7 @@
 			{
 				if(
 					( currentState === "stopping" && newState !== "stopped") ||
-					( currentState === "starting" && newState !== "started") ||
-					( currentState === "opening" && (newState !== "opened" && newState !== "opening") ) ||
-					( currentState === "closing" && newState !== "closed") ||
-					( currentState === "stopping" && (newState !== "stopped" && newState !== "closing") )
+					( currentState === "starting" && newState !== "started")
 				)
 				{
 					ret = false;
@@ -2836,11 +2895,7 @@
 		 * Add wait info to the waiting list.
 		 *
 		 * @param	{Object}		waitInfo			Wait info.
-		 * @param	{Component}		component			Component.
-		 *
-		 * @return  {Promise}		Promise.
 		 */
-		//static __addToWaitingList(waitInfo, component)
 		StateOrganizer.__addToWaitingList = function __addToWaitingList (waitInfo)
 		{
 
@@ -3095,10 +3150,6 @@
 			{
 				case "started":
 					if (
-						currentState !== "opening" &&
-						currentState !== "opened" &&
-						currentState !== "closing" &&
-						currentState !== "closed" &&
 						currentState !== "started"
 					)
 					{
@@ -3200,333 +3251,6 @@
 	// =============================================================================
 
 	// =============================================================================
-	//	Pad class
-	// =============================================================================
-
-	// -----------------------------------------------------------------------------
-	//  Constructor
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Constructor.
-	 */
-	function Pad()
-	{
-
-		// super()
-		return Reflect.construct(Component, [], this.constructor);
-
-	}
-
-	ClassUtil.inherit(Pad, Component);
-
-	// -----------------------------------------------------------------------------
-	//  Setter/Getter
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Component name.
-	 *
-	 * @type	{String}
-	 */
-	Object.defineProperty(Component.prototype, 'modalResult', {
-		get: function get()
-		{
-			return this._modalResult;
-		}
-	});
-
-	// -----------------------------------------------------------------------------
-	//  Methods
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Start pad.
-	 *
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.start = function(settings)
-	{
-		var this$1$1 = this;
-
-
-		// Defaults
-		var defaults = {
-			"settings": {
-				"autoClose":			true,
-				"autoFetch":			true,
-				"autoFill":				true,
-				"autoOpen":				true,
-				"autoRefresh":			true,
-				"autoRefreshOnStart":	false,
-				"autoSetupOnStart":		false,
-				"autoPostStart":		false,
-				"triggerAppendOnStart":	false,
-			},
-			"organizers":{
-				"AutoloadOrganizer":	{"settings":{"attach":true}},
-				"TemplateOrganizer":	{"settings":{"attach":true}},
-			}
-		};
-		settings = ( settings ? BITSMIST.v1.Util.deepMerge(defaults, settings) : defaults );
-
-		return Promise.resolve().then(function () {
-			// super()
-			return Component.prototype.start.call(this$1$1, settings);
-		}).then(function () {
-			return this$1$1.switchTemplate(this$1$1.settings.get("settings.templateName"));
-		}).then(function () {
-			return this$1$1._postStart();
-		}).then(function () {
-			// Open
-			if (this$1$1.settings.get("settings.autoOpen"))
-			{
-				return this$1$1.open();
-			}
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Change template html.
-	 *
-	 * @param	{String}		templateName		Template name.
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.switchTemplate = function(templateName, options)
-	{
-		var this$1$1 = this;
-
-
-		options = Object.assign({}, options);
-
-		if (this.isActiveTemplate(templateName))
-		{
-			return Promise.resolve();
-		}
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.switchTemplate(): Switching template. name=" + (this$1$1.name) + ", templateName=" + templateName + ", id=" + (this$1$1.id)));
-			return this$1$1.addTemplate(templateName);
-		}).then(function () {
-			return this$1$1.applyTemplate(templateName);
-		}).then(function () {
-			return this$1$1.callOrganizers("afterAppend", this$1$1.settings.items);
-		}).then(function () {
-			return this$1$1.trigger("afterAppend", options);
-		}).then(function () {
-			console.debug(("Pad.switchTemplate(): Switched template. name=" + (this$1$1.name) + ", templateName=" + templateName + ", id=" + (this$1$1.id)));
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Open pad.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.open = function(options)
-	{
-		var this$1$1 = this;
-
-
-		options = Object.assign({}, options);
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.open(): Opening pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.changeState("opening");
-		}).then(function () {
-			return this$1$1.trigger("beforeOpen", options);
-		}).then(function () {
-			// Hide conditional elements
-			this$1$1.hideConditionalElements();
-
-			// Setup
-			var autoSetupOnOpen = Util.safeGet(options, "autoSetupOnOpen", this$1$1.settings.get("settings.autoSetupOnOpen"));
-			var autoSetup = Util.safeGet(options, "autoSetupOnOpen", this$1$1.settings.get("settings.autoSetup"));
-			if ( autoSetupOnOpen || (autoSetupOnOpen !== false && autoSetup) )
-			{
-				return this$1$1.setup(options);
-			}
-		}).then(function () {
-			// Refresh
-			if (Util.safeGet(options, "autoRefresh", this$1$1.settings.get("settings.autoRefresh")))
-			{
-				return this$1$1.refresh(options);
-			}
-		}).then(function () {
-			return this$1$1.trigger("doOpen", options);
-		}).then(function () {
-			// Auto focus
-			var autoFocus = this$1$1.settings.get("settings.autoFocus");
-			if (autoFocus)
-			{
-				var target = ( autoFocus === true ? this$1$1 : this$1$1.querySelector(autoFocus) );
-				if (target)
-				{
-					target.focus();
-				}
-			}
-		}).then(function () {
-			return this$1$1.trigger("afterOpen", options);
-		}).then(function () {
-			console.debug(("Pad.open(): Opened pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.changeState("opened");
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Open pad modally.
-	 *
-	 * @param	{array}			options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.openModal = function(options)
-	{
-		var this$1$1 = this;
-
-
-		console.debug(("Pad.openModal(): Opening pad modally. name=" + (this.name) + ", id=" + (this.id)));
-
-		return new Promise(function (resolve, reject) {
-			this$1$1._isModal = true;
-			this$1$1._modalResult = {"result":false};
-			this$1$1._modalPromise = { "resolve": resolve, "reject": reject };
-			this$1$1.open(options);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Close pad.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.close = function(options)
-	{
-		var this$1$1 = this;
-
-
-		options = Object.assign({}, options);
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.close(): Closing pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.changeState("closing");
-		}).then(function () {
-			return this$1$1.trigger("beforeClose", options);
-		}).then(function () {
-			return this$1$1.trigger("doClose", options);
-		}).then(function () {
-			return this$1$1.trigger("afterClose", options);
-		}).then(function () {
-			if (this$1$1._isModal)
-			{
-				this$1$1._modalPromise.resolve(this$1$1._modalResult);
-			}
-		}).then(function () {
-			console.debug(("Pad.close(): Closed pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.changeState("closed");
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Refresh pad.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.refresh = function(options)
-	{
-		var this$1$1 = this;
-
-
-		options = Object.assign({}, options);
-
-		return Promise.resolve().then(function () {
-			console.debug(("Pad.refresh(): Refreshing pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.trigger("beforeRefresh", options);
-		}).then(function () {
-			return this$1$1.trigger("doTarget", options);
-		}).then(function () {
-			// Fetch
-			if (Util.safeGet(options, "autoFetch", this$1$1.settings.get("settings.autoFetch")))
-			{
-				return this$1$1.fetch(options);
-			}
-		}).then(function () {
-			// Show condtional elements
-			this$1$1.showConditionalElements(this$1$1.item);
-		}).then(function () {
-			// Fill
-			if (Util.safeGet(options, "autoFill", this$1$1.settings.get("settings.autoFill")))
-			{
-				return this$1$1.fill(options);
-			}
-		}).then(function () {
-			return this$1$1.trigger("doRefresh", options);
-		}).then(function () {
-			return this$1$1.trigger("afterRefresh", options);
-		}).then(function () {
-			console.debug(("Pad.refresh(): Refreshed pad. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Fill.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.fill = function(options)
-	{
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Clear pad.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Pad.prototype.clear = function(options)
-	{
-	};
-
-	// -----------------------------------------------------------------------------
-
-	customElements.define("bm-pad", Pad);
-
-	// =============================================================================
-
-	// =============================================================================
 	//	Template organizer class
 	// =============================================================================
 
@@ -3543,16 +3267,15 @@
 		{
 
 			// Add properties
-			Object.defineProperty(Pad.prototype, 'templates', { get: function get() { return this._templates; }, });
-			Object.defineProperty(Pad.prototype, 'activeTemplateName', { get: function get() { return this._activeTemplateName; }, set: function set(value) { this._activeTemplateName = value; } });
+			Object.defineProperty(Component.prototype, 'templates', { get: function get() { return this._templates; }, });
+			Object.defineProperty(Component.prototype, 'activeTemplateName', { get: function get() { return this._activeTemplateName; }, set: function set(value) { this._activeTemplateName = value; } });
 
 			// Add methods
-			Pad.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); };
-			Pad.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); };
-			Pad.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); };
-			Pad.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActiveTemplate(this, templateName); };
-			Pad.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); };
-			Pad.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); };
+			Component.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); };
+			Component.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); };
+			Component.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); };
+			Component.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); };
+			Component.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); };
 
 		};
 
@@ -3642,30 +3365,6 @@
 
 		// -------------------------------------------------------------------------
 		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if the template is active.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		templateName		Template name.
-		 *
-		 * @return  {Boolean}		True when active.
-		 */
-		TemplateOrganizer._isActiveTemplate = function _isActiveTemplate (component, templateName)
-		{
-
-			var ret = false;
-
-			if (component._activeTemplateName === templateName)
-			{
-				ret = true;
-			}
-
-			return ret;
-
-		};
-
 		// -------------------------------------------------------------------------
 
 		/**
@@ -4660,7 +4359,7 @@
 			{
 				Object.keys(molds).forEach(function (moldName) {
 					chain = chain.then(function () {
-						return ComponentOrganizer._addComponent(component, moldName, molds[moldName], "opened");
+						return ComponentOrganizer._addComponent(component, moldName, molds[moldName], true);
 					});
 				});
 			}
@@ -4732,6 +4431,8 @@
 		 */
 		ComponentOrganizer._addComponent = function _addComponent (component, componentName, settings, sync)
 		{
+
+			console.debug(("Adding a component. name=" + (component.name) + ", componentName=" + componentName));
 
 			var path = Util.concatPath([
 				component.settings.get("system.appBaseUrl", ""),
@@ -4890,7 +4591,7 @@
 				// Define empty class
 				console.debug(("ComponentOrganizer._loadComponent(): Creating empty component. className=" + className + ", path=" + path + ", tagName=" + tagName));
 
-				var classDef = ( morph === true ?  BITSMIST.v1.Pad : ClassUtil.getClass(morph) );
+				var classDef = ( morph === true ?  BITSMIST.v1.Component : ClassUtil.getClass(morph) );
 				if (!customElements.get(tagName.toLowerCase()))
 				{
 					ClassUtil.newComponent(classDef, settings, tagName, className);
@@ -5051,11 +4752,13 @@
 			}
 
 			// Inject settings to added component
-			addedComponent._injectSettings = function(oldSettings){
+			addedComponent._injectSettings = function(curSettings){
 				// super()
-				var newSettings = Object.assign({}, addedComponent._super.prototype._injectSettings.call(addedComponent, oldSettings));
-
-				return Util.deepMerge(newSettings, settings);
+				if (addedComponent._super && addedComponent._super.prototype._injectSettings)
+				{
+					curSettings = addedComponent._super.prototype._injectSettings.call(addedComponent, curSettings);
+				}
+				return Util.deepMerge(curSettings, settings);
 			};
 
 			return addedComponent;
@@ -5205,7 +4908,7 @@
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Start pad.
+	 * Start components.
 	 *
 	 * @param	{Object}		settings			Settings.
 	 *
@@ -5273,7 +4976,6 @@
 	window.BITSMIST.v1.AutoloadOrganizer = AutoloadOrganizer;
 	OrganizerOrganizer.organizers.set("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterStart"], "order":410});
 	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
-	window.BITSMIST.v1.Pad = Pad;
 	window.BITSMIST.v1.Store = Store;
 	window.BITSMIST.v1.OrganizerStore = OrganizerStore;
 	window.BITSMIST.v1.ChainableStore = ChainableStore;
