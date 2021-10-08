@@ -247,7 +247,7 @@ Component.prototype.switchTemplate = function(templateName, options)
 
 	options = Object.assign({}, options);
 
-	if (this.isActiveTemplate(templateName))
+	if (this.activeTemplateName === templateName)
 	{
 		return Promise.resolve();
 	}
@@ -460,6 +460,8 @@ Component.prototype._initStart = function(settings)
 	}).then((newSettings) => {
 		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
 	}).then(() => {
+		this._adjustSettings();
+
 		return this.initOrganizers(this.settings.items);
 	});
 
@@ -484,7 +486,7 @@ Component.prototype._preStart = function()
 		return this.addOrganizers(this.settings.items);
 	}).then(() => {
 		return this.callOrganizers("beforeStart", this.settings.items);
-	}).then((newSettings) => {
+	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {
 		// Switch template
@@ -531,5 +533,29 @@ Component.prototype._postStart = function()
 }
 
 // -----------------------------------------------------------------------------
+
+/**
+ * Adjust default settings according to current setttings.
+ *
+ * @param	{Object}		settings			Settings.
+ */
+Component.prototype._adjustSettings = function()
+{
+
+	// Overwrite name if specified
+	let name = this.settings.get("settings.name");
+	if (name)
+	{
+		this._name = name;
+	}
+
+	// Do not refresh/setup on start when component is morphing
+	if (this.settings.get("settings.autoMorph"))
+	{
+		this.settings.set("settings.autoRefresh", false);
+		this.settings.set("settings.autoSetup", false);
+	}
+
+}
 
 customElements.define("bm-component", Component);
