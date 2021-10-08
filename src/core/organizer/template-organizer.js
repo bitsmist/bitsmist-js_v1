@@ -38,7 +38,6 @@ export default class TemplateOrganizer extends Organizer
 		Component.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
 		Component.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
 		Component.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
-		Component.prototype.isActiveTemplate = function(templateName) { return TemplateOrganizer._isActiveTemplate(this, templateName); }
 		Component.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); }
 		Component.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); }
 
@@ -130,30 +129,6 @@ export default class TemplateOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 	//  Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if the template is active.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		templateName		Template name.
-	 *
-	 * @return  {Boolean}		True when active.
-	 */
-	static _isActiveTemplate(component, templateName)
-	{
-
-		let ret = false;
-
-		if (component._activeTemplateName && component._activeTemplateName === templateName)
-		{
-			ret = true;
-		}
-
-		return ret;
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**
