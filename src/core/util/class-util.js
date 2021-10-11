@@ -39,12 +39,16 @@ export default class ClassUtil
 		let component = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
 		ClassUtil.inherit(component, superClass);
 
+		// Class settings
 		settings = Object.assign({}, settings);
 		settings.settings = ( settings.settings ? settings.settings : {} );
 		settings["settings"]["name"] = className;
 		component.prototype._getSettings = function() {
 			return settings;
 		}
+
+		// Export class
+		window.BITSMIST.v1[className] = component;
 
 		// Define tag
 		if (tagName)
