@@ -177,7 +177,7 @@ Component.prototype.start = function(settings)
 			"SettingOrganizer":		{"settings":{"attach":true}},
 			"StateOrganizer":		{"settings":{"attach":true}},
 			"EventOrganizer":		{"settings":{"attach":true}},
-			"AutoloadOrganizer":	{"settings":{"attach":true}},
+			"LoaderOrganizer":		{"settings":{"attach":true}},
 			"TemplateOrganizer":	{"settings":{"attach":true}},
 		}
 	};
@@ -258,6 +258,13 @@ Component.prototype.switchTemplate = function(templateName, options)
 	}).then(() => {
 		return this.applyTemplate(templateName);
 	}).then(() => {
+		// Setup
+		let autoSetup = this.settings.get("settings.autoSetup");
+		if (autoSetup)
+		{
+			return this.setup(this.settings.items);
+		}
+
 		this.hideConditionalElements();
 	}).then(() => {
 		return this.callOrganizers("afterAppend", this.settings.items);
@@ -494,12 +501,14 @@ Component.prototype._preStart = function()
 		{
 			return this.switchTemplate(this.settings.get("settings.templateName"));
 		}
-	}).then(() => {
-		// Setup
-		let autoSetup = this.settings.get("settings.autoSetup");
-		if (autoSetup)
+		else
 		{
-			return this.setup(this.settings.items);
+			// Setup
+			let autoSetup = this.settings.get("settings.autoSetup");
+			if (autoSetup)
+			{
+				return this.setup(this.settings.items);
+			}
 		}
 	}).then(() => {
 		// Refresh
