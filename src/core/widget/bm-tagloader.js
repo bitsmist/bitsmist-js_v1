@@ -8,7 +8,7 @@
  */
 // =============================================================================
 
-import AutoloadOrganizer from "../organizer/autoload-organizer.js";
+import LoaderOrganizer from "../organizer/loader-organizer.js";
 import ClassUtil from "../util/class-util.js";
 import Component from "../component.js";
 import Util from "../util/util.js";
@@ -60,12 +60,12 @@ TagLoader.prototype.start = function(settings)
 	return BITSMIST.v1.Component.prototype.start.call(this, settings).then(() => {
 		if (document.readyState !== "loading")
 		{
-			AutoloadOrganizer.load(document.body, this.settings);
+			LoaderOrganizer.load(document.body, this.settings);
 		}
 		else
 		{
 			document.addEventListener("DOMContentLoaded", () => {
-				AutoloadOrganizer.load(document.body, this.settings);
+				LoaderOrganizer.load(document.body, this.settings);
 			});
 		}
 	});
