@@ -9,7 +9,6 @@
 // =============================================================================
 
 import Organizer from "./organizer";
-import OrganizerStore from "../store/organizer-store";
 import Util from "../util/util";
 
 // =============================================================================
@@ -41,9 +40,11 @@ export default class OrganizerOrganizer extends Organizer
 		targetClass.prototype.clearOrganizers = function(condition, settings) { return OrganizerOrganizer._clearOrganizers(this, condition, settings); }
 
 		// Init vars
-		OrganizerOrganizer.__organizers = new OrganizerStore();
+		OrganizerOrganizer._organizers = {};
+		OrganizerOrganizer._targetWords = {};
+
 		Object.defineProperty(OrganizerOrganizer, "organizers", {
-			get() { return OrganizerOrganizer.__organizers; },
+			get() { return OrganizerOrganizer._organizers; },
 		});
 
 	}
@@ -83,6 +84,38 @@ export default class OrganizerOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Register an organizer.
+	 *
+	 * @param	{String}		key					Key to store.
+	 * @param	{Object}		value				Value to store.
+	 */
+	static register(key, value)
+	{
+
+		// Assert
+		value = Object.assign({}, value);
+		value["name"] = ( value["name"] ? value["name"] : key );
+		value["targetWords"] = ( value["targetWords"] ? value["targetWords"] : [] );
+		value["targetWords"] = ( Array.isArray(value["targetWords"]) ? value["targetWords"] : [value["targetWords"]] );
+		value["targetEvents"] = ( value["targetEvents"] ? value["targetEvents"] : [] );
+		value["targetEvents"] = ( Array.isArray(value["targetEvents"]) ? value["targetEvents"] : [value["targetEvents"]] );
+
+		OrganizerOrganizer._organizers[key] = value;
+
+		// Global init
+		value["object"].globalInit(value["targetClassName"]);
+
+		// Create target index
+		for (let i = 0; i < value["targetWords"].length; i++)
+		{
+			OrganizerOrganizer._targetWords[value["targetWords"][i]] = value;
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Add target words/events to oragnizer's settings.
 	 *
 	 * @param	{String}		organizerName		Organizer name.
@@ -94,7 +127,7 @@ export default class OrganizerOrganizer extends Organizer
 	static addTarget(organizerName, targetName, targets)
 	{
 
-		let organizer = OrganizerOrganizer.organizers.get(organizerName);
+		let organizer = OrganizerOrganizer._organizers[organizerName];
 
 		let ret1 = Util.warn(organizer, `Organizer not found. organizerName=${organizerName}`);
 		let ret2 = Util.warn(["targetEvents", "targetWords"].indexOf(targetName) > -1, `Target name is invalid. targetName=${targetName}`);
@@ -131,17 +164,17 @@ export default class OrganizerOrganizer extends Organizer
 				if (
 					Util.safeGet(organizers[key], "settings.attach") &&
 					!component._organizers[key] &&
-					OrganizerOrganizer.__organizers.get(key)
+					OrganizerOrganizer._organizers[key]
 				)
 				{
-					targets[key] = OrganizerOrganizer.__organizers.items[key];
+					targets[key] = OrganizerOrganizer._organizers[key];
 				}
 			});
 		}
 
 		// List new organizers from settings keyword
 		Object.keys(settings).forEach((key) => {
-			let organizerInfo = OrganizerOrganizer.__organizers.getOrganizerInfoByTargetWords(key);
+			let organizerInfo = OrganizerOrganizer._targetWords[key];
 			if (organizerInfo)
 			{
 				if (!component._organizers[organizerInfo.name])
@@ -154,7 +187,7 @@ export default class OrganizerOrganizer extends Organizer
 		// Add and init new organizers
 		OrganizerOrganizer._sortItems(targets).forEach((key) => {
 			chain = chain.then(() => {
-				component._organizers[key] = Object.assign({}, OrganizerOrganizer.__organizers.items[key], Util.safeGet(settings, "organizers." + key));
+				component._organizers[key] = Object.assign({}, OrganizerOrganizer._organizers[key], Util.safeGet(settings, "organizers." + key));
 				return component._organizers[key].object.init(component, settings);
 			});
 		});
