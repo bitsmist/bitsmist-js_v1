@@ -159,8 +159,8 @@ export default class ComponentOrganizer extends Organizer
 			let autoLoad = Util.safeGet(settings, "settings.autoLoad", component.settings.get("system.autoLoad", true));
 			let splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
 			let options = { "autoLoad":autoLoad, "splitComponent":splitComponent };
-			let loader = component.getDefaultLoader();
-			return loader.loadComponent(className, path, settings, options, tagName);
+
+			return component.getLoader().loadComponent(className, path, settings, options, tagName);
 		}).then(() => {
 			// Insert tag
 			if (Util.safeGet(settings, "settings.rootNode") && !component._components[componentName])

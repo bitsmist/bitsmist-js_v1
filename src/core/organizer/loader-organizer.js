@@ -30,7 +30,7 @@ export default class LoaderOrganizer extends Organizer
 	{
 
 		// Add methods
-		BITSMIST.v1.Component.prototype.getDefaultLoader = function() { return LoaderOrganizer._getDefaultLoader(this); }
+		BITSMIST.v1.Component.prototype.getLoader = function() { return LoaderOrganizer.getLoader(this.settings.get("settings.loaderName")); }
 
 		// Init vars
 		LoaderOrganizer._classes = new Store();
@@ -44,7 +44,7 @@ export default class LoaderOrganizer extends Organizer
 		document.addEventListener("DOMContentLoaded", () => {
 			if (BITSMIST.v1.settings.get("organizers.LoaderOrgaznier.settings.autoLoadOnStartup", true))
 			{
-				LoaderOrganizer._load(document.body, BITSMIST.v1.settings, {"waitForTags":false}, LoaderOrganizer._getDefaultGlobalLoader());
+				LoaderOrganizer._load(document.body, BITSMIST.v1.settings, {"waitForTags":false}, LoaderOrganizer.getLoader(BITSMIST.v1.settings.get("system.loaderName")));
 			}
 		});
 
@@ -81,7 +81,7 @@ export default class LoaderOrganizer extends Organizer
 		switch (conditions)
 		{
 			case "afterAppend":
-				let loader = component.getDefaultLoader();
+				let loader = component.getLoader();
 				return LoaderOrganizer._load(component.rootElement, component.settings, component.settings.get("settings"), loader);
 				break;
 		}
@@ -107,11 +107,37 @@ export default class LoaderOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Get a loader.
+	 *
+	 * @param	{String}		loaderName			Loader name.
+	 *
+	 * @return 	{Function}		Loader.
+	 */
+	static getLoader(loaderName)
+	{
+
+		loaderName = ( loaderName ? loaderName : "DefaultLoader" );
+		Util.assert(LoaderOrganizer.loaders[loaderName], `Loader doesn't exist. loaderName=${loaderName}`);
+
+		return LoaderOrganizer._loaders[loaderName].object;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Load all tags.
+	 *
+	 * @param	{String}		rootNode			Root node.
+	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Load options.
+	 * @param	{Function}		loader				Component loader.
+	 *
+	 * @return 	{Promise}		Promise.
 	 */
 	static _load(rootNode, settings, options, loader)
 	{
@@ -121,46 +147,6 @@ export default class LoaderOrganizer extends Organizer
 		let waitForTags = Util.safeGet(options, "waitForTags", settings.get("system.waitForTags", true));
 
 		return loader.loadTags(rootNode, path, {"splitComponent":splitComponent, "waitForTags":waitForTags}, loader);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static _getDefaultLoader(component)
-	{
-
-		let loader;
-
-		if (component.settings.get("settings.loader"))
-		{
-			loader = LoaderOrganizer._loaders[component.settings.get("settings.loader")].object;
-		}
-		else
-		{
-			loader = LoaderOrganizer._loaders["DefaultLoader"].object;
-		}
-
-		return loader;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static _getDefaultGlobalLoader(component)
-	{
-
-		let loader;
-
-		if (BITSMIST.v1.settings.get("system.loader"))
-		{
-			loader = LoaderOrganizer._loaders[BITSMIST.v1.settings.get("system.loader")].object;
-		}
-		else
-		{
-			loader = LoaderOrganizer._loaders["DefaultLoader"].object;
-		}
-
-		return loader;
 
 	}
 
