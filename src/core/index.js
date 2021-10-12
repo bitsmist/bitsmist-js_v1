@@ -54,6 +54,7 @@ window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 
 import DefaultLoader from "./loader/default-loader.js";
 LoaderOrganizer.register("DefaultLoader", {"object":DefaultLoader});
+window.BITSMIST.v1.DefaultLoader = DefaultLoader;
 
 // Store
 
@@ -62,11 +63,6 @@ window.BITSMIST.v1.Store = Store;
 
 import ChainableStore from "./store/chainable-store.js";
 window.BITSMIST.v1.ChainableStore = ChainableStore;
-
-// Widget
-
-import SettingManager from "./widget/bm-setting.js";
-import TagLoader from "./widget/bm-tagloader.js";
 
 // Util
 
