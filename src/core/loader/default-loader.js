@@ -47,7 +47,7 @@ export default class DefaultLoader
 		targets.forEach((element) => {
 			element.setAttribute("bm-autoloading", "");
 
-			let loader = ( element.hasAttribute("bm-loader") ? LoaderOrganizer.loaders[element.getAttribute("bm-loader")].object : this);
+			let loader = ( element.hasAttribute("bm-loader") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loader")).object : this);
 			promises.push(loader.loadTag(element, basePath, options).then(() => {
 				element.removeAttribute("bm-autoloading");
 			}));
@@ -88,6 +88,8 @@ export default class DefaultLoader
 	 */
 	static loadTag(element, basePath, options)
 	{
+
+		console.debug(`Loading a tag. element=${element.tagName}`);
 
 		let href = element.getAttribute("bm-autoload");
 		let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
@@ -139,34 +141,29 @@ export default class DefaultLoader
 	{
 
 		let promise;
+		tagName = tagName.toLowerCase();
 
 		let morph = Util.safeGet(settings, "settings.autoMorph");
 		if (morph)
 		{
-			// Define empty class
-			console.debug(`Creating empty component. className=${className}, path=${path}, tagName=${tagName}`);
-
+			// Morphing
 			let superClass = ( morph === true ?  BITSMIST.v1.Component : ClassUtil.getClass(morph) );
-			if (!customElements.get(tagName.toLowerCase()))
-			{
-				ClassUtil.newComponent(superClass, settings, tagName, className);
-			}
+			console.debug(`Morphing component. className=${className}, superClassName=${superClass.name}, tagName=${tagName}`);
+
+			ClassUtil.newComponent(superClass, settings, tagName, className);
 		}
 		else
 		{
-			if (options["autoLoad"])
-			{
-				// Load component script
-				promise = this._autoloadComponent(className, path, settings, options);
-			}
+			// Loading
+			promise = this._autoloadComponent(className, path, settings, options);
 		}
 
 		return Promise.all([promise]).then(() => {
 			// Define tag if not defined yet
-			if (!customElements.get(tagName.toLowerCase()))
+			if (!customElements.get(tagName))
 			{
 				let newClass = ClassUtil.getClass(className);
-				customElements.define(tagName.toLowerCase(), newClass);
+				customElements.define(tagName, newClass);
 			}
 		});
 
@@ -188,7 +185,7 @@ export default class DefaultLoader
 
 		let ret = false;
 
-		if (LoaderOrganizer._classes.get(className, {})["state"] === "loaded")
+		if (DefaultLoader._classes.get(className, {})["state"] === "loaded")
 		{
 			ret = true;
 		}
@@ -226,23 +223,23 @@ export default class DefaultLoader
 		{
 			// Already loaded
 			console.debug(`Component Already exists. className=${className}`);
-			LoaderOrganizer._classes.set(className, {"state":"loaded"});
+			DefaultLoader._classes.set(className, {"state":"loaded"});
 			promise = Promise.resolve();
 		}
-		else if (LoaderOrganizer._classes.get(className, {})["state"] === "loading")
+		else if (DefaultLoader._classes.get(className, {})["state"] === "loading")
 		{
 			// Already loading
 			console.debug(`Component Already loading. className=${className}`);
-			promise = LoaderOrganizer._classes.get(className)["promise"];
+			promise = DefaultLoader._classes.get(className)["promise"];
 		}
 		else
 		{
 			// Not loaded
-			LoaderOrganizer._classes.set(className, {"state":"loading"});
+			DefaultLoader._classes.set(className, {"state":"loading"});
 			promise = this._loadComponentScript(fileName, path, options).then(() => {
-				LoaderOrganizer._classes.set(className, {"state":"loaded", "promise":null});
+				DefaultLoader._classes.set(className, {"state":"loaded", "promise":null});
 			});
-			LoaderOrganizer._classes.set(className, {"promise":promise});
+			DefaultLoader._classes.set(className, {"promise":promise});
 		}
 
 		return promise;
@@ -282,3 +279,6 @@ export default class DefaultLoader
 	}
 
 }
+
+// Init
+DefaultLoader._classes = new Store();
