@@ -33,7 +33,6 @@ export default class LoaderOrganizer extends Organizer
 		BITSMIST.v1.Component.prototype.getLoader = function() { return LoaderOrganizer.getLoader(this.settings.get("settings.loaderName")); }
 
 		// Init vars
-		LoaderOrganizer._classes = new Store();
 		LoaderOrganizer._loaders = {};
 		Object.defineProperty(LoaderOrganizer, "loaders", {
 			get() { return LoaderOrganizer._loaders; },
@@ -146,7 +145,7 @@ export default class LoaderOrganizer extends Organizer
 		let splitComponent = Util.safeGet(options, "splitComponent", settings.get("system.splitComponent", false));
 		let waitForTags = Util.safeGet(options, "waitForTags", settings.get("system.waitForTags", true));
 
-		return loader.loadTags(rootNode, path, {"splitComponent":splitComponent, "waitForTags":waitForTags}, loader);
+		return loader.loadTags(rootNode, path, {"splitComponent":splitComponent, "waitForTags":waitForTags});
 
 	}
 
