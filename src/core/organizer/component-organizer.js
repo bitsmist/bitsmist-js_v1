@@ -156,9 +156,8 @@ export default class ComponentOrganizer extends Organizer
 
 		return Promise.resolve().then(() => {
 			// Load component
-			let autoLoad = Util.safeGet(settings, "settings.autoLoad", component.settings.get("system.autoLoad", true));
 			let splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
-			let options = { "autoLoad":autoLoad, "splitComponent":splitComponent };
+			let options = { "splitComponent":splitComponent };
 
 			return component.getLoader().loadComponent(className, path, settings, options, tagName);
 		}).then(() => {
@@ -174,6 +173,7 @@ export default class ComponentOrganizer extends Organizer
 				sync = sync || Util.safeGet(settings, "settings.sync"); // sync precedes settings["sync"]
 				let state = (sync === true ? "started" : sync);
 				let c = className.split(".");
+
 				return component.waitFor([{"name":c[c.length - 1], "state":state}]);
 			}
 		});
