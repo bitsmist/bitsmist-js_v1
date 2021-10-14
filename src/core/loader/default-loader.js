@@ -482,8 +482,6 @@ export default class DefaultLoader
 		// Get path from  bm-autoload
 		if (component.getAttribute("bm-autoload"))
 		{
-			console.log("@@@@loading autoload", component.name, component.getAttribute("bm-autoload"));
-
 			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
 			component._settings.set("system.appBaseUrl", "");
 			component._settings.set("system.templatePath", arr[0]);
@@ -502,7 +500,6 @@ export default class DefaultLoader
 		// Get path from attribute
 		if (component.hasAttribute("bm-path"))
 		{
-			console.log("@@@@loading path", component.name, component.getAttribute("bm-path"));
 			component._settings.set("settings.path", component.getAttribute("bm-path"));
 		}
 
