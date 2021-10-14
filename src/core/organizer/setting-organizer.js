@@ -67,86 +67,28 @@ export default class SettingOrganizer extends Organizer
 		}
 
 		return Promise.resolve().then(() => {
-			// Load external settings
-			return SettingOrganizer.__loadExternalSettings(component, "setting");
-		}).then((extraSettings) => {
-			if (extraSettings)
-			{
-				component._settings.merge(extraSettings);
-			}
-
+			// Load settings from an external file.
+			return SettingOrganizer._loadExternalSetting(component, "setting");
+		}).then(() => {
 			// Load settings from attributes
-			SettingOrganizer.__loadAttrSettings(component);
+			SettingOrganizer._loadAttrSettings(component);
 		});
 
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Load setting file.
-	 *
-	 * @param	{String}		settingName			Setting name.
-	 * @param	{String}		path				Path to setting file.
-	 * @param	{String}		path				Type of setting file.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static loadSetting(component, settingName, path, type)
-	{
-
-		type = type || "js";
-		let url = Util.concatPath([path, settingName + "." + type]);
-		let settings;
-
-		console.debug(`SettingOrganizer.loadSetting(): Loading settings. name=${component.name}, url=${url}`);
-
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SettingOrganizer.loadSetting(): Loaded settings. name=${component.name}, url=${url}`);
-
-			switch (type)
-			{
-			case "json":
-				try
-				{
-					settings = JSON.parse(xhr.responseText);
-				}
-				catch(e)
-				{
-					if (e instanceof SyntaxError)
-					{
-						throw new SyntaxError(`Illegal json string. url=${url}, message=${e.message}`);
-					}
-					else
-					{
-						throw e;
-					}
-				}
-				break;
-			case "js":
-			default:
-				settings = Function('"use strict";return (' + xhr.responseText + ')').call(component);
-				break;
-			}
-
-			return settings;
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Privates
+	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load an external setting file.
+	 * Load a setting file.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		settingName			Setting name.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __loadExternalSettings(component, settingName)
+	static _loadExternalSetting(component, settingName)
 	{
 
 		let name, path;
@@ -169,44 +111,20 @@ export default class SettingOrganizer extends Organizer
 
 		if (name || path)
 		{
-			return SettingOrganizer.loadSetting(component, name, path);
+			return component.loadSetting(name, {"path":path});
 		}
 
 	}
 
-	// -----------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Get settings from element's attribute.
 	 *
 	 * @param	{Component}		component			Component.
 	 */
-	static __loadAttrSettings(component)
+	static _loadAttrSettings(component)
 	{
-
-		// Get path from  bm-autoload
-		if (component.getAttribute("bm-autoload"))
-		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
-			component._settings.set("system.appBaseUrl", "");
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("system.componentPath", arr[0]);
-			component._settings.set("settings.path", "");
-			if (arr[1].slice(-3).toLowerCase() === ".js")
-			{
-				component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 3));
-			}
-			else if (arr[1].slice(-5).toLowerCase() === ".html")
-			{
-				component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 5));
-			}
-		}
-
-		// Get path from attribute
-		if (component.hasAttribute("bm-path"))
-		{
-			component._settings.set("settings.path", component.getAttribute("bm-path"));
-		}
 
 		// Get settings from the attribute
 

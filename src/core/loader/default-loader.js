@@ -26,6 +26,23 @@ export default class DefaultLoader
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Init.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static init(component, options)
+	{
+
+		this._loadAttrSettings(component);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Load scripts for tags which has bm-autoload attribute.
 	 *
 	 * @param	{Component}		component			Component.
@@ -107,7 +124,7 @@ export default class DefaultLoader
 		if (href)
 		{
 			let arr = Util.getFilenameAndPathFromUrl(href);
-			settings["settings"]["path"] = arr[0];
+			loadOptions["path"] = arr[0];
 			if (href.slice(-3).toLowerCase() === ".js")
 			{
 				settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
@@ -141,14 +158,15 @@ export default class DefaultLoader
 
 		console.debug(`Loading a component. name=${component.name}, className=${className}, tagName=${tagName}`);
 
-		let promise;
 		tagName = tagName.toLowerCase();
-
-		let path = Util.concatPath([
-			component.settings.get("system.appBaseUrl", ""),
-			component.settings.get("system.componentPath", ""),
-			Util.safeGet(settings, "settings.path"),
-		]);
+		let promise;
+		let path = Util.safeGet(options, "path",
+			Util.concatPath([
+				component.settings.get("system.appBaseUrl", ""),
+				component.settings.get("system.componentPath", ""),
+				Util.safeGet(settings, "settings.path"),
+			])
+		);
 
 		// Check if the tag is already defined
 		if (customElements.get(tagName))
@@ -213,7 +231,7 @@ export default class DefaultLoader
 			break;
 		case "url":
 		default:
-			promise = DefaultLoader._loadTemplateFile(component, templateInfo["name"]).then((template) => {
+			promise = this._loadTemplateFile(component, templateInfo["name"], options).then((template) => {
 				templateInfo["html"] = template;
 			});
 			break;
@@ -221,6 +239,94 @@ export default class DefaultLoader
 
 		return promise.then(() => {
 			templateInfo["isLoaded"] = true;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get a template html according to settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		settingName			Setting name.
+	 * @param	{Object}		options				Load options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static loadSetting(component, settingName, options)
+	{
+
+		let path;
+		return Promise.resolve().then(() => {
+			path = Util.safeGet(options, "path",
+				Util.concatPath([
+					component.settings.get("system.appBaseUrl", ""),
+					component.settings.get("system.componentPath", ""),
+					component.settings.get("settings.componentPath", ""),
+				])
+			);
+
+			return this.loadSettingFile(component, settingName, path, "js");
+		}).then((extraSettings) => {
+			if (extraSettings)
+			{
+				component.settings.merge(extraSettings);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load setting file.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		settingName			Setting name.
+	 * @param	{String}		path				Path to setting file.
+	 * @param	{String}		type				Type of setting file.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadSettingFile(component, settingName, path, type)
+	{
+
+		type = type || "js";
+		let url = Util.concatPath([path, settingName + "." + type]);
+		let settings;
+
+		console.debug(`Loading settings. name=${component.name}, url=${url}`);
+
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			console.debug(`Loaded settings. name=${component.name}, url=${url}`);
+
+			switch (type)
+			{
+			case "json":
+				try
+				{
+					settings = JSON.parse(xhr.responseText);
+				}
+				catch(e)
+				{
+					if (e instanceof SyntaxError)
+					{
+						throw new SyntaxError(`Illegal json string. url=${url}, message=${e.message}`);
+					}
+					else
+					{
+						throw e;
+					}
+				}
+				break;
+			case "js":
+			default:
+				settings = Function('"use strict";return (' + xhr.responseText + ')').call(component);
+				break;
+			}
+
+			return settings;
 		});
 
 	}
@@ -360,6 +466,45 @@ export default class DefaultLoader
 
 			return xhr.responseText;
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get settings from element's attribute.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static _loadAttrSettings(component)
+	{
+
+		// Get path from  bm-autoload
+		if (component.getAttribute("bm-autoload"))
+		{
+			console.log("@@@@loading autoload", component.name, component.getAttribute("bm-autoload"));
+
+			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
+			component._settings.set("system.appBaseUrl", "");
+			component._settings.set("system.templatePath", arr[0]);
+			component._settings.set("system.componentPath", arr[0]);
+			component._settings.set("settings.path", "");
+			if (arr[1].slice(-3).toLowerCase() === ".js")
+			{
+				component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 3));
+			}
+			else if (arr[1].slice(-5).toLowerCase() === ".html")
+			{
+				component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 5));
+			}
+		}
+
+		// Get path from attribute
+		if (component.hasAttribute("bm-path"))
+		{
+			console.log("@@@@loading path", component.name, component.getAttribute("bm-path"));
+			component._settings.set("settings.path", component.getAttribute("bm-path"));
+		}
 
 	}
 
