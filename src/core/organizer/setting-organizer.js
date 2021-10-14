@@ -66,22 +66,6 @@ export default class SettingOrganizer extends Organizer
 			component._settings.chain(SettingOrganizer.globalSettings);
 		}
 
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Organize.
-	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static organize(conditions, component, settings)
-	{
-
 		return Promise.resolve().then(() => {
 			// Load external settings
 			return SettingOrganizer.__loadExternalSettings(component, "setting");
@@ -208,6 +192,14 @@ export default class SettingOrganizer extends Organizer
 			component._settings.set("system.templatePath", arr[0]);
 			component._settings.set("system.componentPath", arr[0]);
 			component._settings.set("settings.path", "");
+			if (arr[1].slice(-3).toLowerCase() === ".js")
+			{
+				component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 3));
+			}
+			else if (arr[1].slice(-5).toLowerCase() === ".html")
+			{
+				component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 5));
+			}
 		}
 
 		// Get path from attribute
