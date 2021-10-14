@@ -31,11 +31,13 @@ export default class LoaderOrganizer extends Organizer
 	{
 
 		// Add methods
-		BITSMIST.v1.Component.prototype.getLoader = function(loaderName) { return LoaderOrganizer._getLoader(this, loaderName); }
+		BITSMIST.v1.Component.prototype.getLoader = function(...args) { return LoaderOrganizer._getLoader(this, ...args); }
 		BITSMIST.v1.Component.prototype.loadTags = function(...args) { return this.getLoader().loadTags(this, ...args); }
 		BITSMIST.v1.Component.prototype.loadTag = function(...args) { return this.getLoader().loadTag(this, ...args); }
 		BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return this.getLoader().loadComponent(this, ...args); }
 		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this.getLoader().loadTemplate(this, ...args); }
+		BITSMIST.v1.Component.prototype.loadSetting = function(...args) { return this.getLoader().loadSetting(this, ...args); }
+		BITSMIST.v1.Component.prototype.loadSettingFile = function(...args) { return this.getLoader().loadSettingFile(this, ...args); }
 
 		// Init vars
 		LoaderOrganizer._loaders = {};
@@ -81,6 +83,9 @@ export default class LoaderOrganizer extends Organizer
 	 */
 	static init(component, settings)
 	{
+
+		component.getLoader().init(component);
+
 	}
 
 	// -------------------------------------------------------------------------
