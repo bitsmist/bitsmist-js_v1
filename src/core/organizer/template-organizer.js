@@ -67,9 +67,6 @@ export default class TemplateOrganizer extends Organizer
 			component.settings.set("settings.templateName", templateName);
 		}
 
-		// Load settings from attributes
-		TemplateOrganizer.__loadAttrSettings(component);
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -310,40 +307,6 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		return component._templates[templateName];
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Get settings from element's attribute.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static __loadAttrSettings(component)
-	{
-
-		/*
-		// Get template path from attribute
-		if (component.hasAttribute("bm-templatepath"))
-		{
-			component.settings.set("system.templatePath", component.getAttribute("bm-templatepath"));
-		}
-
-		// Get template name from attribute
-		if (component.hasAttribute("bm-templatename"))
-		{
-			component.settings.set("templateName", component.getAttribute("bbmmplatename"));
-		}
-
-		// Get template ref from templateref
-		if (component.hasAttribute("bm-templateref"))
-		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-templateref"));
-			component.settings.set("system.templatePath", arr[0]);
-			component.settings.set("templateName", arr[1].replace(".html", ""));
-		}
-		*/
 
 	}
 
