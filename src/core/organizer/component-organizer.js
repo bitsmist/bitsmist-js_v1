@@ -146,11 +146,6 @@ export default class ComponentOrganizer extends Organizer
 
 		console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
 
-		let path = Util.concatPath([
-			component.settings.get("system.appBaseUrl", ""),
-			component.settings.get("system.componentPath", ""),
-			Util.safeGet(settings, "settings.path", "")
-		]);
 		let className = Util.safeGet(settings, "settings.className") || componentName;
 		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
 
@@ -159,7 +154,7 @@ export default class ComponentOrganizer extends Organizer
 			let splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
 			let options = { "splitComponent":splitComponent };
 
-			return component.getLoader().loadComponent(className, path, settings, options, tagName);
+			return component.loadComponent(className, settings, options, tagName);
 		}).then(() => {
 			// Insert tag
 			if (Util.safeGet(settings, "settings.rootNode") && !component._components[componentName])
