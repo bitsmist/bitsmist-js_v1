@@ -488,8 +488,6 @@ Component.prototype._preStart = function()
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
 	}).then(() => {
-		return SettingOrganizer.organize("beforeStart", this, this.settings.items);
-	}).then(() => {
 		return this.addOrganizers(this.settings.items);
 	}).then(() => {
 		return this.callOrganizers("beforeStart", this.settings.items);
@@ -550,6 +548,9 @@ Component.prototype._postStart = function()
  */
 Component.prototype._adjustSettings = function()
 {
+
+	// root element
+	this._rootElement = this.settings.get("settings.rootElement", this);
 
 	// Overwrite name if specified
 	let name = this.settings.get("settings.name");
