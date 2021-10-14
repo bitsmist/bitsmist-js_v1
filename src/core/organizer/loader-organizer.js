@@ -9,6 +9,7 @@
 // =============================================================================
 
 import Organizer from "./organizer.js";
+import ClassUtil from "../util/class-util.js";
 import Store from "../store/store.js";
 import Util from "../util/util.js";
 
@@ -30,7 +31,11 @@ export default class LoaderOrganizer extends Organizer
 	{
 
 		// Add methods
-		BITSMIST.v1.Component.prototype.getLoader = function() { return LoaderOrganizer.getLoader(this.settings.get("settings.loaderName")); }
+		BITSMIST.v1.Component.prototype.getLoader = function(loaderName) { return LoaderOrganizer._getLoader(this, loaderName); }
+		BITSMIST.v1.Component.prototype.loadTags = function(...args) { return this.getLoader().loadTags(this, ...args); }
+		BITSMIST.v1.Component.prototype.loadTag = function(...args) { return this.getLoader().loadTag(this, ...args); }
+		BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return this.getLoader().loadComponent(this, ...args); }
+		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this.getLoader().loadTemplate(this, ...args); }
 
 		// Init vars
 		LoaderOrganizer._loaders = {};
@@ -43,7 +48,22 @@ export default class LoaderOrganizer extends Organizer
 		document.addEventListener("DOMContentLoaded", () => {
 			if (BITSMIST.v1.settings.get("organizers.LoaderOrgaznier.settings.autoLoadOnStartup", true))
 			{
-				LoaderOrganizer._load(document.body, BITSMIST.v1.settings, {"waitForTags":false}, LoaderOrganizer.getLoader(BITSMIST.v1.settings.get("system.loaderName")));
+				// Create dummy component for loading tags.
+				ClassUtil.newComponent(BITSMIST.v1.Component, {
+					"settings": {
+						"autoRefresh":				false,
+						"autoSetup":				false,
+						"hasTemplate":				false,
+						"rootElement":				document.body,
+					},
+				}, "bm-app", "BmApp");
+				let component = document.createElement("bm-app");
+
+				// Load tags
+				component.start().then(() => {
+					let loader = component.getLoader(BITSMIST.v1.settings.get("system.loaderName"));
+					loader.loadTags(component, component.rootElement, {"waitForTags":false});
+				});
 			}
 		});
 
@@ -80,8 +100,7 @@ export default class LoaderOrganizer extends Organizer
 		switch (conditions)
 		{
 			case "afterAppend":
-				let loader = component.getLoader();
-				return LoaderOrganizer._load(component.rootElement, component.settings, component.settings.get("settings"), loader);
+				return component.loadTags(component.rootElement);
 				break;
 		}
 
@@ -106,46 +125,24 @@ export default class LoaderOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Get a loader.
-	 *
-	 * @param	{String}		loaderName			Loader name.
-	 *
-	 * @return 	{Function}		Loader.
-	 */
-	static getLoader(loaderName)
-	{
-
-		loaderName = ( loaderName ? loaderName : "DefaultLoader" );
-		Util.assert(LoaderOrganizer.loaders[loaderName], `Loader doesn't exist. loaderName=${loaderName}`);
-
-		return LoaderOrganizer._loaders[loaderName].object;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load all tags.
+	 * Get a loader.
 	 *
-	 * @param	{String}		rootNode			Root node.
-	 * @param	{Object}		settings			Settings.
-	 * @param	{Object}		options				Load options.
-	 * @param	{Function}		loader				Component loader.
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		loaderName			Loader name.
 	 *
-	 * @return 	{Promise}		Promise.
+	 * @return 	{Function}		Loader.
 	 */
-	static _load(rootNode, settings, options, loader)
+	static _getLoader(component, loaderName)
 	{
 
-		let path = Util.concatPath([settings.get("system.appBaseUrl", ""), settings.get("system.componentPath", "")]);
-		let splitComponent = Util.safeGet(options, "splitComponent", settings.get("system.splitComponent", false));
-		let waitForTags = Util.safeGet(options, "waitForTags", settings.get("system.waitForTags", true));
+		loaderName = ( loaderName ? loaderName : component.settings.get("settings.loaderName", "DefaultLoader") );
+		Util.assert(LoaderOrganizer.loaders[loaderName], `Loader doesn't exist. loaderName=${loaderName}`);
 
-		return loader.loadTags(rootNode, path, {"splitComponent":splitComponent, "waitForTags":waitForTags});
+		return LoaderOrganizer._loaders[loaderName].object;
 
 	}
 
