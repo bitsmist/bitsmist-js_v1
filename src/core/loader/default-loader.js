@@ -28,16 +28,16 @@ export default class DefaultLoader
 	/**
 	 * Load scripts for tags which has bm-autoload attribute.
 	 *
+	 * @param	{Component}		component			Component.
 	 * @param	{HTMLElement}	rootNode			Target node.
-	 * @param	{String}		basePath			Base path prepend to each element's path.
 	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadTags(rootNode, basePath, options)
+	static loadTags(component, rootNode, options)
 	{
 
-		console.debug(`Loading tags. rootNode=${rootNode.tagName}, basePath=${basePath}`);
+		console.debug(`Loading tags. name=${component.name}, rootNode=${rootNode.tagName}`);
 
 		let promises = [];
 		let waitList = [];
@@ -48,7 +48,7 @@ export default class DefaultLoader
 			element.setAttribute("bm-autoloading", "");
 
 			let loader = ( element.hasAttribute("bm-loader") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loader")).object : this);
-			promises.push(loader.loadTag(element, basePath, options).then(() => {
+			promises.push(loader.loadTag(component, element, options).then(() => {
 				element.removeAttribute("bm-autoloading");
 			}));
 		});
@@ -80,32 +80,34 @@ export default class DefaultLoader
 	/**
 	 * Load a tag.
 	 *
+	 * @param	{Component}		component			Component.
 	 * @param	{HTMLElement}	element				Target element.
-	 * @param	{String}		basePath			Base path prepend to each element's path.
 	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadTag(element, basePath, options)
+	static loadTag(component, element, options)
 	{
 
-		console.debug(`Loading a tag. element=${element.tagName}`);
+		console.debug(`Loading a tag. name=${component.name}, element=${element.tagName}`);
 
+		// Get settings from attributes
 		let href = element.getAttribute("bm-autoload");
 		let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
 		let path = element.getAttribute("bm-path") || "";
-		let split = ( element.hasAttribute("bm-split") ? true : options["splitComponent"] );
+		let split = Util.safeGet(options, "splitComponent", component.settings.get("system.splitComponent", false));
 		let morph = ( element.hasAttribute("bm-automorph") ?
 			( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
 			false
 		);
-		let settings = {"settings":{"autoMorph":morph}};
-		let loadOptions = {"splitComponent":split, "autoLoad": true};
+		let settings = {"settings":{"autoMorph":morph, "path":path}};
+		let loadOptions = {"splitComponent":split};
 
+		// Override path,fileName,autoMorph when bm-autoload is set
 		if (href)
 		{
 			let arr = Util.getFilenameAndPathFromUrl(href);
-			path = arr[0];
+			settings["settings"]["path"] = arr[0];
 			if (href.slice(-3).toLowerCase() === ".js")
 			{
 				settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
@@ -113,14 +115,11 @@ export default class DefaultLoader
 			else if (href.slice(-5).toLowerCase() === ".html")
 			{
 				settings["settings"]["autoMorph"] = true;
+				settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
 			}
 		}
-		else
-		{
-			path = Util.concatPath([basePath, path]);
-		}
 
-		return this.loadComponent(className, path, settings, loadOptions, element.tagName);
+		return this.loadComponent(component, className, settings, loadOptions, element.tagName);
 
 	}
 
@@ -129,19 +128,34 @@ export default class DefaultLoader
 	/**
 	 * Load a component.
 	 *
+	 * @param	{Component}		component			Component.
 	 * @param	{String}		className			Class name.
-	 * @param	{String}		path				Path to component.
 	 * @param	{Object}		settings			Component settings.
 	 * @param	{Object}		options				Load options.
 	 * @param	{String}		tagName				Component's tag name
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadComponent(className, path, settings, options, tagName)
+	static loadComponent(component, className, settings, options, tagName)
 	{
+
+		console.debug(`Loading a component. name=${component.name}, className=${className}, tagName=${tagName}`);
 
 		let promise;
 		tagName = tagName.toLowerCase();
+
+		let path = Util.concatPath([
+			component.settings.get("system.appBaseUrl", ""),
+			component.settings.get("system.componentPath", ""),
+			Util.safeGet(settings, "settings.path"),
+		]);
+
+		// Check if the tag is already defined
+		if (customElements.get(tagName))
+		{
+			console.debug(`Tag already defined. className=${className}, tagName=${tagName}`);
+			return Promise.resolve();
+		}
 
 		let morph = Util.safeGet(settings, "settings.autoMorph");
 		if (morph)
@@ -155,7 +169,8 @@ export default class DefaultLoader
 		else
 		{
 			// Loading
-			promise = this._autoloadComponent(className, path, settings, options);
+			let fileName = Util.safeGet(settings, "settings.fileName", tagName);
+			promise = this._autoloadComponent(className, fileName, path, options);
 		}
 
 		return Promise.all([promise]).then(() => {
@@ -165,6 +180,47 @@ export default class DefaultLoader
 				let newClass = ClassUtil.getClass(className);
 				customElements.define(tagName, newClass);
 			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get a template html according to settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		templateName		Template name.
+	 * @param	{Object}		options				Load options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static loadTemplate(component, templateName, options)
+	{
+
+		let promise;
+		let templateInfo = component._templates[templateName];
+		let settings = component.settings.get("templates." + templateName, {});
+
+		switch (settings["type"]) {
+		case "html":
+			templateInfo["html"] = settings["html"];
+			promise = Promise.resolve();
+			break;
+		case "node":
+			templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
+			promise = Promise.resolve();
+			break;
+		case "url":
+		default:
+			promise = DefaultLoader._loadTemplateFile(component, templateInfo["name"]).then((template) => {
+				templateInfo["html"] = template;
+			});
+			break;
+		}
+
+		return promise.then(() => {
+			templateInfo["isLoaded"] = true;
 		});
 
 	}
@@ -204,22 +260,20 @@ export default class DefaultLoader
 	 * Load the component if not loaded yet.
 	 *
 	 * @param	{String}		className			Component class name.
+	 * @param	{String}		fileName			Component file name.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		settings			Component settings.
 	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _autoloadComponent(className, path, settings, options)
+	static _autoloadComponent(className, fileName, path, options)
 	{
 
-		console.debug(`Auto loading component. className=${className}, path=${path}`);
+		console.debug(`Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
 
 		let promise;
-		let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
-		let fileName = Util.safeGet(settings, "settings.fileName", tagName);
 
-		if (this._isLoadedClass(className) || customElements.get(tagName))
+		if (this._isLoadedClass(className))
 		{
 			// Already loaded
 			console.debug(`Component Already exists. className=${className}`);
@@ -274,6 +328,37 @@ export default class DefaultLoader
 			}
 		}).then(() => {
 			console.debug(`Loaded script. fileName=${fileName}`);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the template html.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		templateName		Template name.
+	 * @param	{Object}		options				Load options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _loadTemplateFile(component, templateName, options)
+	{
+
+		console.debug(`Loading template. name=${component.name}, templateName=${templateName}`);
+
+		let path = Util.concatPath([
+			component.settings.get("system.appBaseUrl", ""),
+			component.settings.get("system.templatePath", ""),
+			component.settings.get("settings.path", ""),
+		]);
+
+		let url = Util.concatPath([path, templateName]) + ".html";
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			console.debug(`Loaded template. templateName=${templateName}, path=${path}`);
+
+			return xhr.responseText;
 		});
 
 	}
