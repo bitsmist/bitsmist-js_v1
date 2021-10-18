@@ -1910,8 +1910,6 @@
 		return Promise.resolve().then(function () {
 			return this$1$1._initStart(settings);
 		}).then(function () {
-			return Util.randomWait(2000);
-		}).then(function () {
 			return this$1$1._preStart();
 		}).then(function () {
 			if (this$1$1.settings.get("settings.autoPostStart"))
