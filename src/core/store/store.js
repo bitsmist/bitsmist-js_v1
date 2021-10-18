@@ -30,12 +30,10 @@ export default class Store
 	{
 
 		// Init vars
-		this._filter;
 		this._options = Object.assign({}, options);
 
 		// Init
 		this.items = Util.safeGet(this._options, "items");
-		this.filter = Util.safeGet(this._options, "filter", () => { return true; } );
 		this.merger = Util.safeGet(this._options, "merger", Util.deepMerge );
 
 	}
@@ -66,29 +64,6 @@ export default class Store
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Filter function.
-	 *
-	 * @type	{Function}
-	 */
-	get filter()
-	{
-
-		this._filter;
-
-	}
-
-	set filter(value)
-	{
-
-		Util.assert(typeof value === "function", `Store.filter(setter): Filter is not a function. filter=${value}`, TypeError);
-
-		this._filter = value;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Merge function.
 	 *
 	 * @type	{Function}
@@ -103,7 +78,7 @@ export default class Store
 	set merger(value)
 	{
 
-		Util.assert(typeof value === "function", `Store.merger(setter): Merger is not a function. filter=${value}`, TypeError);
+		Util.assert(typeof value === "function", `Store.merger(setter): Merger is not a function. merger=${value}`, TypeError);
 
 		this._merger = value;
 
