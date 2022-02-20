@@ -161,7 +161,7 @@ export default class EventOrganizer extends Organizer
 		}
 
 		// Register listener info
-		listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo, "order":order});
+		listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo});
 
 		// Stable sort by order
 		let order = Util.safeGet(handlerOptions, "order");
