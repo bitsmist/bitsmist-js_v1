@@ -15,564 +15,574 @@
 	//	Util class
 	// =============================================================================
 
-	var Util = function Util () {};
-
-	Util.safeGet = function safeGet (store, key, defaultValue)
+	class Util
 	{
 
-		var current = store;
-		var found = true;
-		var items = key.split(".");
-		for (var i = 0; i < items.length; i++)
-		{
-			if (current && typeof current === "object" && items[i] in current)
-			{
-				current = current[items[i]];
-			}
-			else
-			{
-				found = false;
-				break;
-			}
-		}
-
-		return ( found ? current : defaultValue);
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-		 * Set an value to store.
+		/**
+		 * Get an value from store. Return default value when specified key is not available.
 		 *
-		 * @param{Object}	store			Object that holds keys/values.
-		 * @param{String}	key				Key to store.
-		 * @param{Object}	value			Value to store.
+		 * @param	{Object}		store				Object that holds keys/values.
+		 * @param	{String}		key					Key to get.
+		 * @param	{Object}		defaultValue		Value returned when key is not found.
+		 *
+		 * @return  {*}				Value.
 		 */
-	Util.safeSet = function safeSet (store, key, value)
-	{
-
-		var current = store;
-		var items = key.split(".");
-		for (var i = 0; i < items.length - 1; i++)
+		static safeGet(store, key, defaultValue)
 		{
-			Util.assert(current && typeof current === "object",
-				("Util.safeSet(): Key already exists. key=" + key + ", existingKey=" + (( i > 0 ? items[i-1] : "" )) + ", existingValue=" + current), TypeError);
 
-			if (!(items[i] in current))
+			let current = store;
+			let found = true;
+			let items = key.split(".");
+			for (let i = 0; i < items.length; i++)
 			{
-				current[items[i]] = {};
-			}
-
-			current = current[items[i]];
-		}
-
-		current[items[items.length - 1]] = value;
-
-		return store;
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-		 * Set an value to store. Unlike safeSet() if both the existing value and
-		 * the value is an object, it merges them instead of overwrite it.
-		 *
-		 * @param{Object}	store			Object that holds keys/values.
-		 * @param{String}	key				Key to store.
-		 * @param{Object}	value			Value to store.
-		 */
-	Util.safeMerge = function safeMerge (store, key, value)
-	{
-
-		var current = store;
-		var items = key.split(".");
-		for (var i = 0; i < items.length - 1; i++)
-		{
-			Util.assert(current && typeof current === "object",
-				("Util.safeSet(): Key already exists. key=" + key + ", existingKey=" + (( i > 0 ? items[i-1] : "" )) + ", existingValue=" + current), TypeError);
-
-			if (!(items[i] in current))
-			{
-				current[items[i]] = {};
-			}
-
-			current = current[items[i]];
-		}
-
-		// Overwrite/Merge value
-		var lastWord = items[items.length - 1];
-		if (current[lastWord] && (typeof current[lastWord] === "object") && value && (typeof value === "object"))
-		{
-			Util.deepMerge(current[lastWord], value);
-		}
-		else
-		{
-			current[lastWord] = value;
-		}
-
-		return store;
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-		 * Check if the store has specified key.
-		 *
-		 * @param{Object}	store			Store.
-		 * @param{String}	key				Key to check.
-		 *
-		 * @return{Boolean}	True:exists, False:not exists.
-		 */
-	Util.safeHas = function safeHas (store, key)
-	{
-
-		var current = store;
-		var found = true;
-		var items = key.split(".");
-		for (var i = 0; i < items.length; i++)
-		{
-			if (current && typeof current === "object" && items[i] in current)
-			{
-				current = current[items[i]];
-			}
-			else
-			{
-				found = false;
-				break;
-			}
-		}
-
-		return found;
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 	 * Execute Javascript code from string.
-		 *
-		 * @param{String}	code			Code to execute.
-		 * @param{Object}	context			Context refered as "this" inside the code.
-		 * @param{Object}	parameters		Parameters passed to the code.
-		 *
-		 * @return{*}			Result of eval.
-		 */
-	Util.safeEval = function safeEval (code, context, parameters)
-	{
-
-		var names;
-		var values = [];
-
-		if (parameters)
-		{
-			names = Object.keys(parameters).join(",");
-			Object.keys(parameters).forEach(function (key) {
-				values.push(parameters[key]);
-			});
-		}
-
-		var ret = false;
-
-		try
-		{
-			ret = Function(names, '"use strict";return (' + code + ')').apply(context, values);
-		}
-		catch(e)
-		{
-			console.error(("Util.safeEval(): Exception occurred. code=" + code + ", error=" + e));
-		}
-
-		return ret;
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-		 * Concatenat path strings appending trainling "/" when needed.
-		 *
-		 * @param{Array}		paths			Paths.
-		 *
-		 * @return{String}	Concatenated paths
-		 */
-	Util.concatPath = function concatPath (paths)
-	{
-
-		var path = paths[0] || "";
-
-		for (var i = 1; i < paths.length; i++)
-		{
-			if (paths[i])
-			{
-				if (path.slice(path.length - 1) === "/" && paths[i].slice(0, 1) === "/")
+				if (current && typeof current === "object" && items[i] in current)
 				{
-					// "---/" and "/---"
-					// Remove an extra slash
-					path += paths[i].slice(1);
-				}
-				else if (path.slice(path.length - 1) === "/" || paths[i].slice(0, 1) === "/")
-				{
-					// "---/" or "/---"
-					// Just concat
-					path += paths[i];
-				}
-				else if (path)
-				{
-					// "---" + "---"
-					// Add an slash between
-					path += "/" + paths[i];
+					current = current[items[i]];
 				}
 				else
 				{
-					// "" + "---"
-					// First word, just accept
-					path = paths[i];
+					found = false;
+					break;
 				}
 			}
+
+			return ( found ? current : defaultValue);
+
 		}
 
-		return path;
+		// -----------------------------------------------------------------------------
 
-	};
+		/**
+		 * Set an value to store.
+		 *
+		 * @param	{Object}		store				Object that holds keys/values.
+		 * @param	{String}		key					Key to store.
+		 * @param	{Object}		value				Value to store.
+		 */
+		static safeSet(store, key, value)
+		{
 
-	// -------------------------------------------------------------------------
+			let current = store;
+			let items = key.split(".");
+			for (let i = 0; i < items.length - 1; i++)
+			{
+				Util.assert(current && typeof current === "object",
+					`Util.safeSet(): Key already exists. key=${key}, existingKey=${( i > 0 ? items[i-1] : "" )}, existingValue=${current}`, TypeError);
 
-	/**
+				if (!(items[i] in current))
+				{
+					current[items[i]] = {};
+				}
+
+				current = current[items[i]];
+			}
+
+			current[items[items.length - 1]] = value;
+
+			return store;
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Set an value to store. Unlike safeSet() if both the existing value and
+		 * the value is an object, it merges them instead of overwrite it.
+		 *
+		 * @param	{Object}		store				Object that holds keys/values.
+		 * @param	{String}		key					Key to store.
+		 * @param	{Object}		value				Value to store.
+		 */
+		static safeMerge(store, key, value)
+		{
+
+			let current = store;
+			let items = key.split(".");
+			for (let i = 0; i < items.length - 1; i++)
+			{
+				Util.assert(current && typeof current === "object",
+					`Util.safeSet(): Key already exists. key=${key}, existingKey=${( i > 0 ? items[i-1] : "" )}, existingValue=${current}`, TypeError);
+
+				if (!(items[i] in current))
+				{
+					current[items[i]] = {};
+				}
+
+				current = current[items[i]];
+			}
+
+			// Overwrite/Merge value
+			let lastWord = items[items.length - 1];
+			if (current[lastWord] && (typeof current[lastWord] === "object") && value && (typeof value === "object"))
+			{
+				Util.deepMerge(current[lastWord], value);
+			}
+			else
+			{
+				current[lastWord] = value;
+			}
+
+			return store;
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Check if the store has specified key.
+		 *
+		 * @param	{Object}		store				Store.
+		 * @param	{String}		key					Key to check.
+		 *
+		 * @return	{Boolean}		True:exists, False:not exists.
+		 */
+		static safeHas(store, key)
+		{
+
+			let current = store;
+			let found = true;
+			let items = key.split(".");
+			for (let i = 0; i < items.length; i++)
+			{
+				if (current && typeof current === "object" && items[i] in current)
+				{
+					current = current[items[i]];
+				}
+				else
+				{
+					found = false;
+					break;
+				}
+			}
+
+			return found;
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+	 	 * Execute Javascript code from string.
+		 *
+		 * @param	{String}		code				Code to execute.
+		 * @param	{Object}		context				Context refered as "this" inside the code.
+		 * @param	{Object}		parameters			Parameters passed to the code.
+		 *
+		 * @return	{*}				Result of eval.
+		 */
+		static safeEval(code, context, parameters)
+		{
+
+			let names;
+			let values = [];
+
+			if (parameters)
+			{
+				names = Object.keys(parameters).join(",");
+				Object.keys(parameters).forEach((key) => {
+					values.push(parameters[key]);
+				});
+			}
+
+			let ret = false;
+
+			try
+			{
+				ret = Function(names, '"use strict";return (' + code + ')').apply(context, values);
+			}
+			catch(e)
+			{
+				console.error(`Util.safeEval(): Exception occurred. code=${code}, error=${e}`);
+			}
+
+			return ret;
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Concatenat path strings appending trainling "/" when needed.
+		 *
+		 * @param	{Array}			paths				Paths.
+		 *
+		 * @return	{String}		Concatenated paths
+		 */
+		static concatPath(paths)
+		{
+
+			let path = paths[0] || "";
+
+			for (let i = 1; i < paths.length; i++)
+			{
+				if (paths[i])
+				{
+					if (path.slice(path.length - 1) === "/" && paths[i].slice(0, 1) === "/")
+					{
+						// "---/" and "/---"
+						// Remove an extra slash
+						path += paths[i].slice(1);
+					}
+					else if (path.slice(path.length - 1) === "/" || paths[i].slice(0, 1) === "/")
+					{
+						// "---/" or "/---"
+						// Just concat
+						path += paths[i];
+					}
+					else if (path)
+					{
+						// "---" + "---"
+						// Add an slash between
+						path += "/" + paths[i];
+					}
+					else
+					{
+						// "" + "---"
+						// First word, just accept
+						path = paths[i];
+					}
+				}
+			}
+
+			return path;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
 		 * Deep merge two objects. Merge obj2 into obj1.
 		 *
-		 * @param{Object}	obj1				Object1.
-		 * @param{Object}	obj2				Object2.
+		 * @param	{Object}		obj1					Object1.
+		 * @param	{Object}		obj2					Object2.
 		 *
-		 * @return  {Object}	Merged object.
+		 * @return  {Object}		Merged object.
 		 */
-	Util.deepMerge = function deepMerge (obj1, obj2)
-	{
+		static deepMerge(obj1, obj2)
+		{
 
-		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepMerge(): \"obj1\" and \"obj2\" parameters must be an object.", TypeError);
+			Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", `Util.deepMerge(): "obj1" and "obj2" parameters must be an object.`, TypeError);
 
-		Object.keys(obj2).forEach(function (key) {
-			// array <--- *
-			if (Array.isArray(obj1[key]))
-			{
-				obj1[key] = obj1[key].concat(obj2[key]);
-			}
-			// object <--- object
-			else if (
-				obj1.hasOwnProperty(key) &&
-				obj1[key] && typeof obj1[key] === "object" &&
-				obj2[key] && typeof obj2[key] === "object" &&
-				!(obj1[key] instanceof HTMLElement) &&
-				!(obj2[key] instanceof HTMLElement)
-			)
-			{
-				Util.deepMerge(obj1[key], obj2[key]);
-			}
-			// value <--- *
-			else
-			{
-				obj1[key] = obj2[key];
-			}
-		});
+			Object.keys(obj2).forEach((key) => {
+				// array <--- *
+				if (Array.isArray(obj1[key]))
+				{
+					obj1[key] = obj1[key].concat(obj2[key]);
+				}
+				// object <--- object
+				else if (
+					obj1.hasOwnProperty(key) &&
+					obj1[key] && typeof obj1[key] === "object" &&
+					obj2[key] && typeof obj2[key] === "object" &&
+					!(obj1[key] instanceof HTMLElement) &&
+					!(obj2[key] instanceof HTMLElement)
+				)
+				{
+					Util.deepMerge(obj1[key], obj2[key]);
+				}
+				// value <--- *
+				else
+				{
+					obj1[key] = obj2[key];
+				}
+			});
 
-		return obj1;
+			return obj1;
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Deep clone an objects into another object.
 		 *
-		 * @param{Object}	obj1				Object1.
-		 * @param{Object}	obj2				Object2.
+		 * @param	{Object}		obj1					Object1.
+		 * @param	{Object}		obj2					Object2.
 		 *
-		 * @return  {Object}	Merged object.
+		 * @return  {Object}		Merged object.
 		 */
-	Util.deepClone = function deepClone (obj1, obj2)
-	{
+		static deepClone(obj1, obj2)
+		{
 
-		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", "Util.deepMerge(): \"obj1\" and \"obj2\" parameters must be an object.", TypeError);
+			Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", `Util.deepMerge(): "obj1" and "obj2" parameters must be an object.`, TypeError);
 
-		Object.keys(obj2).forEach(function (key) {
-			// array <--- *
-			if (Array.isArray(obj1[key]))
-			{
-				obj1[key] = obj1[key].concat(obj2[key]);
-			}
-			// object <--- object
-			else if (
-				obj1.hasOwnProperty(key) &&
-				obj1[key] && typeof obj1[key] === "object" &&
-				obj2[key] && typeof obj2[key] === "object" &&
-				!(obj1[key] instanceof HTMLElement) &&
-				!(obj2[key] instanceof HTMLElement)
-			)
-			{
-				Util.deepClone(obj1[key], obj2[key]);
-			}
-			// * <--- array
-			else if (Array.isArray(obj2[key]))
-			{
-				obj1[key] = Util.deepCloneArray(obj2[key]);
-			}
-			// * <--- object
-			else if (
-				obj2[key] && typeof obj2[key] === "object" &&
-				!(obj2[key] instanceof HTMLElement)
-			)
-			{
-				obj1[key] = {};
-				Util.deepClone(obj1[key], obj2[key]);
-			}
-			// value <--- value
-			else
-			{
-				obj1[key] = obj2[key];
-			}
-		});
+			Object.keys(obj2).forEach((key) => {
+				// array <--- *
+				if (Array.isArray(obj1[key]))
+				{
+					obj1[key] = obj1[key].concat(obj2[key]);
+				}
+				// object <--- object
+				else if (
+					obj1.hasOwnProperty(key) &&
+					obj1[key] && typeof obj1[key] === "object" &&
+					obj2[key] && typeof obj2[key] === "object" &&
+					!(obj1[key] instanceof HTMLElement) &&
+					!(obj2[key] instanceof HTMLElement)
+				)
+				{
+					Util.deepClone(obj1[key], obj2[key]);
+				}
+				// * <--- array
+				else if (Array.isArray(obj2[key]))
+				{
+					obj1[key] = Util.deepCloneArray(obj2[key]);
+				}
+				// * <--- object
+				else if (
+					obj2[key] && typeof obj2[key] === "object" &&
+					!(obj2[key] instanceof HTMLElement)
+				)
+				{
+					obj1[key] = {};
+					Util.deepClone(obj1[key], obj2[key]);
+				}
+				// value <--- value
+				else
+				{
+					obj1[key] = obj2[key];
+				}
+			});
 
-		return obj1;
+			return obj1;
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Deep clone an array.
 		 *
-		 * @param{Object}	arr					Array.
+		 * @param	{Object}		arr						Array.
 		 *
-		 * @return  {Object}	Merged array.
+		 * @return  {Object}		Merged array.
 		 */
-	Util.deepCloneArray = function deepCloneArray (arr)
-	{
-
-		Util.assert(Array.isArray(arr), "Util.deepCloneArray(): \"arr\" parameter must be an array.", TypeError);
-
-		var result = [];
-
-		for (var i = 0; i < arr.length; i++)
+		static deepCloneArray(arr)
 		{
-			if (
-				arr[i] && typeof arr[i] === "object" &&
-				!(arr[i] instanceof HTMLElement)
-			)
+
+			Util.assert(Array.isArray(arr), `Util.deepCloneArray(): "arr" parameter must be an array.`, TypeError);
+
+			let result = [];
+
+			for (let i = 0; i < arr.length; i++)
 			{
-				result.push(Util.deepClone({}, arr[i]));
+				if (
+					arr[i] && typeof arr[i] === "object" &&
+					!(arr[i] instanceof HTMLElement)
+				)
+				{
+					result.push(Util.deepClone({}, arr[i]));
+				}
+				else
+				{
+					result.push(arr[i]);
+				}
 			}
-			else
-			{
-				result.push(arr[i]);
-			}
+
+			return result;
+
 		}
 
-		return result;
+		// -----------------------------------------------------------------------------
 
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Get a class name from tag name.
 		 *
-		 * @param{String}	tagName			Tag name.
+		 * @param	{String}		tagName				Tag name.
 		 *
-		 * @return  {String}	Class name.
+		 * @return  {String}		Class name.
 		 */
-	Util.getClassNameFromTagName = function getClassNameFromTagName (tagName)
-	{
+		static getClassNameFromTagName(tagName)
+		{
 
-		var tag = tagName.split("-");
-		var className = tag[0].charAt(0).toUpperCase() + tag[0].slice(1).toLowerCase() + tag[1].charAt(0).toUpperCase() + tag[1].slice(1).toLowerCase();
+			let tag = tagName.split("-");
+			let className = tag[0].charAt(0).toUpperCase() + tag[0].slice(1).toLowerCase() + tag[1].charAt(0).toUpperCase() + tag[1].slice(1).toLowerCase();
 
-		return className;
+			return className;
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Get tag name from class name.
 		 *
-		 * @param{String}	className		Class name.
+		 * @param	{String}		className			Class name.
 		 *
-		 * @return {String}	Tag name.
+		 * @return 	{String}		Tag name.
 		 */
-	Util.getTagNameFromClassName = function getTagNameFromClassName (className)
-	{
-
-		var pos;
-		var result = className;
-		var c = className.split(".");
-		var cName = c[c.length - 1];
-
-		for (pos = 1; pos < cName.length; pos++)
+		static getTagNameFromClassName(className)
 		{
-			if ( Util.__isUpper(cName.substring(pos, pos + 1)) )
+
+			let pos;
+			let result = className;
+			let c = className.split(".");
+			let cName = c[c.length - 1];
+
+			for (pos = 1; pos < cName.length; pos++)
 			{
-				break;
+				if ( Util.__isUpper(cName.substring(pos, pos + 1)) )
+				{
+					break;
+				}
 			}
+
+			if ( pos < cName.length )
+			{
+				result = cName.substring(0, pos).toLowerCase() + "-" + cName.substring(pos).toLowerCase();
+			}
+
+			return result;
+
 		}
 
-		if ( pos < cName.length )
-		{
-			result = cName.substring(0, pos).toLowerCase() + "-" + cName.substring(pos).toLowerCase();
-		}
+		// -------------------------------------------------------------------------
 
-		return result;
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Get file name and path from url.
 		 *
-		 * @param{String}	path			Path.
+		 * @param	{String}		path				Path.
 		 *
-		 * @return {String}	File name.
+		 * @return 	{String}		File name.
 		 */
-	Util.getFilenameAndPathFromUrl = function getFilenameAndPathFromUrl (url)
-	{
+		static getFilenameAndPathFromUrl(url)
+		{
 
-		var pos = url.lastIndexOf("/");
-		var path = url.substr(0, pos);
-		var fileName = url.substr(pos + 1);
+			let pos = url.lastIndexOf("/");
+			let path = url.substr(0, pos);
+			let fileName = url.substr(pos + 1);
 
-		return [path, fileName];
+			return [path, fileName];
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Check if character is upper case.
 		 *
-		 * @param{String}	c				Character.
+		 * @param	{String}		c					Character.
 		 *
-		 * @return {Boolean}	True if it is upper case.
+		 * @return 	{Boolean}		True if it is upper case.
 		 */
-	Util.__isUpper = function __isUpper (c)
-	{
+		static __isUpper(c)
+		{
 
-		return c === c.toUpperCase() && c !== c.toLowerCase();
+			return c === c.toUpperCase() && c !== c.toLowerCase();
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Assert conditions. Throws an error when assertion failed.
 		 *
-		 * @param{Boolean}	conditions		Conditions.
-		 * @param{String}	Message			Error message.
-		 * @param{Error}		error			Error to throw.
-		 * @param{Options}	options			Options.
+		 * @param	{Boolean}		conditions			Conditions.
+		 * @param	{String}		Message				Error message.
+		 * @param	{Error}			error				Error to throw.
+		 * @param	{Options}		options				Options.
 		 *
-		 * @return {Boolean}	True if it is upper case.
+		 * @return 	{Boolean}		True if it is upper case.
 		 */
-	Util.assert = function assert (conditions, msg, error, options)
-	{
-
-		if (!conditions)
+		static assert(conditions, msg, error, options)
 		{
-			error = error || Error;
-			var e = new error(msg);
 
-			// Remove last stack (assert() itself)
-			var stacks = e.stack.split("\n");
-			stacks.splice(1, 1);
-			e.stack = stacks.join("\n");
+			if (!conditions)
+			{
+				error = error || Error;
+				let e = new error(msg);
 
-			throw e;
+				// Remove last stack (assert() itself)
+				let stacks = e.stack.split("\n");
+				stacks.splice(1, 1);
+				e.stack = stacks.join("\n");
+
+				throw e;
+			}
+
 		}
 
-	};
+		// -------------------------------------------------------------------------
 
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Warns when condition failed.
 		 *
-		 * @param{Boolean}	conditions		Conditions.
-		 * @param{String}	Message			Error message.
-		 * @param{String}	level			Warn level.
-		 * @param{Options}	options			Options.
+		 * @param	{Boolean}		conditions			Conditions.
+		 * @param	{String}		Message				Error message.
+		 * @param	{String}		level				Warn level.
+		 * @param	{Options}		options				Options.
 		 *
-		 * @return {Boolean}	True if it is upper case.
+		 * @return 	{Boolean}		True if it is upper case.
 		 */
-	Util.warn = function warn (conditions, msg, level, options)
-	{
-
-		var ret = true;
-
-		if (!conditions)
+		static warn(conditions, msg, level, options)
 		{
-			level = level || "warn";
-			console[level](msg);
 
-			ret = false;
+			let ret = true;
+
+			if (!conditions)
+			{
+				level = level || "warn";
+				console[level](msg);
+
+				ret = false;
+			}
+
+			return ret;
+
 		}
 
-		return ret;
+		// -------------------------------------------------------------------------
 
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Return a promise that resolved after random milliseconds.
 		 *
-		 * @param{Integer}	max				Maximum time in milliseconds.
+		 * @param	{Integer}		max					Maximum time in milliseconds.
 		 *
-		 * @return {Promise}	Promise.
+		 * @return 	{Promise}		Promise.
 		 */
-	Util.randomWait = function randomWait (max, fixed)
-	{
+		static randomWait(max, fixed)
+		{
 
-		var timeout = ( fixed ? max : Math.floor(Math.random() * max ) );
+			let timeout = ( fixed ? max : Math.floor(Math.random() * max ) );
 
-		return new Promise(function (resolve, reject) {
-			setTimeout(function () {
-				resolve();
-			}, timeout);
-		});
+			return new Promise((resolve, reject) => {
+				setTimeout(() => {
+					resolve();
+				}, timeout);
+			});
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Execute query on root node excluding nested components inside.
 		 *
-		 * @param{HTMLElement}rootNode		Root node.
-		 * @param{String}	query			Query.
+		 * @param	{HTMLElement}	rootNode			Root node.
+		 * @param	{String}		query				Query.
 		 *
-		 * @return  {Array}		Array of matched elements.
+		 * @return  {Array}			Array of matched elements.
 		 */
-	    Util.scopedSelectorAll = function scopedSelectorAll (rootNode, query)
+	    static scopedSelectorAll(rootNode, query)
 	    {
 
 	        // Set temp id
-	        var guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+	        let guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 	        rootNode.setAttribute("__bm_tempid", guid);
-	        var id = "[__bm_tempid='" + guid + "'] ";
+	        let id = "[__bm_tempid='" + guid + "'] ";
 
 	        // Query to select all
-	        var newQuery = id + query.replace(",", "," + id);
-	        var allElements = rootNode.querySelectorAll(newQuery);
+	        let newQuery = id + query.replace(",", "," + id);
+	        let allElements = rootNode.querySelectorAll(newQuery);
 
-		// Query to select descendant of other component
-	        var removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
-	        var removeElements = rootNode.querySelectorAll(removeQuery);
+			// Query to select descendant of other component
+	        let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
+	        let removeElements = rootNode.querySelectorAll(removeQuery);
 
-		// Remove elements descendant of other component
-	        var setAll = new Set(allElements);
-	        var setRemove = new Set(removeElements);
-	        setRemove.forEach(function (item) {
+			// Remove elements descendant of other component
+	        let setAll = new Set(allElements);
+	        let setRemove = new Set(removeElements);
+	        setRemove.forEach((item) => {
 	            setAll.delete(item);
 	        });
 
@@ -581,7 +591,9 @@
 
 	        return Array.from(setAll);
 
-	    };
+	    }
+
+	}
 
 	// =============================================================================
 
@@ -589,128 +601,140 @@
 	//	Loader util class
 	// =============================================================================
 
-	var ClassUtil = function ClassUtil () {};
-
-	ClassUtil.newComponent = function newComponent (superClass, settings, tagName, className)
+	class ClassUtil
 	{
 
-		className = ( className ? className : Util.getClassNameFromTagName(tagName) );
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-		// Define class
-		var funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
-		var component = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
-		ClassUtil.inherit(component, superClass);
-
-		// Class settings
-		settings = Object.assign({}, settings);
-		settings.settings = ( settings.settings ? settings.settings : {} );
-		settings["settings"]["name"] = className;
-		component.prototype._getSettings = function() {
-			return settings;
-		};
-
-		// Export class
-		window.BITSMIST.v1[className] = component;
-
-		// Define tag
-		if (tagName)
+		/**
+		 * Define new component in ES5 way.
+		 *
+		 * @param	{Object}		superClass			Super class.
+		 * @param	{Object}		settings			Component Settings.
+		 * @param	{String}		tagName				Tag name.
+		 * @param	{String}		className			Class name.
+		 */
+		static newComponent(superClass, settings, tagName, className)
 		{
-			customElements.define(tagName.toLowerCase(), component);
+
+			className = ( className ? className : Util.getClassNameFromTagName(tagName) );
+
+			// Define class
+			let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
+			let component = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
+			ClassUtil.inherit(component, superClass);
+
+			// Class settings
+			settings = Object.assign({}, settings);
+			settings.settings = ( settings.settings ? settings.settings : {} );
+			settings["settings"]["name"] = className;
+			component.prototype._getSettings = function() {
+				return settings;
+			};
+
+			// Export class
+			window.BITSMIST.v1[className] = component;
+
+			// Define tag
+			if (tagName)
+			{
+				customElements.define(tagName.toLowerCase(), component);
+			}
+
+			return component;
+
 		}
 
-		return component;
+		// -------------------------------------------------------------------------
 
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Inherit the component in ES5 way.
 		 *
-		 * @param{Object}	subClass		Sub class.
-		 * @param{Object}	superClass		Super class.
+		 * @param	{Object}		subClass			Sub class.
+		 * @param	{Object}		superClass			Super class.
 		 */
-	ClassUtil.inherit = function inherit (subClass, superClass)
-	{
+		static inherit(subClass, superClass)
+		{
 
-		subClass.prototype = Object.create(superClass.prototype);
-		subClass.prototype.constructor = subClass;
-		subClass.prototype._super = superClass;
-		Object.setPrototypeOf(subClass, superClass);
+			subClass.prototype = Object.create(superClass.prototype);
+			subClass.prototype.constructor = subClass;
+			subClass.prototype._super = superClass;
+			Object.setPrototypeOf(subClass, superClass);
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Instantiate a component.
 		 *
-		 * @param{String}	className		Class name.
-		 * @param{Object}	options			Options for the component.
+		 * @param	{String}		className			Class name.
+		 * @param	{Object}		options				Options for the component.
 		 *
-		 * @return  {Object}	Initaiated object.
+		 * @return  {Object}		Initaiated object.
 		 */
-	ClassUtil.createObject = function createObject (className)
-	{
-			var args = [], len = arguments.length - 1;
-			while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
+		static createObject(className, ...args)
+		{
 
+			let c = ClassUtil.getClass(className);
+			Util.assert(c, `ClassUtil.createObject(): Class '${className}' is not defined.`, ReferenceError);
 
-		var c = ClassUtil.getClass(className);
-		Util.assert(c, ("ClassUtil.createObject(): Class '" + className + "' is not defined."), ReferenceError);
+			return  new c(...args);
 
-		return  new (Function.prototype.bind.apply( c, [ null ].concat( args) ));
+		}
 
-	};
+		// -------------------------------------------------------------------------
 
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Get a class.
 		 *
-		 * @param{String}	className		Class name.
+		 * @param	{String}		className			Class name.
 		 *
-		 * @return  {Object}	Class object.
+		 * @return  {Object}		Class object.
 		 */
-	ClassUtil.getClass = function getClass (className)
-	{
-
-		var ret;
-
-		try
+		static getClass(className)
 		{
-			ret = Function("return (" + ClassUtil.__validateClassName(className) + ")")();
-		}
-		catch(e)
-		{
-			if (!(e instanceof ReferenceError))
+
+			let ret;
+
+			try
 			{
-				throw e;
+				ret = Function("return (" + ClassUtil.__validateClassName(className) + ")")();
 			}
+			catch(e)
+			{
+				if (!(e instanceof ReferenceError))
+				{
+					throw e;
+				}
+			}
+
+			return ret;
+
 		}
 
-		return ret;
+		// -------------------------------------------------------------------------
 
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Validate class name.
 		 *
-		 * @param{String}	className		Class name.
+		 * @param	{String}		className			Class name.
 		 *
-		 * @return  {String}	Class name when valid. Throws an exception when not valid.
+		 * @return  {String}		Class name when valid. Throws an exception when not valid.
 		 */
-	ClassUtil.__validateClassName = function __validateClassName (className)
-	{
+		static __validateClassName(className)
+		{
 
-		var result = /^[a-zA-Z0-9\-\._]+$/.test(className);
-		Util.assert(result, ("ClassUtil.__validateClassName(): Class name '" + className + "' is not valid."), TypeError);
+			let result = /^[a-zA-Z0-9\-\._]+$/.test(className);
+			Util.assert(result, `ClassUtil.__validateClassName(): Class name '${className}' is not valid.`, TypeError);
 
-		return className;
+			return className;
 
-	};
+		}
+
+	}
 
 	// =============================================================================
 	/**
@@ -726,110 +750,120 @@
 	//	Base organizer class
 	// =============================================================================
 
-	var Organizer = function Organizer () {};
-
-	Organizer.globalInit = function globalInit (targetClass)
+	class Organizer
 	{
-	};
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
+		 * Global init.
+		 */
+		static globalInit(targetClass)
+		{
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
 		 * Init.
 		 *
-		 * @param{Object}	conditions		Conditions.
-		 * @param{Component}	component		Component.
-		 * @param{Object}	settings		Settings.
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
 		 *
-		 * @return {Promise}	Promise.
+		 * @return 	{Promise}		Promise.
 		 */
-	Organizer.init = function init (conditions, component, settings)
-	{
-	};
+		static init(conditions, component, settings)
+		{
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Organize.
 		 *
-		 * @param{Object}	conditions		Conditions.
-		 * @param{Component}	component		Component.
-		 * @param{Object}	settings		Settings.
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
 		 *
-		 * @return {Promise}	Promise.
+		 * @return 	{Promise}		Promise.
 		 */
-	Organizer.organize = function organize (conditions, component, settings)
-	{
-	};
+		static organize(conditions, component, settings)
+		{
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Unorganize.
 		 *
-		 * @param{Object}	conditions		Conditions.
-		 * @param{Component}	component		Component.
-		 * @param{Object}	settings		Settings.
+		 * @param	{Object}		conditions			Conditions.
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
 		 *
-		 * @return {Promise}	Promise.
+		 * @return 	{Promise}		Promise.
 		 */
-	Organizer.unorganize = function unorganize (conditions, component, settings)
-	{
-	};
+		static unorganize(conditions, component, settings)
+		{
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Clear.
 		 *
-		 * @param{Component}	component		Component.
+		 * @param	{Component}		component			Component.
 		 */
-	Organizer.clear = function clear (component)
-	{
-	};
+		static clear(component)
+		{
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Check if event is target.
 		 *
-		 * @param{String}	conditions		Event name.
-		 * @param{Object}	organizerInfo	Organizer info.
-		 * @param{Component}	component		Component.
+		 * @param	{String}		conditions			Event name.
+		 * @param	{Object}		organizerInfo		Organizer info.
+		 * @param	{Component}		component			Component.
 		 *
-		 * @return {Boolean}	True if it is target.
+		 * @return 	{Boolean}		True if it is target.
 		 */
-	Organizer.isTarget = function isTarget (conditions, organizerInfo, component)
-	{
-
-		if (organizerInfo["targetEvents"].indexOf("*") > -1)
+		static isTarget(conditions, organizerInfo, component)
 		{
-			return true;
-		}
-		else if (organizerInfo["targetEvents"].indexOf(conditions) > -1)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
+
+			if (organizerInfo["targetEvents"].indexOf("*") > -1)
+			{
+				return true;
+			}
+			else if (organizerInfo["targetEvents"].indexOf(conditions) > -1)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+
 		}
 
-	};
+		// -------------------------------------------------------------------------
 
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Get editor for the organizer.
 		 *
-		 * @return {String}	Editor.
+		 * @return 	{String}		Editor.
 		 */
-	Organizer.getEditor = function getEditor ()
-	{
+		static getEditor()
+		{
 
-		return "";
+			return "";
 
-	};
+		}
+
+	}
 
 	// =============================================================================
 
@@ -837,21 +871,22 @@
 	//	Organizer organizer class
 	// =============================================================================
 
-	var OrganizerOrganizer = /*@__PURE__*/(function (Organizer) {
-		function OrganizerOrganizer () {
-			Organizer.apply(this, arguments);
-		}
+	class OrganizerOrganizer extends Organizer
+	{
 
-		if ( Organizer ) OrganizerOrganizer.__proto__ = Organizer;
-		OrganizerOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		OrganizerOrganizer.prototype.constructor = OrganizerOrganizer;
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-		OrganizerOrganizer.globalInit = function globalInit (targetClass)
+		/**
+		 * Global init.
+		 */
+		static globalInit(targetClass)
 		{
 
 			// Add properties
 			Object.defineProperty(targetClass.prototype, "organizers", {
-				get: function get() { return this._organizers; },
+				get() { return this._organizers; },
 			});
 
 			// Add methods
@@ -865,10 +900,10 @@
 			OrganizerOrganizer._targetWords = {};
 
 			Object.defineProperty(OrganizerOrganizer, "organizers", {
-				get: function get() { return OrganizerOrganizer._organizers; },
+				get() { return OrganizerOrganizer._organizers; },
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -881,12 +916,12 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		OrganizerOrganizer.organize = function organize (conditions, component, settings)
+		static organize(conditions, component, settings)
 		{
 
 			return OrganizerOrganizer._addOrganizers(component, settings);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -895,12 +930,12 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 */
-		OrganizerOrganizer.clear = function clear (component)
+		static clear(component)
 		{
 
 			component._organizers = {};
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -910,7 +945,7 @@
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
 		 */
-		OrganizerOrganizer.register = function register (key, value)
+		static register(key, value)
 		{
 
 			// Assert
@@ -927,12 +962,12 @@
 			value["object"].globalInit(value["targetClassName"]);
 
 			// Create target index
-			for (var i = 0; i < value["targetWords"].length; i++)
+			for (let i = 0; i < value["targetWords"].length; i++)
 			{
 				OrganizerOrganizer._targetWords[value["targetWords"][i]] = value;
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -945,13 +980,13 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		OrganizerOrganizer.addTarget = function addTarget (organizerName, targetName, targets)
+		static addTarget(organizerName, targetName, targets)
 		{
 
-			var organizer = OrganizerOrganizer._organizers[organizerName];
+			let organizer = OrganizerOrganizer._organizers[organizerName];
 
-			var ret1 = Util.warn(organizer, ("Organizer not found. organizerName=" + organizerName));
-			var ret2 = Util.warn(["targetEvents", "targetWords"].indexOf(targetName) > -1, ("Target name is invalid. targetName=" + targetName));
+			let ret1 = Util.warn(organizer, `Organizer not found. organizerName=${organizerName}`);
+			let ret2 = Util.warn(["targetEvents", "targetWords"].indexOf(targetName) > -1, `Target name is invalid. targetName=${targetName}`);
 
 			if (ret1 && ret2)
 			{
@@ -965,23 +1000,23 @@
 				}
 			}
 
-		};
+		}
 
 		// ------------------------------------------------------------------------
 		//  Protected
 		// ------------------------------------------------------------------------
 
-		OrganizerOrganizer._addOrganizers = function _addOrganizers (component, settings)
+		static _addOrganizers(component, settings)
 		{
 
-			var targets = {};
-			var chain = Promise.resolve();
+			let targets = {};
+			let chain = Promise.resolve();
 
 			// List new organizers
-			var organizers = settings["organizers"];
+			let organizers = settings["organizers"];
 			if (organizers)
 			{
-				Object.keys(organizers).forEach(function (key) {
+				Object.keys(organizers).forEach((key) => {
 					if (
 						Util.safeGet(organizers[key], "settings.attach") &&
 						!component._organizers[key] &&
@@ -994,8 +1029,8 @@
 			}
 
 			// List new organizers from settings keyword
-			Object.keys(settings).forEach(function (key) {
-				var organizerInfo = OrganizerOrganizer._targetWords[key];
+			Object.keys(settings).forEach((key) => {
+				let organizerInfo = OrganizerOrganizer._targetWords[key];
 				if (organizerInfo)
 				{
 					if (!component._organizers[organizerInfo.name])
@@ -1006,8 +1041,8 @@
 			});
 
 			// Add and init new organizers
-			OrganizerOrganizer._sortItems(targets).forEach(function (key) {
-				chain = chain.then(function () {
+			OrganizerOrganizer._sortItems(targets).forEach((key) => {
+				chain = chain.then(() => {
 					component._organizers[key] = Object.assign({}, OrganizerOrganizer._organizers[key], Util.safeGet(settings, "organizers." + key));
 					return component._organizers[key].object.init(component, settings);
 				});
@@ -1015,7 +1050,7 @@
 
 			return chain;
 
-		};
+		}
 
 		// ------------------------------------------------------------------------
 
@@ -1027,7 +1062,7 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		OrganizerOrganizer._initOrganizers = function _initOrganizers (component, settings)
+		static _initOrganizers(component, settings)
 		{
 
 			// Init
@@ -1036,7 +1071,7 @@
 			// Add organizers
 			return OrganizerOrganizer.organize("*", component, settings);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -1049,15 +1084,15 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		OrganizerOrganizer._callOrganizers = function _callOrganizers (component, conditions, settings)
+		static _callOrganizers(component, conditions, settings)
 		{
 
-			var chain = Promise.resolve();
+			let chain = Promise.resolve();
 
-			OrganizerOrganizer._sortItems(component._organizers).forEach(function (key) {
+			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
 				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
 				{
-					chain = chain.then(function () {
+					chain = chain.then(() => {
 						return component._organizers[key].object.organize(conditions, component, settings);
 					});
 				}
@@ -1065,7 +1100,7 @@
 
 			return chain;
 
-		};
+		}
 
 		// ------------------------------------------------------------------------
 
@@ -1078,15 +1113,15 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		OrganizerOrganizer._clearOrganizers = function _clearOrganizers (component, conditions, settings)
+		static _clearOrganizers(component, conditions, settings)
 		{
 
-			var chain = Promise.resolve();
+			let chain = Promise.resolve();
 
-			OrganizerOrganizer._sortItems(component._organizers).forEach(function (key) {
+			OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
 				if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
 				{
-					chain = chain.then(function () {
+					chain = chain.then(() => {
 						return component._organizers[key].object.unorganize(conditions, component, settings);
 					});
 				}
@@ -1094,7 +1129,7 @@
 
 			return chain;
 
-		};
+		}
 
 		// ------------------------------------------------------------------------
 
@@ -1105,17 +1140,16 @@
 		 *
 		 * @return  {Array}			Sorted keys.
 		 */
-		OrganizerOrganizer._sortItems = function _sortItems (organizers)
+		static _sortItems(organizers)
 		{
 
-			return Object.keys(organizers).sort(function (a,b) {
+			return Object.keys(organizers).sort((a,b) => {
 				return organizers[a]["order"] - organizers[b]["order"];
 			})
 
-		};
+		}
 
-		return OrganizerOrganizer;
-	}(Organizer));
+	}
 
 	// =============================================================================
 
@@ -1123,92 +1157,106 @@
 	//	Ajax util class
 	// =============================================================================
 
-	var AjaxUtil = function AjaxUtil () {};
-
-	AjaxUtil.ajaxRequest = function ajaxRequest (options)
+	class AjaxUtil
 	{
 
-		return new Promise(function (resolve, reject) {
-			var url = Util.safeGet(options, "url");
-			var method = Util.safeGet(options, "method");
-			var data = Util.safeGet(options, "data", "");
-			var headers = Util.safeGet(options, "headers");
-			var xhrOptions = Util.safeGet(options, "options");
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-			var xhr = new XMLHttpRequest();
-			xhr.open(method, url, true);
+		/**
+		 * Make an ajax request.
+		 *
+		 * @param	{Object}		options				Request options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static ajaxRequest(options)
+		{
 
-			// options
-			if (xhrOptions)
-			{
-				Object.keys(xhrOptions).forEach(function (option) {
-					xhr[option] = xhrOptions[option];
-				});
-			}
+			return new Promise((resolve, reject) => {
+				let url = Util.safeGet(options, "url");
+				let method = Util.safeGet(options, "method");
+				let data = Util.safeGet(options, "data", "");
+				let headers = Util.safeGet(options, "headers");
+				let xhrOptions = Util.safeGet(options, "options");
 
-			// extra headers
-			if (headers)
-			{
-				Object.keys(headers).forEach(function (header) {
-					xhr.setRequestHeader(header, headers[header]);
-				});
-			}
+				let xhr = new XMLHttpRequest();
+				xhr.open(method, url, true);
 
-			// callback (load)
-			xhr.addEventListener("load", function () {
-				if (xhr.status === 200 || xhr.status === 201)
+				// options
+				if (xhrOptions)
 				{
-					resolve(xhr);
+					Object.keys(xhrOptions).forEach((option) => {
+						xhr[option] = xhrOptions[option];
+					});
 				}
-				else
+
+				// extra headers
+				if (headers)
 				{
+					Object.keys(headers).forEach((header) => {
+						xhr.setRequestHeader(header, headers[header]);
+					});
+				}
+
+				// callback (load)
+				xhr.addEventListener("load", () => {
+					if (xhr.status === 200 || xhr.status === 201)
+					{
+						resolve(xhr);
+					}
+					else
+					{
+						reject(xhr);
+					}
+				});
+
+				// callback (error)
+				xhr.addEventListener("error", () => {
 					reject(xhr);
-				}
+				});
+
+				// send
+				xhr.send(data);
 			});
 
-			// callback (error)
-			xhr.addEventListener("error", function () {
-				reject(xhr);
-			});
+		}
 
-			// send
-			xhr.send(data);
-		});
+		// -------------------------------------------------------------------------
 
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Load the javascript file.
 		 *
-		 * @param{string}	url				Javascript url.
+		 * @param	{string}		url					Javascript url.
 		 *
-		 * @return  {Promise}	Promise.
+		 * @return  {Promise}		Promise.
 		 */
-	AjaxUtil.loadScript = function loadScript (url) {
+		static loadScript(url) {
 
-		return new Promise(function (resolve, reject) {
-			var source = url;
-			var script = document.createElement('script');
-			var prior = document.getElementsByTagName('script')[0];
-			script.async = 1;
-			script.onload = script.onreadystatechange = function ( _, isAbort ) {
-				if(isAbort || !script.readyState || /loaded|complete/.test(script.readyState) ) {
-					script.onload = script.onreadystatechange = null;
-					script = undefined;
+			return new Promise((resolve, reject) => {
+				let source = url;
+				let script = document.createElement('script');
+				let prior = document.getElementsByTagName('script')[0];
+				script.async = 1;
+				script.onload = script.onreadystatechange = ( _, isAbort ) => {
+					if(isAbort || !script.readyState || /loaded|complete/.test(script.readyState) ) {
+						script.onload = script.onreadystatechange = null;
+						script = undefined;
 
-					if(!isAbort) {
-						resolve();
+						if(!isAbort) {
+							resolve();
+						}
 					}
-				}
-			};
+				};
 
-			script.src = source;
-			prior.parentNode.insertBefore(script, prior);
-		});
+				script.src = source;
+				prior.parentNode.insertBefore(script, prior);
+			});
 
-	};
+		}
+
+	}
 
 	// =============================================================================
 
@@ -1216,184 +1264,194 @@
 	//	Store class
 	// =============================================================================
 
-	var Store = function Store(options)
+	class Store
 	{
 
-		// Init vars
-		this._options = Object.assign({}, options);
+		// -------------------------------------------------------------------------
+		//  Constructor
+		// -------------------------------------------------------------------------
 
-		// Init
-		this.items = Util.safeGet(this._options, "items");
-		this.merger = Util.safeGet(this._options, "merger", Util.deepMerge );
-
-	};
-
-	var prototypeAccessors = { items: { configurable: true },merger: { configurable: true } };
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Items.
-		 *
-		 * @type{String}
-		 */
-	prototypeAccessors.items.get = function ()
-	{
-
-		return this.clone();
-
-	};
-
-	prototypeAccessors.items.set = function (value)
-	{
-
-		this._items = Object.assign({}, value);
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Merge function.
-		 *
-		 * @type{Function}
-		 */
-	prototypeAccessors.merger.get = function ()
-	{
-
-		this._merger;
-
-	};
-
-	prototypeAccessors.merger.set = function (value)
-	{
-
-		Util.assert(typeof value === "function", ("Store.merger(setter): Merger is not a function. merger=" + value), TypeError);
-
-		this._merger = value;
-
-	};
-
-	// -------------------------------------------------------------------------
-	//  Method
-	// -------------------------------------------------------------------------
-
-	/**
-	     * Clear.
+		/**
+	     * Constructor.
 	     *
-		 * @param{Object}	component		Component to attach.
-		 * @param{Object}	options			Plugin options.
+		 * @param	{Object}		options				Options.
 	     */
-	Store.prototype.clear = function clear ()
-	{
-
-		this._items = {};
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
-	     * Clone contents as an object.
-	     *
-		 * @return  {Object}	Cloned items.
-	     */
-	Store.prototype.clone = function clone ()
-	{
-
-		return Util.deepClone({}, this._items);
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Merge items.
-		 *
-		 * @param{Array/Object}newItems		Array/Object of Items to merge.
-		 * @param{Function}	merger			Merge function.
-		 */
-	Store.prototype.merge = function merge (newItems, merger)
-	{
-
-		merger = merger || this._merger;
-		var items = (Array.isArray(newItems) ? newItems: [newItems]);
-
-		for (var i = 0; i < items.length; i++)
+		constructor(options)
 		{
-			if (items[i] && typeof items[i] === "object")
-			{
-				merger(this._items, items[i]);
-			}
+
+			// Init vars
+			this._options = Object.assign({}, options);
+
+			// Init
+			this.items = Util.safeGet(this._options, "items");
+			this.merger = Util.safeGet(this._options, "merger", Util.deepMerge );
+
 		}
 
-	};
+		// -------------------------------------------------------------------------
+		//  Setter/Getter
+		// -------------------------------------------------------------------------
 
-	// -----------------------------------------------------------------------------
+		/**
+		 * Items.
+		 *
+		 * @type	{String}
+		 */
+		get items()
+		{
 
-	/**
+			return this.clone();
+
+		}
+
+		set items(value)
+		{
+
+			this._items = Object.assign({}, value);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Merge function.
+		 *
+		 * @type	{Function}
+		 */
+		get merger()
+		{
+
+			this._merger;
+
+		}
+
+		set merger(value)
+		{
+
+			Util.assert(typeof value === "function", `Store.merger(setter): Merger is not a function. merger=${value}`, TypeError);
+
+			this._merger = value;
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Method
+		// -------------------------------------------------------------------------
+
+		/**
+	     * Clear.
+	     *
+		 * @param	{Object}		component			Component to attach.
+		 * @param	{Object}		options				Plugin options.
+	     */
+		clear()
+		{
+
+			this._items = {};
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+	     * Clone contents as an object.
+	     *
+		 * @return  {Object}		Cloned items.
+	     */
+		clone()
+		{
+
+			return Util.deepClone({}, this._items);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Merge items.
+		 *
+		 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
+		 * @param	{Function}		merger				Merge function.
+		 */
+		merge(newItems, merger)
+		{
+
+			merger = merger || this._merger;
+			let items = (Array.isArray(newItems) ? newItems: [newItems]);
+
+			for (let i = 0; i < items.length; i++)
+			{
+				if (items[i] && typeof items[i] === "object")
+				{
+					merger(this._items, items[i]);
+				}
+			}
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
 		 * Get a value from store. Return default value when specified key is not available.
 		 *
-		 * @param{String}	key				Key to get.
-		 * @param{Object}	defaultValue	Value returned when key is not found.
+		 * @param	{String}		key					Key to get.
+		 * @param	{Object}		defaultValue		Value returned when key is not found.
 		 *
-		 * @return  {*}			Value.
+		 * @return  {*}				Value.
 		 */
-	Store.prototype.get = function get (key, defaultValue)
-	{
+		get(key, defaultValue)
+		{
 
-		return Util.safeGet(this._items, key, defaultValue);
+			return Util.safeGet(this._items, key, defaultValue);
 
-	};
+		}
 
-	// -----------------------------------------------------------------------------
+		// -----------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Set a value to the store. If key is empty, it sets the value to the root.
 		 *
-		 * @param{String}	key				Key to store.
-		 * @param{Object}	value			Value to store.
+		 * @param	{String}		key					Key to store.
+		 * @param	{Object}		value				Value to store.
 		 */
-	Store.prototype.set = function set (key, value, options)
-	{
+		set(key, value, options)
+		{
 
-		Util.safeMerge(this._items, key, value);
+			Util.safeMerge(this._items, key, value);
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Remove from the list.
 		 *
-		 * @param{String}	key				Key to store.
+		 * @param	{String}		key					Key to store.
 		 */
-	Store.prototype.remove = function remove (key)
-	{
+		remove(key)
+		{
 
-		delete this._items[key];
+			delete this._items[key];
 
-	};
+		}
 
-	// -----------------------------------------------------------------------------
+		// -----------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Check if the store has specified key.
 		 *
-		 * @param{String}	key				Key to check.
+		 * @param	{String}		key					Key to check.
 		 *
-		 * @return{Boolean}	True:exists, False:not exists.
+		 * @return	{Boolean}		True:exists, False:not exists.
 		 */
-	Store.prototype.has = function has (key)
-	{
+		has(key)
+		{
 
-		return Util.safeHas(this._items, key);
+			return Util.safeHas(this._items, key);
 
-	};
+		}
 
-	Object.defineProperties( Store.prototype, prototypeAccessors );
+	}
 
 	// =============================================================================
 
@@ -1401,29 +1459,35 @@
 	//	Chainable store class
 	// =============================================================================
 
-	var ChainableStore = /*@__PURE__*/(function (Store) {
-		function ChainableStore(options)
+	class ChainableStore extends Store
+	{
+
+		// -------------------------------------------------------------------------
+		//  Constructor
+		// -------------------------------------------------------------------------
+
+		/**
+	     * Constructor.
+	     *
+		 * @param	{Object}		options				Options.
+		 * @param	{Store}			chain				Store Component to chain.
+	     */
+		constructor(options)
 		{
 
-			Store.call(this, options);
+			super(options);
 
 			// Init vars
 			this.chain;
 
 			// Chain
-			var chain = Util.safeGet(this._options, "chain");
+			let chain = Util.safeGet(this._options, "chain");
 			if (chain)
 			{
 				this.chain(chain);
 			}
 
 		}
-
-		if ( Store ) ChainableStore.__proto__ = Store;
-		ChainableStore.prototype = Object.create( Store && Store.prototype );
-		ChainableStore.prototype.constructor = ChainableStore;
-
-		var prototypeAccessors = { items: { configurable: true },localItems: { configurable: true } };
 
 		// -------------------------------------------------------------------------
 		//  Setter/Getter
@@ -1434,10 +1498,10 @@
 		 *
 		 * @type	{Object}
 		 */
-		prototypeAccessors.items.get = function ()
+		get items()
 		{
 
-			var items;
+			let items;
 
 			if (this._chain)
 			{
@@ -1450,14 +1514,14 @@
 
 			return items;
 
-		};
+		}
 
-		prototypeAccessors.items.set = function (value)
+		set items(value)
 		{
 
 			this._items = Object.assign({}, value);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -1466,12 +1530,12 @@
 		 *
 		 * @type	{Object}
 		 */
-		prototypeAccessors.localItems.get = function ()
+		get localItems()
 		{
 
 			return this.clone();
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Method
@@ -1482,7 +1546,7 @@
 	     *
 		 * @return  {Object}		Cloned items.
 	     */
-		ChainableStore.prototype.clone = function clone ()
+		clone()
 		{
 
 			if (this._chain)
@@ -1494,7 +1558,7 @@
 				return Store.prototype.clone.call(this);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -1504,14 +1568,14 @@
 		 * @param	{Object}		component			Component to attach.
 		 * @param	{Object}		options				Plugin options.
 	     */
-		ChainableStore.prototype.chain = function chain (store)
+		chain(store)
 		{
 
-			Util.assert(store instanceof ChainableStore, "ChainableStore.chain(): \"store\" parameter must be a ChainableStore.", TypeError);
+			Util.assert(store instanceof ChainableStore, `ChainableStore.chain(): "store" parameter must be a ChainableStore.`, TypeError);
 
 			this._chain = store;
 
-		};
+		}
 
 		// -----------------------------------------------------------------------------
 
@@ -1524,10 +1588,10 @@
 		 *
 		 * @return  {*}				Value.
 		 */
-		ChainableStore.prototype.get = function get (key, defaultValue)
+		get(key, defaultValue)
 		{
 
-			var result = defaultValue;
+			let result = defaultValue;
 
 			if (this.has(key))
 			{
@@ -1540,7 +1604,7 @@
 
 			return result;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -1550,7 +1614,7 @@
 		 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
 		 * @param	{Function}		merger				Merge function.
 		 */
-		ChainableStore.prototype.merge = function merge (newItems, merger)
+		merge(newItems, merger)
 		{
 
 			if (this._options["writeThrough"])
@@ -1562,7 +1626,7 @@
 				Store.prototype.merge.call(this, newItems, merger);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -1572,7 +1636,7 @@
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
 		 */
-		ChainableStore.prototype.set = function set (key, value, options)
+		set(key, value, options)
 		{
 
 			if (Util.safeGet(options, "writeThrough", this._options["writeThrough"]))
@@ -1584,12 +1648,9 @@
 				Store.prototype.set.call(this, key, value);
 			}
 
-		};
+		}
 
-		Object.defineProperties( ChainableStore.prototype, prototypeAccessors );
-
-		return ChainableStore;
-	}(Store));
+	}
 
 	// =============================================================================
 
@@ -1597,30 +1658,31 @@
 	//	Setting organizer class
 	// =============================================================================
 
-	var SettingOrganizer = /*@__PURE__*/(function (Organizer) {
-		function SettingOrganizer () {
-			Organizer.apply(this, arguments);
-		}
+	class SettingOrganizer extends Organizer
+	{
 
-		if ( Organizer ) SettingOrganizer.__proto__ = Organizer;
-		SettingOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		SettingOrganizer.prototype.constructor = SettingOrganizer;
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-		SettingOrganizer.globalInit = function globalInit (targetClass)
+		/**
+		 * Global init.
+		 */
+		static globalInit(targetClass)
 		{
 
 			// Add properties
 			Object.defineProperty(targetClass.prototype, "settings", {
-				get: function get() { return this._settings; },
+				get() { return this._settings; },
 			});
 
 			// Init vars
 			SettingOrganizer.__globalSettings = new ChainableStore();
 			Object.defineProperty(SettingOrganizer, "globalSettings", {
-				get: function get() { return SettingOrganizer.__globalSettings; },
+				get() { return SettingOrganizer.__globalSettings; },
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -1632,7 +1694,7 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		SettingOrganizer.init = function init (component, settings)
+		static init(component, settings)
 		{
 
 			// Init vars
@@ -1645,15 +1707,15 @@
 				component._settings.chain(SettingOrganizer.globalSettings);
 			}
 
-			return Promise.resolve().then(function () {
+			return Promise.resolve().then(() => {
 				// Load settings from an external file.
 				return SettingOrganizer._loadExternalSetting(component, "setting");
-			}).then(function () {
+			}).then(() => {
 				// Load settings from attributes
 				SettingOrganizer._loadAttrSettings(component);
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Protected
@@ -1667,14 +1729,14 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		SettingOrganizer._loadExternalSetting = function _loadExternalSetting (component, settingName)
+		static _loadExternalSetting(component, settingName)
 		{
 
-			var name, path;
+			let name, path;
 
 			if (component.hasAttribute("bm-" + settingName + "ref"))
 			{
-				var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-" + settingName + "ref"));
+				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-" + settingName + "ref"));
 				path = arr[0];
 				name = arr[1].slice(0, -3);
 			}
@@ -1693,7 +1755,7 @@
 				return component.loadSetting(name, {"path":path});
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -1702,26 +1764,25 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 */
-		SettingOrganizer._loadAttrSettings = function _loadAttrSettings (component)
+		static _loadAttrSettings(component)
 		{
 
 			// Get settings from the attribute
 
-			var dataSettings = ( document.querySelector(component._settings.get("settings.rootNode")) ?
+			let dataSettings = ( document.querySelector(component._settings.get("settings.rootNode")) ?
 				document.querySelector(component._settings.get("settings.rootNode")).getAttribute("bm-settings") :
 				component.getAttribute("bm-settings")
 			);
 
 			if (dataSettings)
 			{
-				var settings = {"settings": JSON.parse(dataSettings)};
+				let settings = {"settings": JSON.parse(dataSettings)};
 				component._settings.merge(settings);
 			}
 
-		};
+		}
 
-		return SettingOrganizer;
-	}(Organizer));
+	}
 
 	// =============================================================================
 
@@ -1755,8 +1816,6 @@
 	 */
 	Component.prototype.connectedCallback = function()
 	{
-		var this$1$1 = this;
-
 
 		// Create a promise to prevent from start/stop while stopping/starting
 		if (!this._ready)
@@ -1765,16 +1824,16 @@
 		}
 
 		// Start
-		this._ready = this._ready.then(function () {
-			if (!this$1$1._initialized || this$1$1.settings.get("settings.autoRestart"))
+		this._ready = this._ready.then(() => {
+			if (!this._initialized || this.settings.get("settings.autoRestart"))
 			{
-				this$1$1._initialized = true;
-				return this$1$1.start();
+				this._initialized = true;
+				return this.start();
 			}
 			else
 			{
-				console.debug(("Component.start(): Restarted component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-				return this$1$1.changeState("started");
+				console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}`);
+				return this.changeState("started");
 			}
 		});
 
@@ -1787,13 +1846,11 @@
 	 */
 	Component.prototype.disconnectedCallback = function()
 	{
-		var this$1$1 = this;
-
 
 		if (this.settings.get("settings.autoStop"))
 		{
-			this._ready = this._ready.then(function () {
-				return this$1$1.stop();
+			this._ready = this._ready.then(() => {
+				return this.stop();
 			});
 		}
 
@@ -1827,7 +1884,7 @@
 	 * @type	{String}
 	 */
 	Object.defineProperty(Component.prototype, 'name', {
-		get: function get()
+		get()
 		{
 			return this._name;
 		}
@@ -1841,7 +1898,7 @@
 	 * @type	{String}
 	 */
 	Object.defineProperty(Component.prototype, 'uniqueId', {
-		get: function get()
+		get()
 		{
 			return this._uniqueId;
 		}
@@ -1855,7 +1912,7 @@
 	 * @type	{HTMLElement}
 	 */
 	Object.defineProperty(Component.prototype, 'rootElement', {
-		get: function get()
+		get()
 		{
 			return this._rootElement;
 		}
@@ -1874,11 +1931,9 @@
 	 */
 	Component.prototype.start = function(settings)
 	{
-		var this$1$1 = this;
-
 
 		// Defaults
-		var defaults = {
+		let defaults = {
 			"settings": {
 				"autoFetch":			true,
 				"autoFill":				true,
@@ -1907,14 +1962,14 @@
 		this._name = this.constructor.name;
 		this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
 
-		return Promise.resolve().then(function () {
-			return this$1$1._initStart(settings);
-		}).then(function () {
-			return this$1$1._preStart();
-		}).then(function () {
-			if (this$1$1.settings.get("settings.autoPostStart"))
+		return Promise.resolve().then(() => {
+			return this._initStart(settings);
+		}).then(() => {
+			return this._preStart();
+		}).then(() => {
+			if (this.settings.get("settings.autoPostStart"))
 			{
-				return this$1$1._postStart();
+				return this._postStart();
 			}
 		});
 
@@ -1931,23 +1986,21 @@
 	 */
 	Component.prototype.stop = function(options)
 	{
-		var this$1$1 = this;
-
 
 		options = Object.assign({}, options);
 
-		return Promise.resolve().then(function () {
-			console.debug(("Component.stop(): Stopping component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.changeState("stopping");
-		}).then(function () {
-			return this$1$1.trigger("beforeStop", options);
-		}).then(function () {
-			return this$1$1.trigger("doStop", options);
-		}).then(function () {
-			console.debug(("Component.stop(): Stopped component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.changeState("stopped");
-		}).then(function () {
-			return this$1$1.trigger("afterStop", options);
+		return Promise.resolve().then(() => {
+			console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
+			return this.changeState("stopping");
+		}).then(() => {
+			return this.trigger("beforeStop", options);
+		}).then(() => {
+			return this.trigger("doStop", options);
+		}).then(() => {
+			console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}`);
+			return this.changeState("stopped");
+		}).then(() => {
+			return this.trigger("afterStop", options);
 		});
 
 	};
@@ -1964,8 +2017,6 @@
 	 */
 	Component.prototype.switchTemplate = function(templateName, options)
 	{
-		var this$1$1 = this;
-
 
 		options = Object.assign({}, options);
 
@@ -1974,26 +2025,26 @@
 			return Promise.resolve();
 		}
 
-		return Promise.resolve().then(function () {
-			console.debug(("Component.switchTemplate(): Switching template. name=" + (this$1$1.name) + ", templateName=" + templateName + ", id=" + (this$1$1.id)));
-			return this$1$1.addTemplate(templateName);
-		}).then(function () {
-			return this$1$1.applyTemplate(templateName);
-		}).then(function () {
+		return Promise.resolve().then(() => {
+			console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+			return this.addTemplate(templateName);
+		}).then(() => {
+			return this.applyTemplate(templateName);
+		}).then(() => {
 			// Setup
-			var autoSetup = this$1$1.settings.get("settings.autoSetup");
+			let autoSetup = this.settings.get("settings.autoSetup");
 			if (autoSetup)
 			{
-				return this$1$1.setup(this$1$1.settings.items);
+				return this.setup(this.settings.items);
 			}
 
-			this$1$1.hideConditionalElements();
-		}).then(function () {
-			return this$1$1.callOrganizers("afterAppend", this$1$1.settings.items);
-		}).then(function () {
-			return this$1$1.trigger("afterAppend", options);
-		}).then(function () {
-			console.debug(("Component.switchTemplate(): Switched template. name=" + (this$1$1.name) + ", templateName=" + templateName + ", id=" + (this$1$1.id)));
+			this.hideConditionalElements();
+		}).then(() => {
+			return this.callOrganizers("afterAppend", this.settings.items);
+		}).then(() => {
+			return this.trigger("afterAppend", options);
+		}).then(() => {
+			console.debug(`Component.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 		});
 
 	};
@@ -2009,20 +2060,18 @@
 	 */
 	Component.prototype.setup = function(options)
 	{
-		var this$1$1 = this;
-
 
 		options = Object.assign({}, options);
 
-		return Promise.resolve().then(function () {
-			console.debug(("Component.setup(): Setting up component. name=" + (this$1$1.name) + ", state=" + (this$1$1.state) + ", id=" + (this$1$1.id)));
-			return this$1$1.trigger("beforeSetup", options);
-		}).then(function () {
-			return this$1$1.trigger("doSetup", options);
-		}).then(function () {
-			return this$1$1.trigger("afterSetup", options);
-		}).then(function () {
-			console.debug(("Component.setup(): Set up component. name=" + (this$1$1.name) + ", state=" + (this$1$1.state) + ", id=" + (this$1$1.id)));
+		return Promise.resolve().then(() => {
+			console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
+			return this.trigger("beforeSetup", options);
+		}).then(() => {
+			return this.trigger("doSetup", options);
+		}).then(() => {
+			return this.trigger("afterSetup", options);
+		}).then(() => {
+			console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 		});
 
 	};
@@ -2038,36 +2087,34 @@
 	 */
 	Component.prototype.refresh = function(options)
 	{
-		var this$1$1 = this;
-
 
 		options = Object.assign({}, options);
 
-		return Promise.resolve().then(function () {
-			console.debug(("Component.refresh(): Refreshing component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.trigger("beforeRefresh", options);
-		}).then(function () {
-			return this$1$1.trigger("doTarget", options);
-		}).then(function () {
+		return Promise.resolve().then(() => {
+			console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}`);
+			return this.trigger("beforeRefresh", options);
+		}).then(() => {
+			return this.trigger("doTarget", options);
+		}).then(() => {
 			// Fetch
-			if (Util.safeGet(options, "autoFetch", this$1$1.settings.get("settings.autoFetch")))
+			if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
 			{
-				return this$1$1.fetch(options);
+				return this.fetch(options);
 			}
-		}).then(function () {
-			this$1$1.showConditionalElements(this$1$1.item);
-		}).then(function () {
+		}).then(() => {
+			this.showConditionalElements(this.item);
+		}).then(() => {
 			// Fill
-			if (Util.safeGet(options, "autoFill", this$1$1.settings.get("settings.autoFill")))
+			if (Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))
 			{
-				return this$1$1.fill(options);
+				return this.fill(options);
 			}
-		}).then(function () {
-			return this$1$1.trigger("doRefresh", options);
-		}).then(function () {
-			return this$1$1.trigger("afterRefresh", options);
-		}).then(function () {
-			console.debug(("Component.refresh(): Refreshed component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
+		}).then(() => {
+			return this.trigger("doRefresh", options);
+		}).then(() => {
+			return this.trigger("afterRefresh", options);
+		}).then(() => {
+			console.debug(`Component.refresh(): Refreshed component. name=${this.name}, id=${this.id}`);
 		});
 
 	};
@@ -2083,22 +2130,20 @@
 	 */
 	Component.prototype.fetch = function(options)
 	{
-		var this$1$1 = this;
-
 
 		options = Object.assign({}, options);
 
-		return Promise.resolve().then(function () {
-			console.debug(("Component.fetch(): Fetching data. name=" + (this$1$1.name)));
-			return this$1$1.trigger("beforeFetch", options);
-		}).then(function () {
-			return this$1$1.callOrganizers("doFetch", options);
-		}).then(function () {
-			return this$1$1.trigger("doFetch", options);
-		}).then(function () {
-			return this$1$1.trigger("afterFetch", options);
-		}).then(function () {
-			console.debug(("Component.fetch(): Fetched data. name=" + (this$1$1.name)));
+		return Promise.resolve().then(() => {
+			console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
+			return this.trigger("beforeFetch", options);
+		}).then(() => {
+			return this.callOrganizers("doFetch", options);
+		}).then(() => {
+			return this.trigger("doFetch", options);
+		}).then(() => {
+			return this.trigger("afterFetch", options);
+		}).then(() => {
+			console.debug(`Component.fetch(): Fetched data. name=${this.name}`);
 		});
 
 	};
@@ -2189,17 +2234,15 @@
 	 */
 	Component.prototype._initStart = function(settings)
 	{
-		var this$1$1 = this;
 
+		return Promise.resolve().then(() => {
+			return this._injectSettings(settings);
+		}).then((newSettings) => {
+			return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
+		}).then(() => {
+			this._adjustSettings();
 
-		return Promise.resolve().then(function () {
-			return this$1$1._injectSettings(settings);
-		}).then(function (newSettings) {
-			return SettingOrganizer.init(this$1$1, newSettings); // now settings are included in this.settings
-		}).then(function () {
-			this$1$1._adjustSettings();
-
-			return this$1$1.initOrganizers(this$1$1.settings.items);
+			return this.initOrganizers(this.settings.items);
 		});
 
 	};
@@ -2213,38 +2256,36 @@
 	 */
 	Component.prototype._preStart = function()
 	{
-		var this$1$1 = this;
 
-
-		return Promise.resolve().then(function () {
-			console.debug(("Component.start(): Starting component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.changeState("starting");
-		}).then(function () {
-			return this$1$1.addOrganizers(this$1$1.settings.items);
-		}).then(function () {
-			return this$1$1.callOrganizers("beforeStart", this$1$1.settings.items);
-		}).then(function () {
-			return this$1$1.trigger("beforeStart");
-		}).then(function () {
+		return Promise.resolve().then(() => {
+			console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
+			return this.changeState("starting");
+		}).then(() => {
+			return this.addOrganizers(this.settings.items);
+		}).then(() => {
+			return this.callOrganizers("beforeStart", this.settings.items);
+		}).then(() => {
+			return this.trigger("beforeStart");
+		}).then(() => {
 			// Switch template
-			if (this$1$1.settings.get("settings.hasTemplate"))
+			if (this.settings.get("settings.hasTemplate"))
 			{
-				return this$1$1.switchTemplate(this$1$1.settings.get("settings.templateName"));
+				return this.switchTemplate(this.settings.get("settings.templateName"));
 			}
 			else
 			{
 				// Setup
-				var autoSetup = this$1$1.settings.get("settings.autoSetup");
+				let autoSetup = this.settings.get("settings.autoSetup");
 				if (autoSetup)
 				{
-					return this$1$1.setup(this$1$1.settings.items);
+					return this.setup(this.settings.items);
 				}
 			}
-		}).then(function () {
+		}).then(() => {
 			// Refresh
-			if (this$1$1.settings.get("settings.autoRefresh"))
+			if (this.settings.get("settings.autoRefresh"))
 			{
-				return this$1$1.refresh();
+				return this.refresh();
 			}
 		});
 
@@ -2259,16 +2300,14 @@
 	 */
 	Component.prototype._postStart = function()
 	{
-		var this$1$1 = this;
 
-
-		return Promise.resolve().then(function () {
-			console.debug(("Component.start(): Started component. name=" + (this$1$1.name) + ", id=" + (this$1$1.id)));
-			return this$1$1.changeState("started");
-		}).then(function () {
-			return this$1$1.callOrganizers("afterStart", this$1$1.settings.items);
-		}).then(function () {
-			return this$1$1.trigger("afterStart");
+		return Promise.resolve().then(() => {
+			console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
+			return this.changeState("started");
+		}).then(() => {
+			return this.callOrganizers("afterStart", this.settings.items);
+		}).then(() => {
+			return this.trigger("afterStart");
 		});
 
 	};
@@ -2287,7 +2326,7 @@
 		this._rootElement = this.settings.get("settings.rootElement", this);
 
 		// Overwrite name if specified
-		var name = this.settings.get("settings.name");
+		let name = this.settings.get("settings.name");
 		if (name)
 		{
 			this._name = name;
@@ -2310,22 +2349,23 @@
 	//	State organizer class
 	// =============================================================================
 
-	var StateOrganizer = /*@__PURE__*/(function (Organizer) {
-		function StateOrganizer () {
-			Organizer.apply(this, arguments);
-		}
+	class StateOrganizer extends Organizer
+	{
 
-		if ( Organizer ) StateOrganizer.__proto__ = Organizer;
-		StateOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		StateOrganizer.prototype.constructor = StateOrganizer;
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-		StateOrganizer.globalInit = function globalInit ()
+		/**
+		 * Global init.
+		 */
+		static globalInit()
 		{
 
 			// Add properties
 			Object.defineProperty(Component.prototype, "state", {
-				get: function get() { return this._state; },
-				set: function set(value) { this._state = value; }
+				get() { return this._state; },
+				set(value) { this._state = value; }
 			});
 
 			// Add methods
@@ -2344,7 +2384,7 @@
 			StateOrganizer.__waitingListIndexNone = new Map();
 			StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); };
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2356,7 +2396,7 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		StateOrganizer.init = function init (component, settings)
+		static init(component, settings)
 		{
 
 			// Init vars
@@ -2366,7 +2406,7 @@
 			// Load settings from attributes
 			StateOrganizer.__loadAttrSettings(component);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2379,12 +2419,12 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		StateOrganizer.organize = function organize (conditions, component, settings)
+		static organize(conditions, component, settings)
 		{
 
-			var promise = Promise.resolve();
+			let promise = Promise.resolve();
 
-			var waitFor = settings["waitFor"];
+			let waitFor = settings["waitFor"];
 			if (waitFor)
 			{
 				if (waitFor[conditions])
@@ -2395,19 +2435,19 @@
 
 			return promise;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
 		/**
 		 * Clear.
 		 */
-		StateOrganizer.clear = function clear ()
+		static clear()
 		{
 
 			this.__waitingList.clear();
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2416,13 +2456,13 @@
 		 *
 		 * @param	{String}		state				Component state.
 		 */
-		StateOrganizer.globalSuspend = function globalSuspend (state)
+		static globalSuspend(state)
 		{
 
 			StateOrganizer.__suspends[state] = StateOrganizer._createSuspendInfo(state);
 			StateOrganizer.__suspends[state].state = "pending";
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2431,13 +2471,13 @@
 		 *
 		 * @param	{String}		state				Component state.
 		 */
-		StateOrganizer.globalResume = function globalResume (state)
+		static globalResume(state)
 		{
 
 			StateOrganizer.__suspends[state].resolve();
 			StateOrganizer.__suspends[state].state = "resolved";
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Protected
@@ -2452,13 +2492,13 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		StateOrganizer._waitFor = function _waitFor (component, waitlist, options)
+		static _waitFor(component, waitlist, options)
 		{
 
-			var promise;
-			var timeout = ( options && options["timeout"] ? options["timeout"] : 10000 );
-			var waiter = ( options && options["waiter"] ? options["waiter"] : component );
-			var waitInfo = {"waiter":waiter, "waitlist":waitlist.slice()};
+			let promise;
+			let timeout = ( options && options["timeout"] ? options["timeout"] : 10000 );
+			let waiter = ( options && options["waiter"] ? options["waiter"] : component );
+			let waitInfo = {"waiter":waiter, "waitlist":waitlist.slice()};
 
 			if (StateOrganizer.__isAllReady(waitInfo))
 			{
@@ -2467,12 +2507,12 @@
 			else
 			{
 				// Create a promise that is resolved when waiting is completed.
-				promise = new Promise(function (resolve, reject) {
+				promise = new Promise((resolve, reject) => {
 					waitInfo["resolve"] = resolve;
 					waitInfo["reject"] = reject;
-					setTimeout(function () {
-						var name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
-						reject(("StateOrganizer._waitFor(): Timed out after " + timeout + " milliseconds waiting for " + (StateOrganizer.__dumpWaitlist(waitlist)) + ", name=" + name + "."));
+					setTimeout(() => {
+						let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
+						reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}.`);
 					}, timeout);
 				});
 				waitInfo["promise"] = promise;
@@ -2483,7 +2523,7 @@
 
 			return promise;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2496,11 +2536,11 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		StateOrganizer._waitForSingle = function _waitForSingle (component, state, timeout)
+		static _waitForSingle(component, state, timeout)
 		{
 
-			var componentInfo = StateOrganizer.__components.get(component.uniqueId);
-			var waitlistItem = {"id":component.uniqueId, "state":state};
+			let componentInfo = StateOrganizer.__components.get(component.uniqueId);
+			let waitlistItem = {"id":component.uniqueId, "state":state};
 
 			if (StateOrganizer.__isReady(waitlistItem, componentInfo))
 			{
@@ -2511,7 +2551,7 @@
 				return StateOrganizer.waitFor(component, [waitlistItem], timeout);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2560,17 +2600,17 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		StateOrganizer._changeState = function _changeState (component, state)
+		static _changeState(component, state)
 		{
 
-			Util.assert(StateOrganizer.__isTransitionable(component._state, state), ("StateOrganizer._changeState(): Illegal transition. name=" + (component.name) + ", fromState=" + (component._state) + ", toState=" + state + ", id=" + (component.id)), Error);
+			Util.assert(StateOrganizer.__isTransitionable(component._state, state), `StateOrganizer._changeState(): Illegal transition. name=${component.name}, fromState=${component._state}, toState=${state}, id=${component.id}`, Error);
 
 			component._state = state;
 			StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
 
 			StateOrganizer.__processWaitingList(component, state);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2580,13 +2620,13 @@
 		 * @param	{Component}		component			Component.
 		 * @param	{String}		state				Component state.
 		 */
-		StateOrganizer._suspend = function _suspend (component, state)
+		static _suspend(component, state)
 		{
 
 			component._suspends[state] = StateOrganizer._createSuspendInfo();
 		 	component._suspends[state].state = "pending";
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2596,13 +2636,13 @@
 		 * @param	{Component}		component			Component.
 		 * @param	{String}		state				Component state.
 		 */
-		StateOrganizer._resume = function _resume (component, state)
+		static _resume(component, state)
 		{
 
 		 	component._suspends[state].resolve();
 		 	component._suspends[state].state = "resolved";
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2614,10 +2654,10 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		StateOrganizer._pause = function _pause (component, state)
+		static _pause(component, state)
 		{
 
-			var ret = [];
+			let ret = [];
 
 			// Globally suspended?
 			if (StateOrganizer.__suspends[state] && StateOrganizer.__suspends[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
@@ -2633,7 +2673,7 @@
 
 			return Promise.all(ret);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Privates
@@ -2647,10 +2687,10 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		StateOrganizer.__isTransitionable = function __isTransitionable (currentState, newState)
+		static __isTransitionable(currentState, newState)
 		{
 
-			var ret = true;
+			let ret = true;
 
 			if (currentState && currentState.slice(-3) === "ing")
 			{
@@ -2665,38 +2705,38 @@
 
 			return ret;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
 		/**
 		 * Check wait list and resolve() if components are ready.
 		 */
-		StateOrganizer.__processWaitingList = function __processWaitingList (component, state)
+		static __processWaitingList(component, state)
 		{
 
 			// Process name index
-			var names = StateOrganizer.__waitingListIndexName.get(component.name + "." + state);
+			let names = StateOrganizer.__waitingListIndexName.get(component.name + "." + state);
 			if (names && names.length > 0)
 			{
 				StateOrganizer.__processIndex(names);
 			}
 
 			// Process ID index
-			var ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + state);
+			let ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + state);
 			if (ids && ids.length > 0)
 			{
 				StateOrganizer.__processIndex(ids);
 			}
 
 			// Process non indexables
-			var list = StateOrganizer.__waitingListIndexNone.get("none");
+			let list = StateOrganizer.__waitingListIndexNone.get("none");
 			if (list && list.length > 0)
 			{
 				StateOrganizer.__processIndex(list);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2705,14 +2745,14 @@
 		 *
 		 * @param	{Array}			list				List of indexed waiting list id.
 		 */
-		StateOrganizer.__processIndex = function __processIndex (list)
+		static __processIndex(list)
 		{
 
-			var removeList = [];
+			let removeList = [];
 
-			for (var i = 0; i < list.length; i++)
+			for (let i = 0; i < list.length; i++)
 			{
-				var id = list[i];
+				let id = list[i];
 				StateOrganizer.__waitingList.get(id);
 
 				if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
@@ -2727,12 +2767,12 @@
 			}
 
 			// Remove from index;
-			for (var i$1 = removeList.length - 1; i$1 >= 0; i$1--)
+			for (let i = removeList.length - 1; i >= 0; i--)
 			{
-				StateOrganizer.__removeFromIndex(list, removeList[i$1]);
+				StateOrganizer.__removeFromIndex(list, removeList[i]);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2741,16 +2781,16 @@
 		 *
 		 * @param	{Object}		waitInfo			Wait info.
 		 */
-		StateOrganizer.__addToWaitingList = function __addToWaitingList (waitInfo)
+		static __addToWaitingList(waitInfo)
 		{
 
 			// Add wait info to the waiting list.
-			var id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+			let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
 			StateOrganizer.__waitingList.set(id, waitInfo);
 
 			// Create index for faster processing
-			var waitlist = waitInfo["waitlist"];
-			for (var i = 0; i < waitlist.length; i++)
+			let waitlist = waitInfo["waitlist"];
+			for (let i = 0; i < waitlist.length; i++)
 			{
 				// Set default state when not specified
 				waitlist[i]["state"] = waitlist[i]["state"] || "started";
@@ -2772,7 +2812,7 @@
 				}
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2783,10 +2823,10 @@
 		 * @param	{String}		key					Index key.
 		 * @param	{String}		id					Waiting list id.
 		 */
-		StateOrganizer.__addToIndex = function __addToIndex (index, key, id)
+		static __addToIndex(index, key, id)
 		{
 
-			var list = index.get(key);
+			let list = index.get(key);
 			if (!list)
 			{
 				list = [];
@@ -2798,7 +2838,7 @@
 				list.push(id);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2808,16 +2848,16 @@
 		 * @param	{Array}			list				List of ids.
 		 * @param	{String}		id					Waiting list id.
 		 */
-		StateOrganizer.__removeFromIndex = function __removeFromIndex (list, id)
+		static __removeFromIndex(list, id)
 		{
 
-			var index = list.indexOf(id);
+			let index = list.indexOf(id);
 			if (index > -1)
 			{
 				list.splice(index, 1);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2828,10 +2868,10 @@
 		 *
 		 * @return  {Boolean}		True if ready.
 		 */
-		StateOrganizer.__getComponentInfo = function __getComponentInfo (waitlistItem)
+		static __getComponentInfo(waitlistItem)
 		{
 
-			var componentInfo;
+			let componentInfo;
 
 			if (waitlistItem["id"])
 			{
@@ -2839,7 +2879,7 @@
 			}
 			else if (waitlistItem["name"])
 			{
-				Object.keys(StateOrganizer.__components.items).forEach(function (key) {
+				Object.keys(StateOrganizer.__components.items).forEach((key) => {
 					if (waitlistItem["name"] === StateOrganizer.__components.get(key).object.name)
 					{
 						componentInfo = StateOrganizer.__components.get(key);
@@ -2848,7 +2888,7 @@
 			}
 			else if (waitlistItem["rootNode"])
 			{
-				var element = document.querySelector(waitlistItem["rootNode"]);
+				let element = document.querySelector(waitlistItem["rootNode"]);
 				if (element && element.uniqueId)
 				{
 					componentInfo = StateOrganizer.__components.get(element.uniqueId);
@@ -2856,16 +2896,16 @@
 			}
 			else if (waitlistItem["object"])
 			{
-				var element$1 = waitlistItem["object"];
-				if (element$1.uniqueId)
+				let element = waitlistItem["object"];
+				if (element.uniqueId)
 				{
-					componentInfo = StateOrganizer.__components.get(element$1.uniqueId);
+					componentInfo = StateOrganizer.__components.get(element.uniqueId);
 				}
 			}
 
 			return componentInfo;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2876,16 +2916,16 @@
 		 *
 		 * @return  {Boolean}		True if ready.
 		 */
-		StateOrganizer.__isAllReady = function __isAllReady (waitInfo)
+		static __isAllReady(waitInfo)
 		{
 
-			var result = true;
-			var waitlist = waitInfo["waitlist"];
+			let result = true;
+			let waitlist = waitInfo["waitlist"];
 
-			for (var i = 0; i < waitlist.length; i++)
+			for (let i = 0; i < waitlist.length; i++)
 			{
-				var match = false;
-				var componentInfo = this.__getComponentInfo(waitlist[i]);
+				let match = false;
+				let componentInfo = this.__getComponentInfo(waitlist[i]);
 				if (componentInfo)
 				{
 					if (StateOrganizer.__isReady(waitlist[i], componentInfo))
@@ -2904,7 +2944,7 @@
 
 			return result;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2916,11 +2956,11 @@
 		 *
 		 * @return  {Boolean}		True if ready.
 		 */
-		StateOrganizer.__isReady = function __isReady (waitlistItem, componentInfo)
+		static __isReady(waitlistItem, componentInfo)
 		{
 
 			// Check component
-			var isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
+			let isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
 
 			// Check state
 			if (isMatch)
@@ -2930,7 +2970,7 @@
 
 			return isMatch;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2942,10 +2982,10 @@
 		 *
 		 * @return  {Boolean}		True if match.
 		 */
-		StateOrganizer.__isComponentMatch = function __isComponentMatch (componentInfo, waitlistItem)
+		static __isComponentMatch(componentInfo, waitlistItem)
 		{
 
-			var isMatch = true;
+			let isMatch = true;
 
 			// check instance
 			if (waitlistItem["component"] && componentInfo["object"] !== waitlistItem["component"])
@@ -2973,7 +3013,7 @@
 
 			return isMatch;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -2985,11 +3025,11 @@
 		 *
 		 * @return  {Boolean}		True if match.
 		 */
-		StateOrganizer.__isStateMatch = function __isStateMatch (currentState, expectedState)
+		static __isStateMatch(currentState, expectedState)
 		{
 
 			expectedState = expectedState || "started"; // Default is "started"
-			var isMatch = true;
+			let isMatch = true;
 
 			switch (expectedState)
 			{
@@ -3011,7 +3051,7 @@
 
 			return isMatch;
 
-		};
+		}
 
 		// -----------------------------------------------------------------------------
 
@@ -3020,24 +3060,24 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 */
-		StateOrganizer.__loadAttrSettings = function __loadAttrSettings (component)
+		static __loadAttrSettings(component)
 		{
 
 			// Get waitFor from attribute
 
 			if (component.hasAttribute("bm-waitfor"))
 			{
-				var waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"started"};
+				let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"started"};
 				component.settings.merge({"waitFor": [waitInfo]});
 			}
 
 			if (component.hasAttribute("bm-waitfornode"))
 			{
-				var waitInfo$1 = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"started"};
-				component.settings.merge({"waitFor": [waitInfo$1]});
+				let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"started"};
+				component.settings.merge({"waitFor": [waitInfo]});
 			}
 
-		};
+		}
 
 		// -----------------------------------------------------------------------------
 
@@ -3048,24 +3088,24 @@
 		 *
 		 * @return  {String}		Wait list string.
 		 */
-		StateOrganizer.__dumpWaitlist = function __dumpWaitlist (waitlist)
+		static __dumpWaitlist(waitlist)
 		{
 
-			var result = "";
+			let result = "";
 
-			for (var i = 0; i < waitlist.length; i++)
+			for (let i = 0; i < waitlist.length; i++)
 			{
-				var id = ( waitlist[i].id ? "id:" + waitlist[i].id + "," : "" );
-				var name = ( waitlist[i].name ? "name:" + waitlist[i].name + "," : "" );
-				var object = ( waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "" );
-				var node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "" );
-				var state = (waitlist[i].state ? "state:" + waitlist[i].state: "" );
+				let id = ( waitlist[i].id ? "id:" + waitlist[i].id + "," : "" );
+				let name = ( waitlist[i].name ? "name:" + waitlist[i].name + "," : "" );
+				let object = ( waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "" );
+				let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "" );
+				let state = (waitlist[i].state ? "state:" + waitlist[i].state: "" );
 				result += "\n\t{" + id + name + object + node + state + "},";
 			}
 
 			return "[" + result + "\n]";
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3074,12 +3114,12 @@
 		 *
 		 * @return  {Object}		Suspend info.
 		 */
-		StateOrganizer._createSuspendInfo = function _createSuspendInfo ()
+		static _createSuspendInfo()
 		{
 
-			var suspendInfo = {};
+			let suspendInfo = {};
 
-			var promise = new Promise(function (resolve, reject) {
+			let promise = new Promise((resolve, reject) => {
 				suspendInfo["resolve"] = resolve;
 				suspendInfo["reject"] = reject;
 				suspendInfo["state"] = "pending";
@@ -3088,10 +3128,9 @@
 
 			return suspendInfo;
 
-		};
+		}
 
-		return StateOrganizer;
-	}(Organizer));
+	}
 
 	// =============================================================================
 
@@ -3099,21 +3138,22 @@
 	//	Template organizer class
 	// =============================================================================
 
-	var TemplateOrganizer = /*@__PURE__*/(function (Organizer) {
-		function TemplateOrganizer () {
-			Organizer.apply(this, arguments);
-		}
+	class TemplateOrganizer extends Organizer
+	{
 
-		if ( Organizer ) TemplateOrganizer.__proto__ = Organizer;
-		TemplateOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		TemplateOrganizer.prototype.constructor = TemplateOrganizer;
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-		TemplateOrganizer.globalInit = function globalInit ()
+		/**
+		 * Global init.
+		 */
+		static globalInit()
 		{
 
 			// Add properties
-			Object.defineProperty(Component.prototype, 'templates', { get: function get() { return this._templates; }, });
-			Object.defineProperty(Component.prototype, 'activeTemplateName', { get: function get() { return this._activeTemplateName; }, set: function set(value) { this._activeTemplateName = value; } });
+			Object.defineProperty(Component.prototype, 'templates', { get() { return this._templates; }, });
+			Object.defineProperty(Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
 
 			// Add methods
 			Component.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); };
@@ -3122,7 +3162,7 @@
 			Component.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); };
 			Component.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); };
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3134,7 +3174,7 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		TemplateOrganizer.init = function init (component, setttings)
+		static init(component, setttings)
 		{
 
 			// Init vars
@@ -3144,11 +3184,11 @@
 			// Set defaults if not set
 			if (!component.settings.get("settings.templateName"))
 			{
-				var templateName = component.settings.get("settings.fileName") || component.tagName.toLowerCase();
+				let templateName = component.settings.get("settings.fileName") || component.tagName.toLowerCase();
 				component.settings.set("settings.templateName", templateName);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3161,14 +3201,14 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		TemplateOrganizer.organize = function organize (conditions, component, settings)
+		static organize(conditions, component, settings)
 		{
 
-			var promises = [];
-			var templates = settings["templates"];
+			let promises = [];
+			let templates = settings["templates"];
 			if (templates)
 			{
-				Object.keys(templates).forEach(function (templateName) {
+				Object.keys(templates).forEach((templateName) => {
 					if (conditions === "beforeStart")
 					{
 						switch (templates[templateName]["type"])
@@ -3193,7 +3233,7 @@
 
 			return Promise.all(promises);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3202,12 +3242,12 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 */
-		TemplateOrganizer.clear = function clear (component)
+		static clear(component)
 		{
 
 			component._templates = {};
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Protected
@@ -3222,21 +3262,21 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		TemplateOrganizer._addTemplate = function _addTemplate (component, templateName, options)
+		static _addTemplate(component, templateName, options)
 		{
 
-			var templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
+			let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
 
 			if (templateInfo["isLoaded"])
 			//if (templateInfo["isLoaded"] && options && !options["forceLoad"])
 			{
-				console.debug(("TemplateOrganizer._addTemplate(): Template already loaded. name=" + (component.name) + ", templateName=" + templateName));
+				console.debug(`TemplateOrganizer._addTemplate(): Template already loaded. name=${component.name}, templateName=${templateName}`);
 				return Promise.resolve();
 			}
 
 			return component.loadTemplate(templateName);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3246,23 +3286,23 @@
 		 * @param	{Component}		component			Parent component.
 		 * @param	{String}		templateName		Template name.
 		 */
-		TemplateOrganizer._applyTemplate = function _applyTemplate (component, templateName)
+		static _applyTemplate(component, templateName)
 		{
 
 			if (component._activeTemplateName === templateName)
 			{
-				console.debug(("TemplateOrganizer._applyTemplate(): Template already applied. name=" + (component.name) + ", templateName=" + templateName));
+				console.debug(`TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}`);
 				return Promise.resolve();
 			}
 
-			var templateInfo = component._templates[templateName];
+			let templateInfo = component._templates[templateName];
 
-			Util.assert(templateInfo,("TemplateOrganizer._applyTemplate(): Template not loaded. name=" + (component.name) + ", templateName=" + templateName), ReferenceError);
+			Util.assert(templateInfo,`TemplateOrganizer._applyTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}`, ReferenceError);
 
 			if (templateInfo["node"])
 			{
 				// Template node
-				var clone = TemplateOrganizer.clone(component, templateInfo["name"]);
+				let clone = TemplateOrganizer.clone(component, templateInfo["name"]);
 				component.insertBefore(clone, component.firstChild);
 			}
 			else
@@ -3274,9 +3314,9 @@
 			// Change active template
 			component._activeTemplateName = templateName;
 
-			console.debug(("TemplateOrganizer._applyTemplate(): Applied template. name=" + (component.name) + ", templateName=" + (templateInfo["name"]) + ", id=" + (component.id)));
+			console.debug(`TemplateOrganizer._applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3288,15 +3328,15 @@
 		 *
 		 * @return  {Object}		Cloned component.
 		 */
-		TemplateOrganizer._clone = function _clone (component, templateName)
+		static _clone(component, templateName)
 		{
 
 			templateName = templateName || component.settings.get("settings.templateName");
-			var templateInfo = component._templates[templateName];
+			let templateInfo = component._templates[templateName];
 
-			Util.assert(templateInfo,("TemplateOrganizer._addTemplate(): Template not loaded. name=" + (component.name) + ", templateName=" + templateName), ReferenceError);
+			Util.assert(templateInfo,`TemplateOrganizer._addTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}`, ReferenceError);
 
-			var clone;
+			let clone;
 			if (templateInfo["node"])
 			{
 				// A template tag
@@ -3305,7 +3345,7 @@
 			else
 			{
 				// Not a template tag
-				var ele = document.createElement("div");
+				let ele = document.createElement("div");
 				ele.innerHTML = templateInfo["html"];
 
 				clone = ele.firstElementChild;
@@ -3313,7 +3353,7 @@
 
 			return clone;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3323,15 +3363,15 @@
 		 * @param	{Component}		component			Component.
 		 * @param	{Object}		item				Item used to judge condition.
 		 */
-		TemplateOrganizer._showConditionalElements = function _showConditionalElements (component, item)
+		static _showConditionalElements(component, item)
 		{
 
 			// Get elements with bm-visible attribute
-			var elements = Util.scopedSelectorAll(component, "[bm-visible]");
+			let elements = Util.scopedSelectorAll(component, "[bm-visible]");
 
 			// Show elements
-			elements.forEach(function (element) {
-				var condition = element.getAttribute("bm-visible");
+			elements.forEach((element) => {
+				let condition = element.getAttribute("bm-visible");
 				if (Util.safeEval(condition, item, item))
 				{
 					element.style.removeProperty("display");
@@ -3342,7 +3382,7 @@
 				}
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3351,18 +3391,18 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 */
-		TemplateOrganizer._hideConditionalElements = function _hideConditionalElements (component)
+		static _hideConditionalElements(component)
 		{
 
 			// Get elements with bm-visible attribute
-			var elements = Util.scopedSelectorAll(component, "[bm-visible]");
+			let elements = Util.scopedSelectorAll(component, "[bm-visible]");
 
 			// Hide elements
-			elements.forEach(function (element) {
+			elements.forEach((element) => {
 				element.style.display = "none";
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Privates
@@ -3376,7 +3416,7 @@
 		 *
 		 * @return  {Object}		Template info.
 		 */
-		TemplateOrganizer.__createTemplateInfo = function __createTemplateInfo (component, templateName)
+		static __createTemplateInfo(component, templateName)
 		{
 
 			if (!component._templates[templateName])
@@ -3389,10 +3429,9 @@
 
 			return component._templates[templateName];
 
-		};
+		}
 
-		return TemplateOrganizer;
-	}(Organizer));
+	}
 
 	// =============================================================================
 
@@ -3400,16 +3439,17 @@
 	//	Event organizer class
 	// =============================================================================
 
-	var EventOrganizer = /*@__PURE__*/(function (Organizer) {
-		function EventOrganizer () {
-			Organizer.apply(this, arguments);
-		}
+	class EventOrganizer extends Organizer
+	{
 
-		if ( Organizer ) EventOrganizer.__proto__ = Organizer;
-		EventOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		EventOrganizer.prototype.constructor = EventOrganizer;
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-		EventOrganizer.globalInit = function globalInit ()
+		/**
+		 * Global init.
+		 */
+		static globalInit()
 		{
 
 			// Add methods
@@ -3434,10 +3474,10 @@
 
 			// Add properties
 			Object.defineProperty(Component.prototype, 'eventResult', {
-				get: function get() { return this._eventResult; },
+				get() { return this._eventResult; },
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3449,13 +3489,13 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		EventOrganizer.init = function init (component, settings)
+		static init(component, settings)
 		{
 
 			// Init vars
 			component._eventResult = {};
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3468,20 +3508,20 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		EventOrganizer.organize = function organize (conditions, component, settings)
+		static organize(conditions, component, settings)
 		{
 
-			var events = settings["events"];
+			let events = settings["events"];
 			if (events)
 			{
-				var targets = EventOrganizer.__filterElements(component, events, conditions);
+				let targets = EventOrganizer.__filterElements(component, events, conditions);
 
-				Object.keys(targets).forEach(function (elementName) {
+				Object.keys(targets).forEach((elementName) => {
 					EventOrganizer._initEvents(component, elementName, events[elementName]);
 				});
 			}
 
-		};
+		}
 		// -------------------------------------------------------------------------
 
 		/**
@@ -3493,18 +3533,18 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		EventOrganizer.unorganize = function unorganize (conditions, component, settings)
+		static unorganize(conditions, component, settings)
 		{
 
-			var events = settings["events"];
+			let events = settings["events"];
 			if (events)
 			{
-				Object.keys(events).forEach(function (elementName) {
+				Object.keys(events).forEach((elementName) => {
 					EventOrganizer._removeEvents(component, elementName, events[elementName]);
 				});
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Protected
@@ -3519,15 +3559,15 @@
 		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
 		 * @param	{Object}		bindTo					Object that binds to the handler.
 		 */
-		EventOrganizer._addEventHandler = function _addEventHandler (component, element, eventName, handlerInfo, bindTo)
+		static _addEventHandler(component, element, eventName, handlerInfo, bindTo)
 		{
 
 			element = element || component;
-			var handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
+			let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 			// Get handler
-			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
-			Util.assert(handler, ("EventOrganizer._addEventHandler(): handler not found. name=" + (component.name) + ", eventName=" + eventName));
+			let handler = EventOrganizer._getEventHandler(component, handlerInfo);
+			Util.assert(handler, `EventOrganizer._addEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
 
 			// Init holder object for the element
 			if (!element.__bm_eventinfo)
@@ -3536,7 +3576,7 @@
 			}
 
 			// Add hook event handler
-			var listeners = element.__bm_eventinfo.listeners;
+			let listeners = element.__bm_eventinfo.listeners;
 			if (!listeners[eventName])
 			{
 				listeners[eventName] = [];
@@ -3544,17 +3584,17 @@
 			}
 
 			// Register listener info
-			listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo, "order":order});
+			listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo});
 
 			// Stable sort by order
-			var order = Util.safeGet(handlerOptions, "order");
-			listeners[eventName].sort(function (a, b) {
-				if (a.order === b.order)	{ return 0; }
-				else if (a.order > b.order)	{ return 1; }
-				else 						{ return -1 }
+			Util.safeGet(handlerOptions, "order");
+			listeners[eventName].sort((a, b) => {
+				if (a.order === b.order)	return 0;
+				else if (a.order > b.order)	return 1;
+				else 						return -1
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3566,19 +3606,19 @@
 		 * @param	{String}		eventName				Event name.
 		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
 		 */
-		EventOrganizer._removeEventHandler = function _removeEventHandler (component, element, eventName, handlerInfo)
+		static _removeEventHandler(component, element, eventName, handlerInfo)
 		{
 
 			element = element || component;
 
 			// Get handler
-			var handler = EventOrganizer._getEventHandler(component, handlerInfo);
-			Util.assert(handler, ("EventOrganizer._removeEventHandler(): handler not found. name=" + (component.name) + ", eventName=" + eventName));
+			let handler = EventOrganizer._getEventHandler(component, handlerInfo);
+			Util.assert(handler, `EventOrganizer._removeEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
 
-			var listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
+			let listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
 			if (listeners)
 			{
-				for (var i = listeners.length - 1; i >= 0; i--)
+				for (let i = listeners.length - 1; i >= 0; i--)
 				{
 					if (listeners[i]["handler"] === handler)
 					{
@@ -3588,7 +3628,7 @@
 				}
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3600,28 +3640,28 @@
 		 * @param	{Object}		eventInfo			Event info.
 		 * @param	{HTMLElement}	rootNode			Root node of elements.
 		 */
-		EventOrganizer._initEvents = function _initEvents (component, elementName, eventInfo, rootNode)
+		static _initEvents(component, elementName, eventInfo, rootNode)
 		{
 
 			rootNode = ( rootNode ? rootNode : component );
 
 			// Get target elements
-			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
+			let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
 			//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
 
 			// Set event handlers
-			Object.keys(eventInfo["handlers"]).forEach(function (eventName) {
-				var handlers = ( Array.isArray(eventInfo["handlers"][eventName]) ? eventInfo["handlers"][eventName] : [eventInfo["handlers"][eventName]] );
-				for (var i = 0; i < handlers.length; i++)
+			Object.keys(eventInfo["handlers"]).forEach((eventName) => {
+				let handlers = ( Array.isArray(eventInfo["handlers"][eventName]) ? eventInfo["handlers"][eventName] : [eventInfo["handlers"][eventName]] );
+				for (let i = 0; i < handlers.length; i++)
 				{
-					for (var j = 0; j < elements.length; j++)
+					for (let j = 0; j < elements.length; j++)
 					{
 						component.addEventHandler(eventName, handlers[i], elements[j]);
 					}
 				}
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3633,27 +3673,27 @@
 		 * @param	{Object}		eventInfo			Event info.
 		 * @param	{HTMLElement}	rootNode			Root node of elements.
 		 */
-		EventOrganizer._removeEvents = function _removeEvents (component, elementName, eventInfo, rootNode)
+		static _removeEvents(component, elementName, eventInfo, rootNode)
 		{
 
 			rootNode = ( rootNode ? rootNode : component );
 
 			// Get target elements
-			var elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
+			let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
 
 			// Remove event handlers
-			Object.keys(eventInfo["handlers"]).forEach(function (eventName) {
-				var handlers = ( Array.isArray(eventInfo["handlers"][eventName]) ? eventInfo["handlers"][eventName] : [eventInfo["handlers"][eventName]] );
-				for (var i = 0; i < handlers.length; i++)
+			Object.keys(eventInfo["handlers"]).forEach((eventName) => {
+				let handlers = ( Array.isArray(eventInfo["handlers"][eventName]) ? eventInfo["handlers"][eventName] : [eventInfo["handlers"][eventName]] );
+				for (let i = 0; i < handlers.length; i++)
 				{
-					for (var j = 0; j < elements.length; j++)
+					for (let j = 0; j < elements.length; j++)
 					{
 						component.removeEventHandler(eventName, handlers[i], elements[j]);
 					}
 				}
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3665,7 +3705,7 @@
 		 * @param	{Object}		options					Event parameter options.
 		 * @param	{HTMLElement}	element					HTML element.
 		 */
-		EventOrganizer._trigger = function _trigger (component, eventName, options, element)
+		static _trigger(component, eventName, options, element)
 		{
 
 			options = Object.assign({}, options);
@@ -3673,7 +3713,7 @@
 			component._eventResult = {};
 			options["result"] = component._eventResult;
 			element = ( element ? element : component );
-			var e = null;
+			let e = null;
 
 			try
 			{
@@ -3690,7 +3730,7 @@
 			// return the promise if exists
 			return Util.safeGet(element, "__bm_eventinfo.promises." + eventName) || Promise.resolve();
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3702,7 +3742,7 @@
 		 * @param	{Object}		options					Event parameter options.
 		 * @param	{HTMLElement}	element					HTML element.
 		 */
-		EventOrganizer._triggerAsync = function _triggerAsync (component, eventName, options, element)
+		static _triggerAsync(component, eventName, options, element)
 		{
 
 			options = options || {};
@@ -3710,7 +3750,7 @@
 
 			return EventOrganizer._trigger.call(component, component, eventName, options, element);
 
-		};
+		}
 
 		// -----------------------------------------------------------------------------
 
@@ -3720,14 +3760,14 @@
 		 * @param	{Component}		component				Component.
 		 * @param	{Object/Function/String}	handlerInfo	Handler info.
 		 */
-		EventOrganizer._getEventHandler = function _getEventHandler (component, handlerInfo)
+		static _getEventHandler(component, handlerInfo)
 		{
 
-			var handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
+			let handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
 
 			return handler;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Privates
@@ -3742,22 +3782,22 @@
 		 *
 		 * @return 	{Object}		Target elements.
 		 */
-		EventOrganizer.__filterElements = function __filterElements (component, eventInfo, conditions)
+		static __filterElements(component, eventInfo, conditions)
 		{
 
-			var keys;
+			let keys;
 
 			switch (conditions)
 			{
 			case "beforeStart":
 				// Return events only for the component itself.
-				keys = Object.keys(eventInfo).filter(function (elementName) {
+				keys = Object.keys(eventInfo).filter((elementName) => {
 					return EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
 				});
 				break;
 			case "afterAppend":
 				// Return events only for elements inside the component.
-				keys = Object.keys(eventInfo).filter(function (elementName) {
+				keys = Object.keys(eventInfo).filter((elementName) => {
 					return !EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
 				});
 				break;
@@ -3767,14 +3807,14 @@
 				break;
 			}
 
-			var targets = keys.reduce(function (result, key) {
+			let targets = keys.reduce((result, key) => {
 				result[key] = eventInfo[key];
 				return result;
 			}, {});
 
 			return targets;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3786,10 +3826,10 @@
 		 *
 		 * @return 	{Boolean}			Target node list.
 		 */
-			EventOrganizer.__isTargetSelf = function __isTargetSelf (elementName, eventInfo)
+			static __isTargetSelf(elementName, eventInfo)
 		{
 
-			var ret = false;
+			let ret = false;
 
 			if (elementName === "this" || eventInfo && eventInfo["rootNode"] === "this")
 			{
@@ -3798,7 +3838,7 @@
 
 			return ret;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3812,10 +3852,10 @@
 		 *
 		 * @return 	{Array}			Target node list.
 		 */
-		EventOrganizer.__getTargetElements = function __getTargetElements (component, rootNode, elementName, eventInfo)
+		static __getTargetElements(component, rootNode, elementName, eventInfo)
 		{
 
-			var elements;
+			let elements;
 
 			if (EventOrganizer.__isTargetSelf(elementName, eventInfo))
 			{
@@ -3832,7 +3872,7 @@
 
 			return elements;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3845,15 +3885,15 @@
 		 *
 		 * @return 	{Boolean}		True if already installed.
 		 */
-		EventOrganizer.__isHandlerInstalled = function __isHandlerInstalled (element, eventName, handler)
+		static __isHandlerInstalled(element, eventName, handler)
 		{
 
-			var isInstalled = false;
-			var listeners = Util.safeGet(element.__bm_eventinfo, "listeners." + eventName);
+			let isInstalled = false;
+			let listeners = Util.safeGet(element.__bm_eventinfo, "listeners." + eventName);
 
 			if (listeners)
 			{
-				for (var i = 0; i < listeners.length; i++)
+				for (let i = 0; i < listeners.length; i++)
 				{
 					if (listeners[i]["handler"] === handler)
 					{
@@ -3865,7 +3905,7 @@
 
 			return isInstalled;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3877,27 +3917,25 @@
 		 *
 		 * @param	{Object}		e						Event parameter.
 		 */
-		EventOrganizer.__callEventHandler = function __callEventHandler (e)
+		static __callEventHandler(e)
 		{
-			var this$1$1 = this;
 
-
-			var listeners = Util.safeGet(this, "__bm_eventinfo.listeners." + e.type);
-			var sender = Util.safeGet(e, "detail.sender", this);
-			var component = Util.safeGet(this, "__bm_eventinfo.component");
+			let listeners = Util.safeGet(this, "__bm_eventinfo.listeners." + e.type);
+			let sender = Util.safeGet(e, "detail.sender", this);
+			let component = Util.safeGet(this, "__bm_eventinfo.component");
 
 			// Check if handler is already running
 			//Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
-			Util.warn(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", ("EventOrganizer.__callEventHandler(): Event handler is already running. name=" + (this.tagName) + ", eventName=" + (e.type)));
+			Util.warn(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
 
 			Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
 
 			if (Util.safeGet(e, "detail.async", false) === false)
 			{
 				// Wait previous handler
-				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(function (result) {
-					Util.safeSet(this$1$1, "__bm_eventinfo.promises." + e.type, null);
-					Util.safeSet(this$1$1, "__bm_eventinfo.statuses." + e.type, "");
+				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then((result) => {
+					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
 				});
 			}
 			else
@@ -3908,7 +3946,7 @@
 				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3920,35 +3958,33 @@
 		 * @param	{Object}		component				Target component.
 		 * @param	{Object}		listener				Listers info.
 		 */
-		EventOrganizer.__handle = function __handle (e, sender, component, listeners)
+		static __handle(e, sender, component, listeners)
 		{
 
-			var chain = Promise.resolve();
-			var stopPropagation = false;
+			let chain = Promise.resolve();
+			let stopPropagation = false;
 
-			var loop = function ( i ) {
+			for (let i = 0; i < listeners.length; i++)
+			{
 				// Options set in addEventHandler()
-				var ex = {
+				let ex = {
 					"component": component,
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 				};
 
-				chain = chain.then(function () {
+				chain = chain.then(() => {
 					// Get a handler
-					var handler = listeners[i]["handler"];
+					let handler = listeners[i]["handler"];
 					handler = ( typeof handler === "string" ? component[handler] : handler );
-					Util.assert(typeof handler === "function", ("EventOrganizer._addEventHandler(): Event handler is not a function. name=" + (component.name) + ", eventName=" + (e.type)), TypeError);
+					Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
 
 					// Execute handler
-					var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+					let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
 					return handler.call(bindTo, sender, e, ex);
 				});
 
 				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
-			};
-
-			for (var i = 0; i < listeners.length; i++)
-			loop( i );
+			}
 
 			if (stopPropagation)
 			{
@@ -3957,7 +3993,7 @@
 
 			return chain;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -3969,26 +4005,26 @@
 		 * @param	{Object}		component				Target component.
 		 * @param	{Object}		listener				Listers info.
 		 */
-		EventOrganizer.__handleAsync = function __handleAsync (e, sender, component, listeners)
+		static __handleAsync(e, sender, component, listeners)
 		{
 
-			var stopPropagation = false;
+			let stopPropagation = false;
 
-			for (var i = 0; i < listeners.length; i++)
+			for (let i = 0; i < listeners.length; i++)
 			{
 				// Options set on addEventHandler()
-				var ex = {
+				let ex = {
 					"component": component,
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 				};
 
 				// Get a handler
-				var handler = listeners[i]["handler"];
+				let handler = listeners[i]["handler"];
 				handler = ( typeof handler === "string" ? component[handler] : handler );
-				Util.assert(typeof handler === "function", ("EventOrganizer._addEventHandler(): Event handler is not a function. name=" + (component.name) + ", eventName=" + (e.type)), TypeError);
+				Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
 
 				// Execute handler
-				var bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
 				handler.call(bindTo, sender, e, ex);
 
 				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
@@ -4001,10 +4037,9 @@
 
 			return Promise.resolve();
 
-		};
+		}
 
-		return EventOrganizer;
-	}(Organizer));
+	}
 
 	// =============================================================================
 
@@ -4012,63 +4047,37 @@
 	//	Loader organizer class
 	// =============================================================================
 
-	var LoaderOrganizer = /*@__PURE__*/(function (Organizer) {
-		function LoaderOrganizer () {
-			Organizer.apply(this, arguments);
-		}
+	class LoaderOrganizer extends Organizer
+	{
 
-		if ( Organizer ) LoaderOrganizer.__proto__ = Organizer;
-		LoaderOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		LoaderOrganizer.prototype.constructor = LoaderOrganizer;
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-		LoaderOrganizer.globalInit = function globalInit ()
+		/**
+		 * Global init.
+		 */
+		static globalInit()
 		{
 
 			// Add methods
-			BITSMIST.v1.Component.prototype.getLoader = function() {
-			var args = [], len = arguments.length;
-			while ( len-- ) args[ len ] = arguments[ len ];
-	 return LoaderOrganizer._getLoader.apply(LoaderOrganizer, [ this ].concat( args )); };
-			BITSMIST.v1.Component.prototype.loadTags = function() {
-			var ref;
-
-			var args = [], len = arguments.length;
-			while ( len-- ) args[ len ] = arguments[ len ]; return (ref = this.getLoader()).loadTags.apply(ref, [ this ].concat( args )); };
-			BITSMIST.v1.Component.prototype.loadTag = function() {
-			var ref;
-
-			var args = [], len = arguments.length;
-			while ( len-- ) args[ len ] = arguments[ len ]; return (ref = this.getLoader()).loadTag.apply(ref, [ this ].concat( args )); };
-			BITSMIST.v1.Component.prototype.loadComponent = function() {
-			var ref;
-
-			var args = [], len = arguments.length;
-			while ( len-- ) args[ len ] = arguments[ len ]; return (ref = this.getLoader()).loadComponent.apply(ref, [ this ].concat( args )); };
-			BITSMIST.v1.Component.prototype.loadTemplate = function() {
-			var ref;
-
-			var args = [], len = arguments.length;
-			while ( len-- ) args[ len ] = arguments[ len ]; return (ref = this.getLoader()).loadTemplate.apply(ref, [ this ].concat( args )); };
-			BITSMIST.v1.Component.prototype.loadSetting = function() {
-			var ref;
-
-			var args = [], len = arguments.length;
-			while ( len-- ) args[ len ] = arguments[ len ]; return (ref = this.getLoader()).loadSetting.apply(ref, [ this ].concat( args )); };
-			BITSMIST.v1.Component.prototype.loadSettingFile = function() {
-			var ref;
-
-			var args = [], len = arguments.length;
-			while ( len-- ) args[ len ] = arguments[ len ]; return (ref = this.getLoader()).loadSettingFile.apply(ref, [ this ].concat( args )); };
+			BITSMIST.v1.Component.prototype.getLoader = function(...args) { return LoaderOrganizer._getLoader(this, ...args); };
+			BITSMIST.v1.Component.prototype.loadTags = function(...args) { return this.getLoader().loadTags(this, ...args); };
+			BITSMIST.v1.Component.prototype.loadTag = function(...args) { return this.getLoader().loadTag(this, ...args); };
+			BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return this.getLoader().loadComponent(this, ...args); };
+			BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this.getLoader().loadTemplate(this, ...args); };
+			BITSMIST.v1.Component.prototype.loadSetting = function(...args) { return this.getLoader().loadSetting(this, ...args); };
+			BITSMIST.v1.Component.prototype.loadSettingFile = function(...args) { return this.getLoader().loadSettingFile(this, ...args); };
 
 			// Init vars
 			LoaderOrganizer._loaders = {};
 			Object.defineProperty(LoaderOrganizer, "loaders", {
-				get: function get() { return LoaderOrganizer._loaders; },
+				get() { return LoaderOrganizer._loaders; },
 			});
 			LoaderOrganizer._loaders["DefaultLoader"] = BITSMIST.v1.DefaultLoader;
 
 			// Load tags
-			document.addEventListener("DOMContentLoaded", function () {
+			document.addEventListener("DOMContentLoaded", () => {
 				if (BITSMIST.v1.settings.get("organizers.LoaderOrgaznier.settings.autoLoadOnStartup", true))
 				{
 					// Create dummy component for loading tags.
@@ -4080,17 +4089,17 @@
 							"rootElement":				document.body,
 						},
 					}, "bm-app", "BmApp");
-					var component = document.createElement("bm-app");
+					let component = document.createElement("bm-app");
 
 					// Load tags
-					component.start().then(function () {
-						var loader = component.getLoader(BITSMIST.v1.settings.get("system.loaderName"));
+					component.start().then(() => {
+						let loader = component.getLoader(BITSMIST.v1.settings.get("system.loaderName"));
 						loader.loadTags(component, component.rootElement, {"waitForTags":false});
 					});
 				}
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -4102,12 +4111,12 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		LoaderOrganizer.init = function init (component, settings)
+		static init(component, settings)
 		{
 
 			component.getLoader().init(component);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -4120,7 +4129,7 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		LoaderOrganizer.organize = function organize (conditions, component, settings)
+		static organize(conditions, component, settings)
 		{
 
 			switch (conditions)
@@ -4129,7 +4138,7 @@
 					return component.loadTags(component.rootElement);
 			}
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -4139,7 +4148,7 @@
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
 		 */
-		LoaderOrganizer.register = function register (key, value)
+		static register(key, value)
 		{
 
 			value = Object.assign({}, value);
@@ -4147,7 +4156,7 @@
 
 			LoaderOrganizer._loaders[key] = value;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Protected
@@ -4161,18 +4170,17 @@
 		 *
 		 * @return 	{Function}		Loader.
 		 */
-		LoaderOrganizer._getLoader = function _getLoader (component, loaderName)
+		static _getLoader(component, loaderName)
 		{
 
 			loaderName = ( loaderName ? loaderName : component.settings.get("settings.loaderName", "DefaultLoader") );
-			Util.assert(LoaderOrganizer.loaders[loaderName], ("Loader doesn't exist. loaderName=" + loaderName));
+			Util.assert(LoaderOrganizer.loaders[loaderName], `Loader doesn't exist. loaderName=${loaderName}`);
 
 			return LoaderOrganizer._loaders[loaderName].object;
 
-		};
+		}
 
-		return LoaderOrganizer;
-	}(Organizer));
+	}
 
 	// =============================================================================
 
@@ -4180,21 +4188,27 @@
 	//	Component organizer class
 	// =============================================================================
 
-	var ComponentOrganizer = /*@__PURE__*/(function (Organizer) {
-		function ComponentOrganizer () {
-			Organizer.apply(this, arguments);
-		}
+	class ComponentOrganizer extends Organizer
+	{
 
-		if ( Organizer ) ComponentOrganizer.__proto__ = Organizer;
-		ComponentOrganizer.prototype = Object.create( Organizer && Organizer.prototype );
-		ComponentOrganizer.prototype.constructor = ComponentOrganizer;
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-		ComponentOrganizer.init = function init (component, settings)
+		/**
+		 * Init.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		static init(component, settings)
 		{
 
 			// Add properties
 			Object.defineProperty(component, "components", {
-				get: function get() { return this._components; },
+				get() { return this._components; },
 			});
 
 			// Add methods
@@ -4203,7 +4217,7 @@
 			// Init vars
 			component._components = {};
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -4216,28 +4230,28 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		ComponentOrganizer.organize = function organize (conditions, component, settings)
+		static organize(conditions, component, settings)
 		{
 
-			var chain = Promise.resolve();
+			let chain = Promise.resolve();
 
 			// Load molds
-			var molds = settings["molds"];
+			let molds = settings["molds"];
 			if (molds)
 			{
-				Object.keys(molds).forEach(function (moldName) {
-					chain = chain.then(function () {
+				Object.keys(molds).forEach((moldName) => {
+					chain = chain.then(() => {
 						return ComponentOrganizer._addComponent(component, moldName, molds[moldName], true);
 					});
 				});
 			}
 
 			// Load components
-			var components = settings["components"];
+			let components = settings["components"];
 			if (components)
 			{
-				Object.keys(components).forEach(function (componentName) {
-					chain = chain.then(function () {
+				Object.keys(components).forEach((componentName) => {
+					chain = chain.then(() => {
 						return ComponentOrganizer._addComponent(component, componentName, components[componentName]);
 					});
 				});
@@ -4245,7 +4259,7 @@
 
 			return chain;
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -4258,12 +4272,12 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		ComponentOrganizer.unorganize = function unorganize (conditions, component, settings)
+		static unorganize(conditions, component, settings)
 		{
 
 			ComponentOrganizer.clear(component);
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 
@@ -4272,16 +4286,16 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 */
-		ComponentOrganizer.clear = function clear (component)
+		static clear(component)
 		{
 
-			Object.keys(component._components).forEach(function (key) {
+			Object.keys(component._components).forEach((key) => {
 				component._components[key].parentNode.removeChild(component._components[key]);
 			});
 
 			component._components = {};
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Protected
@@ -4297,39 +4311,39 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		ComponentOrganizer._addComponent = function _addComponent (component, componentName, settings, sync)
+		static _addComponent(component, componentName, settings, sync)
 		{
 
-			console.debug(("Adding a component. name=" + (component.name) + ", componentName=" + componentName));
+			console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
 
-			var className = Util.safeGet(settings, "settings.className") || componentName;
-			var tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
+			let className = Util.safeGet(settings, "settings.className") || componentName;
+			let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
 
-			return Promise.resolve().then(function () {
+			return Promise.resolve().then(() => {
 				// Load component
-				var splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
-				var options = { "splitComponent":splitComponent };
+				let splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
+				let options = { "splitComponent":splitComponent };
 
 				return component.loadComponent(className, settings, options, tagName);
-			}).then(function () {
+			}).then(() => {
 				// Insert tag
 				if (Util.safeGet(settings, "settings.rootNode") && !component._components[componentName])
 				{
 					component._components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
 				}
-			}).then(function () {
+			}).then(() => {
 				// Wait for the added component to be ready
 				if (sync || Util.safeGet(settings, "settings.sync"))
 				{
 					sync = sync || Util.safeGet(settings, "settings.sync"); // sync precedes settings["sync"]
-					var state = (sync === true ? "started" : sync);
-					var c = className.split(".");
+					let state = (sync === true ? "started" : sync);
+					let c = className.split(".");
 
 					return component.waitFor([{"name":c[c.length - 1], "state":state}]);
 				}
 			});
 
-		};
+		}
 
 		// -------------------------------------------------------------------------
 		//  Privates
@@ -4343,17 +4357,17 @@
 		 *
 		 * @return  {Component}		Component.
 		 */
-		ComponentOrganizer.__insertTag = function __insertTag (component, tagName, settings)
+		static __insertTag(component, tagName, settings)
 		{
 
-			var addedComponent;
+			let addedComponent;
 
 			// Check root node
-			var root = component.rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
-			Util.assert(root, ("ComponentOrganizer.__insertTag(): Root node does not exist. name=" + (component.name) + ", tagName=" + tagName + ", rootNode=" + (Util.safeGet(settings, "settings.rootNode"))), ReferenceError);
+			let root = component.rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
+			Util.assert(root, `ComponentOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`, ReferenceError);
 
 			// Build tag
-			var tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
+			let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
 
 			// Insert tag
 			if (Util.safeGet(settings, "settings.overwrite"))
@@ -4379,10 +4393,9 @@
 
 			return addedComponent;
 
-		};
+		}
 
-		return ComponentOrganizer;
-	}(Organizer));
+	}
 
 	// =============================================================================
 
@@ -4390,480 +4403,494 @@
 	//	Default loader class
 	// =============================================================================
 
-	var DefaultLoader = function DefaultLoader () {};
-
-	DefaultLoader.init = function init (component, options)
+	class DefaultLoader
 	{
 
-		this._loadAttrSettings(component);
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
-	};
+		/**
+		 * Init.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		static init(component, options)
+		{
 
-	// -------------------------------------------------------------------------
+			this._loadAttrSettings(component);
 
-	/**
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
 		 * Load scripts for tags which has bm-autoload attribute.
 		 *
-		 * @param{Component}	component		Component.
-		 * @param{HTMLElement}rootNode		Target node.
-		 * @param{Object}	options			Load Options.
+		 * @param	{Component}		component			Component.
+		 * @param	{HTMLElement}	rootNode			Target node.
+		 * @param	{Object}		options				Load Options.
 		 *
-		 * @return  {Promise}	Promise.
+		 * @return  {Promise}		Promise.
 		 */
-	DefaultLoader.loadTags = function loadTags (component, rootNode, options)
-	{
-			var this$1$1 = this;
+		static loadTags(component, rootNode, options)
+		{
 
+			console.debug(`Loading tags. name=${component.name}, rootNode=${rootNode.tagName}`);
 
-		console.debug(("Loading tags. name=" + (component.name) + ", rootNode=" + (rootNode.tagName)));
+			let promises = [];
+			let waitList = [];
 
-		var promises = [];
-		var waitList = [];
+			// Load tags that has bm-autoload/bm-automorph attribute
+			let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered])");
+			targets.forEach((element) => {
+				element.setAttribute("bm-autoloading", "");
 
-		// Load tags that has bm-autoload/bm-automorph attribute
-		var targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered])");
-		targets.forEach(function (element) {
-			element.setAttribute("bm-autoloading", "");
+				let loader = ( element.hasAttribute("bm-loader") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loader")).object : this);
+				promises.push(loader.loadTag(component, element, options).then(() => {
+					element.removeAttribute("bm-autoloading");
+				}));
+			});
 
-			var loader = ( element.hasAttribute("bm-loader") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loader")).object : this$1$1);
-			promises.push(loader.loadTag(component, element, options).then(function () {
-				element.removeAttribute("bm-autoloading");
-			}));
-		});
+			// Create waiting list to wait Bitsmist components
+			targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
+			targets.forEach((element) => {
+				if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
+				{
+					let waitItem = {"object":element, "state":"started"};
+					waitList.push(waitItem);
+				}
+			});
 
-		// Create waiting list to wait Bitsmist components
-		targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
-		targets.forEach(function (element) {
-			if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
-			{
-				var waitItem = {"object":element, "state":"started"};
-				waitList.push(waitItem);
-			}
-		});
+			// Wait for the elements to be loaded
+			return Promise.all(promises).then(() => {
+				let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
+				if (waitFor)
+				{
+					// Wait for the elements to become "started"
+					return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
+				}
+			});
 
-		// Wait for the elements to be loaded
-		return Promise.all(promises).then(function () {
-			var waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
-			if (waitFor)
-			{
-				// Wait for the elements to become "started"
-				return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
-			}
-		});
+		}
 
-	};
+		// -----------------------------------------------------------------------------
 
-	// -----------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Load a tag.
 		 *
-		 * @param{Component}	component		Component.
-		 * @param{HTMLElement}element			Target element.
-		 * @param{Object}	options			Load Options.
+		 * @param	{Component}		component			Component.
+		 * @param	{HTMLElement}	element				Target element.
+		 * @param	{Object}		options				Load Options.
 		 *
-		 * @return  {Promise}	Promise.
+		 * @return  {Promise}		Promise.
 		 */
-	DefaultLoader.loadTag = function loadTag (component, element, options)
-	{
-
-		console.debug(("Loading a tag. name=" + (component.name) + ", element=" + (element.tagName)));
-
-		// Get settings from attributes
-		var href = element.getAttribute("bm-autoload");
-		var className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
-		var path = element.getAttribute("bm-path") || "";
-		var split = Util.safeGet(options, "splitComponent", component.settings.get("system.splitComponent", false));
-		var morph = ( element.hasAttribute("bm-automorph") ?
-			( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
-			false
-		);
-		var settings = {"settings":{"autoMorph":morph, "path":path}};
-		var loadOptions = {"splitComponent":split};
-
-		// Override path,fileName,autoMorph when bm-autoload is set
-		if (href)
+		static loadTag(component, element, options)
 		{
-			var arr = Util.getFilenameAndPathFromUrl(href);
-			loadOptions["path"] = arr[0];
-			if (href.slice(-3).toLowerCase() === ".js")
+
+			console.debug(`Loading a tag. name=${component.name}, element=${element.tagName}`);
+
+			// Get settings from attributes
+			let href = element.getAttribute("bm-autoload");
+			let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
+			let path = element.getAttribute("bm-path") || "";
+			let split = Util.safeGet(options, "splitComponent", component.settings.get("system.splitComponent", false));
+			let morph = ( element.hasAttribute("bm-automorph") ?
+				( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
+				false
+			);
+			let settings = {"settings":{"autoMorph":morph, "path":path}};
+			let loadOptions = {"splitComponent":split};
+
+			// Override path,fileName,autoMorph when bm-autoload is set
+			if (href)
 			{
-				settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
+				let arr = Util.getFilenameAndPathFromUrl(href);
+				loadOptions["path"] = arr[0];
+				if (href.slice(-3).toLowerCase() === ".js")
+				{
+					settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
+				}
+				else if (href.slice(-5).toLowerCase() === ".html")
+				{
+					settings["settings"]["autoMorph"] = true;
+					settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
+				}
 			}
-			else if (href.slice(-5).toLowerCase() === ".html")
-			{
-				settings["settings"]["autoMorph"] = true;
-				settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
-			}
+
+			return this.loadComponent(component, className, settings, loadOptions, element.tagName);
+
 		}
 
-		return this.loadComponent(component, className, settings, loadOptions, element.tagName);
+		// -------------------------------------------------------------------------
 
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Load a component.
 		 *
-		 * @param{Component}	component		Component.
-		 * @param{String}	className		Class name.
-		 * @param{Object}	settings		Component settings.
-		 * @param{Object}	options			Load options.
-		 * @param{String}	tagName			Component's tag name
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		className			Class name.
+		 * @param	{Object}		settings			Component settings.
+		 * @param	{Object}		options				Load options.
+		 * @param	{String}		tagName				Component's tag name
 		 *
-		 * @return  {Promise}	Promise.
+		 * @return  {Promise}		Promise.
 		 */
-	DefaultLoader.loadComponent = function loadComponent (component, className, settings, options, tagName)
-	{
-
-		console.debug(("Loading a component. name=" + (component.name) + ", className=" + className + ", tagName=" + tagName));
-
-		tagName = tagName.toLowerCase();
-		var promise;
-		var path = Util.safeGet(options, "path",
-			Util.concatPath([
-				component.settings.get("system.appBaseUrl", ""),
-				component.settings.get("system.componentPath", ""),
-				Util.safeGet(settings, "settings.path") ])
-		);
-
-		// Check if the tag is already defined
-		if (customElements.get(tagName))
+		static loadComponent(component, className, settings, options, tagName)
 		{
-			console.debug(("Tag already defined. className=" + className + ", tagName=" + tagName));
-			return Promise.resolve();
-		}
 
-		var morph = Util.safeGet(settings, "settings.autoMorph");
-		if (morph)
-		{
-			// Morphing
-			var superClass = ( morph === true ?  BITSMIST.v1.Component : ClassUtil.getClass(morph) );
-			console.debug(("Morphing component. className=" + className + ", superClassName=" + (superClass.name) + ", tagName=" + tagName));
+			console.debug(`Loading a component. name=${component.name}, className=${className}, tagName=${tagName}`);
 
-			ClassUtil.newComponent(superClass, settings, tagName, className);
-		}
-		else
-		{
-			// Loading
-			var fileName = Util.safeGet(settings, "settings.fileName", tagName);
-			promise = this._autoloadComponent(className, fileName, path, options);
-		}
-
-		return Promise.all([promise]).then(function () {
-			// Define tag if not defined yet
-			if (!customElements.get(tagName))
-			{
-				var newClass = ClassUtil.getClass(className);
-				customElements.define(tagName, newClass);
-			}
-		});
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Get a template html according to settings.
-		 *
-		 * @param{Component}	component		Component.
-		 * @param{String}	templateName	Template name.
-		 * @param{Object}	options			Load options.
-		 *
-		 * @return {Promise}	Promise.
-		 */
-	DefaultLoader.loadTemplate = function loadTemplate (component, templateName, options)
-	{
-
-		var promise;
-		var templateInfo = component._templates[templateName];
-		var settings = component.settings.get("templates." + templateName, {});
-
-		switch (settings["type"]) {
-		case "html":
-			templateInfo["html"] = settings["html"];
-			promise = Promise.resolve();
-			break;
-		case "node":
-			templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
-			promise = Promise.resolve();
-			break;
-		case "url":
-		default:
-			promise = this._loadTemplateFile(component, templateInfo["name"], options).then(function (template) {
-				templateInfo["html"] = template;
-			});
-			break;
-		}
-
-		return promise.then(function () {
-			templateInfo["isLoaded"] = true;
-		});
-
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
-		 * Get a template html according to settings.
-		 *
-		 * @param{Component}	component		Component.
-		 * @param{String}	settingName		Setting name.
-		 * @param{Object}	options			Load options.
-		 *
-		 * @return {Promise}	Promise.
-		 */
-	DefaultLoader.loadSetting = function loadSetting (component, settingName, options)
-	{
-			var this$1$1 = this;
-
-
-		var path;
-		return Promise.resolve().then(function () {
-			path = Util.safeGet(options, "path",
+			tagName = tagName.toLowerCase();
+			let promise;
+			let path = Util.safeGet(options, "path",
 				Util.concatPath([
 					component.settings.get("system.appBaseUrl", ""),
 					component.settings.get("system.componentPath", ""),
-					component.settings.get("settings.componentPath", "") ])
+					Util.safeGet(settings, "settings.path"),
+				])
 			);
 
-			return this$1$1.loadSettingFile(component, settingName, path, "js");
-		}).then(function (extraSettings) {
-			if (extraSettings)
+			// Check if the tag is already defined
+			if (customElements.get(tagName))
 			{
-				component.settings.merge(extraSettings);
+				console.debug(`Tag already defined. className=${className}, tagName=${tagName}`);
+				return Promise.resolve();
 			}
-		});
 
-	};
+			let morph = Util.safeGet(settings, "settings.autoMorph");
+			if (morph)
+			{
+				// Morphing
+				let superClass = ( morph === true ?  BITSMIST.v1.Component : ClassUtil.getClass(morph) );
+				console.debug(`Morphing component. className=${className}, superClassName=${superClass.name}, tagName=${tagName}`);
 
-	// -------------------------------------------------------------------------
+				ClassUtil.newComponent(superClass, settings, tagName, className);
+			}
+			else
+			{
+				// Loading
+				let fileName = Util.safeGet(settings, "settings.fileName", tagName);
+				promise = this._autoloadComponent(className, fileName, path, options);
+			}
 
-	/**
+			return Promise.all([promise]).then(() => {
+				// Define tag if not defined yet
+				if (!customElements.get(tagName))
+				{
+					let newClass = ClassUtil.getClass(className);
+					customElements.define(tagName, newClass);
+				}
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get a template html according to settings.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		templateName		Template name.
+		 * @param	{Object}		options				Load options.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		static loadTemplate(component, templateName, options)
+		{
+
+			let promise;
+			let templateInfo = component._templates[templateName];
+			let settings = component.settings.get("templates." + templateName, {});
+
+			switch (settings["type"]) {
+			case "html":
+				templateInfo["html"] = settings["html"];
+				promise = Promise.resolve();
+				break;
+			case "node":
+				templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
+				promise = Promise.resolve();
+				break;
+			case "url":
+			default:
+				promise = this._loadTemplateFile(component, templateInfo["name"], options).then((template) => {
+					templateInfo["html"] = template;
+				});
+				break;
+			}
+
+			return promise.then(() => {
+				templateInfo["isLoaded"] = true;
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get a template html according to settings.
+		 *
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		settingName			Setting name.
+		 * @param	{Object}		options				Load options.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		static loadSetting(component, settingName, options)
+		{
+
+			let path;
+			return Promise.resolve().then(() => {
+				path = Util.safeGet(options, "path",
+					Util.concatPath([
+						component.settings.get("system.appBaseUrl", ""),
+						component.settings.get("system.componentPath", ""),
+						component.settings.get("settings.componentPath", ""),
+					])
+				);
+
+				return this.loadSettingFile(component, settingName, path, "js");
+			}).then((extraSettings) => {
+				if (extraSettings)
+				{
+					component.settings.merge(extraSettings);
+				}
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
 		 * Load setting file.
 		 *
-		 * @param{Component}	component		Component.
-		 * @param{String}	settingName		Setting name.
-		 * @param{String}	path			Path to setting file.
-		 * @param{String}	type			Type of setting file.
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		settingName			Setting name.
+		 * @param	{String}		path				Path to setting file.
+		 * @param	{String}		type				Type of setting file.
 		 *
-		 * @return  {Promise}	Promise.
+		 * @return  {Promise}		Promise.
 		 */
-	DefaultLoader.loadSettingFile = function loadSettingFile (component, settingName, path, type)
-	{
+		static loadSettingFile(component, settingName, path, type)
+		{
 
-		type = type || "js";
-		var url = Util.concatPath([path, settingName + "." + type]);
-		var settings;
+			type = type || "js";
+			let url = Util.concatPath([path, settingName + "." + type]);
+			let settings;
 
-		console.debug(("Loading settings. name=" + (component.name) + ", url=" + url));
+			console.debug(`Loading settings. name=${component.name}, url=${url}`);
 
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then(function (xhr) {
-			console.debug(("Loaded settings. name=" + (component.name) + ", url=" + url));
+			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+				console.debug(`Loaded settings. name=${component.name}, url=${url}`);
 
-			switch (type)
-			{
-			case "json":
-				try
+				switch (type)
 				{
-					settings = JSON.parse(xhr.responseText);
-				}
-				catch(e)
-				{
-					if (e instanceof SyntaxError)
+				case "json":
+					try
 					{
-						throw new SyntaxError(("Illegal json string. url=" + url + ", message=" + (e.message)));
+						settings = JSON.parse(xhr.responseText);
 					}
-					else
+					catch(e)
 					{
-						throw e;
+						if (e instanceof SyntaxError)
+						{
+							throw new SyntaxError(`Illegal json string. url=${url}, message=${e.message}`);
+						}
+						else
+						{
+							throw e;
+						}
 					}
+					break;
+				case "js":
+				default:
+					settings = Function('"use strict";return (' + xhr.responseText + ')').call(component);
+					break;
 				}
-				break;
-			case "js":
-			default:
-				settings = Function('"use strict";return (' + xhr.responseText + ')').call(component);
-				break;
-			}
 
-			return settings;
-		});
+				return settings;
+			});
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
-	//  Protected
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
+		//  Protected
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Check if the class exists.
 		 *
-		 * @param{String}	className		Class name.
+		 * @param	{String}		className			Class name.
 		 *
-		 * @return  {Bool}		True if exists.
+		 * @return  {Bool}			True if exists.
 		 */
-	DefaultLoader._isLoadedClass = function _isLoadedClass (className)
-	{
-
-		var ret = false;
-
-		if (DefaultLoader._classes.get(className, {})["state"] === "loaded")
+		static _isLoadedClass(className)
 		{
-			ret = true;
+
+			let ret = false;
+
+			if (DefaultLoader._classes.get(className, {})["state"] === "loaded")
+			{
+				ret = true;
+			}
+			else if (ClassUtil.getClass(className))
+			{
+				ret = true;
+			}
+
+			return ret;
+
 		}
-		else if (ClassUtil.getClass(className))
-		{
-			ret = true;
-		}
 
-		return ret;
+		// -------------------------------------------------------------------------
 
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Load the component if not loaded yet.
 		 *
-		 * @param{String}	className		Component class name.
-		 * @param{String}	fileName		Component file name.
-		 * @param{String}	path			Path to component.
-		 * @param{Object}	options			Load Options.
+		 * @param	{String}		className			Component class name.
+		 * @param	{String}		fileName			Component file name.
+		 * @param	{String}		path				Path to component.
+		 * @param	{Object}		options				Load Options.
 		 *
-		 * @return  {Promise}	Promise.
+		 * @return  {Promise}		Promise.
 		 */
-	DefaultLoader._autoloadComponent = function _autoloadComponent (className, fileName, path, options)
-	{
-
-		console.debug(("Auto loading component. className=" + className + ", fileName=" + fileName + ", path=" + path));
-
-		var promise;
-
-		if (this._isLoadedClass(className))
+		static _autoloadComponent(className, fileName, path, options)
 		{
-			// Already loaded
-			console.debug(("Component Already exists. className=" + className));
-			DefaultLoader._classes.set(className, {"state":"loaded"});
-			promise = Promise.resolve();
+
+			console.debug(`Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
+
+			let promise;
+
+			if (this._isLoadedClass(className))
+			{
+				// Already loaded
+				console.debug(`Component Already exists. className=${className}`);
+				DefaultLoader._classes.set(className, {"state":"loaded"});
+				promise = Promise.resolve();
+			}
+			else if (DefaultLoader._classes.get(className, {})["state"] === "loading")
+			{
+				// Already loading
+				console.debug(`Component Already loading. className=${className}`);
+				promise = DefaultLoader._classes.get(className)["promise"];
+			}
+			else
+			{
+				// Not loaded
+				DefaultLoader._classes.set(className, {"state":"loading"});
+				promise = this._loadComponentScript(fileName, path, options).then(() => {
+					DefaultLoader._classes.set(className, {"state":"loaded", "promise":null});
+				});
+				DefaultLoader._classes.set(className, {"promise":promise});
+			}
+
+			return promise;
+
 		}
-		else if (DefaultLoader._classes.get(className, {})["state"] === "loading")
-		{
-			// Already loading
-			console.debug(("Component Already loading. className=" + className));
-			promise = DefaultLoader._classes.get(className)["promise"];
-		}
-		else
-		{
-			// Not loaded
-			DefaultLoader._classes.set(className, {"state":"loading"});
-			promise = this._loadComponentScript(fileName, path, options).then(function () {
-				DefaultLoader._classes.set(className, {"state":"loaded", "promise":null});
-			});
-			DefaultLoader._classes.set(className, {"promise":promise});
-		}
 
-		return promise;
+		// -------------------------------------------------------------------------
 
-	};
-
-	// -------------------------------------------------------------------------
-
-	/**
+		/**
 		 * Load the component js files.
 		 *
-		 * @param{String}	className		Class name.
-		 * @param{String}	path			Path to component.
-		 * @param{Object}	options			Load Options.
+		 * @param	{String}		className			Class name.
+		 * @param	{String}		path				Path to component.
+		 * @param	{Object}		options				Load Options.
 		 *
-		 * @return  {Promise}	Promise.
+		 * @return  {Promise}		Promise.
 		 */
-	DefaultLoader._loadComponentScript = function _loadComponentScript (fileName, path, options)
-	{
+		static _loadComponentScript(fileName, path, options)
+		{
 
-		console.debug(("Loading script. fileName=" + fileName + ", path=" + path));
+			console.debug(`Loading script. fileName=${fileName}, path=${path}`);
 
-		var url1 = Util.concatPath([path, fileName + ".js"]);
-		var url2 = Util.concatPath([path, fileName + ".settings.js"]);
+			let url1 = Util.concatPath([path, fileName + ".js"]);
+			let url2 = Util.concatPath([path, fileName + ".settings.js"]);
 
-		return Promise.resolve().then(function () {
-			return AjaxUtil.loadScript(url1);
-		}).then(function () {
-			if (options["splitComponent"])
-			{
-				return AjaxUtil.loadScript(url2);
-			}
-		}).then(function () {
-			console.debug(("Loaded script. fileName=" + fileName));
-		});
+			return Promise.resolve().then(() => {
+				return AjaxUtil.loadScript(url1);
+			}).then(() => {
+				if (options["splitComponent"])
+				{
+					return AjaxUtil.loadScript(url2);
+				}
+			}).then(() => {
+				console.debug(`Loaded script. fileName=${fileName}`);
+			});
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Load the template html.
 		 *
-		 * @param{Component}	component		Component.
-		 * @param{String}	templateName	Template name.
-		 * @param{Object}	options			Load options.
+		 * @param	{Component}		component			Component.
+		 * @param	{String}		templateName		Template name.
+		 * @param	{Object}		options				Load options.
 		 *
-		 * @return  {Promise}	Promise.
+		 * @return  {Promise}		Promise.
 		 */
-	DefaultLoader._loadTemplateFile = function _loadTemplateFile (component, templateName, options)
-	{
+		static _loadTemplateFile(component, templateName, options)
+		{
 
-		console.debug(("Loading template. name=" + (component.name) + ", templateName=" + templateName));
+			console.debug(`Loading template. name=${component.name}, templateName=${templateName}`);
 
-		var path = Util.concatPath([
-			component.settings.get("system.appBaseUrl", ""),
-			component.settings.get("system.templatePath", ""),
-			component.settings.get("settings.path", "") ]);
+			let path = Util.concatPath([
+				component.settings.get("system.appBaseUrl", ""),
+				component.settings.get("system.templatePath", ""),
+				component.settings.get("settings.path", ""),
+			]);
 
-		var url = Util.concatPath([path, templateName]) + ".html";
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then(function (xhr) {
-			console.debug(("Loaded template. templateName=" + templateName + ", path=" + path));
+			let url = Util.concatPath([path, templateName]) + ".html";
+			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+				console.debug(`Loaded template. templateName=${templateName}, path=${path}`);
 
-			return xhr.responseText;
-		});
+				return xhr.responseText;
+			});
 
-	};
+		}
 
-	// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 
-	/**
+		/**
 		 * Get settings from element's attribute.
 		 *
-		 * @param{Component}	component		Component.
+		 * @param	{Component}		component			Component.
 		 */
-	DefaultLoader._loadAttrSettings = function _loadAttrSettings (component)
-	{
-
-		// Get path from  bm-autoload
-		if (component.getAttribute("bm-autoload"))
+		static _loadAttrSettings(component)
 		{
-			var arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
-			component._settings.set("system.appBaseUrl", "");
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("system.componentPath", arr[0]);
-			component._settings.set("settings.path", "");
-			if (arr[1].slice(-3).toLowerCase() === ".js")
+
+			// Get path from  bm-autoload
+			if (component.getAttribute("bm-autoload"))
 			{
-				component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 3));
+				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
+				component._settings.set("system.appBaseUrl", "");
+				component._settings.set("system.templatePath", arr[0]);
+				component._settings.set("system.componentPath", arr[0]);
+				component._settings.set("settings.path", "");
+				if (arr[1].slice(-3).toLowerCase() === ".js")
+				{
+					component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 3));
+				}
+				else if (arr[1].slice(-5).toLowerCase() === ".html")
+				{
+					component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 5));
+				}
 			}
-			else if (arr[1].slice(-5).toLowerCase() === ".html")
+
+			// Get path from attribute
+			if (component.hasAttribute("bm-path"))
 			{
-				component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 5));
+				component._settings.set("settings.path", component.getAttribute("bm-path"));
 			}
+
 		}
 
-		// Get path from attribute
-		if (component.hasAttribute("bm-path"))
-		{
-			component._settings.set("settings.path", component.getAttribute("bm-path"));
-		}
-
-	};
+	}
 
 	// Init
 	DefaultLoader._classes = new Store();
