@@ -266,6 +266,8 @@ Component.prototype.switchTemplate = function(templateName, options)
 		}
 
 		this.hideConditionalElements();
+	 }).then(() => {
+ 		return this.loadTags(this.rootElement);
 	}).then(() => {
 		return this.callOrganizers("afterAppend", this.settings.items);
 	}).then(() => {
@@ -400,7 +402,6 @@ Component.prototype.fill = function(options)
 Component.prototype.clear = function(options)
 {
 }
-
 
 // -----------------------------------------------------------------------------
 
