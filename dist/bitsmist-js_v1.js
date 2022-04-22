@@ -2039,6 +2039,8 @@
 			}
 
 			this.hideConditionalElements();
+		 }).then(() => {
+	 		return this.loadTags(this.rootElement);
 		}).then(() => {
 			return this.callOrganizers("afterAppend", this.settings.items);
 		}).then(() => {
@@ -2173,7 +2175,6 @@
 	Component.prototype.clear = function(options)
 	{
 	};
-
 
 	// -----------------------------------------------------------------------------
 
@@ -4062,9 +4063,9 @@
 
 			// Add methods
 			BITSMIST.v1.Component.prototype.getLoader = function(...args) { return LoaderOrganizer._getLoader(this, ...args); };
-			BITSMIST.v1.Component.prototype.loadTags = function(...args) { return this.getLoader().loadTags(this, ...args); };
-			BITSMIST.v1.Component.prototype.loadTag = function(...args) { return this.getLoader().loadTag(this, ...args); };
-			BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return this.getLoader().loadComponent(this, ...args); };
+			BITSMIST.v1.Component.prototype.loadTags = function(...args) { return this.getLoader().loadTags(...args); };
+			BITSMIST.v1.Component.prototype.loadTag = function(...args) { return this.getLoader().loadTag(...args); };
+			BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return this.getLoader().loadComponent(...args); };
 			BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this.getLoader().loadTemplate(this, ...args); };
 			BITSMIST.v1.Component.prototype.loadSetting = function(...args) { return this.getLoader().loadSetting(this, ...args); };
 			BITSMIST.v1.Component.prototype.loadSettingFile = function(...args) { return this.getLoader().loadSettingFile(this, ...args); };
@@ -4076,26 +4077,15 @@
 			});
 			LoaderOrganizer._loaders["DefaultLoader"] = BITSMIST.v1.DefaultLoader;
 
-			// Load tags
+			// Load tags on DOMContentLoaded event
 			document.addEventListener("DOMContentLoaded", () => {
 				if (BITSMIST.v1.settings.get("organizers.LoaderOrgaznier.settings.autoLoadOnStartup", true))
 				{
-					// Create dummy component for loading tags.
-					ClassUtil.newComponent(BITSMIST.v1.Component, {
-						"settings": {
-							"autoRefresh":				false,
-							"autoSetup":				false,
-							"hasTemplate":				false,
-							"rootElement":				document.body,
-						},
-					}, "bm-app", "BmApp");
-					let component = document.createElement("bm-app");
+					let loaderName = BITSMIST.v1.settings.get("system.loaderName", "DefaultLoader");
+					let loader = LoaderOrganizer._loaders[loaderName].object;
+					Util.assert(LoaderOrganizer._loaders[loaderName], `Loader doesn't exist. loaderName=${loaderName}`);
 
-					// Load tags
-					component.start().then(() => {
-						let loader = component.getLoader(BITSMIST.v1.settings.get("system.loaderName"));
-						loader.loadTags(component, component.rootElement, {"waitForTags":false});
-					});
+					loader.loadTags(document.body, {"waitForTags":false});
 				}
 			});
 
@@ -4113,6 +4103,17 @@
 		 */
 		static init(component, settings)
 		{
+
+			// Add properties
+			Object.defineProperty(component, "components", {
+				get() { return this._components; },
+			});
+
+			// Add methods
+			component.addComponent = function(componentName, settings, sync) { return LoaderOrganizer._addComponent(this, componentName, settings, sync); };
+
+			// Init vars
+			component._components = {};
 
 			component.getLoader().init(component);
 
@@ -4132,11 +4133,31 @@
 		static organize(conditions, component, settings)
 		{
 
-			switch (conditions)
+			let chain = Promise.resolve();
+
+			// Load molds
+			let molds = settings["molds"];
+			if (molds)
 			{
-				case "afterAppend":
-					return component.loadTags(component.rootElement);
+				Object.keys(molds).forEach((moldName) => {
+					chain = chain.then(() => {
+						return LoaderOrganizer._addComponent(component, moldName, molds[moldName], true);
+					});
+				});
 			}
+
+			// Load components
+			let components = settings["components"];
+			if (components)
+			{
+				Object.keys(components).forEach((componentName) => {
+					chain = chain.then(() => {
+						return LoaderOrganizer._addComponent(component, componentName, components[componentName]);
+					});
+				});
+			}
+
+			return chain;
 
 		}
 
@@ -4174,131 +4195,12 @@
 		{
 
 			loaderName = ( loaderName ? loaderName : component.settings.get("settings.loaderName", "DefaultLoader") );
-			Util.assert(LoaderOrganizer.loaders[loaderName], `Loader doesn't exist. loaderName=${loaderName}`);
+			Util.assert(LoaderOrganizer._loaders[loaderName], `Loader doesn't exist. loaderName=${loaderName}`);
 
 			return LoaderOrganizer._loaders[loaderName].object;
 
 		}
 
-	}
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Component organizer class
-	// =============================================================================
-
-	class ComponentOrganizer extends Organizer
-	{
-
-		// -------------------------------------------------------------------------
-		//  Methods
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Init.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		static init(component, settings)
-		{
-
-			// Add properties
-			Object.defineProperty(component, "components", {
-				get() { return this._components; },
-			});
-
-			// Add methods
-			component.addComponent = function(componentName, settings, sync) { return ComponentOrganizer._addComponent(this, componentName, settings, sync); };
-
-			// Init vars
-			component._components = {};
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Organize.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		static organize(conditions, component, settings)
-		{
-
-			let chain = Promise.resolve();
-
-			// Load molds
-			let molds = settings["molds"];
-			if (molds)
-			{
-				Object.keys(molds).forEach((moldName) => {
-					chain = chain.then(() => {
-						return ComponentOrganizer._addComponent(component, moldName, molds[moldName], true);
-					});
-				});
-			}
-
-			// Load components
-			let components = settings["components"];
-			if (components)
-			{
-				Object.keys(components).forEach((componentName) => {
-					chain = chain.then(() => {
-						return ComponentOrganizer._addComponent(component, componentName, components[componentName]);
-					});
-				});
-			}
-
-			return chain;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Organize.
-		 *
-		 * @param	{Object}		conditions			Conditions.
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		static unorganize(conditions, component, settings)
-		{
-
-			ComponentOrganizer.clear(component);
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Clear.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		static clear(component)
-		{
-
-			Object.keys(component._components).forEach((key) => {
-				component._components[key].parentNode.removeChild(component._components[key]);
-			});
-
-			component._components = {};
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Protected
 		// -------------------------------------------------------------------------
 
 		/**
@@ -4316,26 +4218,26 @@
 
 			console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
 
-			let className = Util.safeGet(settings, "settings.className") || componentName;
-			let tagName = Util.safeGet(settings, "settings.tagName") || Util.getTagNameFromClassName(className);
+			let className = Util.safeGet(settings, "loadings.className") || componentName;
+			let tagName = Util.safeGet(settings, "loadings.tagName") || Util.getTagNameFromClassName(className);
 
 			return Promise.resolve().then(() => {
 				// Load component
-				let splitComponent = Util.safeGet(settings, "settings.splitComponent", component.settings.get("system.splitComponent", false));
+				let splitComponent = Util.safeGet(settings, "loadings.splitComponent", component.settings.get("system.splitComponent", false));
 				let options = { "splitComponent":splitComponent };
 
 				return component.loadComponent(className, settings, options, tagName);
 			}).then(() => {
 				// Insert tag
-				if (Util.safeGet(settings, "settings.rootNode") && !component._components[componentName])
+				if (Util.safeGet(settings, "loadings.rootNode") && !component._components[componentName])
 				{
-					component._components[componentName] = ComponentOrganizer.__insertTag(component, tagName, settings);
+					component._components[componentName] = LoaderOrganizer.__insertTag(component, tagName, settings);
 				}
 			}).then(() => {
 				// Wait for the added component to be ready
-				if (sync || Util.safeGet(settings, "settings.sync"))
+				if (sync || Util.safeGet(settings, "loadings.sync"))
 				{
-					sync = sync || Util.safeGet(settings, "settings.sync"); // sync precedes settings["sync"]
+					sync = sync || Util.safeGet(settings, "loadings.sync"); // sync precedes settings["sync"]
 					let state = (sync === true ? "started" : sync);
 					let c = className.split(".");
 
@@ -4363,14 +4265,15 @@
 			let addedComponent;
 
 			// Check root node
-			let root = component.rootElement.querySelector(Util.safeGet(settings, "settings.rootNode"));
-			Util.assert(root, `ComponentOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`, ReferenceError);
+			let root = component.rootElement.querySelector(Util.safeGet(settings, "loadings.rootNode"));
+			Util.assert(root, `LoaderOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`, ReferenceError);
 
 			// Build tag
-			let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
+			let tag = ( Util.safeGet(settings, "loadings.tag") ? Util.safeGet(settings, "loadings.tag") : "<" + tagName +  "></" + tagName + ">" );
 
 			// Insert tag
-			if (Util.safeGet(settings, "settings.overwrite"))
+			//if (Util.safeGet(settings, "settings.overwrite"))
+			if (Util.safeGet(settings, "loadings.overwrite"))
 			{
 				root.outerHTML = tag;
 				addedComponent = root;
@@ -4430,16 +4333,15 @@
 		/**
 		 * Load scripts for tags which has bm-autoload attribute.
 		 *
-		 * @param	{Component}		component			Component.
 		 * @param	{HTMLElement}	rootNode			Target node.
 		 * @param	{Object}		options				Load Options.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static loadTags(component, rootNode, options)
+		static loadTags(rootNode, options)
 		{
 
-			console.debug(`Loading tags. name=${component.name}, rootNode=${rootNode.tagName}`);
+			console.debug(`Loading tags. rootNode=${rootNode.tagName}`);
 
 			let promises = [];
 			let waitList = [];
@@ -4450,7 +4352,7 @@
 				element.setAttribute("bm-autoloading", "");
 
 				let loader = ( element.hasAttribute("bm-loader") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loader")).object : this);
-				promises.push(loader.loadTag(component, element, options).then(() => {
+				promises.push(loader.loadTag(element, options).then(() => {
 					element.removeAttribute("bm-autoloading");
 				}));
 			});
@@ -4465,12 +4367,12 @@
 				}
 			});
 
-			// Wait for the elements to be loaded
+			// Wait for the components to be loaded
 			return Promise.all(promises).then(() => {
 				let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
 				if (waitFor)
 				{
-					// Wait for the elements to become "started"
+					// Wait for the components to become "started"
 					return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
 				}
 			});
@@ -4482,27 +4384,26 @@
 		/**
 		 * Load a tag.
 		 *
-		 * @param	{Component}		component			Component.
 		 * @param	{HTMLElement}	element				Target element.
 		 * @param	{Object}		options				Load Options.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static loadTag(component, element, options)
+		static loadTag(element, options)
 		{
 
-			console.debug(`Loading a tag. name=${component.name}, element=${element.tagName}`);
+			console.debug(`Loading a tag. element=${element.tagName}`);
 
 			// Get settings from attributes
 			let href = element.getAttribute("bm-autoload");
 			let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
 			let path = element.getAttribute("bm-path") || "";
-			let split = Util.safeGet(options, "splitComponent", component.settings.get("system.splitComponent", false));
+			let split = Util.safeGet(options, "splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false));
 			let morph = ( element.hasAttribute("bm-automorph") ?
 				( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
 				false
 			);
-			let settings = {"settings":{"autoMorph":morph, "path":path}};
+			let settings = {"loadings":{"autoMorph":morph, "path":path}};
 			let loadOptions = {"splitComponent":split};
 
 			// Override path,fileName,autoMorph when bm-autoload is set
@@ -4512,16 +4413,16 @@
 				loadOptions["path"] = arr[0];
 				if (href.slice(-3).toLowerCase() === ".js")
 				{
-					settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
+					settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
 				}
 				else if (href.slice(-5).toLowerCase() === ".html")
 				{
-					settings["settings"]["autoMorph"] = true;
-					settings["settings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
+					settings["loadings"]["autoMorph"] = true;
+					settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
 				}
 			}
 
-			return this.loadComponent(component, className, settings, loadOptions, element.tagName);
+			return this.loadComponent(className, settings, loadOptions, element.tagName);
 
 		}
 
@@ -4530,7 +4431,6 @@
 		/**
 		 * Load a component.
 		 *
-		 * @param	{Component}		component			Component.
 		 * @param	{String}		className			Class name.
 		 * @param	{Object}		settings			Component settings.
 		 * @param	{Object}		options				Load options.
@@ -4538,18 +4438,18 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static loadComponent(component, className, settings, options, tagName)
+		static loadComponent(className, settings, options, tagName)
 		{
 
-			console.debug(`Loading a component. name=${component.name}, className=${className}, tagName=${tagName}`);
+			console.debug(`Loading a component. className=${className}, tagName=${tagName}`);
 
 			tagName = tagName.toLowerCase();
 			let promise;
 			let path = Util.safeGet(options, "path",
 				Util.concatPath([
-					component.settings.get("system.appBaseUrl", ""),
-					component.settings.get("system.componentPath", ""),
-					Util.safeGet(settings, "settings.path"),
+					BITSMIST.v1.settings.get("system.appBaseUrl", ""),
+					BITSMIST.v1.settings.get("system.componentPath", ""),
+					Util.safeGet(settings, "loadings.path"),
 				])
 			);
 
@@ -4560,7 +4460,7 @@
 				return Promise.resolve();
 			}
 
-			let morph = Util.safeGet(settings, "settings.autoMorph");
+			let morph = Util.safeGet(settings, "loadings.autoMorph");
 			if (morph)
 			{
 				// Morphing
@@ -4572,7 +4472,7 @@
 			else
 			{
 				// Loading
-				let fileName = Util.safeGet(settings, "settings.fileName", tagName);
+				let fileName = Util.safeGet(settings, "loadings.fileName", tagName);
 				promise = this._autoloadComponent(className, fileName, path, options);
 			}
 
@@ -4646,9 +4546,9 @@
 			return Promise.resolve().then(() => {
 				path = Util.safeGet(options, "path",
 					Util.concatPath([
-						component.settings.get("system.appBaseUrl", ""),
-						component.settings.get("system.componentPath", ""),
-						component.settings.get("settings.componentPath", ""),
+						BITSMIST.v1.settings.get("system.appBaseUrl", ""),
+						BITSMIST.v1.settings.get("system.componentPath", ""),
+						Util.safeGet(options, "path"),
 					])
 				);
 
@@ -4842,7 +4742,7 @@
 			let path = Util.concatPath([
 				component.settings.get("system.appBaseUrl", ""),
 				component.settings.get("system.templatePath", ""),
-				component.settings.get("settings.path", ""),
+				component.settings.get("loadings.path", ""),
 			]);
 
 			let url = Util.concatPath([path, templateName]) + ".html";
@@ -4871,21 +4771,21 @@
 				component._settings.set("system.appBaseUrl", "");
 				component._settings.set("system.templatePath", arr[0]);
 				component._settings.set("system.componentPath", arr[0]);
-				component._settings.set("settings.path", "");
+				component._settings.set("loadings.path", "");
 				if (arr[1].slice(-3).toLowerCase() === ".js")
 				{
-					component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 3));
+					component._settings.set("loadings.fileName", arr[1].substring(0, arr[1].length - 3));
 				}
 				else if (arr[1].slice(-5).toLowerCase() === ".html")
 				{
-					component._settings.set("settings.fileName", arr[1].substring(0, arr[1].length - 5));
+					component._settings.set("loadings.fileName", arr[1].substring(0, arr[1].length - 5));
 				}
 			}
 
 			// Get path from attribute
 			if (component.hasAttribute("bm-path"))
 			{
-				component._settings.set("settings.path", component.getAttribute("bm-path"));
+				component._settings.set("loadings.path", component.getAttribute("bm-path"));
 			}
 
 		}
@@ -4920,10 +4820,8 @@
 	window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 	OrganizerOrganizer.register("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend", "afterSpecLoad"], "order":210});
 	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
-	OrganizerOrganizer.register("LoaderOrganizer", {"object":LoaderOrganizer, "targetEvents":["afterAppend"], "order":400});
+	OrganizerOrganizer.register("LoaderOrganizer", {"object":LoaderOrganizer, "targetWords":["molds", "components"], "targetEvents":["afterStart"], "order":400});
 	window.BITSMIST.v1.LoaderOrganizer = LoaderOrganizer;
-	OrganizerOrganizer.register("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"],"targetEvents":["afterStart"], "order":410});
-	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 	LoaderOrganizer.register("DefaultLoader", {"object":DefaultLoader});
 	window.BITSMIST.v1.DefaultLoader = DefaultLoader;
 	window.BITSMIST.v1.Store = Store;
