@@ -33,11 +33,10 @@ export default class LoaderOrganizer extends Organizer
 		// Add methods
 		BITSMIST.v1.Component.prototype.getLoader = function(...args) { return LoaderOrganizer._getLoader(this, ...args); }
 		BITSMIST.v1.Component.prototype.loadTags = function(...args) { return this.getLoader().loadTags(...args); }
-		BITSMIST.v1.Component.prototype.loadTag = function(...args) { return this.getLoader().loadTag(...args); }
 		BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return this.getLoader().loadComponent(...args); }
 		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this.getLoader().loadTemplate(this, ...args); }
 		BITSMIST.v1.Component.prototype.loadSetting = function(...args) { return this.getLoader().loadSetting(this, ...args); }
-		BITSMIST.v1.Component.prototype.loadSettingFile = function(...args) { return this.getLoader().loadSettingFile(this, ...args); }
+		BITSMIST.v1.Component.prototype.loadSettingFile = function(...args) { return this.getLoader().loadSettingFile(...args); }
 
 		// Init vars
 		LoaderOrganizer._loaders = {};
@@ -83,7 +82,6 @@ export default class LoaderOrganizer extends Organizer
 
 		// Init vars
 		component._components = {};
-
 		component.getLoader().init(component);
 
 	}
@@ -188,18 +186,16 @@ export default class LoaderOrganizer extends Organizer
 		console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
 
 		let className = Util.safeGet(settings, "loadings.className") || componentName;
-		let tagName = Util.safeGet(settings, "loadings.tagName") || Util.getTagNameFromClassName(className);
 
 		return Promise.resolve().then(() => {
-			// Load component
-			let splitComponent = Util.safeGet(settings, "loadings.splitComponent", component.settings.get("system.splitComponent", false));
-			let options = { "splitComponent":splitComponent };
-
-			return component.loadComponent(className, settings, options, tagName);
+			let loaderName = Util.safeGet(settings, "loadings.loaderName", "DefaultLoader");
+			let loader = LoaderOrganizer._loaders[loaderName].object;
+			return loader.loadComponent(className, settings, null);
 		}).then(() => {
 			// Insert tag
 			if (Util.safeGet(settings, "loadings.rootNode") && !component._components[componentName])
 			{
+				let tagName = Util.safeGet(settings, "loadings.tagName") || Util.getTagNameFromClassName(className);
 				component._components[componentName] = LoaderOrganizer.__insertTag(component, tagName, settings);
 			}
 		}).then(() => {
@@ -241,7 +237,6 @@ export default class LoaderOrganizer extends Organizer
 		let tag = ( Util.safeGet(settings, "loadings.tag") ? Util.safeGet(settings, "loadings.tag") : "<" + tagName +  "></" + tagName + ">" );
 
 		// Insert tag
-		//if (Util.safeGet(settings, "settings.overwrite"))
 		if (Util.safeGet(settings, "loadings.overwrite"))
 		{
 			root.outerHTML = tag;

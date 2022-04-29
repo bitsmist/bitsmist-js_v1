@@ -36,7 +36,7 @@ export default class DefaultLoader
 	static init(component, options)
 	{
 
-		this._loadAttrSettings(component);
+		component.settings.set("loadings", this._loadAttrSettings(component));
 
 	}
 
@@ -63,12 +63,16 @@ export default class DefaultLoader
 		targets.forEach((element) => {
 			element.setAttribute("bm-autoloading", "");
 
-			let loader = ( element.hasAttribute("bm-loader") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loader")).object : this);
-			promises.push(loader.loadTag(element, options).then(() => {
+			// Load a tag
+			let loader = ( element.hasAttribute("bm-loadername") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loadername")).object : this);
+			let settings = { "loadings": this._loadAttrSettings(element) };
+			let className = Util.safeGet(settings, "loadings.className", Util.getClassNameFromTagName(element.tagName));
+			promises.push(loader.loadComponent(className, settings, null, element.tagName).then(() => {
 				element.removeAttribute("bm-autoloading");
 			}));
 		});
 
+		/*
 		// Create waiting list to wait Bitsmist components
 		targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
 		targets.forEach((element) => {
@@ -88,53 +92,7 @@ export default class DefaultLoader
 				return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
 			}
 		});
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Load a tag.
-	 *
-	 * @param	{HTMLElement}	element				Target element.
-	 * @param	{Object}		options				Load Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static loadTag(element, options)
-	{
-
-		console.debug(`Loading a tag. element=${element.tagName}`);
-
-		// Get settings from attributes
-		let href = element.getAttribute("bm-autoload");
-		let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
-		let path = element.getAttribute("bm-path") || "";
-		let split = Util.safeGet(options, "splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false));
-		let morph = ( element.hasAttribute("bm-automorph") ?
-			( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
-			false
-		);
-		let settings = {"loadings":{"autoMorph":morph, "path":path}};
-		let loadOptions = {"splitComponent":split};
-
-		// Override path,fileName,autoMorph when bm-autoload is set
-		if (href)
-		{
-			let arr = Util.getFilenameAndPathFromUrl(href);
-			loadOptions["path"] = arr[0];
-			if (href.slice(-3).toLowerCase() === ".js")
-			{
-				settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
-			}
-			else if (href.slice(-5).toLowerCase() === ".html")
-			{
-				settings["loadings"]["autoMorph"] = true;
-				settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
-			}
-		}
-
-		return this.loadComponent(className, settings, loadOptions, element.tagName);
+		*/
 
 	}
 
@@ -145,25 +103,16 @@ export default class DefaultLoader
 	 *
 	 * @param	{String}		className			Class name.
 	 * @param	{Object}		settings			Component settings.
-	 * @param	{Object}		options				Load options.
-	 * @param	{String}		tagName				Component's tag name
+	 * @param	{Object}		loadOptions			Load options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadComponent(className, settings, options, tagName)
+	static loadComponent(className, settings, loadOptions)
 	{
 
-		console.debug(`Loading a component. className=${className}, tagName=${tagName}`);
+		console.debug(`Loading a component. className=${className}`);
 
-		tagName = tagName.toLowerCase();
-		let promise;
-		let path = Util.safeGet(options, "path",
-			Util.concatPath([
-				BITSMIST.v1.settings.get("system.appBaseUrl", ""),
-				BITSMIST.v1.settings.get("system.componentPath", ""),
-				Util.safeGet(settings, "loadings.path"),
-			])
-		);
+		let tagName = Util.safeGet(settings, "loadings.tagName") || Util.getTagNameFromClassName(className);
 
 		// Check if the tag is already defined
 		if (customElements.get(tagName))
@@ -171,6 +120,16 @@ export default class DefaultLoader
 			console.debug(`Tag already defined. className=${className}, tagName=${tagName}`);
 			return Promise.resolve();
 		}
+
+		// Get a path
+		let promise;
+		let path = Util.safeGet(loadOptions, "path",
+			Util.concatPath([
+				Util.safeGet(settings, "loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+				Util.safeGet(settings, "loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
+				Util.safeGet(settings, "loadings.path", ""),
+			])
+		);
 
 		let morph = Util.safeGet(settings, "loadings.autoMorph");
 		if (morph)
@@ -185,9 +144,13 @@ export default class DefaultLoader
 		{
 			// Loading
 			let fileName = Util.safeGet(settings, "loadings.fileName", tagName);
-			promise = this._autoloadComponent(className, fileName, path, options);
+			let split = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
+			promise = this._autoloadComponent(className, fileName, path, {"splitComponent": split});
 		}
 
+		return promise;
+
+		/*
 		return Promise.all([promise]).then(() => {
 			// Define tag if not defined yet
 			if (!customElements.get(tagName))
@@ -196,6 +159,7 @@ export default class DefaultLoader
 				customElements.define(tagName, newClass);
 			}
 		});
+		*/
 
 	}
 
@@ -206,11 +170,11 @@ export default class DefaultLoader
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		templateName		Template name.
-	 * @param	{Object}		options				Load options.
+	 * @param	{Object}		loadOptions			Load options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static loadTemplate(component, templateName, options)
+	static loadTemplate(component, templateName, loadOptions)
 	{
 
 		let promise;
@@ -228,7 +192,15 @@ export default class DefaultLoader
 			break;
 		case "url":
 		default:
-			promise = this._loadTemplateFile(component, templateInfo["name"], options).then((template) => {
+			let path = Util.safeGet(loadOptions, "path",
+				Util.concatPath([
+					component.settings.get("loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+					component.settings.get("loadings.templatePath", BITSMIST.v1.settings.get("system.templatePath", "")),
+					component.settings.get("loadings.path", ""),
+				])
+			);
+
+			promise = this._loadTemplateFile(templateInfo["name"], path, loadOptions).then((template) => {
 				templateInfo["html"] = template;
 			});
 			break;
@@ -247,24 +219,24 @@ export default class DefaultLoader
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		settingName			Setting name.
-	 * @param	{Object}		options				Load options.
+	 * @param	{Object}		loadOptions			Load options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static loadSetting(component, settingName, options)
+	static loadSetting(component, settingName, loadOptions)
 	{
 
 		let path;
 		return Promise.resolve().then(() => {
-			path = Util.safeGet(options, "path",
+			path = Util.safeGet(loadOptions, "path",
 				Util.concatPath([
-					BITSMIST.v1.settings.get("system.appBaseUrl", ""),
-					BITSMIST.v1.settings.get("system.componentPath", ""),
-					Util.safeGet(options, "path"),
+					component.settings.get("loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+					component.settings.get("loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
+					component.settings.get("loadings.path", ""),
 				])
 			);
 
-			return this.loadSettingFile(component, settingName, path, "js");
+			return this.loadSettingFile(settingName, path, {"type":"js", "bindTo":component});
 		}).then((extraSettings) => {
 			if (extraSettings)
 			{
@@ -286,17 +258,17 @@ export default class DefaultLoader
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadSettingFile(component, settingName, path, type)
+	static loadSettingFile(settingName, path, loadOptions)
 	{
 
-		type = type || "js";
+		let type = Util.safeGet(loadOptions, "type", "js");
 		let url = Util.concatPath([path, settingName + "." + type]);
 		let settings;
 
-		console.debug(`Loading settings. name=${component.name}, url=${url}`);
+		console.debug(`Loading setting. settingName=${settingName}, path=${path}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`Loaded settings. name=${component.name}, url=${url}`);
+			console.debug(`Loaded settings. url=${url}`);
 
 			switch (type)
 			{
@@ -319,7 +291,8 @@ export default class DefaultLoader
 				break;
 			case "js":
 			default:
-				settings = Function('"use strict";return (' + xhr.responseText + ')').call(component);
+				let bindTo = Util.safeGet(loadOptions, "bindTo");
+				settings = Function('"use strict";return (' + xhr.responseText + ')').call(bindTo);
 				break;
 			}
 
@@ -365,11 +338,11 @@ export default class DefaultLoader
 	 * @param	{String}		className			Component class name.
 	 * @param	{String}		fileName			Component file name.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		options				Load Options.
+	 * @param	{Object}		loadOptions			Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _autoloadComponent(className, fileName, path, options)
+	static _autoloadComponent(className, fileName, path, loadOptions)
 	{
 
 		console.debug(`Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
@@ -393,7 +366,7 @@ export default class DefaultLoader
 		{
 			// Not loaded
 			DefaultLoader._classes.set(className, {"state":"loading"});
-			promise = this._loadComponentScript(fileName, path, options).then(() => {
+			promise = this._loadComponentFile(fileName, path, loadOptions).then(() => {
 				DefaultLoader._classes.set(className, {"state":"loaded", "promise":null});
 			});
 			DefaultLoader._classes.set(className, {"promise":promise});
@@ -410,11 +383,11 @@ export default class DefaultLoader
 	 *
 	 * @param	{String}		className			Class name.
 	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		options				Load Options.
+	 * @param	{Object}		loadOptions			Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadComponentScript(fileName, path, options)
+	static _loadComponentFile(fileName, path, loadOptions)
 	{
 
 		console.debug(`Loading script. fileName=${fileName}, path=${path}`);
@@ -425,7 +398,7 @@ export default class DefaultLoader
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
 		}).then(() => {
-			if (options["splitComponent"])
+			if (loadOptions["splitComponent"])
 			{
 				return AjaxUtil.loadScript(url2);
 			}
@@ -440,22 +413,16 @@ export default class DefaultLoader
 	/**
 	 * Load the template html.
 	 *
-	 * @param	{Component}		component			Component.
 	 * @param	{String}		templateName		Template name.
-	 * @param	{Object}		options				Load options.
+	 * @param	{String}		path				Path to template.
+	 * @param	{Object}		loadOptions			Load options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadTemplateFile(component, templateName, options)
+	static _loadTemplateFile(templateName, path, loadOptions)
 	{
 
-		console.debug(`Loading template. name=${component.name}, templateName=${templateName}`);
-
-		let path = Util.concatPath([
-			component.settings.get("system.appBaseUrl", ""),
-			component.settings.get("system.templatePath", ""),
-			component.settings.get("loadings.path", ""),
-		]);
+		console.debug(`Loading template. templateName=${templateName}, path=${path}`);
 
 		let url = Util.concatPath([path, templateName]) + ".html";
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
@@ -473,32 +440,66 @@ export default class DefaultLoader
 	 *
 	 * @param	{Component}		component			Component.
 	 */
-	static _loadAttrSettings(component)
+	static _loadAttrSettings(element)
 	{
 
-		// Get path from  bm-autoload
-		if (component.getAttribute("bm-autoload"))
+		let settings = {};
+
+		// Class name
+		if (element.hasAttribute("bm-classname"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
-			component._settings.set("system.appBaseUrl", "");
-			component._settings.set("system.templatePath", arr[0]);
-			component._settings.set("system.componentPath", arr[0]);
-			component._settings.set("loadings.path", "");
-			if (arr[1].slice(-3).toLowerCase() === ".js")
+			settings["className"] = element.hasAttribute("bm-classname");
+		}
+
+		// Split component
+		if (element.hasAttribute("bm-split"))
+		{
+			settings["splitComponent"] = true;
+		}
+
+		// Path
+		if (element.hasAttribute("bm-path"))
+		{
+			settings["path"] = element.getAttribute("bm-path");
+		}
+
+		// File name
+		if (element.hasAttribute("bm-filename"))
+		{
+			settings["filename"] = element.getAttribute("bm-filename");
+		}
+
+		// Morphing
+		if (element.hasAttribute("bm-automorph"))
+		{
+			settings["autoMorph"] = element.getAttribute("bm-automorph");
+		}
+
+		// Override path, fileName, autoMorph when bm-autoload is set
+		let href = element.getAttribute("bm-autoload");
+		if (href)
+		{
+			let arr = Util.getFilenameAndPathFromUrl(href);
+
+			// Path
+			settings["appBaseUrl"] = "";
+			settings["componentPath"] = "";
+			settings["templatePath"] = "";
+			settings["path"] = arr[0];
+
+			// File name
+			if (href.slice(-3).toLowerCase() === ".js")
 			{
-				component._settings.set("loadings.fileName", arr[1].substring(0, arr[1].length - 3));
+				settings["fileName"] = arr[1].substring(0, arr[1].length - 3);
 			}
-			else if (arr[1].slice(-5).toLowerCase() === ".html")
+			else if (href.slice(-5).toLowerCase() === ".html")
 			{
-				component._settings.set("loadings.fileName", arr[1].substring(0, arr[1].length - 5));
+				settings["autoMorph"] = true;
+				settings["fileName"] = arr[1].substring(0, arr[1].length - 5);
 			}
 		}
 
-		// Get path from attribute
-		if (component.hasAttribute("bm-path"))
-		{
-			component._settings.set("loadings.path", component.getAttribute("bm-path"));
-		}
+		return settings;
 
 	}
 
