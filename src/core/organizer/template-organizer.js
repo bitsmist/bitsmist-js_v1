@@ -9,7 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from "../util/ajax-util";
-import Component from "../component.js";
+import Component from "../component/component.js";
 import Organizer from "./organizer";
 import Util from "../util/util";
 

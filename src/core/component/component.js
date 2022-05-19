@@ -8,10 +8,10 @@
  */
 // =============================================================================
 
-import ClassUtil from "./util/class-util.js";
-import OrganizerOrganizer from "./organizer/organizer-organizer.js";
-import SettingOrganizer from "./organizer/setting-organizer.js";
-import Util from "./util/util.js";
+import ClassUtil from "../util/class-util.js";
+import OrganizerOrganizer from "../organizer/organizer-organizer.js";
+import SettingOrganizer from "../organizer/setting-organizer.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Component class
@@ -388,6 +388,16 @@ Component.prototype.fetch = function(options)
  */
 Component.prototype.fill = function(options)
 {
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.fill(): Filling with data. name=${this.name}`);
+		return this.trigger("beforeFill", options);
+	}).then(() => {
+		return this.trigger("doFill", options);
+	}).then(() => {
+		return this.trigger("afterFill", options);
+	});
+
 }
 
 // -----------------------------------------------------------------------------
@@ -488,8 +498,8 @@ Component.prototype._preStart = function()
 	return Promise.resolve().then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
-	}).then(() => {
-		return this.addOrganizers(this.settings.items);
+	// }).then(() => {
+	// 	return this.addOrganizers(this.settings.items);
 	}).then(() => {
 		return this.callOrganizers("beforeStart", this.settings.items);
 	}).then(() => {

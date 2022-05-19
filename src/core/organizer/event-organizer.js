@@ -8,7 +8,7 @@
  */
 // =============================================================================
 
-import Component from "../component.js";
+import Component from "../component/component.js";
 import Organizer from "./organizer.js";
 import Util from "../util/util.js";
 

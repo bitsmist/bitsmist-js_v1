@@ -13,7 +13,7 @@ window.BITSMIST.v1 = window.BITSMIST.v1 || {};
 
 // Component
 
-import Component from "./component.js";
+import Component from "./component/component.js";
 window.BITSMIST.v1.Component = Component;
 
 // Organizer
