@@ -498,8 +498,6 @@ Component.prototype._preStart = function()
 	return Promise.resolve().then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
-	// }).then(() => {
-	// 	return this.addOrganizers(this.settings.items);
 	}).then(() => {
 		return this.callOrganizers("beforeStart", this.settings.items);
 	}).then(() => {
