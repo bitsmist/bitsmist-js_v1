@@ -59,7 +59,7 @@ test('Event order test - All events should be triggered in order', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - All events should be triggered in reverse order - asynchronous without promises', async () => {
+test('Event order test - All events should be triggered in reverse order - Asynchronous without promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
@@ -203,7 +203,7 @@ test('Event order test - All events should be triggered in reverse order - async
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - All events should be triggered in order - asynchronous with promises', async () => {
+test('Event order test - All events should be triggered in order - Asynchronous with promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
@@ -384,7 +384,7 @@ test('Event order test - All events should be triggered in order - asynchronous 
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - 2 event handlers on 1 event should be triggered in order', async () => {
+test('Event order test - Two event handlers on one event should be triggered in order', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
@@ -412,7 +412,7 @@ test('Event order test - 2 event handlers on 1 event should be triggered in orde
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - 2 event handlers on 1 event should be triggered in reverse order - asynchronous without promises', async () => {
+test('Event order test - Two event handlers on one event should be triggered in reverse order - Asynchronous without promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
@@ -449,7 +449,7 @@ test('Event order test - 2 event handlers on 1 event should be triggered in reve
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - 2 event handlers on 1 event should be triggered in order - asynchronous with promises', async () => {
+test('Event order test - Two event handlers on one event should be triggered in order - Asynchronous with promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);

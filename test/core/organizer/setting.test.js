@@ -5,7 +5,7 @@ import {BarMain} from './_common.js';
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.name should be applied', async () => {
+test('Setting test - settings.name should be applied', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -19,7 +19,7 @@ test('Settings test - settings.name should be applied', async () => {
 /* Does not work
 // -----------------------------------------------------------------------------
 
-test('Settings test - Default root node should be itself', async () => {
+test('Setting test - Default root node should be itself', async () => {
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
@@ -32,7 +32,7 @@ test('Settings test - Default root node should be itself', async () => {
 /* Does not work now
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoPostStart=true should work', async () => {
+test('Setting test - settings.autoPostStart=true should work', async () => {
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
@@ -44,7 +44,7 @@ test('Settings test - settings.autoPostStart=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoSetup=false should work', async () => {
+test('Setting test - settings.autoSetup=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoPosStart"] = false;
@@ -63,7 +63,7 @@ test('Settings test - settings.autoSetup=false should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoSetup=true should work', async () => {
+test('Setting test - settings.autoSetup=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -78,7 +78,7 @@ test('Settings test - settings.autoSetup=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoSetup=false should work', async () => {
+test('Setting test - settings.autoSetup=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoSetup"] = false;
@@ -100,7 +100,7 @@ test('Settings test - settings.autoSetup=false should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoRefresh=true should work', async () => {
+test('Setting test - settings.autoRefresh=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -119,7 +119,7 @@ test('Settings test - settings.autoRefresh=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoRefresh=false should work', async () => {
+test('Setting test - settings.autoRefresh=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoRefresh"] = false;
@@ -143,7 +143,7 @@ test('Settings test - settings.autoRefresh=false should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoFetch=true should work', async () => {
+test('Setting test - settings.autoFetch=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -162,7 +162,7 @@ test('Settings test - settings.autoFetch=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoFetch=false should work', async () => {
+test('Setting test - settings.autoFetch=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoFetch"] = false;
@@ -186,7 +186,7 @@ test('Settings test - settings.autoFetch=false should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoFill=true should work', async () => {
+test('Setting test - settings.autoFill=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -201,7 +201,7 @@ test('Settings test - settings.autoFill=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.autoFill=false should work', async () => {
+test('Setting test - settings.autoFill=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoFill"] = false;
@@ -221,7 +221,7 @@ test('Settings test - settings.autoFill=false should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.hasTemplate=true should work', async () => {
+test('Setting test - settings.hasTemplate=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -234,7 +234,7 @@ test('Settings test - settings.hasTemplate=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings test - settings.hasTemplate=false should work', async () => {
+test('Setting test - settings.hasTemplate=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["hasTemplate"] = false;
@@ -254,8 +254,8 @@ test('Settings test - settings.hasTemplate=false should work', async () => {
 
 /*
 // -----------------------------------------------------------------------------
-test('Settings loading test - _injectSettings() should work', async () => {
-test('Settings loading test - _getSettings() should work', async () => {
-test('Settings loading test - external settings should be loaded', async () => {
-test('Settings loading test - attriubte settings should be loaded', async () => {
+test('Loading settings test - _injectSettings() should called', async () => {
+test('Loading settings test - _getSettings() should called', async () => {
+test('Loading settings test - external settings should be loaded', async () => {
+test('Loading settings test - attriubte settings should be loaded', async () => {
 */
