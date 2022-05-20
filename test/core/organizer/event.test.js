@@ -3,9 +3,150 @@
  */
 import {BarMain} from './_common.js';
 
+BarMain.prototype.__getSettings = function() {
+	return {
+		"loadings": {
+			"path": "common",
+		},
+		"settings": {
+			"name": "BarMain",
+		},
+		"events": {
+			"this": {
+				"handlers": {
+					// "beforeStart": [
+					// 	{"handler": this.onBeforeStart},
+					// ],
+					"beforeStart": [this.init],
+					"afterStart": [],
+					"beforeStop": [],
+					"doStop": [],
+					"afterStop": [],
+					"beforeSetup": [],
+					"doSetup": [],
+					"afterSetup": [],
+					"afterAppend": [],
+					"beforeRefresh": [],
+					"doRefresh": [],
+					"afterRefresh": [],
+					"doTarget": [],
+					"beforeFetch": [],
+					"doFetch": [],
+					"afterFetch": [],
+					"beforeFill": [],
+					"doFill": [],
+					"afterFill": [],
+				}
+			}
+		},
+	};
+};
+
 // -----------------------------------------------------------------------------
 
 test('Event trigger test - All events should be triggered', async () => {
+	BarMain.prototype._getSettings = function() {
+		let settings = this.__getSettings.call(this);
+		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart);
+		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onBeforeSetup);
+		settings["events"]["this"]["handlers"]["doSetup"].push(this.onDoSetup);
+		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onAfterSetup);
+		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onAfterAppend);
+		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onBeforeRefresh);
+		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onDoRefresh);
+		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onAfterRefresh);
+		settings["events"]["this"]["handlers"]["doTarget"].push(this.onDoTarget);
+		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onBeforeFetch);
+		settings["events"]["this"]["handlers"]["doFetch"].push(this.onDoFetch);
+		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onAfterFetch);
+		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill);
+		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill);
+		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill);
+
+		return settings;
+	};
+
+	BarMain.prototype.onBeforeStart = function() {
+		this.testVars["eventCalled"] = {
+			"beforeStart": false,
+			"afterStart": false,
+			"beforeStop": false,
+			"doStop": false,
+			"afterStop": false,
+			"beforeSetup": false,
+			"doSetup": false,
+			"afterSetup": false,
+			"afterAppend": false,
+			"beforeRefresh": false,
+			"doRefresh": false,
+			"afterRefresh": false,
+			"doTarget": false,
+			"beforeFetch": false,
+			"doFetch": false,
+			"afterFetch": false,
+			"beforeFill": false,
+			"doFill": false,
+			"afterFill": false,
+		};
+		this.testVars["eventCalled"]["beforeStart"] = true;
+	};
+
+	BarMain.prototype.onBeforeSetup = function() {
+		this.testVars["eventCalled"]["beforeSetup"] = true;
+	};
+
+	BarMain.prototype.onDoSetup = function() {
+		this.testVars["eventCalled"]["doSetup"] = true;
+	};
+
+	BarMain.prototype.onAfterSetup = function() {
+		this.testVars["eventCalled"]["afterSetup"] = true;
+	};
+
+	BarMain.prototype.onAfterAppend = function() {
+		this.testVars["eventCalled"]["afterAppend"] = true;
+	};
+
+	BarMain.prototype.onBeforeRefresh = function() {
+		this.testVars["eventCalled"]["beforeRefresh"] = true;
+	};
+
+	BarMain.prototype.onDoTarget = function() {
+		this.testVars["eventCalled"]["doTarget"] = true;
+	};
+
+	BarMain.prototype.onBeforeFetch = function() {
+		this.testVars["eventCalled"]["beforeFetch"] = true;
+	};
+
+	BarMain.prototype.onDoFetch = function() {
+		this.testVars["eventCalled"]["doFetch"] = true;
+	};
+
+	BarMain.prototype.onAfterFetch = function() {
+		this.testVars["eventCalled"]["afterFetch"] = true;
+	};
+
+	BarMain.prototype.onBeforeFill = function() {
+		this.testVars["eventCalled"]["beforeFill"] = true;
+	};
+
+	BarMain.prototype.onDoFill = function() {
+		this.testVars["eventCalled"]["doFill"] = true;
+	};
+
+	BarMain.prototype.onAfterFill = function() {
+		this.testVars["eventCalled"]["afterFill"] = true;
+	};
+
+	BarMain.prototype.onDoRefresh = function() {
+		this.testVars["eventCalled"]["doRefresh"] = true;
+	};
+
+	BarMain.prototype.onAfterRefresh = function() {
+		this.testVars["eventCalled"]["afterRefresh"] = true;
+	};
+
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
@@ -36,6 +177,88 @@ test('Event trigger test - All events should be triggered', async () => {
 // -----------------------------------------------------------------------------
 
 test('Event order test - All events should be triggered in order', async () => {
+	BarMain.prototype._getSettings = function() {
+		let settings = this.__getSettings.call(this);
+		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart);
+		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onBeforeSetup);
+		settings["events"]["this"]["handlers"]["doSetup"].push(this.onDoSetup);
+		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onAfterSetup);
+		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onAfterAppend);
+		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onBeforeRefresh);
+		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onDoRefresh);
+		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onAfterRefresh);
+		settings["events"]["this"]["handlers"]["doTarget"].push(this.onDoTarget);
+		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onBeforeFetch);
+		settings["events"]["this"]["handlers"]["doFetch"].push(this.onDoFetch);
+		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onAfterFetch);
+		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill);
+		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill);
+		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill);
+
+		return settings;
+	};
+
+	BarMain.prototype.onBeforeStart = function() {
+		this.testVars["eventOrder"] = [];
+		this.testVars["eventOrder"].push("beforeStart");
+	};
+
+	BarMain.prototype.onBeforeSetup = function() {
+		this.testVars["eventOrder"].push("beforeSetup");
+	};
+
+	BarMain.prototype.onDoSetup = function() {
+		this.testVars["eventOrder"].push("doSetup");
+	};
+
+	BarMain.prototype.onAfterSetup = function() {
+		this.testVars["eventOrder"].push("afterSetup");
+	};
+
+	BarMain.prototype.onAfterAppend = function() {
+		this.testVars["eventOrder"].push("afterAppend");
+	};
+
+	BarMain.prototype.onBeforeRefresh = function() {
+		this.testVars["eventOrder"].push("beforeRefresh");
+	};
+
+	BarMain.prototype.onDoTarget = function() {
+		this.testVars["eventOrder"].push("doTarget");
+	};
+
+	BarMain.prototype.onBeforeFetch = function() {
+		this.testVars["eventOrder"].push("beforeFetch");
+	};
+
+	BarMain.prototype.onDoFetch = function() {
+		this.testVars["eventOrder"].push("doFetch");
+	};
+
+	BarMain.prototype.onAfterFetch = function() {
+		this.testVars["eventOrder"].push("afterFetch");
+	};
+
+	BarMain.prototype.onBeforeFill = function() {
+		this.testVars["eventOrder"].push("beforeFill");
+	};
+
+	BarMain.prototype.onDoFill = function() {
+		this.testVars["eventOrder"].push("doFill");
+	};
+
+	BarMain.prototype.onAfterFill = function() {
+		this.testVars["eventOrder"].push("afterFill");
+	};
+
+	BarMain.prototype.onDoRefresh = function() {
+		this.testVars["eventOrder"].push("doRefresh");
+	};
+
+	BarMain.prototype.onAfterRefresh = function() {
+		this.testVars["eventOrder"].push("afterRefresh");
+	};
+
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
@@ -62,119 +285,119 @@ test('Event order test - All events should be triggered in order', async () => {
 test('Event order test - All events should be triggered in reverse order - Asynchronous without promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
-		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
-		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onBeforeSetup2);
-		settings["events"]["this"]["handlers"]["doSetup"].push(this.onDoSetup2);
-		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onAfterSetup2);
-		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onAfterAppend2);
-		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onBeforeRefresh2);
-		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onDoRefresh2);
-		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onAfterRefresh2);
-		settings["events"]["this"]["handlers"]["doTarget"].push(this.onDoTarget2);
-		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onBeforeFetch2);
-		settings["events"]["this"]["handlers"]["doFetch"].push(this.onDoFetch2);
-		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onAfterFetch2);
-		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill2);
-		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill2);
-		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill2);
+		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart);
+		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onBeforeSetup);
+		settings["events"]["this"]["handlers"]["doSetup"].push(this.onDoSetup);
+		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onAfterSetup);
+		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onAfterAppend);
+		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onBeforeRefresh);
+		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onDoRefresh);
+		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onAfterRefresh);
+		settings["events"]["this"]["handlers"]["doTarget"].push(this.onDoTarget);
+		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onBeforeFetch);
+		settings["events"]["this"]["handlers"]["doFetch"].push(this.onDoFetch);
+		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onAfterFetch);
+		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill);
+		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill);
+		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill);
 
 		return settings;
 	};
 
-	BarMain.prototype.onBeforeStart2 = function() {
-		this.testVars["eventOrder2"] = [];
+	BarMain.prototype.onBeforeStart = function() {
+		this.testVars["eventOrder"] = [];
 		this.testVars["promise"] = {};
 		this.testVars["promise"]["promise"] = new Promise((resolve, reject) => {
 			this.testVars["promise"]["resolve"] = resolve;
 		});
 
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("beforeStart");
+			this.testVars["eventOrder"].push("beforeStart");
 			this.testVars["promise"]["resolve"]();
 		}, 2000);
 	};
 
-	BarMain.prototype.onBeforeSetup2 = function() {
+	BarMain.prototype.onBeforeSetup = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("beforeSetup");
+			this.testVars["eventOrder"].push("beforeSetup");
 		}, 180);
 	};
 
-	BarMain.prototype.onDoSetup2 = function() {
+	BarMain.prototype.onDoSetup = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("doSetup");
+			this.testVars["eventOrder"].push("doSetup");
 		}, 160);
 	};
 
-	BarMain.prototype.onAfterSetup2 = function() {
+	BarMain.prototype.onAfterSetup = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("afterSetup");
+			this.testVars["eventOrder"].push("afterSetup");
 		}, 140);
 	};
 
-	BarMain.prototype.onAfterAppend2 = function() {
+	BarMain.prototype.onAfterAppend = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("afterAppend");
+			this.testVars["eventOrder"].push("afterAppend");
 		}, 120);
 	};
 
-	BarMain.prototype.onBeforeRefresh2 = function() {
+	BarMain.prototype.onBeforeRefresh = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("beforeRefresh");
+			this.testVars["eventOrder"].push("beforeRefresh");
 		}, 100);
 	};
 
-	BarMain.prototype.onDoTarget2 = function() {
+	BarMain.prototype.onDoTarget = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("doTarget");
+			this.testVars["eventOrder"].push("doTarget");
 		}, 90);
 	};
 
-	BarMain.prototype.onBeforeFetch2 = function() {
+	BarMain.prototype.onBeforeFetch = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("beforeFetch");
+			this.testVars["eventOrder"].push("beforeFetch");
 		}, 80);
 	};
 
-	BarMain.prototype.onDoFetch2 = function() {
+	BarMain.prototype.onDoFetch = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("doFetch");
+			this.testVars["eventOrder"].push("doFetch");
 		}, 70);
 	};
 
-	BarMain.prototype.onAfterFetch2 = function() {
+	BarMain.prototype.onAfterFetch = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("afterFetch");
+			this.testVars["eventOrder"].push("afterFetch");
 		}, 60);
 	};
 
-	BarMain.prototype.onBeforeFill2 = function() {
+	BarMain.prototype.onBeforeFill = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("beforeFill");
+			this.testVars["eventOrder"].push("beforeFill");
 		}, 50);
 	};
 
-	BarMain.prototype.onDoFill2 = function() {
+	BarMain.prototype.onDoFill = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("doFill");
+			this.testVars["eventOrder"].push("doFill");
 		}, 40);
 	};
 
-	BarMain.prototype.onAfterFill2 = function() {
+	BarMain.prototype.onAfterFill = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("afterFill");
+			this.testVars["eventOrder"].push("afterFill");
 		}, 30);
 	};
 
-	BarMain.prototype.onDoRefresh2 = function() {
+	BarMain.prototype.onDoRefresh = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("doRefresh");
+			this.testVars["eventOrder"].push("doRefresh");
 		}, 20);
 	};
 
-	BarMain.prototype.onAfterRefresh2 = function() {
+	BarMain.prototype.onAfterRefresh = function() {
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("afterRefresh");
+			this.testVars["eventOrder"].push("afterRefresh");
 		}, 10);
 	};
 
@@ -183,21 +406,21 @@ test('Event order test - All events should be triggered in reverse order - Async
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
 	return barMain.testVars["promise"]["promise"].then(() => {
-		expect(barMain.testVars["eventOrder2"][14]).toBe("beforeStart");
-		expect(barMain.testVars["eventOrder2"][13]).toBe("beforeSetup");
-		expect(barMain.testVars["eventOrder2"][12]).toBe("doSetup");
-		expect(barMain.testVars["eventOrder2"][11]).toBe("afterSetup");
-		expect(barMain.testVars["eventOrder2"][10]).toBe("afterAppend");
-		expect(barMain.testVars["eventOrder2"][9]).toBe("beforeRefresh");
-		expect(barMain.testVars["eventOrder2"][8]).toBe("doTarget");
-		expect(barMain.testVars["eventOrder2"][7]).toBe("beforeFetch");
-		expect(barMain.testVars["eventOrder2"][6]).toBe("doFetch");
-		expect(barMain.testVars["eventOrder2"][5]).toBe("afterFetch");
-		expect(barMain.testVars["eventOrder2"][4]).toBe("beforeFill");
-		expect(barMain.testVars["eventOrder2"][3]).toBe("doFill");
-		expect(barMain.testVars["eventOrder2"][2]).toBe("afterFill");
-		expect(barMain.testVars["eventOrder2"][1]).toBe("doRefresh");
-		expect(barMain.testVars["eventOrder2"][0]).toBe("afterRefresh");
+		expect(barMain.testVars["eventOrder"][14]).toBe("beforeStart");
+		expect(barMain.testVars["eventOrder"][13]).toBe("beforeSetup");
+		expect(barMain.testVars["eventOrder"][12]).toBe("doSetup");
+		expect(barMain.testVars["eventOrder"][11]).toBe("afterSetup");
+		expect(barMain.testVars["eventOrder"][10]).toBe("afterAppend");
+		expect(barMain.testVars["eventOrder"][9]).toBe("beforeRefresh");
+		expect(barMain.testVars["eventOrder"][8]).toBe("doTarget");
+		expect(barMain.testVars["eventOrder"][7]).toBe("beforeFetch");
+		expect(barMain.testVars["eventOrder"][6]).toBe("doFetch");
+		expect(barMain.testVars["eventOrder"][5]).toBe("afterFetch");
+		expect(barMain.testVars["eventOrder"][4]).toBe("beforeFill");
+		expect(barMain.testVars["eventOrder"][3]).toBe("doFill");
+		expect(barMain.testVars["eventOrder"][2]).toBe("afterFill");
+		expect(barMain.testVars["eventOrder"][1]).toBe("doRefresh");
+		expect(barMain.testVars["eventOrder"][0]).toBe("afterRefresh");
 	});
 });
 
@@ -206,156 +429,156 @@ test('Event order test - All events should be triggered in reverse order - Async
 test('Event order test - All events should be triggered in order - Asynchronous with promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
-		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
-		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onBeforeSetup2);
-		settings["events"]["this"]["handlers"]["doSetup"].push(this.onDoSetup2);
-		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onAfterSetup2);
-		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onAfterAppend2);
-		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onBeforeRefresh2);
-		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onDoRefresh2);
-		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onAfterRefresh2);
-		settings["events"]["this"]["handlers"]["doTarget"].push(this.onDoTarget2);
-		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onBeforeFetch2);
-		settings["events"]["this"]["handlers"]["doFetch"].push(this.onDoFetch2);
-		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onAfterFetch2);
-		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill2);
-		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill2);
-		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill2);
+		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart);
+		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onBeforeSetup);
+		settings["events"]["this"]["handlers"]["doSetup"].push(this.onDoSetup);
+		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onAfterSetup);
+		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onAfterAppend);
+		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onBeforeRefresh);
+		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onDoRefresh);
+		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onAfterRefresh);
+		settings["events"]["this"]["handlers"]["doTarget"].push(this.onDoTarget);
+		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onBeforeFetch);
+		settings["events"]["this"]["handlers"]["doFetch"].push(this.onDoFetch);
+		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onAfterFetch);
+		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill);
+		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill);
+		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill);
 
 		return settings;
 	};
 
-	BarMain.prototype.onBeforeStart2 = function() {
-		this.testVars["eventOrder2"] = [];
+	BarMain.prototype.onBeforeStart = function() {
+		this.testVars["eventOrder"] = [];
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("beforeStart");
+				this.testVars["eventOrder"].push("beforeStart");
 				resolve();
 			 }, 150);
 		 });
 	};
 
-	BarMain.prototype.onBeforeSetup2 = function() {
+	BarMain.prototype.onBeforeSetup = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("beforeSetup");
+				this.testVars["eventOrder"].push("beforeSetup");
 				resolve();
 			 }, 140);
 		 });
 	};
 
-	BarMain.prototype.onDoSetup2 = function() {
+	BarMain.prototype.onDoSetup = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("doSetup");
+				this.testVars["eventOrder"].push("doSetup");
 				resolve();
 			 }, 130);
 		 });
 	};
 
-	BarMain.prototype.onAfterSetup2 = function() {
+	BarMain.prototype.onAfterSetup = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("afterSetup");
+				this.testVars["eventOrder"].push("afterSetup");
 				resolve();
 			 }, 120);
 		 });
 	};
 
-	BarMain.prototype.onAfterAppend2 = function() {
+	BarMain.prototype.onAfterAppend = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("afterAppend");
+				this.testVars["eventOrder"].push("afterAppend");
 				resolve();
 			 }, 110);
 		 });
 	};
 
-	BarMain.prototype.onBeforeRefresh2 = function() {
+	BarMain.prototype.onBeforeRefresh = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("beforeRefresh");
+				this.testVars["eventOrder"].push("beforeRefresh");
 				resolve();
 			 }, 100);
 		 });
 	};
 
-	BarMain.prototype.onDoTarget2 = function() {
+	BarMain.prototype.onDoTarget = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("doTarget");
+				this.testVars["eventOrder"].push("doTarget");
 				resolve();
 			 }, 90);
 		 });
 	};
 
-	BarMain.prototype.onBeforeFetch2 = function() {
+	BarMain.prototype.onBeforeFetch = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("beforeFetch");
+				this.testVars["eventOrder"].push("beforeFetch");
 				resolve();
 			 }, 80);
 		 });
 	};
 
-	BarMain.prototype.onDoFetch2 = function() {
+	BarMain.prototype.onDoFetch = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("doFetch");
+				this.testVars["eventOrder"].push("doFetch");
 				resolve();
 			 }, 70);
 		 });
 	};
 
-	BarMain.prototype.onAfterFetch2 = function() {
+	BarMain.prototype.onAfterFetch = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("afterFetch");
+				this.testVars["eventOrder"].push("afterFetch");
 				resolve();
 			 }, 60);
 		 });
 	};
 
-	BarMain.prototype.onBeforeFill2 = function() {
+	BarMain.prototype.onBeforeFill = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("beforeFill");
+				this.testVars["eventOrder"].push("beforeFill");
 				resolve();
 			 }, 50);
 		 });
 	};
 
-	BarMain.prototype.onDoFill2 = function() {
+	BarMain.prototype.onDoFill = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("doFill");
+				this.testVars["eventOrder"].push("doFill");
 				resolve();
 			 }, 40);
 		 });
 	};
 
-	BarMain.prototype.onAfterFill2 = function() {
+	BarMain.prototype.onAfterFill = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("afterFill");
+				this.testVars["eventOrder"].push("afterFill");
 				resolve();
 			 }, 30);
 		 });
 	};
 
-	BarMain.prototype.onDoRefresh2 = function() {
+	BarMain.prototype.onDoRefresh = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("doRefresh");
+				this.testVars["eventOrder"].push("doRefresh");
 				resolve();
 			 }, 20);
 		 });
 	};
 
-	BarMain.prototype.onAfterRefresh2 = function() {
+	BarMain.prototype.onAfterRefresh = function() {
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("afterRefresh");
+				this.testVars["eventOrder"].push("afterRefresh");
 				resolve();
 			 }, 10);
 		 });
@@ -365,21 +588,21 @@ test('Event order test - All events should be triggered in order - Asynchronous 
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	expect(barMain.testVars["eventOrder2"][0]).toBe("beforeStart");
-	expect(barMain.testVars["eventOrder2"][1]).toBe("beforeSetup");
-	expect(barMain.testVars["eventOrder2"][2]).toBe("doSetup");
-	expect(barMain.testVars["eventOrder2"][3]).toBe("afterSetup");
-	expect(barMain.testVars["eventOrder2"][4]).toBe("afterAppend");
-	expect(barMain.testVars["eventOrder2"][5]).toBe("beforeRefresh");
-	expect(barMain.testVars["eventOrder2"][6]).toBe("doTarget");
-	expect(barMain.testVars["eventOrder2"][7]).toBe("beforeFetch");
-	expect(barMain.testVars["eventOrder2"][8]).toBe("doFetch");
-	expect(barMain.testVars["eventOrder2"][9]).toBe("afterFetch");
-	expect(barMain.testVars["eventOrder2"][10]).toBe("beforeFill");
-	expect(barMain.testVars["eventOrder2"][11]).toBe("doFill");
-	expect(barMain.testVars["eventOrder2"][12]).toBe("afterFill");
-	expect(barMain.testVars["eventOrder2"][13]).toBe("doRefresh");
-	expect(barMain.testVars["eventOrder2"][14]).toBe("afterRefresh");
+	expect(barMain.testVars["eventOrder"][0]).toBe("beforeStart");
+	expect(barMain.testVars["eventOrder"][1]).toBe("beforeSetup");
+	expect(barMain.testVars["eventOrder"][2]).toBe("doSetup");
+	expect(barMain.testVars["eventOrder"][3]).toBe("afterSetup");
+	expect(barMain.testVars["eventOrder"][4]).toBe("afterAppend");
+	expect(barMain.testVars["eventOrder"][5]).toBe("beforeRefresh");
+	expect(barMain.testVars["eventOrder"][6]).toBe("doTarget");
+	expect(barMain.testVars["eventOrder"][7]).toBe("beforeFetch");
+	expect(barMain.testVars["eventOrder"][8]).toBe("doFetch");
+	expect(barMain.testVars["eventOrder"][9]).toBe("afterFetch");
+	expect(barMain.testVars["eventOrder"][10]).toBe("beforeFill");
+	expect(barMain.testVars["eventOrder"][11]).toBe("doFill");
+	expect(barMain.testVars["eventOrder"][12]).toBe("afterFill");
+	expect(barMain.testVars["eventOrder"][13]).toBe("doRefresh");
+	expect(barMain.testVars["eventOrder"][14]).toBe("afterRefresh");
 });
 
 // -----------------------------------------------------------------------------
@@ -387,27 +610,27 @@ test('Event order test - All events should be triggered in order - Asynchronous 
 test('Event order test - Two event handlers on one event should be triggered in order', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
+		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart1);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
-		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart3);
 
 		return settings;
 	};
 
-	BarMain.prototype.onBeforeStart2 = function() {
-		this.testVars["eventOrder2"] = [];
-		this.testVars["eventOrder2"].push("beforeStart2");
+	BarMain.prototype.onBeforeStart1 = function() {
+		this.testVars["eventOrder"] = [];
+		this.testVars["eventOrder"].push("beforeStart1");
 	};
 
-	BarMain.prototype.onBeforeStart3 = function() {
-		this.testVars["eventOrder2"].push("beforeStart3");
+	BarMain.prototype.onBeforeStart2 = function() {
+		this.testVars["eventOrder"].push("beforeStart2");
 	};
 
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	expect(barMain.testVars["eventOrder2"][0]).toBe("beforeStart2");
-	expect(barMain.testVars["eventOrder2"][1]).toBe("beforeStart3");
+	expect(barMain.testVars["eventOrder"][0]).toBe("beforeStart1");
+	expect(barMain.testVars["eventOrder"][1]).toBe("beforeStart2");
 });
 
 // -----------------------------------------------------------------------------
@@ -415,26 +638,26 @@ test('Event order test - Two event handlers on one event should be triggered in 
 test('Event order test - Two event handlers on one event should be triggered in reverse order - Asynchronous without promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
+		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart1);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
-		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart3);
 
 		return settings;
 	};
 
-	BarMain.prototype.onBeforeStart2 = function() {
-		this.testVars["eventOrder2"] = [];
+	BarMain.prototype.onBeforeStart1 = function() {
+		this.testVars["eventOrder"] = [];
 		this.testVars["promise"] = {};
 		this.testVars["promise"]["promise"] = new Promise((resolve, reject) => {
 			this.testVars["promise"]["resolve"] = resolve;
 		});
 
 		setTimeout(() => {
-			this.testVars["eventOrder2"].push("beforeStart2");
+			this.testVars["eventOrder"].push("beforeStart1");
 			this.testVars["promise"]["resolve"]();
 		}, 200);
 	};
-	BarMain.prototype.onBeforeStart3 = function() {
-		this.testVars["eventOrder2"].push("beforeStart3");
+	BarMain.prototype.onBeforeStart2 = function() {
+		this.testVars["eventOrder"].push("beforeStart2");
 	};
 
 	document.body.innerHTML = "<bar-main></bar-main>";
@@ -442,8 +665,8 @@ test('Event order test - Two event handlers on one event should be triggered in 
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
 	return barMain.testVars["promise"]["promise"].then(() => {
-		expect(barMain.testVars["eventOrder2"][0]).toBe("beforeStart3");
-		expect(barMain.testVars["eventOrder2"][1]).toBe("beforeStart2");
+		expect(barMain.testVars["eventOrder"][0]).toBe("beforeStart2");
+		expect(barMain.testVars["eventOrder"][1]).toBe("beforeStart1");
 	});
 });
 
@@ -452,30 +675,30 @@ test('Event order test - Two event handlers on one event should be triggered in 
 test('Event order test - Two event handlers on one event should be triggered in order - Asynchronous with promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
+		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart1);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart2);
-		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart3);
 
 		return settings;
 	};
 
-	BarMain.prototype.onBeforeStart2 = function() {
-		this.testVars["eventOrder2"] = [];
+	BarMain.prototype.onBeforeStart1 = function() {
+		this.testVars["eventOrder"] = [];
 		 return new Promise((resolve, reject) => {
 		 	setTimeout(() => {
-				this.testVars["eventOrder2"].push("beforeStart2");
+				this.testVars["eventOrder"].push("beforeStart1");
 				resolve();
 			 }, 1000);
 		 });
 	};
 
-	BarMain.prototype.onBeforeStart3 = function() {
-		this.testVars["eventOrder2"].push("beforeStart3");
+	BarMain.prototype.onBeforeStart2 = function() {
+		this.testVars["eventOrder"].push("beforeStart2");
 	};
 
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	expect(barMain.testVars["eventOrder2"][0]).toBe("beforeStart2");
-	expect(barMain.testVars["eventOrder2"][1]).toBe("beforeStart3");
+	expect(barMain.testVars["eventOrder"][0]).toBe("beforeStart1");
+	expect(barMain.testVars["eventOrder"][1]).toBe("beforeStart2");
 });
