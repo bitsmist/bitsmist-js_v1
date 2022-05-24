@@ -190,7 +190,11 @@ Component.prototype.start = function(settings)
 	this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
 
 	return Promise.resolve().then(() => {
-		return this._initStart(settings);
+		return this._injectSettings(settings);
+	}).then((newSettings) => {
+		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
+	}).then(() => {
+		return this.initOrganizers(this.settings.items);
 	}).then(() => {
 		return this._preStart();
 	}).then(() => {
@@ -457,30 +461,6 @@ Component.prototype._getSettings = function()
 {
 
 	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Initialize start processing.
- *
- * @param	{Object}		settings			Settings.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype._initStart = function(settings)
-{
-
-	return Promise.resolve().then(() => {
-		return this._injectSettings(settings);
-	}).then((newSettings) => {
-		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
-	}).then(() => {
-		this._adjustSettings();
-
-		return this.initOrganizers(this.settings.items);
-	});
 
 }
 
