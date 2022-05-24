@@ -4,11 +4,8 @@
 
 BITSMIST.v1.settings.merge({
 	"system": {
-		"specPath":						"/specs/",
-		"templatePath":					"/components/",
-		"componentPath":				"/components/",
-		"appBaseUrl":					"http://dev.sale-quest.com",
-		"apiBaseUrl":					"http://saleapi.dev.sale-quest.com/v1",
+		"appBaseUrl":					"http://test.bitsmist.com",
+		"apiBaseUrl":					"http://api.test.bitsmist.com/v1",
 		"env":							"test",
 		"splitComponent":				true,
 	},

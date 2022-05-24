@@ -8,20 +8,20 @@ var barMain = document.querySelector("bar-main");
 
 // -----------------------------------------------------------------------------
 
-test('Component name test - Component name should be "BarMain"', () => {
+test('Component Name Test - Component name should be "BarMain"', () => {
 	expect(barMain.name).toBe("BarMain");
 });
 
 // -----------------------------------------------------------------------------
 
-test('Inheritance test - Component instance should be an instance of HTMLElement', () => {
+test('Inheritance Test - Component instance should be an instance of HTMLElement', () => {
 	expect(barMain).toBeInstanceOf(HTMLElement);
 });
 
-/*
 // -----------------------------------------------------------------------------
 
-test('Default root element test - Default root element should be itself', async () => {
+/*
+test('Default Root Element Test - Default root element should be itself', async () => {
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 

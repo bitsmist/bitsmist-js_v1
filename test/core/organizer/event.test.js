@@ -3,150 +3,9 @@
  */
 import {BarMain} from './_common.js';
 
-BarMain.prototype.__getSettings = function() {
-	return {
-		"loadings": {
-			"path": "common",
-		},
-		"settings": {
-			"name": "BarMain",
-		},
-		"events": {
-			"this": {
-				"handlers": {
-					// "beforeStart": [
-					// 	{"handler": this.onBeforeStart},
-					// ],
-					"beforeStart": [this.init],
-					"afterStart": [],
-					"beforeStop": [],
-					"doStop": [],
-					"afterStop": [],
-					"beforeSetup": [],
-					"doSetup": [],
-					"afterSetup": [],
-					"afterAppend": [],
-					"beforeRefresh": [],
-					"doRefresh": [],
-					"afterRefresh": [],
-					"doTarget": [],
-					"beforeFetch": [],
-					"doFetch": [],
-					"afterFetch": [],
-					"beforeFill": [],
-					"doFill": [],
-					"afterFill": [],
-				}
-			}
-		},
-	};
-};
-
 // -----------------------------------------------------------------------------
 
-test('Event trigger test - All events should be triggered', async () => {
-	BarMain.prototype._getSettings = function() {
-		let settings = this.__getSettings.call(this);
-		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart);
-		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onBeforeSetup);
-		settings["events"]["this"]["handlers"]["doSetup"].push(this.onDoSetup);
-		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onAfterSetup);
-		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onAfterAppend);
-		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onBeforeRefresh);
-		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onDoRefresh);
-		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onAfterRefresh);
-		settings["events"]["this"]["handlers"]["doTarget"].push(this.onDoTarget);
-		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onBeforeFetch);
-		settings["events"]["this"]["handlers"]["doFetch"].push(this.onDoFetch);
-		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onAfterFetch);
-		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill);
-		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill);
-		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill);
-
-		return settings;
-	};
-
-	BarMain.prototype.onBeforeStart = function() {
-		this.testVars["eventCalled"] = {
-			"beforeStart": false,
-			"afterStart": false,
-			"beforeStop": false,
-			"doStop": false,
-			"afterStop": false,
-			"beforeSetup": false,
-			"doSetup": false,
-			"afterSetup": false,
-			"afterAppend": false,
-			"beforeRefresh": false,
-			"doRefresh": false,
-			"afterRefresh": false,
-			"doTarget": false,
-			"beforeFetch": false,
-			"doFetch": false,
-			"afterFetch": false,
-			"beforeFill": false,
-			"doFill": false,
-			"afterFill": false,
-		};
-		this.testVars["eventCalled"]["beforeStart"] = true;
-	};
-
-	BarMain.prototype.onBeforeSetup = function() {
-		this.testVars["eventCalled"]["beforeSetup"] = true;
-	};
-
-	BarMain.prototype.onDoSetup = function() {
-		this.testVars["eventCalled"]["doSetup"] = true;
-	};
-
-	BarMain.prototype.onAfterSetup = function() {
-		this.testVars["eventCalled"]["afterSetup"] = true;
-	};
-
-	BarMain.prototype.onAfterAppend = function() {
-		this.testVars["eventCalled"]["afterAppend"] = true;
-	};
-
-	BarMain.prototype.onBeforeRefresh = function() {
-		this.testVars["eventCalled"]["beforeRefresh"] = true;
-	};
-
-	BarMain.prototype.onDoTarget = function() {
-		this.testVars["eventCalled"]["doTarget"] = true;
-	};
-
-	BarMain.prototype.onBeforeFetch = function() {
-		this.testVars["eventCalled"]["beforeFetch"] = true;
-	};
-
-	BarMain.prototype.onDoFetch = function() {
-		this.testVars["eventCalled"]["doFetch"] = true;
-	};
-
-	BarMain.prototype.onAfterFetch = function() {
-		this.testVars["eventCalled"]["afterFetch"] = true;
-	};
-
-	BarMain.prototype.onBeforeFill = function() {
-		this.testVars["eventCalled"]["beforeFill"] = true;
-	};
-
-	BarMain.prototype.onDoFill = function() {
-		this.testVars["eventCalled"]["doFill"] = true;
-	};
-
-	BarMain.prototype.onAfterFill = function() {
-		this.testVars["eventCalled"]["afterFill"] = true;
-	};
-
-	BarMain.prototype.onDoRefresh = function() {
-		this.testVars["eventCalled"]["doRefresh"] = true;
-	};
-
-	BarMain.prototype.onAfterRefresh = function() {
-		this.testVars["eventCalled"]["afterRefresh"] = true;
-	};
-
+test('Event Trigger Test - All events should be triggered', async () => {
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
@@ -176,24 +35,24 @@ test('Event trigger test - All events should be triggered', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - All events should be triggered in order', async () => {
+test('Event Order Test - All events should be triggered in order', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart);
-		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onBeforeSetup);
-		settings["events"]["this"]["handlers"]["doSetup"].push(this.onDoSetup);
-		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onAfterSetup);
-		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onAfterAppend);
-		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onBeforeRefresh);
-		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onDoRefresh);
-		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onAfterRefresh);
-		settings["events"]["this"]["handlers"]["doTarget"].push(this.onDoTarget);
-		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onBeforeFetch);
-		settings["events"]["this"]["handlers"]["doFetch"].push(this.onDoFetch);
-		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onAfterFetch);
-		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill);
-		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill);
-		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill);
+		settings["events"]["this"]["handlers"]["beforeSetup"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["doSetup"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["afterSetup"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["afterAppend"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["beforeRefresh"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["doRefresh"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["afterRefresh"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["doTarget"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["beforeFetch"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["doFetch"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["afterFetch"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["doFill"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["afterFill"].push(this.onEvent2);
 
 		return settings;
 	};
@@ -203,61 +62,9 @@ test('Event order test - All events should be triggered in order', async () => {
 		this.testVars["eventOrder"].push("beforeStart");
 	};
 
-	BarMain.prototype.onBeforeSetup = function() {
-		this.testVars["eventOrder"].push("beforeSetup");
-	};
-
-	BarMain.prototype.onDoSetup = function() {
-		this.testVars["eventOrder"].push("doSetup");
-	};
-
-	BarMain.prototype.onAfterSetup = function() {
-		this.testVars["eventOrder"].push("afterSetup");
-	};
-
-	BarMain.prototype.onAfterAppend = function() {
-		this.testVars["eventOrder"].push("afterAppend");
-	};
-
-	BarMain.prototype.onBeforeRefresh = function() {
-		this.testVars["eventOrder"].push("beforeRefresh");
-	};
-
-	BarMain.prototype.onDoTarget = function() {
-		this.testVars["eventOrder"].push("doTarget");
-	};
-
-	BarMain.prototype.onBeforeFetch = function() {
-		this.testVars["eventOrder"].push("beforeFetch");
-	};
-
-	BarMain.prototype.onDoFetch = function() {
-		this.testVars["eventOrder"].push("doFetch");
-	};
-
-	BarMain.prototype.onAfterFetch = function() {
-		this.testVars["eventOrder"].push("afterFetch");
-	};
-
-	BarMain.prototype.onBeforeFill = function() {
-		this.testVars["eventOrder"].push("beforeFill");
-	};
-
-	BarMain.prototype.onDoFill = function() {
-		this.testVars["eventOrder"].push("doFill");
-	};
-
-	BarMain.prototype.onAfterFill = function() {
-		this.testVars["eventOrder"].push("afterFill");
-	};
-
-	BarMain.prototype.onDoRefresh = function() {
-		this.testVars["eventOrder"].push("doRefresh");
-	};
-
-	BarMain.prototype.onAfterRefresh = function() {
-		this.testVars["eventOrder"].push("afterRefresh");
-	};
+	BarMain.prototype.onEvent2 = function(sender, e, ex) {
+		this.testVars["eventOrder"].push(e.type);
+	}
 
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
@@ -282,7 +89,7 @@ test('Event order test - All events should be triggered in order', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - All events should be triggered in reverse order - Asynchronous without promises', async () => {
+test('Event Order Test - All events should be triggered in reverse order - Asynchronous without promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart);
@@ -426,7 +233,7 @@ test('Event order test - All events should be triggered in reverse order - Async
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - All events should be triggered in order - Asynchronous with promises', async () => {
+test('Event Order Test - All events should be triggered in order - Asynchronous with promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart);
@@ -607,7 +414,7 @@ test('Event order test - All events should be triggered in order - Asynchronous 
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - Two event handlers on one event should be triggered in order', async () => {
+test('Event Order Test - Two event handlers on one event should be triggered in order', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart1);
@@ -635,7 +442,7 @@ test('Event order test - Two event handlers on one event should be triggered in 
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - Two event handlers on one event should be triggered in reverse order - Asynchronous without promises', async () => {
+test('Event Order Test - Two event handlers on one event should be triggered in reverse order - Asynchronous without promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart1);
@@ -672,7 +479,7 @@ test('Event order test - Two event handlers on one event should be triggered in 
 
 // -----------------------------------------------------------------------------
 
-test('Event order test - Two event handlers on one event should be triggered in order - Asynchronous with promises', async () => {
+test('Event Order Test - Two event handlers on one event should be triggered in order - Asynchronous with promises', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["events"]["this"]["handlers"]["beforeStart"].push(this.onBeforeStart1);

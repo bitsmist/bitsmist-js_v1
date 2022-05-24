@@ -1,50 +1,91 @@
 /**
  * @jest-environment jsdom
  */
-import {BarMain} from './_common.js';
+import { BarMain } from './_common.js';
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.name should be applied', async () => {
-	BarMain.prototype._getSettings = function() {
-		return this.__getSettings();
+test('Settings Loading Test - _injectSettings() should be called', async () => {
+	BarMain.prototype._injectSettings = function(settings) {
+		settings["injectSettings"] = true;
+
+		return settings;
 	};
+
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	expect(barMain.name).toBe("BarMain");
+	expect(barMain.settings.get("injectSettings")).toBe(true);
 });
 
-/* Does not work
 // -----------------------------------------------------------------------------
 
-test('Setting test - Default root node should be itself', async () => {
+test('Settings Loading Test - _getSettings() should be called', async () => {
+	BarMain.prototype._getSettings = function() {
+		let settings = this.__getSettings.call(this);
+		settings["getSettings"] = true;
+
+		return settings;
+	};
+
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	console.log(document.querySelector("bar-main"));
-	expect(barMain.rootNode).toBe(document.querySelector("bar-main"));
+	expect(barMain.settings.get("getSettings")).toBe(true);
 });
-*/
 
-/* Does not work now
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoPostStart=true should work', async () => {
+test('Settings Loading Test - An external setting file should be loaded', async () => {
+	document.body.innerHTML = "<bar-main bm-settingref='http://test.bitsmist.com/test.settings.js'></bar-main>";
+	var barMain = document.querySelector("bar-main");
+
+	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
+	expect(barMain.settings.get("settings.externalSettingsTest")).toBe(true);
+});
+
+test('Settings Loading Test - Attriubte settings should be loaded', async () => {
+	document.body.innerHTML = "<bar-main bm-settings='{\"attrib\":\"true\"}'></bar-main>";
+	var barMain = document.querySelector("bar-main");
+
+	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
+	expect(barMain.settings.get("settings.attrib")).toBe("true");
+});
+
+// -----------------------------------------------------------------------------
+
+test('Setting Test - settings.name should be applied', async () => {
+	BarMain.prototype._getSettings = function() {
+		let settings = this.__getSettings();
+		settings["settings"]["name"] = "BarMain2";
+
+		return settings;
+	};
+
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	expect(barMain.testVars["eventCalled"]["beforeStart"]).toBe(true);
-	expect(barMain.testVars["eventCalled"]["afterStart"]).toBe(true);
+	expect(barMain.name).toBe("BarMain2");
 });
-*/
+
+// -----------------------------------------------------------------------------
+// Does not work
+
+// test('Setting Test - Default root node should be itself', async () => {
+// 	document.body.innerHTML = "<bar-main></bar-main>";
+// 	var barMain = document.querySelector("bar-main");
+
+// 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
+// 	console.log(document.querySelector("bar-main"));
+// 	expect(barMain.rootNode).toBe(document.querySelector("bar-main"));
+// });
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoSetup=false should work', async () => {
+test('Setting Test - settings.autoSetup=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoPosStart"] = false;
@@ -57,13 +98,11 @@ test('Setting test - settings.autoSetup=false should work', async () => {
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
 	expect(barMain.testVars["eventCalled"]["beforeStart"]).toBe(true);
 	expect(barMain.testVars["eventCalled"]["afterStart"]).toBe(false);
-
-	document.body.innerHTML = "";
 });
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoSetup=true should work', async () => {
+test('Setting Test - settings.autoSetup=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -78,7 +117,7 @@ test('Setting test - settings.autoSetup=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoSetup=false should work', async () => {
+test('Setting Test - settings.autoSetup=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoSetup"] = false;
@@ -92,15 +131,11 @@ test('Setting test - settings.autoSetup=false should work', async () => {
 	expect(barMain.testVars["eventCalled"]["beforeSetup"]).toBe(false);
 	expect(barMain.testVars["eventCalled"]["doSetup"]).toBe(false);
 	expect(barMain.testVars["eventCalled"]["afterSetup"]).toBe(false);
-
-	//let promise = BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main", "state":"stopped"}]);
-	document.body.innerHTML = "";
-	//await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main", "state":"stopped"}]);
 });
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoRefresh=true should work', async () => {
+test('Setting Test - settings.autoRefresh=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -119,7 +154,7 @@ test('Setting test - settings.autoRefresh=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoRefresh=false should work', async () => {
+test('Setting Test - settings.autoRefresh=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoRefresh"] = false;
@@ -137,13 +172,11 @@ test('Setting test - settings.autoRefresh=false should work', async () => {
 	expect(barMain.testVars["eventCalled"]["doTarget"]).toBe(false);
 	expect(barMain.testVars["eventCalled"]["doFetch"]).toBe(false);
 	expect(barMain.testVars["eventCalled"]["afterFetch"]).toBe(false);
-
-	document.body.innerHTML = "";
 });
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoFetch=true should work', async () => {
+test('Setting Test - settings.autoFetch=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -162,7 +195,7 @@ test('Setting test - settings.autoFetch=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoFetch=false should work', async () => {
+test('Setting Test - settings.autoFetch=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoFetch"] = false;
@@ -180,13 +213,11 @@ test('Setting test - settings.autoFetch=false should work', async () => {
 	expect(barMain.testVars["eventCalled"]["doTarget"]).toBe(true);
 	expect(barMain.testVars["eventCalled"]["doFetch"]).toBe(false);
 	expect(barMain.testVars["eventCalled"]["afterFetch"]).toBe(false);
-
-	document.body.innerHTML = "";
 });
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoFill=true should work', async () => {
+test('Setting Test - settings.autoFill=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -201,7 +232,7 @@ test('Setting test - settings.autoFill=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.autoFill=false should work', async () => {
+test('Setting Test - settings.autoFill=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["autoFill"] = false;
@@ -215,13 +246,11 @@ test('Setting test - settings.autoFill=false should work', async () => {
 	expect(barMain.testVars["eventCalled"]["beforeFill"]).toBe(false);
 	expect(barMain.testVars["eventCalled"]["doFill"]).toBe(false);
 	expect(barMain.testVars["eventCalled"]["afterFill"]).toBe(false);
-
-	document.body.innerHTML = "";
 });
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.hasTemplate=true should work', async () => {
+test('Setting Test - settings.hasTemplate=true should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		return this.__getSettings();
 	};
@@ -234,7 +263,7 @@ test('Setting test - settings.hasTemplate=true should work', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Setting test - settings.hasTemplate=false should work', async () => {
+test('Setting Test - settings.hasTemplate=false should work', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["settings"]["hasTemplate"] = false;
@@ -245,17 +274,166 @@ test('Setting test - settings.hasTemplate=false should work', async () => {
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	//expect(barMain.testVars["eventCalled"]["afterAppend"]).toBe(false);
 	expect(barMain.testVars["eventCalled"]["afterAppend"]).toBe(true);
 	expect(barMain.innerHTML).toBe("");
-
-	document.body.innerHTML = "";
 });
 
-/*
 // -----------------------------------------------------------------------------
-test('Loading settings test - _injectSettings() should called', async () => {
-test('Loading settings test - _getSettings() should called', async () => {
-test('Loading settings test - external settings should be loaded', async () => {
-test('Loading settings test - attriubte settings should be loaded', async () => {
-*/
+
+test('Setting Test - settings.autoPostStart=true should work', async () => {
+	BarMain.prototype.onBeforeStart = function() {
+		this.testVars = {};
+		this.testVars["promise"] = {};
+		this.testVars["promise"]["promise"] = new Promise((resolve, reject) => {
+			this.testVars["promise"]["resolve"] = resolve;
+		});
+		this.testVars["autoPostStart"] = false;
+	};
+
+	BarMain.prototype.onAfterStart = function() {
+		this.testVars["autoPostStart"] = true;
+		this.testVars["promise"]["resolve"]();
+	};
+
+	BarMain.prototype._getSettings = function() {
+		let settings = this.__getSettings.call(this);
+		settings["settings"]["autoPostStart"] = true;
+		settings["events"] = {
+			"this": {
+				"handlers": {
+					"beforeStart": [this.onBeforeStart],
+					"afterStart": [this.onAfterStart],
+				}
+			}
+		}
+
+		return settings;
+	};
+
+	document.body.innerHTML = "<bar-main></bar-main>";
+	var barMain = document.querySelector("bar-main");
+
+	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
+	return barMain.testVars["promise"]["promise"].then(() => {
+		expect(barMain.testVars["autoPostStart"]).toBe(true);
+	});
+});
+
+// -----------------------------------------------------------------------------
+
+test('Setting Test - settings.autoPostStart=false should work', async () => {
+	BarMain.prototype.onBeforeStart = function() {
+		this.testVars = {};
+		this.testVars["promise"] = {};
+		this.testVars["promise"]["promise"] = new Promise((resolve, reject) => {
+			this.testVars["promise"]["resolve"] = resolve;
+		});
+		this.testVars["autoPostStart"] = false;
+	};
+
+	BarMain.prototype.onAfterStart = function() {
+		this.testVars["autoPostStart"] = true;
+		this.testVars["promise"]["resolve"]();
+	};
+
+	BarMain.prototype._getSettings = function() {
+		let settings = this.__getSettings.call(this);
+		settings["settings"]["autoPostStart"] = false;
+		settings["events"] = {
+			"this": {
+				"handlers": {
+					"beforeStart": [this.onBeforeStart],
+					"afterStart": [this.onAfterStart],
+				}
+			}
+		}
+
+		return settings;
+	};
+
+	document.body.innerHTML = "<bar-main></bar-main>";
+	var barMain = document.querySelector("bar-main");
+
+	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
+	expect(barMain.testVars["autoPostStart"]).toBe(false);
+});
+
+// -----------------------------------------------------------------------------
+
+test('Setting Test - settings.autoPostStart=true should work', async () => {
+	BarMain.prototype.onBeforeStart = function() {
+		this.testVars = {};
+		this.testVars["promise"] = {};
+		this.testVars["promise"]["promise"] = new Promise((resolve, reject) => {
+			this.testVars["promise"]["resolve"] = resolve;
+		});
+		this.testVars["autoPostStart"] = false;
+	};
+
+	BarMain.prototype.onAfterStart = function() {
+		this.testVars["autoPostStart"] = true;
+		this.testVars["promise"]["resolve"]();
+	};
+
+	BarMain.prototype._getSettings = function() {
+		let settings = this.__getSettings.call(this);
+		settings["settings"]["autoPostStart"] = true;
+		settings["events"] = {
+			"this": {
+				"handlers": {
+					"beforeStart": [this.onBeforeStart],
+					"afterStart": [this.onAfterStart],
+				}
+			}
+		}
+
+		return settings;
+	};
+
+	document.body.innerHTML = "<bar-main></bar-main>";
+	var barMain = document.querySelector("bar-main");
+
+	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
+	return barMain.testVars["promise"]["promise"].then(() => {
+		expect(barMain.testVars["autoPostStart"]).toBe(true);
+	});
+});
+
+// -----------------------------------------------------------------------------
+
+test('Setting Test - settings.autoPostStart=false should work', async () => {
+	BarMain.prototype.onBeforeStart = function() {
+		this.testVars = {};
+		this.testVars["promise"] = {};
+		this.testVars["promise"]["promise"] = new Promise((resolve, reject) => {
+			this.testVars["promise"]["resolve"] = resolve;
+		});
+		this.testVars["autoPostStart"] = false;
+	};
+
+	BarMain.prototype.onAfterStart = function() {
+		this.testVars["autoPostStart"] = true;
+		this.testVars["promise"]["resolve"]();
+	};
+
+	BarMain.prototype._getSettings = function() {
+		let settings = this.__getSettings.call(this);
+		settings["settings"]["autoPostStart"] = false;
+		settings["events"] = {
+			"this": {
+				"handlers": {
+					"beforeStart": [this.onBeforeStart],
+					"afterStart": [this.onAfterStart],
+				}
+			}
+		}
+
+		return settings;
+	};
+
+	document.body.innerHTML = "<bar-main></bar-main>";
+	var barMain = document.querySelector("bar-main");
+
+	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
+	expect(barMain.testVars["autoPostStart"]).toBe(false);
+});
