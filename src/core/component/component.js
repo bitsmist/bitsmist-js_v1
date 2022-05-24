@@ -523,6 +523,9 @@ Component.prototype._preStart = function()
 		{
 			return this.refresh();
 		}
+	}).then(() => {
+		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
+		return this.changeState("started");
 	});
 
 }
@@ -538,9 +541,6 @@ Component.prototype._postStart = function()
 {
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
-		return this.changeState("started");
-	}).then(() => {
 		return this.callOrganizers("afterStart", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterStart");
