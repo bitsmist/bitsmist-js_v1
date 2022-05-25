@@ -194,6 +194,7 @@ Component.prototype.start = function(settings)
 	}).then((newSettings) => {
 		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
 	}).then(() => {
+		this._adjustSettings();
 		return this.initOrganizers(this.settings.items);
 	}).then(() => {
 		return this._preStart();
