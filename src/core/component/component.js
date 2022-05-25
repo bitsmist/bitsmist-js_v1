@@ -257,10 +257,18 @@ Component.prototype.switchTemplate = function(templateName, options)
 	}
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-		return this.addTemplate(templateName);
-	}).then(() => {
-		return this.applyTemplate(templateName);
+		// Switch template
+		if (this.settings.get("settings.hasTemplate"))
+		{
+			return Promise.resolve().then(() => {
+				console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+				return this.addTemplate(templateName);
+			}).then(() => {
+				return this.applyTemplate(templateName);
+			}).then(() => {
+				console.debug(`Component.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+			});
+		}
 	}).then(() => {
 		// Setup
 		let autoSetup = this.settings.get("settings.autoSetup");
@@ -275,8 +283,6 @@ Component.prototype.switchTemplate = function(templateName, options)
 		return this.callOrganizers("afterAppend", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterAppend", options);
-	}).then(() => {
-		console.debug(`Component.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 	});
 
 }
@@ -482,20 +488,7 @@ Component.prototype._preStart = function()
 	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {
-		// Switch template
-		if (this.settings.get("settings.hasTemplate"))
-		{
-			return this.switchTemplate(this.settings.get("settings.templateName"));
-		}
-		else
-		{
-			// Setup
-			let autoSetup = this.settings.get("settings.autoSetup");
-			if (autoSetup)
-			{
-				return this.setup(this.settings.items);
-			}
-		}
+		return this.switchTemplate(this.settings.get("settings.templateName"));
 	}).then(() => {
 		// Refresh
 		if (this.settings.get("settings.autoRefresh"))
