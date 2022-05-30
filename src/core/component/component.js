@@ -164,7 +164,6 @@ Component.prototype.start = function(settings)
 		"settings": {
 			"autoFetch":			true,
 			"autoFill":				true,
-			"autoPostStart":		true,
 			"autoRefresh":			true,
 			"autoRestart":			false,
 			"autoSetup":			true,
@@ -199,10 +198,9 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this._preStart();
 	}).then(() => {
-		if (this.settings.get("settings.autoPostStart"))
-		{
-			return this._postStart();
-		}
+		return this.trigger("doStart");
+	}).then(() => {
+		return this._postStart();
 	});
 
 }
@@ -517,6 +515,8 @@ Component.prototype._postStart = function()
 		return this.callOrganizers("afterStart", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterStart");
+	}).then(() => {
+		return this.changeState("ready");
 	});
 
 }
