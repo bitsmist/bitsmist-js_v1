@@ -66,6 +66,9 @@ export class BarMain extends BITSMIST.v1.Component
 						"beforeFill": [this.onEvent],
 						"doFill": [this.onEvent],
 						"afterFill": [this.onEvent],
+						"beforeStop": [this.onEvent],
+						"doStop": [this.onEvent],
+						"afterStop": [this.onEvent],
 					}
 				}
 			},
