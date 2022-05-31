@@ -43,7 +43,7 @@ OrganizerOrganizer.register("EventOrganizer", {"object":EventOrganizer, "targetW
 window.BITSMIST.v1.EventOrganizer = EventOrganizer;
 
 import LoaderOrganizer from "./organizer/loader-organizer.js";
-OrganizerOrganizer.register("LoaderOrganizer", {"object":LoaderOrganizer, "targetWords":["molds", "components"], "targetEvents":["afterStart"], "order":400});
+OrganizerOrganizer.register("LoaderOrganizer", {"object":LoaderOrganizer, "targetWords":["molds", "components"], "targetEvents":["afterStart", "afterSpecLoad"], "order":400});
 window.BITSMIST.v1.LoaderOrganizer = LoaderOrganizer;
 
 // Loader
