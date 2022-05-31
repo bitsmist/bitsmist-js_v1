@@ -461,7 +461,7 @@ export default class StateOrganizer extends Organizer
 		for (let i = 0; i < waitlist.length; i++)
 		{
 			// Set default state when not specified
-			waitlist[i]["state"] = waitlist[i]["state"] || "started";
+			waitlist[i]["state"] = waitlist[i]["state"] || "ready";
 
 			// Index for component id + state
 			if (waitlist[i].id)
@@ -696,23 +696,42 @@ export default class StateOrganizer extends Organizer
 	static __isStateMatch(currentState, expectedState)
 	{
 
-		expectedState = expectedState || "started"; // Default is "started"
-		let isMatch = true;
+		let isMatch = false;
 
-		switch (expectedState)
+		switch (currentState)
 		{
-			case "started":
+			case "ready":
 				if (
-					currentState !== "started"
+					expectedState === "ready" ||
+					expectedState === "started" ||
+					expectedState === "starting"
 				)
 				{
-					isMatch = false;
+					isMatch = true;
+				}
+				break;
+			case "started":
+				if (
+					expectedState === "started" ||
+					expectedState === "starting"
+				)
+				{
+					isMatch = true;
+				}
+				break;
+			case "stopped":
+				if (
+					expectedState === "stopped" ||
+					expectedState === "stopping"
+				)
+				{
+					isMatch = true;
 				}
 				break;
 			default:
-				if (currentState !== expectedState)
+				if ( currentState === expectedState )
 				{
-					isMatch = false;
+					isMatch = true;
 				}
 				break;
 		}
