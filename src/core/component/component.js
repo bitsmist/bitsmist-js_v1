@@ -60,7 +60,7 @@ Component.prototype.connectedCallback = function()
 		else
 		{
 			console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}`);
-			return this.changeState("started");
+			return this.changeState("ready");
 		}
 	});
 
@@ -196,11 +196,31 @@ Component.prototype.start = function(settings)
 		this._adjustSettings();
 		return this.initOrganizers(this.settings.items);
 	}).then(() => {
-		return this._preStart();
+		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
+		return this.changeState("starting");
+	}).then(() => {
+		return this.callOrganizers("beforeStart", this.settings.items);
+	}).then(() => {
+		return this.trigger("beforeStart");
+	}).then(() => {
+		return this.switchTemplate(this.settings.get("settings.templateName"));
+	}).then(() => {
+		if (this.settings.get("settings.autoRefresh"))
+		{
+			return this.refresh();
+		}
 	}).then(() => {
 		return this.trigger("doStart");
 	}).then(() => {
-		return this._postStart();
+		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
+		return this.changeState("started");
+	}).then(() => {
+		return this.callOrganizers("afterStart", this.settings.items);
+	}).then(() => {
+		return this.trigger("afterStart");
+	}).then(() => {
+		console.debug(`Component.start(): Component is ready. name=${this.name}, id=${this.id}`);
+		return this.changeState("ready");
 	});
 
 }
@@ -466,58 +486,6 @@ Component.prototype._getSettings = function()
 {
 
 	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Pre start processing.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype._preStart = function()
-{
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
-		return this.changeState("starting");
-	}).then(() => {
-		return this.callOrganizers("beforeStart", this.settings.items);
-	}).then(() => {
-		return this.trigger("beforeStart");
-	}).then(() => {
-		return this.switchTemplate(this.settings.get("settings.templateName"));
-	}).then(() => {
-		// Refresh
-		if (this.settings.get("settings.autoRefresh"))
-		{
-			return this.refresh();
-		}
-	}).then(() => {
-		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
-		return this.changeState("started");
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Post start processing.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype._postStart = function()
-{
-
-	return Promise.resolve().then(() => {
-		return this.callOrganizers("afterStart", this.settings.items);
-	}).then(() => {
-		return this.trigger("afterStart");
-	}).then(() => {
-		return this.changeState("ready");
-	});
 
 }
 
