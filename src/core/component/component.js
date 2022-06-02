@@ -57,6 +57,9 @@ Component.prototype.connectedCallback = function()
 
 	// Start
 	this._ready = this._ready.then(() => {
+		console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}, id=${this.id}`);
+		return this.changeState("connected");
+	}).then(() => {
 		if (!this._initialized || this.settings.get("settings.autoRestart"))
 		{
 			this._initialized = true;
@@ -80,12 +83,15 @@ Component.prototype.disconnectedCallback = function()
 {
 
 	// Stop
-	if (this.settings.get("settings.autoStop"))
-	{
-		this._ready = this._ready.then(() => {
+	this._ready = this._ready.then(() => {
+		if (this.settings.get("settings.autoStop"))
+		{
 			return this.stop();
-		});
-	}
+		}
+	}).then(() => {
+		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.name}, id=${this.id}`);
+		return this.changeState("disconnected");
+	});
 
 }
 
