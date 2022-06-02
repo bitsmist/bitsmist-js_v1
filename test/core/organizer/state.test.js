@@ -29,10 +29,6 @@ test('Wait Test - Wait for a component to become specific states by specifying t
 	document.body.innerHTML = "<bar-main></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
-	// You can't wait "starting" by specifying the unique id since the unique id is not issued before "starting"
-//	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main", "state":"starting"}]);
-
-	// Now you can use the unique id.
 	await BITSMIST.v1.StateOrganizer.waitFor([{"id":barMain.uniqueId, "state":"starting"}]);
 	expect(barMain.state).toBe("starting");
 	await BITSMIST.v1.StateOrganizer.waitFor([{"id":barMain.uniqueId, "state":"started"}]);
