@@ -44,10 +44,15 @@ ClassUtil.inherit(Component, HTMLElement);
 Component.prototype.connectedCallback = function()
 {
 
-	// Create a promise to prevent from start/stop while stopping/starting
+	// The first time only initialization
 	if (!this._ready)
 	{
+		// Create a promise to prevent from start/stop while stopping/starting
 		this._ready = Promise.resolve();
+
+		this.setAttribute("bm-powered", "");
+		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+		this._name = this.constructor.name;
 	}
 
 	// Start
@@ -74,6 +79,7 @@ Component.prototype.connectedCallback = function()
 Component.prototype.disconnectedCallback = function()
 {
 
+	// Stop
 	if (this.settings.get("settings.autoStop"))
 	{
 		this._ready = this._ready.then(() => {
@@ -181,12 +187,6 @@ Component.prototype.start = function(settings)
 		}
 	};
 	settings = ( settings ? Util.deepMerge(defaults, settings) : defaults );
-
-	// Init vars
-	this.setAttribute("bm-powered", "");
-	this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-	this._name = this.constructor.name;
-	this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
 
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
