@@ -48,6 +48,7 @@ export class BarMain extends BITSMIST.v1.Component
 						// 	{"handler": this.onBeforeStart},
 						// ],
 						"beforeStart": [this.init],
+						"doStart": [this.onEvent],
 						"afterStart": [this.onEvent],
 						"beforeStop": [this.onEvent],
 						"doStop": [this.onEvent],
@@ -80,6 +81,7 @@ export class BarMain extends BITSMIST.v1.Component
 		this.testVars = {
 			"eventCalled": {
 				"beforeStart": false,
+				"doStart": false,
 				"afterStart": false,
 				"beforeStop": false,
 				"doStop": false,

@@ -11,7 +11,6 @@ test('Event Trigger Test - All events should be triggered', async () => {
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
 	expect(barMain.testVars["eventCalled"]["beforeStart"]).toBe(true);
-//	expect(barMain.testVars["eventCalled"]["afterStart"]).toBe(true);
 	expect(barMain.testVars["eventCalled"]["beforeSetup"]).toBe(true);
 	expect(barMain.testVars["eventCalled"]["doSetup"]).toBe(true);
 	expect(barMain.testVars["eventCalled"]["afterSetup"]).toBe(true);
@@ -26,11 +25,15 @@ test('Event Trigger Test - All events should be triggered', async () => {
 	expect(barMain.testVars["eventCalled"]["beforeFill"]).toBe(true);
 	expect(barMain.testVars["eventCalled"]["doFill"]).toBe(true);
 	expect(barMain.testVars["eventCalled"]["afterFill"]).toBe(true);
+	expect(barMain.testVars["eventCalled"]["doStart"]).toBe(true);
+	expect(barMain.testVars["eventCalled"]["afterStart"]).toBe(true);
 
-	// document.body.innerHTML = "";
-	// expect(barMain.testVars["eventCalled"]["beforeStop"]).toBe(true);
-	// expect(barMain.testVars["eventCalled"]["doStop"]).toBe(true);
-	// expect(barMain.testVars["eventCalled"]["afterStop"]).toBe(true);
+	document.body.innerHTML = "";
+	//await BITSMIST.v1.StateOrganizer.waitFor([{"name":"BarMain", "state":"uninstantiated"}]);
+	await BITSMIST.v1.StateOrganizer.waitFor([{"name":"BarMain", "state":"stopped"}]);
+	expect(barMain.testVars["eventCalled"]["beforeStop"]).toBe(true);
+	expect(barMain.testVars["eventCalled"]["doStop"]).toBe(true);
+//	expect(barMain.testVars["eventCalled"]["afterStop"]).toBe(true);
 });
 
 // -----------------------------------------------------------------------------
@@ -53,6 +56,8 @@ test('Event Order Test - All events should be triggered in order', async () => {
 		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onEvent2);
 		settings["events"]["this"]["handlers"]["doFill"].push(this.onEvent2);
 		settings["events"]["this"]["handlers"]["afterFill"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["doStart"].push(this.onEvent2);
+		settings["events"]["this"]["handlers"]["afterStart"].push(this.onEvent2);
 
 		return settings;
 	};
@@ -85,6 +90,8 @@ test('Event Order Test - All events should be triggered in order', async () => {
 	expect(barMain.testVars["eventOrder"][12]).toBe("afterFill");
 	expect(barMain.testVars["eventOrder"][13]).toBe("doRefresh");
 	expect(barMain.testVars["eventOrder"][14]).toBe("afterRefresh");
+	expect(barMain.testVars["eventOrder"][15]).toBe("doStart");
+	expect(barMain.testVars["eventOrder"][16]).toBe("afterStart");
 });
 
 // -----------------------------------------------------------------------------
@@ -107,6 +114,8 @@ test('Event Order Test - All events should be triggered in reverse order - Async
 		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill);
 		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill);
 		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill);
+		settings["events"]["this"]["handlers"]["doStart"].push(this.onDoStart);
+		settings["events"]["this"]["handlers"]["afterStart"].push(this.onAfterStart);
 
 		return settings;
 	};
@@ -127,85 +136,97 @@ test('Event Order Test - All events should be triggered in reverse order - Async
 	BarMain.prototype.onBeforeSetup = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("beforeSetup");
-		}, 180);
+		}, 320);
 	};
 
 	BarMain.prototype.onDoSetup = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("doSetup");
-		}, 160);
+		}, 300);
 	};
 
 	BarMain.prototype.onAfterSetup = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("afterSetup");
-		}, 140);
+		}, 280);
 	};
 
 	BarMain.prototype.onAfterAppend = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("afterAppend");
-		}, 120);
+		}, 260);
 	};
 
 	BarMain.prototype.onBeforeRefresh = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("beforeRefresh");
-		}, 100);
+		}, 240);
 	};
 
 	BarMain.prototype.onDoTarget = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("doTarget");
-		}, 90);
+		}, 220);
 	};
 
 	BarMain.prototype.onBeforeFetch = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("beforeFetch");
-		}, 80);
+		}, 200);
 	};
 
 	BarMain.prototype.onDoFetch = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("doFetch");
-		}, 70);
+		}, 180);
 	};
 
 	BarMain.prototype.onAfterFetch = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("afterFetch");
-		}, 60);
+		}, 160);
 	};
 
 	BarMain.prototype.onBeforeFill = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("beforeFill");
-		}, 50);
+		}, 140);
 	};
 
 	BarMain.prototype.onDoFill = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("doFill");
-		}, 40);
+		}, 120);
 	};
 
 	BarMain.prototype.onAfterFill = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("afterFill");
-		}, 30);
+		}, 100);
 	};
 
 	BarMain.prototype.onDoRefresh = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("doRefresh");
-		}, 20);
+		}, 80);
 	};
 
 	BarMain.prototype.onAfterRefresh = function() {
 		setTimeout(() => {
 			this.testVars["eventOrder"].push("afterRefresh");
-		}, 10);
+		}, 60);
+	};
+
+	BarMain.prototype.onDoStart = function() {
+		setTimeout(() => {
+			this.testVars["eventOrder"].push("doStart");
+		}, 40);
+	};
+
+	BarMain.prototype.onAfterStart = function() {
+		setTimeout(() => {
+			this.testVars["eventOrder"].push("afterStart");
+		}, 20);
 	};
 
 	document.body.innerHTML = "<bar-main></bar-main>";
@@ -213,21 +234,23 @@ test('Event Order Test - All events should be triggered in reverse order - Async
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
 	return barMain.testVars["promise"]["promise"].then(() => {
-		expect(barMain.testVars["eventOrder"][14]).toBe("beforeStart");
-		expect(barMain.testVars["eventOrder"][13]).toBe("beforeSetup");
-		expect(barMain.testVars["eventOrder"][12]).toBe("doSetup");
-		expect(barMain.testVars["eventOrder"][11]).toBe("afterSetup");
-		expect(barMain.testVars["eventOrder"][10]).toBe("afterAppend");
-		expect(barMain.testVars["eventOrder"][9]).toBe("beforeRefresh");
-		expect(barMain.testVars["eventOrder"][8]).toBe("doTarget");
-		expect(barMain.testVars["eventOrder"][7]).toBe("beforeFetch");
-		expect(barMain.testVars["eventOrder"][6]).toBe("doFetch");
-		expect(barMain.testVars["eventOrder"][5]).toBe("afterFetch");
-		expect(barMain.testVars["eventOrder"][4]).toBe("beforeFill");
-		expect(barMain.testVars["eventOrder"][3]).toBe("doFill");
-		expect(barMain.testVars["eventOrder"][2]).toBe("afterFill");
-		expect(barMain.testVars["eventOrder"][1]).toBe("doRefresh");
-		expect(barMain.testVars["eventOrder"][0]).toBe("afterRefresh");
+		expect(barMain.testVars["eventOrder"][16]).toBe("beforeStart");
+		expect(barMain.testVars["eventOrder"][15]).toBe("beforeSetup");
+		expect(barMain.testVars["eventOrder"][14]).toBe("doSetup");
+		expect(barMain.testVars["eventOrder"][13]).toBe("afterSetup");
+		expect(barMain.testVars["eventOrder"][12]).toBe("afterAppend");
+		expect(barMain.testVars["eventOrder"][11]).toBe("beforeRefresh");
+		expect(barMain.testVars["eventOrder"][10]).toBe("doTarget");
+		expect(barMain.testVars["eventOrder"][9]).toBe("beforeFetch");
+		expect(barMain.testVars["eventOrder"][8]).toBe("doFetch");
+		expect(barMain.testVars["eventOrder"][7]).toBe("afterFetch");
+		expect(barMain.testVars["eventOrder"][6]).toBe("beforeFill");
+		expect(barMain.testVars["eventOrder"][5]).toBe("doFill");
+		expect(barMain.testVars["eventOrder"][4]).toBe("afterFill");
+		expect(barMain.testVars["eventOrder"][3]).toBe("doRefresh");
+		expect(barMain.testVars["eventOrder"][2]).toBe("afterRefresh");
+		expect(barMain.testVars["eventOrder"][1]).toBe("doStart");
+		expect(barMain.testVars["eventOrder"][0]).toBe("afterStart");
 	});
 });
 
@@ -251,6 +274,8 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		settings["events"]["this"]["handlers"]["beforeFill"].push(this.onBeforeFill);
 		settings["events"]["this"]["handlers"]["doFill"].push(this.onDoFill);
 		settings["events"]["this"]["handlers"]["afterFill"].push(this.onAfterFill);
+		settings["events"]["this"]["handlers"]["doStart"].push(this.onDoStart);
+		settings["events"]["this"]["handlers"]["afterStart"].push(this.onAfterStart);
 
 		return settings;
 	};
@@ -261,7 +286,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("beforeStart");
 				resolve();
-			 }, 150);
+			 }, 340);
 		 });
 	};
 
@@ -270,7 +295,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("beforeSetup");
 				resolve();
-			 }, 140);
+			 }, 320);
 		 });
 	};
 
@@ -279,7 +304,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("doSetup");
 				resolve();
-			 }, 130);
+			 }, 300);
 		 });
 	};
 
@@ -288,7 +313,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("afterSetup");
 				resolve();
-			 }, 120);
+			 }, 280);
 		 });
 	};
 
@@ -297,7 +322,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("afterAppend");
 				resolve();
-			 }, 110);
+			 }, 260);
 		 });
 	};
 
@@ -306,7 +331,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("beforeRefresh");
 				resolve();
-			 }, 100);
+			 }, 240);
 		 });
 	};
 
@@ -315,7 +340,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("doTarget");
 				resolve();
-			 }, 90);
+			 }, 220);
 		 });
 	};
 
@@ -324,7 +349,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("beforeFetch");
 				resolve();
-			 }, 80);
+			 }, 200);
 		 });
 	};
 
@@ -333,7 +358,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("doFetch");
 				resolve();
-			 }, 70);
+			 }, 180);
 		 });
 	};
 
@@ -342,7 +367,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("afterFetch");
 				resolve();
-			 }, 60);
+			 }, 160);
 		 });
 	};
 
@@ -351,7 +376,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("beforeFill");
 				resolve();
-			 }, 50);
+			 }, 140);
 		 });
 	};
 
@@ -360,7 +385,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("doFill");
 				resolve();
-			 }, 40);
+			 }, 120);
 		 });
 	};
 
@@ -369,7 +394,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("afterFill");
 				resolve();
-			 }, 30);
+			 }, 100);
 		 });
 	};
 
@@ -378,7 +403,7 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("doRefresh");
 				resolve();
-			 }, 20);
+			 }, 80);
 		 });
 	};
 
@@ -387,7 +412,25 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 		 	setTimeout(() => {
 				this.testVars["eventOrder"].push("afterRefresh");
 				resolve();
-			 }, 10);
+			 }, 60);
+		 });
+	};
+
+	BarMain.prototype.onDoStart = function() {
+		 return new Promise((resolve, reject) => {
+		 	setTimeout(() => {
+				this.testVars["eventOrder"].push("doStart");
+				resolve();
+			 }, 40);
+		 });
+	};
+
+	BarMain.prototype.onAfterStart = function() {
+		 return new Promise((resolve, reject) => {
+		 	setTimeout(() => {
+				this.testVars["eventOrder"].push("afterStart");
+				resolve();
+			 }, 20);
 		 });
 	};
 
@@ -410,6 +453,8 @@ test('Event Order Test - All events should be triggered in order - Asynchronous 
 	expect(barMain.testVars["eventOrder"][12]).toBe("afterFill");
 	expect(barMain.testVars["eventOrder"][13]).toBe("doRefresh");
 	expect(barMain.testVars["eventOrder"][14]).toBe("afterRefresh");
+	expect(barMain.testVars["eventOrder"][15]).toBe("doStart");
+	expect(barMain.testVars["eventOrder"][16]).toBe("afterStart");
 });
 
 // -----------------------------------------------------------------------------
