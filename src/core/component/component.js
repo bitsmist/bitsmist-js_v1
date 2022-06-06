@@ -302,7 +302,6 @@ Component.prototype.switchTemplate = function(templateName, options)
 			return this.setup(this.settings.items);
 		}
 	 }).then(() => {
-		this.hideConditionalElements();
  		return this.loadTags(this.rootElement);
 	}).then(() => {
 		return this.callOrganizers("afterAppend", this.settings.items);
@@ -364,8 +363,6 @@ Component.prototype.refresh = function(options)
 		{
 			return this.fetch(options);
 		}
-	}).then(() => {
-		this.showConditionalElements(this.item);
 	}).then(() => {
 		// Fill
 		if (Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))

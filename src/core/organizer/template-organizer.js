@@ -38,8 +38,6 @@ export default class TemplateOrganizer extends Organizer
 		Component.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
 		Component.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
 		Component.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
-		Component.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); }
-		Component.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); }
 
 	}
 
@@ -231,55 +229,6 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		return clone;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Show "bm-visible" elements if condition passed.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		item				Item used to judge condition.
-	 */
-	static _showConditionalElements(component, item)
-	{
-
-		// Get elements with bm-visible attribute
-		let elements = Util.scopedSelectorAll(component, "[bm-visible]");
-
-		// Show elements
-		elements.forEach((element) => {
-			let condition = element.getAttribute("bm-visible");
-			if (Util.safeEval(condition, item, item))
-			{
-				element.style.removeProperty("display");
-			}
-			else
-			{
-				element.style.display = "none";
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Hide "bm-visible" elements.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static _hideConditionalElements(component)
-	{
-
-		// Get elements with bm-visible attribute
-		let elements = Util.scopedSelectorAll(component, "[bm-visible]");
-
-		// Hide elements
-		elements.forEach((element) => {
-			element.style.display = "none";
-		});
 
 	}
 
