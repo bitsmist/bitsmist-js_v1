@@ -139,6 +139,7 @@ export default class DefaultLoader
 			console.debug(`Morphing component. className=${className}, superClassName=${superClass.name}, tagName=${tagName}`);
 
 			ClassUtil.newComponent(superClass, settings, tagName, className);
+			promise = Promise.resolve();
 		}
 		else
 		{
@@ -448,7 +449,7 @@ export default class DefaultLoader
 		// Class name
 		if (element.hasAttribute("bm-classname"))
 		{
-			settings["className"] = element.hasAttribute("bm-classname");
+			settings["className"] = element.getAttribute("bm-classname");
 		}
 
 		// Split component
@@ -472,7 +473,7 @@ export default class DefaultLoader
 		// Morphing
 		if (element.hasAttribute("bm-automorph"))
 		{
-			settings["autoMorph"] = element.getAttribute("bm-automorph");
+			settings["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
 		}
 
 		// Override path, fileName, autoMorph when bm-autoload is set
