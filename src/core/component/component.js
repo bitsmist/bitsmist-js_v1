@@ -199,7 +199,8 @@ Component.prototype.start = function(settings)
 	}).then((newSettings) => {
 		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
 	}).then(() => {
-		this._adjustSettings();
+		this._name = this.settings.get("settings.name", this._name);
+		this._rootElement = this.settings.get("settings.rootElement", this);
 		return this.initOrganizers(this.settings.items);
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
@@ -489,35 +490,6 @@ Component.prototype._getSettings = function()
 {
 
 	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Adjust default settings according to current setttings.
- *
- * @param	{Object}		settings			Settings.
- */
-Component.prototype._adjustSettings = function()
-{
-
-	// root element
-	this._rootElement = this.settings.get("settings.rootElement", this);
-
-	// Overwrite name if specified
-	let name = this.settings.get("settings.name");
-	if (name)
-	{
-		this._name = name;
-	}
-
-	// Do not refresh/setup on start when component is morphing
-	if (this.settings.get("settings.autoMorph"))
-	{
-		this.settings.set("settings.autoRefresh", false);
-		this.settings.set("settings.autoSetup", false);
-	}
 
 }
 
