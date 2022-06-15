@@ -22,7 +22,12 @@
   },
   "jest": {
     "setupFilesAfterEnv": [
-      "./test/core/_setup.js"
-    ]
+		"./test/core/_setup.js"
+    ],
+	"testEnvironment": "jsdom",
+		"testEnvironmentOptions": {
+		"resources": "usable",
+		"runScripts": "dangerously"
+	}
   }
 }
