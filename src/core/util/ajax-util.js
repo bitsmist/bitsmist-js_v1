@@ -92,23 +92,20 @@ export default class AjaxUtil
 	static loadScript(url) {
 
 		return new Promise((resolve, reject) => {
-			let source = url;
 			let script = document.createElement('script');
-			let prior = document.getElementsByTagName('script')[0];
-			script.async = 1;
-			script.onload = script.onreadystatechange = ( _, isAbort ) => {
-				if(isAbort || !script.readyState || /loaded|complete/.test(script.readyState) ) {
-					script.onload = script.onreadystatechange = null;
-					script = undefined;
+			script.src = url;
+			script.async = true;
 
-					if(!isAbort) {
-						resolve();
-					}
-				}
+			script.onload = () => {
+				resolve();
 			};
 
-			script.src = source;
-			prior.parentNode.insertBefore(script, prior);
+			script.onerror = (e) => {
+				reject(e);
+			};
+
+			let head = document.getElementsByTagName('head')[0];
+			head.appendChild(script);
 		});
 
 	}
