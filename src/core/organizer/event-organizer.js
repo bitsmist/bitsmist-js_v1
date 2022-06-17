@@ -99,6 +99,7 @@ export default class EventOrganizer extends Organizer
 		}
 
 	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -221,6 +222,7 @@ export default class EventOrganizer extends Organizer
 	{
 
 		rootNode = ( rootNode ? rootNode : component );
+		eventInfo = ( eventInfo ? eventInfo : component.settings.get("events." + elementName) );
 
 		// Get target elements
 		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
