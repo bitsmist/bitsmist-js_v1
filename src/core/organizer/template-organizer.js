@@ -61,7 +61,7 @@ export default class TemplateOrganizer extends Organizer
 		// Set defaults if not set
 		if (!component.settings.get("settings.templateName"))
 		{
-			let templateName = component.settings.get("settings.fileName") || component.tagName.toLowerCase();
+			let templateName = component.settings.get("loadings.fileName") || component.tagName.toLowerCase();
 			component.settings.set("settings.templateName", templateName);
 		}
 
