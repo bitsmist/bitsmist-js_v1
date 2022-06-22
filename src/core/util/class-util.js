@@ -36,7 +36,7 @@ export default class ClassUtil
 
 		// Define class
 		let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
-		let classDef = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
+		let classDef = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "()" + funcDef)(superClass);
 		ClassUtil.inherit(classDef, superClass);
 
 		// Class settings
@@ -48,7 +48,7 @@ export default class ClassUtil
 		}
 
 		// Export class
-		window.BITSMIST.v1[className] = classDef;
+		window[className] = classDef;
 
 		// Define tag
 		if (tagName)
