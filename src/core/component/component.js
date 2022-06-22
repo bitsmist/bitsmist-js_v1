@@ -57,7 +57,7 @@ Component.prototype.connectedCallback = function()
 
 	// Start
 	this._ready = this._ready.then(() => {
-		console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}, id=${this.id}`);
+		console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("connected");
 	}).then(() => {
 		if (!this._initialized || this.settings.get("settings.autoRestart"))
