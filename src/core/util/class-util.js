@@ -36,27 +36,27 @@ export default class ClassUtil
 
 		// Define class
 		let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
-		let component = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
-		ClassUtil.inherit(component, superClass);
+		let classDef = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
+		ClassUtil.inherit(classDef, superClass);
 
 		// Class settings
 		settings = Object.assign({}, settings);
 		settings.settings = ( settings.settings ? settings.settings : {} );
 		settings["settings"]["name"] = className;
-		component.prototype._getSettings = function() {
-			return settings;
+		classDef.prototype._getSettings = function() {
+			return Util.deepMerge(superClass.prototype._getSettings(), settings);
 		}
 
 		// Export class
-		window.BITSMIST.v1[className] = component;
+		window.BITSMIST.v1[className] = classDef;
 
 		// Define tag
 		if (tagName)
 		{
-			customElements.define(tagName.toLowerCase(), component);
+			customElements.define(tagName.toLowerCase(), classDef);
 		}
 
-		return component;
+		return classDef;
 
 	}
 
