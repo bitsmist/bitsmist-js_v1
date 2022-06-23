@@ -66,8 +66,11 @@ export default class DefaultLoader
 			// Load a tag
 			let loader = ( element.hasAttribute("bm-loadername") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loadername")).object : this);
 			let settings = { "loadings": this._loadAttrSettings(element) };
-			let className = Util.safeGet(settings, "loadings.className", Util.getClassNameFromTagName(element.tagName));
-			promises.push(loader.loadComponent(className, settings, null, element.tagName).then(() => {
+			let className = Util.getClassNameFromTagName(element.tagName);
+			element._injectSettings = function(curSettings){
+				return Util.deepMerge(curSettings, settings);
+			};
+			promises.push(loader.loadComponent(element.tagName.toLowerCase(), className, settings).then(() => {
 				element.removeAttribute("bm-autoloading");
 			}));
 		});
@@ -78,7 +81,7 @@ export default class DefaultLoader
 		targets.forEach((element) => {
 			if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
 			{
-				let waitItem = {"object":element, "state":"started"};
+				let waitItem = {"object":element, "state":"ready"};
 				waitList.push(waitItem);
 			}
 		});
@@ -88,7 +91,7 @@ export default class DefaultLoader
 			let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
 			if (waitFor)
 			{
-				// Wait for the components to become "started"
+				// Wait for the components to become "ready"
 				return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
 			}
 		});
@@ -101,18 +104,20 @@ export default class DefaultLoader
 	/**
 	 * Load a component.
 	 *
+	 * @param	{String}		tagName				Tag name.
 	 * @param	{String}		className			Class name.
 	 * @param	{Object}		settings			Component settings.
 	 * @param	{Object}		loadOptions			Load options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadComponent(className, settings, loadOptions)
+	static loadComponent(tagName, className, settings, loadOptions)
 	{
 
-		console.debug(`Loading a component. className=${className}`);
+		console.debug(`Loading a component. tagName=${tagName}, className=${className}`);
 
-		let tagName = Util.safeGet(settings, "loadings.tagName") || Util.getTagNameFromClassName(className);
+		let baseClassName = Util.safeGet(settings, "loadings.autoMorph", className );
+		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
 
 		// Check if the tag is already defined
 		if (customElements.get(tagName))
@@ -131,36 +136,25 @@ export default class DefaultLoader
 			])
 		);
 
-		let morph = Util.safeGet(settings, "loadings.autoMorph");
-		if (morph)
-		{
+		// Load a class
+		let fileName = Util.safeGet(settings, "loadings.fileName", tagName.toLowerCase());
+		let split = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
+		promise = this._autoloadComponent(baseClassName, fileName, path, {"splitComponent": split}).then(() => {
 			// Morphing
-			let superClass = ( morph === true ?  BITSMIST.v1.Component : ClassUtil.getClass(morph) );
-			console.debug(`Morphing component. className=${className}, superClassName=${superClass.name}, tagName=${tagName}`);
+			if (baseClassName !== className)
+			{
+				let classDef = ClassUtil.getClass(baseClassName);
+				ClassUtil.newComponent(classDef, settings, tagName);
+			}
 
-			ClassUtil.newComponent(superClass, settings, tagName, className);
-			promise = Promise.resolve();
-		}
-		else
-		{
-			// Loading
-			let fileName = Util.safeGet(settings, "loadings.fileName", tagName);
-			let split = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
-			promise = this._autoloadComponent(className, fileName, path, {"splitComponent": split});
-		}
-
-		return promise;
-
-		/*
-		return Promise.all([promise]).then(() => {
-			// Define tag if not defined yet
 			if (!customElements.get(tagName))
 			{
-				let newClass = ClassUtil.getClass(className);
-				customElements.define(tagName, newClass);
+				let classDef = ClassUtil.getClass(className);
+				customElements.define(tagName, classDef);
 			}
 		});
-		*/
+
+		return promise;
 
 	}
 
@@ -216,7 +210,7 @@ export default class DefaultLoader
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get a template html according to settings.
+	 * Load a setting file and merge to component's settings.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		settingName			Setting name.
@@ -446,12 +440,6 @@ export default class DefaultLoader
 
 		let settings = {};
 
-		// Class name
-		if (element.hasAttribute("bm-classname"))
-		{
-			settings["className"] = element.getAttribute("bm-classname");
-		}
-
 		// Split component
 		if (element.hasAttribute("bm-split"))
 		{
@@ -467,7 +455,7 @@ export default class DefaultLoader
 		// File name
 		if (element.hasAttribute("bm-filename"))
 		{
-			settings["filename"] = element.getAttribute("bm-filename");
+			settings["fileName"] = element.getAttribute("bm-filename");
 		}
 
 		// Morphing
@@ -495,7 +483,7 @@ export default class DefaultLoader
 			}
 			else if (href.slice(-5).toLowerCase() === ".html")
 			{
-				settings["autoMorph"] = true;
+				settings["autoMorph"] = ( settings["autoMorph"] ? settings["autoMorph"] : true );
 				settings["fileName"] = arr[1].substring(0, arr[1].length - 5);
 			}
 		}

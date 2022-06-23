@@ -8,8 +8,8 @@
  */
 // =============================================================================
 
-import Organizer from "./organizer.js";
 import ClassUtil from "../util/class-util.js";
+import Organizer from "./organizer.js";
 import Store from "../store/store.js";
 import Util from "../util/util.js";
 
@@ -185,17 +185,18 @@ export default class LoaderOrganizer extends Organizer
 
 		console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
 
-		let className = Util.safeGet(settings, "loadings.className") || componentName;
+		let tagName = Util.safeGet(settings, "loadings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
 
 		return Promise.resolve().then(() => {
 			let loaderName = Util.safeGet(settings, "loadings.loaderName", "DefaultLoader");
 			let loader = LoaderOrganizer._loaders[loaderName].object;
-			return loader.loadComponent(className, settings, null);
+			return loader.loadComponent(tagName, componentName, settings);
 		}).then(() => {
+			Util.assert(Util.safeGet(settings, "loadings.rootNode"), `Root node not specified. name=${component.name}, componentName=${componentName}`);
+
 			// Insert tag
-			if (Util.safeGet(settings, "loadings.rootNode") && !component._components[componentName])
+			if (!component._components[componentName])
 			{
-				let tagName = Util.safeGet(settings, "loadings.tagName") || Util.getTagNameFromClassName(className);
 				component._components[componentName] = LoaderOrganizer.__insertTag(component, tagName, settings);
 			}
 		}).then(() => {
@@ -203,10 +204,9 @@ export default class LoaderOrganizer extends Organizer
 			if (sync || Util.safeGet(settings, "loadings.sync"))
 			{
 				sync = sync || Util.safeGet(settings, "loadings.sync"); // sync precedes settings["sync"]
-				let state = (sync === true ? "started" : sync);
-				let c = className.split(".");
+				let state = (sync === true ? "ready" : sync);
 
-				return component.waitFor([{"name":c[c.length - 1], "state":state}]);
+				return component.waitFor([{"name":componentName, "state":state}]);
 			}
 		});
 
@@ -231,7 +231,7 @@ export default class LoaderOrganizer extends Organizer
 
 		// Check root node
 		let root = component.rootElement.querySelector(Util.safeGet(settings, "loadings.rootNode"));
-		Util.assert(root, `LoaderOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`, ReferenceError);
+		Util.assert(root, `LoaderOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "loadings.rootNode")}`, ReferenceError);
 
 		// Build tag
 		let tag = ( Util.safeGet(settings, "loadings.tag") ? Util.safeGet(settings, "loadings.tag") : "<" + tagName +  "></" + tagName + ">" );
@@ -250,12 +250,6 @@ export default class LoaderOrganizer extends Organizer
 
 		// Inject settings to added component
 		addedComponent._injectSettings = function(curSettings){
-			// super()
-			if (addedComponent._super && addedComponent._super.prototype._injectSettings)
-			{
-				curSettings = addedComponent._super.prototype._injectSettings.call(addedComponent, curSettings);
-			};
-
 			return Util.deepMerge(curSettings, settings);
 		};
 
