@@ -7,7 +7,7 @@ BITSMIST.v1.settings.merge({
 		"appBaseUrl":					"http://test.bitsmist.com",
 		"apiBaseUrl":					"http://api.test.bitsmist.com/v1",
 		"env":							"test",
-		"splitComponent":				true,
+		"splitComponent":				false,
 	},
 	"organizers": {
 		"ErrorOrganizer": {

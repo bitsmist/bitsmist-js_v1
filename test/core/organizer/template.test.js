@@ -32,28 +32,12 @@ test('Setting Test - settings.templateName should load the specified file as the
 
 // -----------------------------------------------------------------------------
 
-test('Setting Test - settings.fileName should load the specified file as the template', async () => {
+test('Setting Test - loadings.fileName should load the specified file as the template', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
-		settings["settings"]["fileName"] = "bar-main3";
-
-		return settings;
-	};
-
-	document.body.innerHTML = "<bar-main></bar-main>";
-	var barMain = document.querySelector("bar-main");
-
-	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	expect(barMain.innerHTML).toBe("<div>bar-main3</div>");
-});
-
-// -----------------------------------------------------------------------------
-
-test('Setting Test - settings.templateName should have higher priority than settings.fileName', async () => {
-	BarMain.prototype._getSettings = function() {
-		let settings = this.__getSettings.call(this);
-		settings["settings"]["templateName"] = "bar-main2";
-		settings["settings"]["fileName"] = "bar-main3";
+		settings["loadings"] = {
+			"fileName": "bar-main2",
+		}
 
 		return settings;
 	};
@@ -67,10 +51,13 @@ test('Setting Test - settings.templateName should have higher priority than sett
 
 // -----------------------------------------------------------------------------
 
-test('Setting Test - settings.fileName should load the specified file as the template', async () => {
+test('Setting Test - settings.templateName should have higher priority than loadings.fileName', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
-		settings["settings"]["fileName"] = "bar-main3";
+		settings["settings"]["templateName"] = "bar-main2";
+		settings["loadings"] = {
+			"fileName": "bar-main3",
+		}
 
 		return settings;
 	};
@@ -79,8 +66,7 @@ test('Setting Test - settings.fileName should load the specified file as the tem
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
-	expect(barMain.innerHTML).toBe("<div>bar-main3</div>");
+	expect(barMain.innerHTML).toBe("<div>bar-main2</div>");
 });
-
 
 // -----------------------------------------------------------------------------

@@ -38,13 +38,26 @@ test('Settings Loading Test - _getSettings() should be called', async () => {
 
 // -----------------------------------------------------------------------------
 
-test('Settings Loading Test - An external setting file should be loaded', async () => {
+test('Settings Loading Test - An external setting file should be loaded for an existing class', async () => {
 	document.body.innerHTML = "<bar-main bm-settingref='http://test.bitsmist.com/test.settings.js'></bar-main>";
 	var barMain = document.querySelector("bar-main");
 
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main"}]);
 	expect(barMain.settings.get("settings.externalSettingsTest")).toBe(true);
 });
+
+// -----------------------------------------------------------------------------
+
+test('Settings Loading Test - An external setting file should be loaded for auto loaded class', async () => {
+	document.body.innerHTML = "<bar-main1 bm-autoload='' bm-settingref='http://test.bitsmist.com/test.settings.js'></bar-main1>";
+	var barMain = document.querySelector("bar-main1");
+
+	window.document.dispatchEvent(new Event("DOMContentLoaded"));
+
+	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main1"}]);
+	expect(barMain.settings.get("settings.externalSettingsTest")).toBe(true);
+});
+
 
 // -----------------------------------------------------------------------------
 
