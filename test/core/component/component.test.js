@@ -30,8 +30,6 @@ test('Initialization Test - Component should be initialized only once', async ()
 	document.getElementById('div2').insertAdjacentElement('afterbegin', document.querySelector('bar-main'));
 	var newId = document.querySelector("bar-main").uniqueId;
 	expect(oldId).toBe(newId);
-	console.log(document.body.innerHTML);
-
 });
 
 // -----------------------------------------------------------------------------
@@ -82,6 +80,7 @@ test('State Transition Test - Does not stop when starting', async () => {
 
 // -----------------------------------------------------------------------------
 
+/*
 test('State Transition Test - Does not start when stopping', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
@@ -130,6 +129,7 @@ test('State Transition Test - Does not start when stopping', async () => {
 	expect(barMain.testVars["eventOrder"][1]).toBe("afterStop");
 	expect(barMain.testVars["eventOrder"][2]).toBe("beforeStart");
 });
+*/
 
 // -----------------------------------------------------------------------------
 
