@@ -31,7 +31,7 @@ test('Auto Morphing Test - bm-automorph and bm-filename should load a specified 
 // ----------------------------------------------------------------------------
 
 test('Auto Morphing Test - bm-automorph and bm-path should load a template HTML file from the specified path', async () => {
-	document.body.innerHTML = "<bar-footer3 bm-automorph bm-path='common'></bar-footer>";
+	document.body.innerHTML = "<bar-footer3 bm-automorph bm-path='common'></bar-footer3>";
 	var barFooter = document.querySelector("bar-footer3");
 
 	window.document.dispatchEvent(new Event("DOMContentLoaded"));
@@ -60,7 +60,6 @@ test('Auto Morphing Test - bm-automorph should use a existing specified class', 
 
 	window.document.dispatchEvent(new Event("DOMContentLoaded"));
 
-	const script = document.getElementsByTagName('script')[0];
 	//await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main5"}]);
 	await BITSMIST.v1.StateOrganizer.waitFor([{"name":"BarFooter5"}]);
 	expect(barFooter.name).toBe("BarFooter5");
@@ -76,7 +75,6 @@ test('Auto Morphing Test - bm-automorph and bm-autoload should load a specified 
 
 	window.document.dispatchEvent(new Event("DOMContentLoaded"));
 
-	const script = document.getElementsByTagName('script')[0];
 	//await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main6"}]);
 	await BITSMIST.v1.StateOrganizer.waitFor([{"name":"BarFooter6"}]);
 	expect(barFooter.name).toBe("BarFooter6");
@@ -92,7 +90,6 @@ test('Auto Morphing Test - bm-automorph and bm-autoload should load a specified 
 
 	window.document.dispatchEvent(new Event("DOMContentLoaded"));
 
-	const script = document.getElementsByTagName('script')[0];
 	//await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main6"}]);
 	await BITSMIST.v1.StateOrganizer.waitFor([{"name":"BarFooter7"}]);
 	expect(barFooter.name).toBe("BarFooter7");
@@ -222,35 +219,3 @@ test('Auto Loading Test - bm-path and bm-filename should load a specified class 
 	expect(barMain.name).toBe("BarMain6");
 	expect(barMain.innerHTML).toBe("<div>bar-main6a</div>");
 });
-
-// ----------------------------------------------------------------------------
-
-/*
-test('addComponent() Test - bm-filename should load a specified class file', async () => {
-	BarMain.prototype._getSettings = function() {
-		let settings = this.__getSettings.call(this);
-		//settings["molds"] = {
-		settings["components"] = {
-			"BarMain2": {
-				"loadings": {
-					"autoMorph": true,
-					"rootNode": "div",
-				}
-			}
-		};
-
-		return settings;
-	};
-
-	document.body.innerHTML = "<bar-main></bar-main>";
-	var barMain = document.querySelector("bar-main");
-
-	window.document.dispatchEvent(new Event("DOMContentLoaded"));
-
-	const script = document.getElementsByTagName('script')[0];
-	//await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main5"}]);
-	await BITSMIST.v1.StateOrganizer.waitFor([{"name":"BarMain"}]);
-	expect(barMain.name).toBe("BarMain");
-	expect(barMain.innerHTML).toBe("<div>bar-main</div>");
-});
-*/

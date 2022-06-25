@@ -4,6 +4,9 @@ import '../../../src/core/index';
 import './_settings.js';
 
 const server = setupServer(...[
+		rest.get('http://test.bitsmist.com/bar-footer.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-footer</div>'));
+		}),
 		rest.get('http://test.bitsmist.com/bar-footer1.html', (req, res, ctx) => {
 			return res(ctx.text('<div>bar-footer1</div>'));
 		}),
@@ -200,7 +203,7 @@ afterEach(() => {
 });
 afterAll(() => server.close());
 
-export class BarMain extends BITSMIST.v1.Component
+class BarMain extends BITSMIST.v1.Component
 {
 
 	_getSettings()
@@ -286,3 +289,25 @@ export class BarMain extends BITSMIST.v1.Component
 
 }
 customElements.define("bar-main", BarMain);
+
+class BarFooter extends BITSMIST.v1.Component
+{
+
+	_getSettings()
+	{
+		return this.__getSettings();
+	}
+
+	__getSettings()
+	{
+		return {
+			"settings": {
+				"name": "BarFooter",
+			},
+		};
+	}
+
+}
+customElements.define("bar-footer", BarFooter);
+
+export { BarMain, BarFooter };
