@@ -126,8 +126,32 @@ export default class DefaultLoader
 			return Promise.resolve();
 		}
 
+		// Override path and file name when url is specified in autoLoad option
+		let href = Util.safeGet(settings, "loadings.autoLoad");
+		href = ( href === true ? "" : href );
+		if (href)
+		{
+			let arr = Util.getFilenameAndPathFromUrl(href);
+
+			// Path
+			settings["loadings"]["appBaseUrl"] = "";
+			settings["loadings"]["componentPath"] = "";
+			settings["loadings"]["templatePath"] = "";
+			settings["loadings"]["path"] = arr[0];
+
+			// File name
+			if (href.slice(-3).toLowerCase() === ".js")
+			{
+				settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
+			}
+			else if (href.slice(-5).toLowerCase() === ".html")
+			{
+				settings["loadings"]["autoMorph"] = ( settings["loadings"]["autoMorph"] ? settings["loadings"]["autoMorph"] : true );
+				settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
+			}
+		}
+
 		// Get a path
-		let promise;
 		let path = Util.safeGet(loadOptions, "path",
 			Util.concatPath([
 				Util.safeGet(settings, "loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
@@ -139,7 +163,7 @@ export default class DefaultLoader
 		// Load a class
 		let fileName = Util.safeGet(settings, "loadings.fileName", tagName.toLowerCase());
 		let split = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
-		promise = this._autoloadComponent(baseClassName, fileName, path, {"splitComponent": split}).then(() => {
+		return this._autoloadComponent(baseClassName, fileName, path, {"splitComponent": split}).then(() => {
 			// Morphing
 			if (baseClassName !== className)
 			{
@@ -153,8 +177,6 @@ export default class DefaultLoader
 				customElements.define(tagName, classDef);
 			}
 		});
-
-		return promise;
 
 	}
 
@@ -464,28 +486,10 @@ export default class DefaultLoader
 			settings["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
 		}
 
-		// Override path, fileName, autoMorph when bm-autoload is set
-		let href = element.getAttribute("bm-autoload");
-		if (href)
+		// Auto loading
+		if (element.hasAttribute("bm-autoload"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(href);
-
-			// Path
-			settings["appBaseUrl"] = "";
-			settings["componentPath"] = "";
-			settings["templatePath"] = "";
-			settings["path"] = arr[0];
-
-			// File name
-			if (href.slice(-3).toLowerCase() === ".js")
-			{
-				settings["fileName"] = arr[1].substring(0, arr[1].length - 3);
-			}
-			else if (href.slice(-5).toLowerCase() === ".html")
-			{
-				settings["autoMorph"] = ( settings["autoMorph"] ? settings["autoMorph"] : true );
-				settings["fileName"] = arr[1].substring(0, arr[1].length - 5);
-			}
+			settings["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
 		}
 
 		return settings;
