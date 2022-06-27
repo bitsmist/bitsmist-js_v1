@@ -298,6 +298,7 @@ test('Auto Loading Test - bm-autoload should load a default class file', async (
 		settings["components"] = {
 			"BarMain1": {
 				"loadings": {
+					"autoLoad": true,
 					"rootNode": "div",
 				}
 			}
@@ -324,6 +325,7 @@ test('Auto Loading Test - bm-split should load two class files', async () => {
 		settings["components"] = {
 			"BarMain2": {
 				"loadings": {
+					"autoLoad": true,
 					"splitComponent": true,
 					"rootNode": "div",
 				}
@@ -378,6 +380,7 @@ test('Auto Loading Test - bm-autoload and bm-path should load a class file from 
 		settings["components"] = {
 			"BarMain4": {
 				"loadings": {
+					"autoLoad": true,
 					"path": "common",
 					"rootNode": "div",
 				}
@@ -405,6 +408,7 @@ test('Auto Loading Test - bm-filename should load a specified class file', async
 		settings["components"] = {
 			"BarMain5": {
 				"loadings": {
+					"autoLoad": true,
 					"fileName": "bar-main5a",
 					"rootNode": "div",
 				}
@@ -432,6 +436,7 @@ test('Auto Loading Test - bm-path and bm-filename should load a specified class 
 		settings["components"] = {
 			"BarMain6": {
 				"loadings": {
+					"autoLoad": true,
 					"path": "common",
 					"fileName": "bar-main6a",
 					"rootNode": "div",
