@@ -190,7 +190,10 @@ export default class LoaderOrganizer extends Organizer
 		return Promise.resolve().then(() => {
 			let loaderName = Util.safeGet(settings, "loadings.loaderName", "DefaultLoader");
 			let loader = LoaderOrganizer._loaders[loaderName].object;
-			return loader.loadComponent(tagName, componentName, settings);
+			if (Util.safeGet(settings, "loadings.autoLoad") || Util.safeGet(settings, "loadings.autoMorph"))
+			{
+				return loader.loadComponent(tagName, componentName, settings);
+			}
 		}).then(() => {
 			Util.assert(Util.safeGet(settings, "loadings.rootNode"), `Root node not specified. name=${component.name}, componentName=${componentName}`);
 
