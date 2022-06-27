@@ -71,9 +71,8 @@ export default class ClassUtil
 	static inherit(subClass, superClass)
 	{
 
-		subClass.prototype = Object.create(superClass.prototype);
+		Object.setPrototypeOf(subClass.prototype, superClass.prototype);
 		subClass.prototype.constructor = subClass;
-		subClass.prototype._super = superClass;
 		Object.setPrototypeOf(subClass, superClass);
 
 	}
