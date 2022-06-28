@@ -180,6 +180,20 @@ test('Auto Loading Test - bm-autoload should load a specified class file when UR
 
 // ----------------------------------------------------------------------------
 
+test('Auto Morphing Test - bm-autoload should load a specified template file when URL to html file is specified', async () => {
+	document.body.innerHTML = "<bar-main3_2 bm-autoload='http://test.bitsmist.com/bar-main3a.html'></bar-main3_2>";
+	var barMain = document.querySelector("bar-main3_2");
+
+	window.document.dispatchEvent(new Event("DOMContentLoaded"));
+
+	//await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main5"}]);
+	await BITSMIST.v1.StateOrganizer.waitFor([{"name":"BarMain3_2"}]);
+	expect(barMain.name).toBe("BarMain3_2");
+	expect(barMain.innerHTML).toBe("<div>bar-main3</div>");
+});
+
+// ----------------------------------------------------------------------------
+
 test('Auto Loading Test - bm-autoload and bm-path should load a class file from the specified path', async () => {
 	document.body.innerHTML = "<bar-main4 bm-autoload bm-path='common'></bar-main4>";
 	var barMain = document.querySelector("bar-main4");

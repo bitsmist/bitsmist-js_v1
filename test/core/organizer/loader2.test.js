@@ -319,7 +319,7 @@ test('Auto Loading Test - bm-autoload should load a default class file', async (
 
 // ----------------------------------------------------------------------------
 
-test('Auto Loading Test - bm-split should load two class files', async () => {
+test('Auto Loading Test - splitComponent should load two class files', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["components"] = {
