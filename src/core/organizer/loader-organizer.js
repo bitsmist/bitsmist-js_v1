@@ -185,7 +185,18 @@ export default class LoaderOrganizer extends Organizer
 
 		console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
 
-		let tagName = Util.safeGet(settings, "loadings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
+		// Get a tag name
+		let tagName;
+		let tag = Util.safeGet(settings, "loadings.tag");
+		if (tag)
+		{
+			let pattern = /([\w-]+)\s+\w+.*?>/;
+			tagName = tag.match(pattern)[1];
+		}
+		else
+		{
+			tagName = Util.safeGet(settings, "loadings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
+		}
 
 		return Promise.resolve().then(() => {
 			let loaderName = Util.safeGet(settings, "loadings.loaderName", "DefaultLoader");
