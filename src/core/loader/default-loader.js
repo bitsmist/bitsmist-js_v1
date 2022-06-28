@@ -116,9 +116,6 @@ export default class DefaultLoader
 
 		console.debug(`Loading a component. tagName=${tagName}, className=${className}`);
 
-		let baseClassName = Util.safeGet(settings, "loadings.autoMorph", className );
-		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
-
 		// Check if the tag is already defined
 		if (customElements.get(tagName))
 		{
@@ -151,6 +148,10 @@ export default class DefaultLoader
 			}
 		}
 
+		// Get a base class name
+		let baseClassName = Util.safeGet(settings, "loadings.autoMorph", className );
+		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
+
 		// Get a path
 		let path = Util.safeGet(loadOptions, "path",
 			Util.concatPath([
@@ -168,7 +169,7 @@ export default class DefaultLoader
 			if (baseClassName !== className)
 			{
 				let classDef = ClassUtil.getClass(baseClassName);
-				ClassUtil.newComponent(classDef, settings, tagName);
+				ClassUtil.newComponent(classDef, settings, tagName, className);
 			}
 
 			if (!customElements.get(tagName))
