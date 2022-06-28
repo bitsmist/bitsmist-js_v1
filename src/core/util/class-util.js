@@ -24,15 +24,15 @@ export default class ClassUtil
 	/**
 	 * Define new component in ES5 way.
 	 *
-	 * @param	{Object}		superClass			Super class.
-	 * @param	{Object}		settings			Component Settings.
-	 * @param	{String}		tagName				Tag name.
 	 * @param	{String}		className			Class name.
+	 * @param	{Object}		settings			Component Settings.
+	 * @param	{Object}		superClass			Super class.
+	 * @param	{String}		tagName				Tag name.
 	 */
-	static newComponent(superClass, settings, tagName, className)
+	static newComponent(className, settings, superClass, tagName)
 	{
 
-		className = ( className ? className : Util.getClassNameFromTagName(tagName) );
+		superClass = ( superClass ? superClass : BITSMIST.v1.Component );
 
 		// Define class
 		let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";

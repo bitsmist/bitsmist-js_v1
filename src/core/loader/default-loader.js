@@ -168,8 +168,8 @@ export default class DefaultLoader
 			// Morphing
 			if (baseClassName !== className)
 			{
-				let classDef = ClassUtil.getClass(baseClassName);
-				ClassUtil.newComponent(classDef, settings, tagName, className);
+				let superClass = ClassUtil.getClass(baseClassName);
+				ClassUtil.newComponent(className, settings, superClass, tagName);
 			}
 
 			if (!customElements.get(tagName))
