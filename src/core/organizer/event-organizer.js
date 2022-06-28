@@ -515,14 +515,27 @@ export default class EventOrganizer extends Organizer
 			this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then((result) => {
 				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
 				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+			}).catch((err) => {
+				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				throw(err);
 			});
 		}
 		else
 		{
 			// Does not wait previous handler
-			this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
-			Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-			Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+			try
+			{
+				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
+				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+			}
+			catch (err)
+			{
+				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				throw err;
+			}
 		}
 
 	}
