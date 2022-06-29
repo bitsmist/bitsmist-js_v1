@@ -32,6 +32,8 @@ test('Adding Component Test (Auto Morph) - should use the existing component', a
 	expect(document.querySelector("bar-main")).toBeInstanceOf(BarMain);
 });
 
+// -----------------------------------------------------------------------------
+
 test('Adding Component Test (Auto Morph) - tagName should use the specified tag name to add an existing component', async () => {
 	BarFooter.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
@@ -58,6 +60,8 @@ test('Adding Component Test (Auto Morph) - tagName should use the specified tag 
 	expect(document.querySelector("bar-main")).toBeInstanceOf(BarMain);
 });
 
+// -----------------------------------------------------------------------------
+
 test('Adding Component Test (Auto Morph) - tag should use the specified tag to add an existing component', async () => {
 	BarFooter.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
@@ -83,6 +87,8 @@ test('Adding Component Test (Auto Morph) - tag should use the specified tag to a
 	expect(barFooter.innerHTML).toBe("<div><bar-main class=\"@@@\" bm-powered=\"\"><div>bar-main</div></bar-main>bar-footer</div>");
 	expect(document.querySelector("bar-main")).toBeInstanceOf(BarMain);
 });
+
+// -----------------------------------------------------------------------------
 
 test('Adding Component Test (Auto Morph) - tagName should use the specified tag name and morph from the specified class', async () => {
 	BarFooter.prototype._getSettings = function() {
@@ -113,6 +119,8 @@ test('Adding Component Test (Auto Morph) - tagName should use the specified tag 
 	expect(document.querySelector("bar-main2").name).toBe("BarMainDummy");
 });
 
+// -----------------------------------------------------------------------------
+
 test('Adding Component Test (Auto Morph) - tag should use the specified tag and morph from the specified class', async () => {
 	BarFooter.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
@@ -134,14 +142,13 @@ test('Adding Component Test (Auto Morph) - tag should use the specified tag and 
 
 	window.document.dispatchEvent(new Event("DOMContentLoaded"));
 
-	setTimeout(() => {
-		console.log(document.body.innerHTML);
-	}, 2000);
 	await BITSMIST.v1.StateOrganizer.waitFor([{"rootNode":"bar-main2"}]);
 	expect(barFooter).toBeInstanceOf(BarFooter);
 	expect(barFooter.innerHTML).toBe("<div><bar-main2 class=\"@@@\" bm-powered=\"\"><div>bar-main2</div></bar-main2>bar-footer</div>");
 	expect(document.querySelector("bar-main2")).toBeInstanceOf(BarMainDummy);
 });
+
+// -----------------------------------------------------------------------------
 
 test('Adding Component Test (Auto Load) - tagName should use the specified tagName', async () => {
 	BarMain.prototype._getSettings = function() {
@@ -170,6 +177,8 @@ test('Adding Component Test (Auto Load) - tagName should use the specified tagNa
 	expect(barMain.innerHTML).toBe("<div><bar-maindummy1 bm-powered=\"\"><div>bar-main1</div></bar-maindummy1>bar-main</div>");
 	expect(document.querySelector("bar-maindummy1")).toBeInstanceOf(BarMain1);
 });
+
+// -----------------------------------------------------------------------------
 
 test('Adding Component Test (Auto Load) - tag should use the specified tagName and load split component files', async () => {
 	BarMain.prototype._getSettings = function() {
