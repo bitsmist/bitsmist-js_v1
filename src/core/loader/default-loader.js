@@ -43,7 +43,7 @@ export default class DefaultLoader
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load scripts for tags which has bm-autoload attribute.
+	 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
 	 *
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 * @param	{Object}		options				Load Options.
@@ -56,7 +56,6 @@ export default class DefaultLoader
 		console.debug(`Loading tags. rootNode=${rootNode.tagName}`);
 
 		let promises = [];
-		let waitList = [];
 
 		// Load tags that has bm-autoload/bm-automorph attribute
 		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered])");
@@ -75,27 +74,13 @@ export default class DefaultLoader
 			}));
 		});
 
-		/*
-		// Create waiting list to wait Bitsmist components
-		targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
-		targets.forEach((element) => {
-			if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
-			{
-				let waitItem = {"object":element, "state":"ready"};
-				waitList.push(waitItem);
-			}
-		});
-
-		// Wait for the components to be loaded
 		return Promise.all(promises).then(() => {
-			let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
+			let waitFor = Util.safeGet(options, "waitForTags");
 			if (waitFor)
 			{
-				// Wait for the components to become "ready"
-				return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
+				return DefaultLoader._waitForChildren(rootNode);
 			}
 		});
-		*/
 
 	}
 
@@ -321,6 +306,32 @@ export default class DefaultLoader
 
 	// -------------------------------------------------------------------------
 	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Wait for components under the specified root node.
+	 *
+	 * @param	{HTMLElement}	rootNode			Target node.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _waitForChildren(rootNode)
+	{
+
+		let waitList = [];
+		let targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
+		targets.forEach((element) => {
+			if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
+			{
+				let waitItem = {"object":element, "state":"ready"};
+				waitList.push(waitItem);
+			}
+		});
+
+		return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
