@@ -193,6 +193,166 @@ const server = setupServer(...[
 				}
 			}));
 		}),
+		rest.get('http://test2.bitsmist.com/bar-side1.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-side1</div>'));
+		}),
+		rest.get('http://test2.bitsmist.com/bar-side1.js', (req, res, ctx) => {
+			return res(
+				ctx.text(' \
+					class BarSide1 extends BITSMIST.v1.Component \
+					{\
+						_getSettings()\
+						{\
+							return {\
+								"settings": {\
+									"name": "BarSide1"\
+								}\
+							}\
+						}\
+					}\
+				'),
+			);
+		}),
+		rest.get('http://test.bitsmist.com/components/bar-side2.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-side2</div>'));
+		}),
+		rest.get('http://test.bitsmist.com/components/bar-side2.js', (req, res, ctx) => {
+			return res(
+				ctx.text(' \
+					class BarSide2 extends BITSMIST.v1.Component \
+					{\
+						_getSettings()\
+						{\
+							return {\
+								"settings": {\
+									"name": "BarSide2"\
+								}\
+							}\
+						}\
+					}\
+				'),
+			);
+		}),
+		rest.get('http://test.bitsmist.com/templates/bar-side3.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-side3</div>'));
+		}),
+		rest.get('http://test.bitsmist.com/bar-side3.js', (req, res, ctx) => {
+			return res(
+				ctx.text(' \
+					class BarSide3 extends BITSMIST.v1.Component \
+					{\
+						_getSettings()\
+						{\
+							return {\
+								"settings": {\
+									"name": "BarSide3"\
+								}\
+							}\
+						}\
+					}\
+				'),
+			);
+		}),
+		rest.get('http://test.bitsmist.com/components/bar-side4.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-side4</div>'));
+		}),
+		rest.get('http://test.bitsmist.com/components/bar-side4.js', (req, res, ctx) => {
+			return res(
+				ctx.text(' \
+					class BarSide4 extends BITSMIST.v1.Component \
+					{\
+						_getSettings()\
+						{\
+							return {\
+								"settings": {\
+									"name": "BarSide4"\
+								}\
+							}\
+						}\
+					}\
+				'),
+			);
+		}),
+		rest.get('http://test.bitsmist.com/components/bar-side5.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-side5</div>'));
+		}),
+		rest.get('http://test.bitsmist.com/components/bar-side5.js', (req, res, ctx) => {
+			return res(
+				ctx.text(' \
+					class BarSide5 extends BITSMIST.v1.Component \
+					{\
+						_getSettings()\
+						{\
+							return {\
+								"settings": {\
+									"name": "BarSide5"\
+								}\
+							}\
+						}\
+					}\
+				'),
+			);
+		}),
+		rest.get('http://test2.bitsmist.com/bar-menu1.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-menu1</div>'));
+		}),
+		rest.get('http://test2.bitsmist.com/bar-menu1.js', (req, res, ctx) => {
+			return res(
+				ctx.text(' \
+					class BarMenu1 extends BITSMIST.v1.Component \
+					{\
+						_getSettings()\
+						{\
+							return {\
+								"settings": {\
+									"name": "BarMenu1"\
+								}\
+							}\
+						}\
+					}\
+				'),
+			);
+		}),
+		rest.get('http://test.bitsmist.com/components2/bar-menu2.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-menu2</div>'));
+		}),
+		rest.get('http://test.bitsmist.com/components2/bar-menu2.js', (req, res, ctx) => {
+			return res(
+				ctx.text(' \
+					class BarMenu2 extends BITSMIST.v1.Component \
+					{\
+						_getSettings()\
+						{\
+							return {\
+								"settings": {\
+									"name": "BarMenu2"\
+								}\
+							}\
+						}\
+					}\
+				'),
+			);
+		}),
+		rest.get('http://test.bitsmist.com/templates2/bar-menu3.html', (req, res, ctx) => {
+			return res(ctx.text('<div>bar-menu3</div>'));
+		}),
+		rest.get('http://test.bitsmist.com/bar-menu3.js', (req, res, ctx) => {
+			return res(
+				ctx.text(' \
+					class BarMenu3 extends BITSMIST.v1.Component \
+					{\
+						_getSettings()\
+						{\
+							return {\
+								"settings": {\
+									"name": "BarMenu3"\
+								}\
+							}\
+						}\
+					}\
+				'),
+			);
+		}),
 	]
 );
 
