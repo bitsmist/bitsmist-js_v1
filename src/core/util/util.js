@@ -16,7 +16,7 @@ export default class Util
 {
 
 	/**
-	 * Get an value from store. Return default value when specified key is not available.
+	 * Get an value from object. Return default value when specified key is not available.
 	 *
 	 * @param	{Object}		store				Object that holds keys/values.
 	 * @param	{String}		key					Key to get.
@@ -50,7 +50,7 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Set an value to store.
+	 * Set an value to object.
 	 *
 	 * @param	{Object}		store				Object that holds keys/values.
 	 * @param	{String}		key					Key to store.
@@ -75,6 +75,40 @@ export default class Util
 		}
 
 		current[items[items.length - 1]] = value;
+
+		return store;
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Remove a value from object.
+	 *
+	 * @param	{Object}		store				Object that holds keys/values.
+	 * @param	{String}		key					Key to store.
+	 */
+	static safeRemove(store, key)
+	{
+
+		let isFound = true;
+		let current = store;
+		let items = key.split(".");
+		for (let i = 0; i < items.length - 1; i++)
+		{
+			if (!(items[i] in current))
+			{
+				isFound = false;
+				break;
+			}
+
+			current = current[items[i]];
+		}
+
+		if (isFound)
+		{
+			delete current[items[items.length - 1]];
+		}
 
 		return store;
 
