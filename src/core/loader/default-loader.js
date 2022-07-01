@@ -198,7 +198,7 @@ export default class DefaultLoader
 			let path = Util.safeGet(loadOptions, "path",
 				Util.concatPath([
 					component.settings.get("loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
-					component.settings.get("loadings.templatePath", BITSMIST.v1.settings.get("system.templatePath", "")),
+					component.settings.get("loadings.templatePath", BITSMIST.v1.settings.get("system.templatePath", component.settings.get("loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")))),
 					component.settings.get("loadings.path", ""),
 				])
 			);
