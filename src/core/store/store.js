@@ -181,7 +181,7 @@ export default class Store
 	remove(key)
 	{
 
-		delete this._items[key];
+		Util.safeRemove(this._items, key);
 
 	}
 
