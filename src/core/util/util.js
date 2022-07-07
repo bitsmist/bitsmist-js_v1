@@ -70,7 +70,7 @@ export default class Util
 		let current = Util.__createIntermediateObject(store, keys);
 
 		Util.assert(current !== null && typeof current === "object",
-			`Util.safeSet(): Key already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
+			`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
 
 		current[keys[keys.length - 1]] = value;
 
@@ -133,7 +133,7 @@ export default class Util
 		let current = Util.__createIntermediateObject(store, keys);
 
 		Util.assert(current && typeof current === "object",
-			`Util.safeSet(): Key already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
+			`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
 
 		let lastKey = keys[keys.length - 1];
 		current[lastKey] = Util.deepMerge(current[lastKey], value);
@@ -267,34 +267,43 @@ export default class Util
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Deep merge two objects. Create new object.
+	 * Deep merge obj2 into obj1. obj1 will be modified. If you want obj1 to be
+	 * immutable, deep copy it before passing it:
+	 * e.g.) Util.deepMerge(Util.deepClone(obj1), obj2).
+	 * obj2 will be always deep copied.
 	 *
-	 * @param	{Object}		obj1					Object1.
-	 * @param	{Object}		obj2					Object2.
+	 * @param	{*}				obj1					Object1.
+	 * @param	{*}				obj2					Object2.
 	 *
 	 * @return  {Object}		Merged object.
 	 */
 	static deepMerge(obj1, obj2)
 	{
 
-		let result;
+		let result = obj1;
 
-		if (Array.isArray(obj1)) {
-			result = Util.__cloneArr(obj1).concat(Util.deepClone(obj2));
-		} else if (Util.__isMergeable(obj1) && Util.__isMergeable(obj2)) {
-			result = Util.__cloneObj(obj1);
+		if (Array.isArray(obj1))
+		{
+			// obj1 is array
+			if (Array.isArray(obj2))
+			{
+				Array.prototype.push.apply(result, Util.__cloneArr(obj2));
+			}
+			else
+			{
+				result.push(Util.deepClone(obj2));
+			}
+		}
+		else if (Util.__isObject(obj1) && Util.__isMergeable(obj2))
+		{
+			// obj1 is Object and obj2 is Object/Array
 			Object.keys(obj2).forEach((key) => {
-				if (key in result && Util.__isMergeable(result[key]))
-				{
-					result[key] = Util.deepMerge(obj1[key], obj2[key]);
-				}
-				else
-				{
-					result[key] = Util.deepClone(obj2[key]);
-				}
+				result[key] = Util.deepMerge(obj1[key], obj2[key]);
 			});
-		} else {
-			result = obj2;
+		}
+		else
+		{
+			result = Util.deepClone(obj2);
 		}
 
 		return result;
@@ -613,6 +622,25 @@ export default class Util
 		}
 
 		return result;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the target is object or not.
+	 *
+	 * @param	{Object}		target					Target item.
+	 *
+	 * @return  {Boolean}		True if object.
+	 */
+	static __isObject(target)
+	{
+
+		let type = typeof target;
+		let conName = (target && target.constructor && target.constructor.name);
+
+		return (target !== null && conName === "Object" && type !== "function");
 
 	}
 
