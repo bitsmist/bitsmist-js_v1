@@ -280,7 +280,7 @@ export default class Util
 		let result;
 
 		if (Array.isArray(obj1)) {
-			result = Util.__cloneArr(obj1).concat(Util.__cloneItem(obj2));
+			result = Util.__cloneArr(obj1).concat(Util.deepClone(obj2));
 		} else if (Util.__isMergeable(obj1) && Util.__isMergeable(obj2)) {
 			result = Util.__cloneObj(obj1);
 			Object.keys(obj2).forEach((key) => {
@@ -290,7 +290,7 @@ export default class Util
 				}
 				else
 				{
-					result[key] = Util.__cloneItem(obj2[key]);
+					result[key] = Util.deepClone(obj2[key]);
 				}
 			});
 		} else {
@@ -298,6 +298,33 @@ export default class Util
 		}
 
 		return result;
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Clone an item.
+	 *
+	 * @param	{Object}		target					Target item.
+	 *
+	 * @return  {Object}		Cloned item.
+	 */
+	static deepClone(target)
+	{
+
+		if (Array.isArray(target))
+		{
+			return Util.__cloneArr(target);
+		}
+		else if (Util.__isObject(target))
+		{
+			return Util.__cloneObj(target);
+		}
+		else
+		{
+			return target;
+		}
 
 	}
 
@@ -547,33 +574,6 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Clone an item.
-	 *
-	 * @param	{Object}		target					Target item.
-	 *
-	 * @return  {Object}		Cloned item.
-	 */
-	static __cloneItem(target)
-	{
-
-		if (Array.isArray(target))
-		{
-			return Util.__cloneArr(target);
-		}
-		else if (Util.__isMergeable(target))
-		{
-			return Util.__cloneObj(target);
-		}
-		else
-		{
-			return target;
-		}
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
 	 * Clone an object.
 	 *
 	 * @param	{Object}		target					Target object.
@@ -586,7 +586,7 @@ export default class Util
 		let result = {};
 
 		Object.keys(target).forEach((key) => {
-			result[key] = Util.__cloneItem(target[key]);
+			result[key] = Util.deepClone(target[key]);
 		});
 
 		return result;
@@ -609,7 +609,7 @@ export default class Util
 
 		for (let i = 0; i < target.length; i++)
 		{
-			result.push(Util.__cloneItem(target[i]));
+			result.push(Util.deepClone(target[i]));
 		}
 
 		return result;
