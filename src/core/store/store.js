@@ -29,18 +29,35 @@ export default class Store
 	constructor(options)
 	{
 
-		// Init vars
-		this._options = Object.assign({}, options);
-
 		// Init
-		this.items = Util.safeGet(this._options, "items");
-		this.merger = Util.safeGet(this._options, "merger", Util.deepMerge );
+		this.options = options || {};
+		this.items = Util.safeGet(options, "items", {});
+		this.merger = Util.safeGet(options, "merger", Util.deepMerge);
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Options.
+	 *
+	 * @type	{Object}
+	 */
+	get options()
+	{
+
+		return this._options;
+
+	}
+
+	set options(value)
+	{
+
+		this._options = Util.deepMerge({}, value);
+
+	}
 
 	/**
 	 * Items.
@@ -57,7 +74,7 @@ export default class Store
 	set items(value)
 	{
 
-		this._items = Object.assign({}, value);
+		this._items = Util.deepMerge({}, value);
 
 	}
 
@@ -111,7 +128,7 @@ export default class Store
 	clone()
 	{
 
-		return Util.deepClone({}, this._items);
+		return Util.deepMerge({}, this._items);
 
 	}
 
@@ -133,7 +150,7 @@ export default class Store
 		{
 			if (items[i] && typeof items[i] === "object")
 			{
-				merger(this._items, items[i]);
+				this._items = merger(this._items, items[i]);
 			}
 		}
 
@@ -167,7 +184,7 @@ export default class Store
 	set(key, value, options)
 	{
 
-		Util.safeMerge(this._items, key, value);
+		this._items = Util.safeMerge(this._items, key, value);
 
 	}
 
