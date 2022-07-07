@@ -15,6 +15,10 @@
 export default class Util
 {
 
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
 	/**
 	 * Get an value from object. Return default value when specified key is not available.
 	 *
@@ -29,12 +33,13 @@ export default class Util
 
 		let current = store;
 		let found = true;
-		let items = key.split(".");
-		for (let i = 0; i < items.length; i++)
+
+		let keys = key.split(".");
+		for (let i = 0; i < keys.length; i++)
 		{
-			if (current && typeof current === "object" && items[i] in current)
+			if (current !== null && typeof current === "object" && keys[i] in current)
 			{
-				current = current[items[i]];
+				current = current[keys[i]];
 			}
 			else
 			{
@@ -50,31 +55,24 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Set an value to object.
+	 * Set a value to object.
 	 *
 	 * @param	{Object}		store				Object that holds keys/values.
 	 * @param	{String}		key					Key to store.
 	 * @param	{Object}		value				Value to store.
+	 *
+	 * @return	{Object}		Modified object.
 	 */
 	static safeSet(store, key, value)
 	{
 
-		let current = store;
-		let items = key.split(".");
-		for (let i = 0; i < items.length - 1; i++)
-		{
-			Util.assert(current && typeof current === "object",
-				`Util.safeSet(): Key already exists. key=${key}, existingKey=${( i > 0 ? items[i-1] : "" )}, existingValue=${current}`, TypeError);
+		let keys = key.split(".");
+		let current = Util.__createIntermediateObject(store, keys);
 
-			if (!(items[i] in current))
-			{
-				current[items[i]] = {}
-			}
+		Util.assert(current !== null && typeof current === "object",
+			`Util.safeSet(): Key already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
 
-			current = current[items[i]];
-		}
-
-		current[items[items.length - 1]] = value;
+		current[keys[keys.length - 1]] = value;
 
 		return store;
 
@@ -87,27 +85,30 @@ export default class Util
 	 *
 	 * @param	{Object}		store				Object that holds keys/values.
 	 * @param	{String}		key					Key to store.
+	 *
+	 * @return	{Object}		Modified object.
 	 */
 	static safeRemove(store, key)
 	{
 
 		let isFound = true;
 		let current = store;
-		let items = key.split(".");
-		for (let i = 0; i < items.length - 1; i++)
+
+		let keys = key.split(".");
+		for (let i = 0; i < keys.length - 1; i++)
 		{
-			if (!(items[i] in current))
+			if (!(keys[i] in current))
 			{
 				isFound = false;
 				break;
 			}
 
-			current = current[items[i]];
+			current = current[keys[i]];
 		}
 
 		if (isFound)
 		{
-			delete current[items[items.length - 1]];
+			delete current[keys[keys.length - 1]];
 		}
 
 		return store;
@@ -117,41 +118,25 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Set an value to store. Unlike safeSet() if both the existing value and
-	 * the value is an object, it merges them instead of overwrite it.
+	 * Merge a value to store.
 	 *
 	 * @param	{Object}		store				Object that holds keys/values.
 	 * @param	{String}		key					Key to store.
 	 * @param	{Object}		value				Value to store.
+	 *
+	 * @return	{Object}		Modified object.
 	 */
 	static safeMerge(store, key, value)
 	{
 
-		let current = store;
-		let items = key.split(".");
-		for (let i = 0; i < items.length - 1; i++)
-		{
-			Util.assert(current && typeof current === "object",
-				`Util.safeSet(): Key already exists. key=${key}, existingKey=${( i > 0 ? items[i-1] : "" )}, existingValue=${current}`, TypeError);
+		let keys = key.split(".");
+		let current = Util.__createIntermediateObject(store, keys);
 
-			if (!(items[i] in current))
-			{
-				current[items[i]] = {}
-			}
+		Util.assert(current && typeof current === "object",
+			`Util.safeSet(): Key already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
 
-			current = current[items[i]];
-		}
-
-		// Overwrite/Merge value
-		let lastWord = items[items.length - 1];
-		if (current[lastWord] && (typeof current[lastWord] === "object") && value && (typeof value === "object"))
-		{
-			Util.deepMerge(current[lastWord], value);
-		}
-		else
-		{
-			current[lastWord] = value;
-		}
+		let lastKey = keys[keys.length - 1];
+		current[lastKey] = Util.deepMerge(current[lastKey], value);
 
 		return store;
 
@@ -282,7 +267,7 @@ export default class Util
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Deep merge two objects. Merge obj2 into obj1.
+	 * Deep merge two objects. Create new object.
 	 *
 	 * @param	{Object}		obj1					Object1.
 	 * @param	{Object}		obj2					Object2.
@@ -292,122 +277,24 @@ export default class Util
 	static deepMerge(obj1, obj2)
 	{
 
-		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", `Util.deepMerge(): "obj1" and "obj2" parameters must be an object.`, TypeError);
+		let result;
 
-		Object.keys(obj2).forEach((key) => {
-			// array <--- *
-			if (Array.isArray(obj1[key]))
-			{
-				obj1[key] = obj1[key].concat(obj2[key]);
-			}
-			// object <--- object
-			else if (
-				obj1.hasOwnProperty(key) &&
-				obj1[key] && typeof obj1[key] === "object" &&
-				obj2[key] && typeof obj2[key] === "object" &&
-				!(obj1[key] instanceof HTMLElement) &&
-				!(obj2[key] instanceof HTMLElement)
-			)
-			{
-				Util.deepMerge(obj1[key], obj2[key]);
-			}
-			// value <--- *
-			else
-			{
-				obj1[key] = obj2[key];
-			}
-		});
-
-		return obj1;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Deep clone an objects into another object.
-	 *
-	 * @param	{Object}		obj1					Object1.
-	 * @param	{Object}		obj2					Object2.
-	 *
-	 * @return  {Object}		Merged object.
-	 */
-	static deepClone(obj1, obj2)
-	{
-
-		Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", `Util.deepMerge(): "obj1" and "obj2" parameters must be an object.`, TypeError);
-
-		Object.keys(obj2).forEach((key) => {
-			// array <--- *
-			if (Array.isArray(obj1[key]))
-			{
-				obj1[key] = obj1[key].concat(obj2[key]);
-			}
-			// object <--- object
-			else if (
-				obj1.hasOwnProperty(key) &&
-				obj1[key] && typeof obj1[key] === "object" &&
-				obj2[key] && typeof obj2[key] === "object" &&
-				!(obj1[key] instanceof HTMLElement) &&
-				!(obj2[key] instanceof HTMLElement)
-			)
-			{
-				Util.deepClone(obj1[key], obj2[key]);
-			}
-			// * <--- array
-			else if (Array.isArray(obj2[key]))
-			{
-				obj1[key] = Util.deepCloneArray(obj2[key]);
-			}
-			// * <--- object
-			else if (
-				obj2[key] && typeof obj2[key] === "object" &&
-				!(obj2[key] instanceof HTMLElement)
-			)
-			{
-				obj1[key] = {};
-				Util.deepClone(obj1[key], obj2[key]);
-			}
-			// value <--- value
-			else
-			{
-				obj1[key] = obj2[key];
-			}
-		});
-
-		return obj1;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Deep clone an array.
-	 *
-	 * @param	{Object}		arr						Array.
-	 *
-	 * @return  {Object}		Merged array.
-	 */
-	static deepCloneArray(arr)
-	{
-
-		Util.assert(Array.isArray(arr), `Util.deepCloneArray(): "arr" parameter must be an array.`, TypeError);
-
-		let result = [];
-
-		for (let i = 0; i < arr.length; i++)
-		{
-			if (
-				arr[i] && typeof arr[i] === "object" &&
-				!(arr[i] instanceof HTMLElement)
-			)
-			{
-				result.push(Util.deepClone({}, arr[i]));
-			}
-			else
-			{
-				result.push(arr[i]);
-			}
+		if (Array.isArray(obj1)) {
+			result = Util.__cloneArr(obj1).concat(Util.__cloneItem(obj2));
+		} else if (Util.__isMergeable(obj1) && Util.__isMergeable(obj2)) {
+			result = Util.__cloneObj(obj1);
+			Object.keys(obj2).forEach((key) => {
+				if (key in result && Util.__isMergeable(result[key]))
+				{
+					result[key] = Util.deepMerge(obj1[key], obj2[key]);
+				}
+				else
+				{
+					result[key] = Util.__cloneItem(obj2[key]);
+				}
+			});
+		} else {
+			result = obj2;
 		}
 
 		return result;
@@ -486,23 +373,6 @@ export default class Util
 		return [path, fileName];
 
 	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if character is upper case.
-	 *
-	 * @param	{String}		c					Character.
-	 *
-	 * @return 	{Boolean}		True if it is upper case.
-	 */
-	static __isUpper(c)
-	{
-
-		return c === c.toUpperCase() && c !== c.toLowerCase();
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -623,5 +493,146 @@ export default class Util
         return Array.from(setAll);
 
     }
+
+	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if character is upper case.
+	 *
+	 * @param	{String}		c					Character.
+	 *
+	 * @return 	{Boolean}		True if it is upper case.
+	 */
+	static __isUpper(c)
+	{
+
+		return c === c.toUpperCase() && c !== c.toLowerCase();
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Follow keys and create missing intermediate objects.
+	 *
+	 * @param	{Object}		store				Object.
+	 * @param	{Array}			keys				Array of keys to follow.
+	 *
+	 * @return	{Object}		Object.
+	 */
+	static __createIntermediateObject(store, keys)
+	{
+
+		let current = store;
+
+		for (let i = 0; i < keys.length - 1; i++)
+		{
+			Util.assert(current !== null && typeof current === "object",
+				`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. existingKey=${( i > 0 ? keys[i-1] : "" )}, existingValue=${current}`, TypeError);
+
+			if (!(keys[i] in current))
+			{
+				current[keys[i]] = {}
+			}
+
+			current = current[keys[i]];
+		}
+
+		return current;
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Clone an item.
+	 *
+	 * @param	{Object}		target					Target item.
+	 *
+	 * @return  {Object}		Cloned item.
+	 */
+	static __cloneItem(target)
+	{
+
+		if (Array.isArray(target))
+		{
+			return Util.__cloneArr(target);
+		}
+		else if (Util.__isMergeable(target))
+		{
+			return Util.__cloneObj(target);
+		}
+		else
+		{
+			return target;
+		}
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Clone an object.
+	 *
+	 * @param	{Object}		target					Target object.
+	 *
+	 * @return  {Object}		Cloned object.
+	 */
+	static __cloneObj(target)
+	{
+
+		let result = {};
+
+		Object.keys(target).forEach((key) => {
+			result[key] = Util.__cloneItem(target[key]);
+		});
+
+		return result;
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Clone an array.
+	 *
+	 * @param	{Object}		target					Target array.
+	 *
+	 * @return  {Object}		Cloned array.
+	 */
+	static __cloneArr(target)
+	{
+
+		let result = [];
+
+		for (let i = 0; i < target.length; i++)
+		{
+			result.push(Util.__cloneItem(target[i]));
+		}
+
+		return result;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the target is mergeable object or not.
+	 *
+	 * @param	{Object}		target					Target item.
+	 *
+	 * @return  {Boolean}		True if mergeable.
+	 */
+	static __isMergeable(target)
+	{
+
+		let type = typeof target;
+		let conName = (target && target.constructor && target.constructor.name);
+
+		return (target !== null && conName === "Object" && type !== "function") || Array.isArray(target);
+
+	}
 
 }
