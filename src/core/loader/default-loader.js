@@ -36,7 +36,7 @@ export default class DefaultLoader
 	static init(component, options)
 	{
 
-		component.settings.set("loadings", this._loadAttrSettings(component));
+		component.settings.merge("loadings", this._loadAttrSettings(component));
 
 	}
 
@@ -382,7 +382,7 @@ export default class DefaultLoader
 		{
 			// Already loaded
 			console.debug(`Component Already exists. className=${className}`);
-			DefaultLoader._classes.set(className, {"state":"loaded"});
+			DefaultLoader._classes.set(className + ".state", "loaded");
 			promise = Promise.resolve();
 		}
 		else if (DefaultLoader._classes.get(className, {})["state"] === "loading")
@@ -394,11 +394,11 @@ export default class DefaultLoader
 		else
 		{
 			// Not loaded
-			DefaultLoader._classes.set(className, {"state":"loading"});
+			DefaultLoader._classes.set(className + ".state", "loading");
 			promise = this._loadComponentFile(fileName, path, loadOptions).then(() => {
 				DefaultLoader._classes.set(className, {"state":"loaded", "promise":null});
 			});
-			DefaultLoader._classes.set(className, {"promise":promise});
+			DefaultLoader._classes.set(className + ".promise", promise);
 		}
 
 		return promise;
