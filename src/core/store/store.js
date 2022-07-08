@@ -150,10 +150,7 @@ export default class Store
 
 		for (let i = 0; i < items.length; i++)
 		{
-			if (items[i] && typeof items[i] === "object")
-			{
-				this._items = merger(this._items, items[i]);
-			}
+			this._items = merger(this._items, items[i]);
 		}
 
 	}
@@ -186,7 +183,14 @@ export default class Store
 	set(key, value, options)
 	{
 
-		Util.safeSet(this._items, key, value);
+		if (options && options["merge"])
+		{
+			return Util.safeMerge(this._items, key, defaultValue);
+		}
+		else
+		{
+			Util.safeSet(this._items, key, value);
+		}
 
 	}
 
