@@ -34,7 +34,7 @@ export default class ChainableStore extends Store
 		super(options);
 
 		// Init vars
-		this.chain;
+		this._chain;
 
 		// Chain
 		let chain = Util.safeGet(this._options, "chain");
@@ -50,38 +50,6 @@ export default class ChainableStore extends Store
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Items (Override).
-	 *
-	 * @type	{Object}
-	 */
-	get items()
-	{
-
-		let items;
-
-		if (this._chain)
-		{
-			items = Util.deepClone(this._chain.clone(), this._items);
-		}
-		else
-		{
-			items = this.clone();
-		}
-
-		return items;
-
-	}
-
-	set items(value)
-	{
-
-		this._items = Object.assign({}, value);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Local items.
 	 *
 	 * @type	{Object}
@@ -89,7 +57,7 @@ export default class ChainableStore extends Store
 	get localItems()
 	{
 
-		return this.clone();
+		return Store.prototype.clone.call(this);
 
 	}
 
@@ -107,7 +75,7 @@ export default class ChainableStore extends Store
 
 		if (this._chain)
 		{
-			return Util.deepClone(this._chain.clone(), this._items);
+			return Util.deepMerge(this._chain.clone(), this._items);
 		}
 		else
 		{
@@ -201,7 +169,7 @@ export default class ChainableStore extends Store
 		}
 		else
 		{
-			Store.prototype.set.call(this, key, value);
+			Store.prototype.set.call(this, key, value, options);
 		}
 
 	}
