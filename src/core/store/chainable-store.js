@@ -117,7 +117,7 @@ export default class ChainableStore extends Store
 
 		let result = defaultValue;
 
-		if (this.has(key))
+		if (Store.prototype.has.call(this, key))
 		{
 			result = Store.prototype.get.call(this, key, defaultValue);
 		}
@@ -171,6 +171,29 @@ export default class ChainableStore extends Store
 		{
 			Store.prototype.set.call(this, key, value, options);
 		}
+
+	}
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Check if the store has specified key.
+	 *
+	 * @param	{String}		key					Key to check.
+	 *
+	 * @return	{Boolean}		True:exists, False:not exists.
+	 */
+	has(key)
+	{
+
+		let result = Util.safeHas(this._items, key);
+
+		if (result === false && this._chain)
+		{
+			result = Util.safeHas(this._chain._items, key);
+		}
+
+		return result;
 
 	}
 
