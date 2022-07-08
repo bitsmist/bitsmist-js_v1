@@ -7,7 +7,7 @@ window.BarFooter = BarFooter;
 
 // -----------------------------------------------------------------------------
 
-test('Adding Component Test (Auto Morph) - should use the existing component', async () => {
+test('Adding Component Test (Auto Morph) - Should use the existing component', async () => {
 	BarFooter.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["components"] = {

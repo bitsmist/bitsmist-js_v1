@@ -7,7 +7,7 @@ window.BarFooter = BarFooter;
 
 // -----------------------------------------------------------------------------
 
-test('Waiting for Children Test - should wait for all the children to be "ready"', async () => {
+test('Waiting for Children Test - Should wait for all the children to be "ready"', async () => {
 	document.body.innerHTML = "<bar-main1 bm-autoload></bar-main1><bar-main2 bm-autoload bm-split></bar-main2>";
 
 	return BITSMIST.v1.DefaultLoader.loadTags(document.body, {"waitForTags":true}).then(() => {
@@ -17,7 +17,7 @@ test('Waiting for Children Test - should wait for all the children to be "ready"
 	});
 });
 
-test('Loading Settings Test - should respect system.appBaseUrl', async () => {
+test('Loading Settings Test - Should respect system.appBaseUrl', async () => {
 	BITSMIST.v1.settings.merge({
 		"system": {
 			"appBaseUrl": "http://test2.bitsmist.com",
@@ -42,7 +42,7 @@ test('Loading Settings Test - should respect system.appBaseUrl', async () => {
 	});
 });
 
-test('Loading Settings Test - should respect system.componentPath', async () => {
+test('Loading Settings Test - Should respect system.componentPath', async () => {
 	BITSMIST.v1.settings.merge({
 		"system": {
 			"componentPath": "components",
@@ -64,7 +64,7 @@ test('Loading Settings Test - should respect system.componentPath', async () => 
 	console.log(BITSMIST.v1.settings.items);
 });
 
-test('Loading Settings Test - should respect system.templatePath', async () => {
+test('Loading Settings Test - Should respect system.templatePath', async () => {
 	BITSMIST.v1.settings.merge({
 		"system": {
 			"templatePath": "templates",
@@ -85,7 +85,7 @@ test('Loading Settings Test - should respect system.templatePath', async () => {
 	BITSMIST.v1.settings.remove("system.templatePath");
 });
 
-test('Loading Settings Test - should use loadings.componentPath when system/loadings.templatePath is not specified', async () => {
+test('Loading Settings Test - Should use loadings.componentPath when system/loadings.templatePath is not specified', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["components"] = {
@@ -112,7 +112,7 @@ test('Loading Settings Test - should use loadings.componentPath when system/load
 	expect(document.querySelector("bar-side5")).toBeInstanceOf(BarSide5);
 });
 
-test('Loading Settings Test - should override system.appBaseUrl with loadings.appBaseUrl', async () => {
+test('Loading Settings Test - Should override system.appBaseUrl with loadings.appBaseUrl', async () => {
 	BarMain.prototype._getSettings = function() {
 		let settings = this.__getSettings.call(this);
 		settings["components"] = {
@@ -139,7 +139,7 @@ test('Loading Settings Test - should override system.appBaseUrl with loadings.ap
 	expect(document.querySelector("bar-menu1")).toBeInstanceOf(BarMenu1);
 });
 
-test('Loading Test - should override system.componentPath with loadings.componentPath', async () => {
+test('Loading Test - Should override system.componentPath with loadings.componentPath', async () => {
 	BITSMIST.v1.settings.merge({
 		"system": {
 			"componentPath": "",
@@ -174,7 +174,7 @@ test('Loading Test - should override system.componentPath with loadings.componen
 	BITSMIST.v1.settings.remove("system.componentPath");
 });
 
-test('Loading Test - should override system.templatePath with loadings.templatePath', async () => {
+test('Loading Test - Should override system.templatePath with loadings.templatePath', async () => {
 	BITSMIST.v1.settings.merge({
 		"system": {
 			"templatePath": "",
