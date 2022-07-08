@@ -36,7 +36,7 @@ export default class DefaultLoader
 	static init(component, options)
 	{
 
-		component.settings.merge("loadings", this._loadAttrSettings(component));
+		component.settings.merge(this._loadAttrSettings(component));
 
 	}
 
@@ -64,7 +64,7 @@ export default class DefaultLoader
 
 			// Load a tag
 			let loader = ( element.hasAttribute("bm-loadername") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loadername")).object : this);
-			let settings = { "loadings": this._loadAttrSettings(element) };
+			let settings = this._loadAttrSettings(element);
 			let className = Util.getClassNameFromTagName(element.tagName);
 			element._injectSettings = function(curSettings){
 				return Util.deepMerge(curSettings, settings);
@@ -472,36 +472,38 @@ export default class DefaultLoader
 	static _loadAttrSettings(element)
 	{
 
-		let settings = {};
+		let settings = {
+			"loadings": {}
+		};
 
 		// Split component
 		if (element.hasAttribute("bm-split"))
 		{
-			settings["splitComponent"] = true;
+			settings["loadings"]["splitComponent"] = true;
 		}
 
 		// Path
 		if (element.hasAttribute("bm-path"))
 		{
-			settings["path"] = element.getAttribute("bm-path");
+			settings["loadings"]["path"] = element.getAttribute("bm-path");
 		}
 
 		// File name
 		if (element.hasAttribute("bm-filename"))
 		{
-			settings["fileName"] = element.getAttribute("bm-filename");
+			settings["loadings"]["fileName"] = element.getAttribute("bm-filename");
 		}
 
 		// Morphing
 		if (element.hasAttribute("bm-automorph"))
 		{
-			settings["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
+			settings["loadings"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
 		}
 
 		// Auto loading
 		if (element.hasAttribute("bm-autoload"))
 		{
-			settings["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
+			settings["loadings"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
 		}
 
 		return settings;
