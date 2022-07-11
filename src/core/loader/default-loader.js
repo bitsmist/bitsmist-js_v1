@@ -108,29 +108,27 @@ export default class DefaultLoader
 			return Promise.resolve();
 		}
 
-		// Override path and file name when url is specified in autoLoad option
+		loadOptions = ( loadOptions ? Util.deepMerge({}, loadOptions) : {} );
+
+		// Override path and filename when url is specified in autoLoad option
 		let href = Util.safeGet(settings, "loadings.autoLoad");
 		href = ( href === true ? "" : href );
 		if (href)
 		{
-			let arr = Util.getFilenameAndPathFromUrl(href);
+			let url = Util.parseURL(href);
 
-			// Path
 			settings["loadings"]["appBaseUrl"] = "";
 			settings["loadings"]["componentPath"] = "";
 			settings["loadings"]["templatePath"] = "";
-			settings["loadings"]["path"] = arr[0];
+			settings["loadings"]["path"] = url.path;
+			settings["loadings"]["fileName"] = url.filenameWithoutExtension;
 
-			// File name
-			if (href.slice(-3).toLowerCase() === ".js")
-			{
-				settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
-			}
-			else if (href.slice(-5).toLowerCase() === ".html")
+			if (url.extension === "html")
 			{
 				settings["loadings"]["autoMorph"] = ( settings["loadings"]["autoMorph"] ? settings["loadings"]["autoMorph"] : true );
-				settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
 			}
+
+			loadOptions["query"] = url.query;
 		}
 
 		// Get a base class name
@@ -148,8 +146,10 @@ export default class DefaultLoader
 
 		// Load a class
 		let fileName = Util.safeGet(settings, "loadings.fileName", tagName.toLowerCase());
-		let split = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
-		return this._autoloadComponent(baseClassName, fileName, path, {"splitComponent": split}).then(() => {
+		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
+		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "loadgings.query"), "");
+
+		return DefaultLoader._autoloadComponent(baseClassName, fileName, path, loadOptions).then(() => {
 			// Morphing
 			if (baseClassName !== className)
 			{
@@ -239,7 +239,7 @@ export default class DefaultLoader
 				])
 			);
 
-			return this.loadSettingFile(settingName, path, {"type":"js", "bindTo":component});
+			return this.loadSettingFile(settingName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions));
 		}).then((extraSettings) => {
 			if (extraSettings)
 			{
@@ -265,7 +265,8 @@ export default class DefaultLoader
 	{
 
 		let type = Util.safeGet(loadOptions, "type", "js");
-		let url = Util.concatPath([path, settingName + "." + type]);
+		let query = Util.safeGet(loadOptions, "query");
+		let url = Util.concatPath([path, settingName + "." + type]) + (query ? "?" + query : "");
 		let settings;
 
 		console.debug(`Loading setting. settingName=${settingName}, path=${path}`);
@@ -421,8 +422,9 @@ export default class DefaultLoader
 
 		console.debug(`Loading script. fileName=${fileName}, path=${path}`);
 
-		let url1 = Util.concatPath([path, fileName + ".js"]);
-		let url2 = Util.concatPath([path, fileName + ".settings.js"]);
+		let query = Util.safeGet(loadOptions, "query");
+		let url1 = Util.concatPath([path, fileName + ".js"]) + (query ? "?" + query : "");
+		let url2 = Util.concatPath([path, fileName + ".settings.js"]) + (query ? "?" + query : "");
 
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
@@ -453,7 +455,8 @@ export default class DefaultLoader
 
 		console.debug(`Loading template. templateName=${templateName}, path=${path}`);
 
-		let url = Util.concatPath([path, templateName]) + ".html";
+		let query = Util.safeGet(loadOptions, "query");
+		let url = Util.concatPath([path, templateName]) + ".html" + (query ? "?" + query : "");
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`Loaded template. templateName=${templateName}, path=${path}`);
 

@@ -91,27 +91,30 @@ export default class SettingOrganizer extends Organizer
 	static _loadExternalSetting(component, settingName)
 	{
 
-		let name, path;
+		let fileName;
+		let loadOptions = {};
 
 		if (component.hasAttribute("bm-" + settingName + "ref"))
 		{
-			let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-" + settingName + "ref"));
-			path = arr[0];
-			name = arr[1].slice(0, -3);
+			let url = Util.parseURL(component.getAttribute("bm-" + settingName + "ref"));
+			fileName = url.filenameWithoutExtension;
+			loadOptions["path"] = url.path;
+			loadOptions["query"] = url.query;
 		}
 		else
 		{
-			path = ( component.hasAttribute("bm-" + settingName + "path") ? component.getAttribute("bm-" + settingName + "path") : "" );
-			name = ( component.hasAttribute("bm-" + settingName + "name") ? component.getAttribute("bm-" + settingName + "name") : "" );
-			if (path && !name)
+			let path = ( component.hasAttribute("bm-" + settingName + "path") ? component.getAttribute("bm-" + settingName + "path") : "" );
+			fileName = ( component.hasAttribute("bm-" + settingName + "name") ? component.getAttribute("bm-" + settingName + "name") : "" );
+			if (path && !fileName)
 			{
-				name = "settings";
+				fileName = "settings";
 			}
+			loadOptions["path"] = path;
 		}
 
-		if (name || path)
+		if (fileName || loadOptions["path"])
 		{
-			return component.loadSetting(name, {"path":path});
+			return component.loadSetting(fileName, loadOptions);
 		}
 
 	}
