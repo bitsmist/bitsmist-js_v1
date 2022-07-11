@@ -393,22 +393,59 @@ export default class Util
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get file name and path from url.
+	 * Parse URL.
 	 *
-	 * @param	{String}		path				Path.
+	 * @param	{String}		url					URL to parse.
 	 *
-	 * @return 	{String}		File name.
+	 * @return 	{String}		Object contains each URL part.
 	 */
-	static getFilenameAndPathFromUrl(url)
+	static parseURL(url)
 	{
 
-		let pos = url.lastIndexOf("/");
-		let path = url.substr(0, pos);
-		let fileName = url.substr(pos + 1);
+		var pattern = RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+		var matches =  url.match(pattern);
+		let parsed = {
+			"protocol": matches[2],
+			"hostname": matches[4],
+			"pathname": matches[5],
+			"path": "",
+			"filename": "",
+			"filenameWithoutExtension": "",
+			"extension": "",
+			"query": matches[7],
+			"hash": matches[8],
+		};
 
-		return [path, fileName];
+		parsed["path"] = (parsed.protocol ? parsed.protocol + "://" : "") + (parsed.hostname ? parsed.hostname : "" );
+
+		// path and filename
+		let pos = matches[5].lastIndexOf("/");
+		if (pos > -1)
+		{
+			parsed["path"] += matches[5].substr(0, pos + 1);
+			parsed["filename"] = matches[5].substr(pos + 1);
+		}
+		else
+		{
+			parsed["filename"] = matches[5];
+		}
+
+		// filename and extension
+		let posExt =  parsed.filename.lastIndexOf(".");
+		if (posExt)
+		{
+			parsed["filenameWithoutExtension"] = parsed.filename.substr(0, posExt);
+			parsed["extension"] = parsed.filename.substr(posExt + 1);
+		}
+		else
+		{
+			parsed["filenameWithoutExtension"] = parsed.filename;
+		}
+
+		return parsed;
 
 	}
+
 	// -------------------------------------------------------------------------
 
 	/**
