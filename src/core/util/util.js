@@ -301,6 +301,9 @@ export default class Util
 				result[key] = Util.deepMerge(obj1[key], obj2[key]);
 			});
 		}
+		else if (obj2 === undefined)
+		{
+		}
 		else
 		{
 			result = Util.deepClone(obj2);
