@@ -49,11 +49,6 @@ export default class EventOrganizer extends Organizer
 			return EventOrganizer._removeEventHandler(this, element, eventName, handlerInfo)
 		}
 
-		// Add properties
-		Object.defineProperty(Component.prototype, 'eventResult', {
-			get() { return this._eventResult; },
-		})
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -68,10 +63,6 @@ export default class EventOrganizer extends Organizer
 	 */
 	static init(component, settings)
 	{
-
-		// Init vars
-		component._eventResult = {};
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -289,8 +280,6 @@ export default class EventOrganizer extends Organizer
 
 		options = Util.deepMerge({}, options);
 		options["sender"] = options["sender"] || component;
-		component._eventResult = {};
-		options["result"] = component._eventResult;
 		element = ( element ? element : component );
 		let e = null;
 
