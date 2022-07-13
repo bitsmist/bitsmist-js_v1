@@ -18,8 +18,12 @@
 	class Util
 	{
 
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
+
 		/**
-		 * Get an value from store. Return default value when specified key is not available.
+		 * Get an value from object. Return default value when specified key is not available.
 		 *
 		 * @param	{Object}		store				Object that holds keys/values.
 		 * @param	{String}		key					Key to get.
@@ -32,12 +36,13 @@
 
 			let current = store;
 			let found = true;
-			let items = key.split(".");
-			for (let i = 0; i < items.length; i++)
+
+			let keys = key.split(".");
+			for (let i = 0; i < keys.length; i++)
 			{
-				if (current && typeof current === "object" && items[i] in current)
+				if (current !== null && typeof current === "object" && keys[i] in current)
 				{
-					current = current[items[i]];
+					current = current[keys[i]];
 				}
 				else
 				{
@@ -53,31 +58,24 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Set an value to store.
+		 * Set a value to object.
 		 *
 		 * @param	{Object}		store				Object that holds keys/values.
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
+		 *
+		 * @return	{Object}		Modified object.
 		 */
 		static safeSet(store, key, value)
 		{
 
-			let current = store;
-			let items = key.split(".");
-			for (let i = 0; i < items.length - 1; i++)
-			{
-				Util.assert(current && typeof current === "object",
-					`Util.safeSet(): Key already exists. key=${key}, existingKey=${( i > 0 ? items[i-1] : "" )}, existingValue=${current}`, TypeError);
+			let keys = key.split(".");
+			let current = Util.__createIntermediateObject(store, keys);
 
-				if (!(items[i] in current))
-				{
-					current[items[i]] = {};
-				}
+			Util.assert(current !== null && typeof current === "object",
+				`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
 
-				current = current[items[i]];
-			}
-
-			current[items[items.length - 1]] = value;
+			current[keys[keys.length - 1]] = value;
 
 			return store;
 
@@ -86,41 +84,62 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Set an value to store. Unlike safeSet() if both the existing value and
-		 * the value is an object, it merges them instead of overwrite it.
+		 * Remove a value from object.
+		 *
+		 * @param	{Object}		store				Object that holds keys/values.
+		 * @param	{String}		key					Key to store.
+		 *
+		 * @return	{Object}		Modified object.
+		 */
+		static safeRemove(store, key)
+		{
+
+			let isFound = true;
+			let current = store;
+
+			let keys = key.split(".");
+			for (let i = 0; i < keys.length - 1; i++)
+			{
+				if (!(keys[i] in current))
+				{
+					isFound = false;
+					break;
+				}
+
+				current = current[keys[i]];
+			}
+
+			if (isFound)
+			{
+				delete current[keys[keys.length - 1]];
+			}
+
+			return store;
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Merge a value to store.
 		 *
 		 * @param	{Object}		store				Object that holds keys/values.
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
+		 *
+		 * @return	{Object}		Modified object.
 		 */
 		static safeMerge(store, key, value)
 		{
 
-			let current = store;
-			let items = key.split(".");
-			for (let i = 0; i < items.length - 1; i++)
-			{
-				Util.assert(current && typeof current === "object",
-					`Util.safeSet(): Key already exists. key=${key}, existingKey=${( i > 0 ? items[i-1] : "" )}, existingValue=${current}`, TypeError);
+			let keys = key.split(".");
+			let current = Util.__createIntermediateObject(store, keys);
 
-				if (!(items[i] in current))
-				{
-					current[items[i]] = {};
-				}
+			Util.assert(current && typeof current === "object",
+				`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
 
-				current = current[items[i]];
-			}
-
-			// Overwrite/Merge value
-			let lastWord = items[items.length - 1];
-			if (current[lastWord] && (typeof current[lastWord] === "object") && value && (typeof value === "object"))
-			{
-				Util.deepMerge(current[lastWord], value);
-			}
-			else
-			{
-				current[lastWord] = value;
-			}
+			let lastKey = keys[keys.length - 1];
+			current[lastKey] = Util.deepMerge(current[lastKey], value);
 
 			return store;
 
@@ -251,135 +270,75 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Deep merge two objects. Merge obj2 into obj1.
+		 * Deep merge obj2 into obj1. obj1 will be modified. If you want obj1 to be
+		 * immutable, deep copy it before passing it:
+		 * e.g.) Util.deepMerge(Util.deepClone(obj1), obj2).
+		 * obj2 will be always deep copied.
 		 *
-		 * @param	{Object}		obj1					Object1.
-		 * @param	{Object}		obj2					Object2.
+		 * @param	{*}				obj1					Object1.
+		 * @param	{*}				obj2					Object2.
 		 *
 		 * @return  {Object}		Merged object.
 		 */
 		static deepMerge(obj1, obj2)
 		{
 
-			Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", `Util.deepMerge(): "obj1" and "obj2" parameters must be an object.`, TypeError);
+			let result = obj1;
 
-			Object.keys(obj2).forEach((key) => {
-				// array <--- *
-				if (Array.isArray(obj1[key]))
-				{
-					obj1[key] = obj1[key].concat(obj2[key]);
-				}
-				// object <--- object
-				else if (
-					obj1.hasOwnProperty(key) &&
-					obj1[key] && typeof obj1[key] === "object" &&
-					obj2[key] && typeof obj2[key] === "object" &&
-					!(obj1[key] instanceof HTMLElement) &&
-					!(obj2[key] instanceof HTMLElement)
-				)
-				{
-					Util.deepMerge(obj1[key], obj2[key]);
-				}
-				// value <--- *
-				else
-				{
-					obj1[key] = obj2[key];
-				}
-			});
-
-			return obj1;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Deep clone an objects into another object.
-		 *
-		 * @param	{Object}		obj1					Object1.
-		 * @param	{Object}		obj2					Object2.
-		 *
-		 * @return  {Object}		Merged object.
-		 */
-		static deepClone(obj1, obj2)
-		{
-
-			Util.assert(obj1 && typeof obj1 === "object" && obj2 && typeof obj2 === "object", `Util.deepMerge(): "obj1" and "obj2" parameters must be an object.`, TypeError);
-
-			Object.keys(obj2).forEach((key) => {
-				// array <--- *
-				if (Array.isArray(obj1[key]))
-				{
-					obj1[key] = obj1[key].concat(obj2[key]);
-				}
-				// object <--- object
-				else if (
-					obj1.hasOwnProperty(key) &&
-					obj1[key] && typeof obj1[key] === "object" &&
-					obj2[key] && typeof obj2[key] === "object" &&
-					!(obj1[key] instanceof HTMLElement) &&
-					!(obj2[key] instanceof HTMLElement)
-				)
-				{
-					Util.deepClone(obj1[key], obj2[key]);
-				}
-				// * <--- array
-				else if (Array.isArray(obj2[key]))
-				{
-					obj1[key] = Util.deepCloneArray(obj2[key]);
-				}
-				// * <--- object
-				else if (
-					obj2[key] && typeof obj2[key] === "object" &&
-					!(obj2[key] instanceof HTMLElement)
-				)
-				{
-					obj1[key] = {};
-					Util.deepClone(obj1[key], obj2[key]);
-				}
-				// value <--- value
-				else
-				{
-					obj1[key] = obj2[key];
-				}
-			});
-
-			return obj1;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Deep clone an array.
-		 *
-		 * @param	{Object}		arr						Array.
-		 *
-		 * @return  {Object}		Merged array.
-		 */
-		static deepCloneArray(arr)
-		{
-
-			Util.assert(Array.isArray(arr), `Util.deepCloneArray(): "arr" parameter must be an array.`, TypeError);
-
-			let result = [];
-
-			for (let i = 0; i < arr.length; i++)
+			if (Array.isArray(obj1))
 			{
-				if (
-					arr[i] && typeof arr[i] === "object" &&
-					!(arr[i] instanceof HTMLElement)
-				)
+				// obj1 is array
+				if (Array.isArray(obj2))
 				{
-					result.push(Util.deepClone({}, arr[i]));
+					Array.prototype.push.apply(result, Util.__cloneArr(obj2));
 				}
 				else
 				{
-					result.push(arr[i]);
+					result.push(Util.deepClone(obj2));
 				}
+			}
+			else if (Util.__isObject(obj1) && Util.__isMergeable(obj2))
+			{
+				// obj1 is Object and obj2 is Object/Array
+				Object.keys(obj2).forEach((key) => {
+					result[key] = Util.deepMerge(obj1[key], obj2[key]);
+				});
+			}
+			else if (obj2 === undefined)
+			;
+			else
+			{
+				result = Util.deepClone(obj2);
 			}
 
 			return result;
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Clone an item.
+		 *
+		 * @param	{Object}		target					Target item.
+		 *
+		 * @return  {Object}		Cloned item.
+		 */
+		static deepClone(target)
+		{
+
+			if (Array.isArray(target))
+			{
+				return Util.__cloneArr(target);
+			}
+			else if (Util.__isObject(target))
+			{
+				return Util.__cloneObj(target);
+			}
+			else
+			{
+				return target;
+			}
 
 		}
 
@@ -439,36 +398,56 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Get file name and path from url.
+		 * Parse URL.
 		 *
-		 * @param	{String}		path				Path.
+		 * @param	{String}		url					URL to parse.
 		 *
-		 * @return 	{String}		File name.
+		 * @return 	{String}		Object contains each URL part.
 		 */
-		static getFilenameAndPathFromUrl(url)
+		static parseURL(url)
 		{
 
-			let pos = url.lastIndexOf("/");
-			let path = url.substr(0, pos);
-			let fileName = url.substr(pos + 1);
+			var pattern = RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+			var matches =  url.match(pattern);
+			let parsed = {
+				"protocol": matches[2],
+				"hostname": matches[4],
+				"pathname": matches[5],
+				"path": "",
+				"filename": "",
+				"filenameWithoutExtension": "",
+				"extension": "",
+				"query": matches[7],
+				"hash": matches[8],
+			};
 
-			return [path, fileName];
+			parsed["path"] = (parsed.protocol ? parsed.protocol + "://" : "") + (parsed.hostname ? parsed.hostname : "" );
 
-		}
+			// path and filename
+			let pos = matches[5].lastIndexOf("/");
+			if (pos > -1)
+			{
+				parsed["path"] += matches[5].substr(0, pos + 1);
+				parsed["filename"] = matches[5].substr(pos + 1);
+			}
+			else
+			{
+				parsed["filename"] = matches[5];
+			}
 
-		// -------------------------------------------------------------------------
+			// filename and extension
+			let posExt =  parsed.filename.lastIndexOf(".");
+			if (posExt)
+			{
+				parsed["filenameWithoutExtension"] = parsed.filename.substr(0, posExt);
+				parsed["extension"] = parsed.filename.substr(posExt + 1);
+			}
+			else
+			{
+				parsed["filenameWithoutExtension"] = parsed.filename;
+			}
 
-		/**
-		 * Check if character is upper case.
-		 *
-		 * @param	{String}		c					Character.
-		 *
-		 * @return 	{Boolean}		True if it is upper case.
-		 */
-		static __isUpper(c)
-		{
-
-			return c === c.toUpperCase() && c !== c.toLowerCase();
+			return parsed;
 
 		}
 
@@ -593,6 +572,139 @@
 
 	    }
 
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if character is upper case.
+		 *
+		 * @param	{String}		c					Character.
+		 *
+		 * @return 	{Boolean}		True if it is upper case.
+		 */
+		static __isUpper(c)
+		{
+
+			return c === c.toUpperCase() && c !== c.toLowerCase();
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Follow keys and create missing intermediate objects.
+		 *
+		 * @param	{Object}		store				Object.
+		 * @param	{Array}			keys				Array of keys to follow.
+		 *
+		 * @return	{Object}		Object.
+		 */
+		static __createIntermediateObject(store, keys)
+		{
+
+			let current = store;
+
+			for (let i = 0; i < keys.length - 1; i++)
+			{
+				Util.assert(current !== null && typeof current === "object",
+					`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. existingKey=${( i > 0 ? keys[i-1] : "" )}, existingValue=${current}`, TypeError);
+
+				if (!(keys[i] in current))
+				{
+					current[keys[i]] = {};
+				}
+
+				current = current[keys[i]];
+			}
+
+			return current;
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Clone an object.
+		 *
+		 * @param	{Object}		target					Target object.
+		 *
+		 * @return  {Object}		Cloned object.
+		 */
+		static __cloneObj(target)
+		{
+
+			let result = {};
+
+			Object.keys(target).forEach((key) => {
+				result[key] = Util.deepClone(target[key]);
+			});
+
+			return result;
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Clone an array.
+		 *
+		 * @param	{Object}		target					Target array.
+		 *
+		 * @return  {Object}		Cloned array.
+		 */
+		static __cloneArr(target)
+		{
+
+			let result = [];
+
+			for (let i = 0; i < target.length; i++)
+			{
+				result.push(Util.deepClone(target[i]));
+			}
+
+			return result;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the target is object or not.
+		 *
+		 * @param	{Object}		target					Target item.
+		 *
+		 * @return  {Boolean}		True if object.
+		 */
+		static __isObject(target)
+		{
+
+			let type = typeof target;
+			let conName = (target && target.constructor && target.constructor.name);
+
+			return (target !== null && conName === "Object" && type !== "function");
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the target is mergeable object or not.
+		 *
+		 * @param	{Object}		target					Target item.
+		 *
+		 * @return  {Boolean}		True if mergeable.
+		 */
+		static __isMergeable(target)
+		{
+
+			let type = typeof target;
+			let conName = (target && target.constructor && target.constructor.name);
+
+			return (target !== null && conName === "Object" && type !== "function") || Array.isArray(target);
+
+		}
+
 	}
 
 	// =============================================================================
@@ -611,39 +723,39 @@
 		/**
 		 * Define new component in ES5 way.
 		 *
-		 * @param	{Object}		superClass			Super class.
-		 * @param	{Object}		settings			Component Settings.
-		 * @param	{String}		tagName				Tag name.
 		 * @param	{String}		className			Class name.
+		 * @param	{Object}		settings			Component Settings.
+		 * @param	{Object}		superClass			Super class.
+		 * @param	{String}		tagName				Tag name.
 		 */
-		static newComponent(superClass, settings, tagName, className)
+		static newComponent(className, settings, superClass, tagName)
 		{
 
-			className = ( className ? className : Util.getClassNameFromTagName(tagName) );
+			superClass = ( superClass ? superClass : BITSMIST.v1.Component );
 
 			// Define class
 			let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
-			let component = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "(){ " + funcDef + " }")(superClass);
-			ClassUtil.inherit(component, superClass);
+			let classDef = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "()" + funcDef)(superClass);
+			ClassUtil.inherit(classDef, superClass);
 
 			// Class settings
-			settings = Object.assign({}, settings);
+			settings = Util.deepMerge({}, settings);
 			settings.settings = ( settings.settings ? settings.settings : {} );
 			settings["settings"]["name"] = className;
-			component.prototype._getSettings = function() {
-				return settings;
+			classDef.prototype._getSettings = function() {
+				return Util.deepMerge(superClass.prototype._getSettings(), settings);
 			};
 
 			// Export class
-			window.BITSMIST.v1[className] = component;
+			window[className] = classDef;
 
 			// Define tag
 			if (tagName)
 			{
-				customElements.define(tagName.toLowerCase(), component);
+				customElements.define(tagName.toLowerCase(), classDef);
 			}
 
-			return component;
+			return classDef;
 
 		}
 
@@ -660,8 +772,7 @@
 
 			subClass.prototype = Object.create(superClass.prototype);
 			subClass.prototype.constructor = subClass;
-			subClass.prototype._super = superClass;
-			Object.setPrototypeOf(subClass, superClass);
+	//		Object.setPrototypeOf(subClass, superClass); // Disabled for performance sake
 
 		}
 
@@ -945,26 +1056,25 @@
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
 		 */
-		static register(key, value)
+		static register(organizerName, organizerInfo)
 		{
 
-			// Assert
-			value = Object.assign({}, value);
-			value["name"] = ( value["name"] ? value["name"] : key );
-			value["targetWords"] = ( value["targetWords"] ? value["targetWords"] : [] );
-			value["targetWords"] = ( Array.isArray(value["targetWords"]) ? value["targetWords"] : [value["targetWords"]] );
-			value["targetEvents"] = ( value["targetEvents"] ? value["targetEvents"] : [] );
-			value["targetEvents"] = ( Array.isArray(value["targetEvents"]) ? value["targetEvents"] : [value["targetEvents"]] );
+			let info = Util.deepMerge({}, organizerInfo);
+			info["name"] = ( organizerInfo["name"] ? organizerInfo["name"] : organizerName );
+			info["targetWords"] = ( organizerInfo["targetWords"] ? organizerInfo["targetWords"] : [] );
+			info["targetWords"] = ( Array.isArray(organizerInfo["targetWords"]) ? organizerInfo["targetWords"] : [organizerInfo["targetWords"]] );
+			info["targetEvents"] = ( organizerInfo["targetEvents"] ? organizerInfo["targetEvents"] : [] );
+			info["targetEvents"] = ( Array.isArray(organizerInfo["targetEvents"]) ? organizerInfo["targetEvents"] : [organizerInfo["targetEvents"]] );
 
-			OrganizerOrganizer._organizers[key] = value;
+			OrganizerOrganizer._organizers[organizerName] = info;
 
 			// Global init
-			value["object"].globalInit(value["targetClassName"]);
+			info["object"].globalInit(info["targetClassName"]);
 
 			// Create target index
-			for (let i = 0; i < value["targetWords"].length; i++)
+			for (let i = 0; i < info["targetWords"].length; i++)
 			{
-				OrganizerOrganizer._targetWords[value["targetWords"][i]] = value;
+				OrganizerOrganizer._targetWords[info["targetWords"][i]] = info;
 			}
 
 		}
@@ -980,6 +1090,7 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
+		/*
 		static addTarget(organizerName, targetName, targets)
 		{
 
@@ -1001,6 +1112,7 @@
 			}
 
 		}
+		*/
 
 		// ------------------------------------------------------------------------
 		//  Protected
@@ -1043,7 +1155,7 @@
 			// Add and init new organizers
 			OrganizerOrganizer._sortItems(targets).forEach((key) => {
 				chain = chain.then(() => {
-					component._organizers[key] = Object.assign({}, OrganizerOrganizer._organizers[key], Util.safeGet(settings, "organizers." + key));
+					component._organizers[key] = Util.deepMerge(Util.deepClone(OrganizerOrganizer._organizers[key]), Util.safeGet(settings, "organizers." + key));
 					return component._organizers[key].object.init(component, settings);
 				});
 			});
@@ -1205,6 +1317,12 @@
 					if (xhr.status === 200 || xhr.status === 201)
 					{
 						resolve(xhr);
+						/*
+						let wait = Math.floor(Math.random() * 2000);
+						setTimeout(() => {
+							resolve(xhr);
+						}, wait);
+						*/
 					}
 					else
 					{
@@ -1234,24 +1352,22 @@
 		 */
 		static loadScript(url) {
 
+	console.log(`@@@Loading script: ${url}`);
 			return new Promise((resolve, reject) => {
-				let source = url;
 				let script = document.createElement('script');
-				let prior = document.getElementsByTagName('script')[0];
-				script.async = 1;
-				script.onload = script.onreadystatechange = ( _, isAbort ) => {
-					if(isAbort || !script.readyState || /loaded|complete/.test(script.readyState) ) {
-						script.onload = script.onreadystatechange = null;
-						script = undefined;
+				script.src = url;
+				script.async = true;
 
-						if(!isAbort) {
-							resolve();
-						}
-					}
+				script.onload = () => {
+					resolve();
 				};
 
-				script.src = source;
-				prior.parentNode.insertBefore(script, prior);
+				script.onerror = (e) => {
+					reject(e);
+				};
+
+				let head = document.getElementsByTagName('head')[0];
+				head.appendChild(script);
 			});
 
 		}
@@ -1279,17 +1395,36 @@
 		constructor(options)
 		{
 
-			// Init vars
-			this._options = Object.assign({}, options);
-
 			// Init
-			this.items = Util.safeGet(this._options, "items");
-			this.merger = Util.safeGet(this._options, "merger", Util.deepMerge );
+			this.options = options || {};
+			this.items = Util.safeGet(options, "items", {});
+			this.merger = Util.safeGet(options, "merger", Util.deepMerge);
 
 		}
 
 		// -------------------------------------------------------------------------
 		//  Setter/Getter
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Options.
+		 *
+		 * @type	{Object}
+		 */
+		get options()
+		{
+
+			return this._options;
+
+		}
+
+		set options(value)
+		{
+
+			this._options = Util.deepMerge({}, value);
+
+		}
+
 		// -------------------------------------------------------------------------
 
 		/**
@@ -1307,7 +1442,7 @@
 		set items(value)
 		{
 
-			this._items = Object.assign({}, value);
+			this._items = Util.deepMerge({}, value);
 
 		}
 
@@ -1361,7 +1496,7 @@
 		clone()
 		{
 
-			return Util.deepClone({}, this._items);
+			return Util.deepMerge({}, this._items);
 
 		}
 
@@ -1381,10 +1516,7 @@
 
 			for (let i = 0; i < items.length; i++)
 			{
-				if (items[i] && typeof items[i] === "object")
-				{
-					merger(this._items, items[i]);
-				}
+				this._items = merger(this._items, items[i]);
 			}
 
 		}
@@ -1417,7 +1549,14 @@
 		set(key, value, options)
 		{
 
-			Util.safeMerge(this._items, key, value);
+			if (options && options["merge"])
+			{
+				return Util.safeMerge(this._items, key, defaultValue);
+			}
+			else
+			{
+				Util.safeSet(this._items, key, value);
+			}
 
 		}
 
@@ -1431,7 +1570,7 @@
 		remove(key)
 		{
 
-			delete this._items[key];
+			Util.safeRemove(this._items, key);
 
 		}
 
@@ -1478,7 +1617,7 @@
 			super(options);
 
 			// Init vars
-			this.chain;
+			this._chain;
 
 			// Chain
 			let chain = Util.safeGet(this._options, "chain");
@@ -1494,38 +1633,6 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Items (Override).
-		 *
-		 * @type	{Object}
-		 */
-		get items()
-		{
-
-			let items;
-
-			if (this._chain)
-			{
-				items = Util.deepClone(this._chain.clone(), this._items);
-			}
-			else
-			{
-				items = this.clone();
-			}
-
-			return items;
-
-		}
-
-		set items(value)
-		{
-
-			this._items = Object.assign({}, value);
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
 		 * Local items.
 		 *
 		 * @type	{Object}
@@ -1533,7 +1640,7 @@
 		get localItems()
 		{
 
-			return this.clone();
+			return Store.prototype.clone.call(this);
 
 		}
 
@@ -1551,7 +1658,7 @@
 
 			if (this._chain)
 			{
-				return Util.deepClone(this._chain.clone(), this._items);
+				return Util.deepMerge(this._chain.clone(), this._items);
 			}
 			else
 			{
@@ -1593,7 +1700,7 @@
 
 			let result = defaultValue;
 
-			if (this.has(key))
+			if (Store.prototype.has.call(this, key))
 			{
 				result = Store.prototype.get.call(this, key, defaultValue);
 			}
@@ -1645,8 +1752,31 @@
 			}
 			else
 			{
-				Store.prototype.set.call(this, key, value);
+				Store.prototype.set.call(this, key, value, options);
 			}
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Check if the store has specified key.
+		 *
+		 * @param	{String}		key					Key to check.
+		 *
+		 * @return	{Boolean}		True:exists, False:not exists.
+		 */
+		has(key)
+		{
+
+			let result = Util.safeHas(this._items, key);
+
+			if (result === false && this._chain)
+			{
+				result = Util.safeHas(this._chain._items, key);
+			}
+
+			return result;
 
 		}
 
@@ -1732,27 +1862,30 @@
 		static _loadExternalSetting(component, settingName)
 		{
 
-			let name, path;
+			let fileName;
+			let loadOptions = {};
 
 			if (component.hasAttribute("bm-" + settingName + "ref"))
 			{
-				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-" + settingName + "ref"));
-				path = arr[0];
-				name = arr[1].slice(0, -3);
+				let url = Util.parseURL(component.getAttribute("bm-" + settingName + "ref"));
+				fileName = url.filenameWithoutExtension;
+				loadOptions["path"] = url.path;
+				loadOptions["query"] = url.query;
 			}
 			else
 			{
-				path = ( component.hasAttribute("bm-" + settingName + "path") ? component.getAttribute("bm-" + settingName + "path") : "" );
-				name = ( component.hasAttribute("bm-" + settingName + "name") ? component.getAttribute("bm-" + settingName + "name") : "" );
-				if (path && !name)
+				let path = ( component.hasAttribute("bm-" + settingName + "path") ? component.getAttribute("bm-" + settingName + "path") : "" );
+				fileName = ( component.hasAttribute("bm-" + settingName + "name") ? component.getAttribute("bm-" + settingName + "name") : "" );
+				if (path && !fileName)
 				{
-					name = "settings";
+					fileName = "settings";
 				}
+				loadOptions["path"] = path;
 			}
 
-			if (name || path)
+			if (fileName || loadOptions["path"])
 			{
-				return component.loadSetting(name, {"path":path});
+				return component.loadSetting(fileName, loadOptions);
 			}
 
 		}
@@ -1817,14 +1950,22 @@
 	Component.prototype.connectedCallback = function()
 	{
 
-		// Create a promise to prevent from start/stop while stopping/starting
+		// The first time only initialization
 		if (!this._ready)
 		{
+			// Create a promise to prevent from start/stop while stopping/starting
 			this._ready = Promise.resolve();
+
+			this.setAttribute("bm-powered", "");
+			this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+			this._name = this.constructor.name;
 		}
 
 		// Start
 		this._ready = this._ready.then(() => {
+			console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			return this.changeState("connected");
+		}).then(() => {
 			if (!this._initialized || this.settings.get("settings.autoRestart"))
 			{
 				this._initialized = true;
@@ -1833,7 +1974,7 @@
 			else
 			{
 				console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}`);
-				return this.changeState("started");
+				return this.changeState("ready");
 			}
 		});
 
@@ -1847,12 +1988,16 @@
 	Component.prototype.disconnectedCallback = function()
 	{
 
-		if (this.settings.get("settings.autoStop"))
-		{
-			this._ready = this._ready.then(() => {
+		// Stop
+		this._ready = this._ready.then(() => {
+			if (this.settings.get("settings.autoStop"))
+			{
 				return this.stop();
-			});
-		}
+			}
+		}).then(() => {
+			console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.name}, id=${this.id}`);
+			return this.changeState("disconnected");
+		});
 
 	};
 
@@ -1937,7 +2082,6 @@
 			"settings": {
 				"autoFetch":			true,
 				"autoFill":				true,
-				"autoPostStart":		true,
 				"autoRefresh":			true,
 				"autoRestart":			false,
 				"autoSetup":			true,
@@ -1954,23 +2098,42 @@
 				"TemplateOrganizer":	{"settings":{"attach":true}},
 			}
 		};
-		settings = ( settings ? Util.deepMerge(defaults, settings) : defaults );
-
-		// Init vars
-		this.setAttribute("bm-powered", "");
-		this._uniqueId = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-		this._name = this.constructor.name;
-		this._rootElement = Util.safeGet(settings, "settings.rootElement", this);
+		settings = Util.deepMerge(defaults, settings);
 
 		return Promise.resolve().then(() => {
-			return this._initStart(settings);
+			return this._injectSettings(settings);
+		}).then((newSettings) => {
+			return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
 		}).then(() => {
-			return this._preStart();
+			this._name = this.settings.get("settings.name", this._name);
+			this._rootElement = this.settings.get("settings.rootElement", this);
+			return this.initOrganizers(this.settings.items);
 		}).then(() => {
-			if (this.settings.get("settings.autoPostStart"))
+			console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
+			return this.changeState("starting");
+		}).then(() => {
+			return this.callOrganizers("beforeStart", this.settings.items);
+		}).then(() => {
+			return this.trigger("beforeStart");
+		}).then(() => {
+			return this.switchTemplate(this.settings.get("settings.templateName"));
+		}).then(() => {
+			if (this.settings.get("settings.autoRefresh"))
 			{
-				return this._postStart();
+				return this.refresh();
 			}
+		}).then(() => {
+			return this.trigger("doStart");
+		}).then(() => {
+			console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
+			return this.changeState("started");
+		}).then(() => {
+			return this.callOrganizers("afterStart", this.settings.items);
+		}).then(() => {
+			return this.trigger("afterStart");
+		}).then(() => {
+			console.debug(`Component.start(): Component is ready. name=${this.name}, id=${this.id}`);
+			return this.changeState("ready");
 		});
 
 	};
@@ -1987,7 +2150,7 @@
 	Component.prototype.stop = function(options)
 	{
 
-		options = Object.assign({}, options);
+		options = Util.deepMerge({}, options);
 
 		return Promise.resolve().then(() => {
 			console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
@@ -2018,7 +2181,7 @@
 	Component.prototype.switchTemplate = function(templateName, options)
 	{
 
-		options = Object.assign({}, options);
+		options = Util.deepMerge({}, options);
 
 		if (this.activeTemplateName === templateName)
 		{
@@ -2026,10 +2189,18 @@
 		}
 
 		return Promise.resolve().then(() => {
-			console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-			return this.addTemplate(templateName);
-		}).then(() => {
-			return this.applyTemplate(templateName);
+			// Switch template
+			if (this.settings.get("settings.hasTemplate"))
+			{
+				return Promise.resolve().then(() => {
+					console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+					return this.addTemplate(templateName);
+				}).then(() => {
+					return this.applyTemplate(templateName);
+				}).then(() => {
+					console.debug(`Component.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+				});
+			}
 		}).then(() => {
 			// Setup
 			let autoSetup = this.settings.get("settings.autoSetup");
@@ -2037,16 +2208,12 @@
 			{
 				return this.setup(this.settings.items);
 			}
-
-			this.hideConditionalElements();
 		 }).then(() => {
 	 		return this.loadTags(this.rootElement);
 		}).then(() => {
 			return this.callOrganizers("afterAppend", this.settings.items);
 		}).then(() => {
 			return this.trigger("afterAppend", options);
-		}).then(() => {
-			console.debug(`Component.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 		});
 
 	};
@@ -2063,7 +2230,7 @@
 	Component.prototype.setup = function(options)
 	{
 
-		options = Object.assign({}, options);
+		options = Util.deepMerge({}, options);
 
 		return Promise.resolve().then(() => {
 			console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
@@ -2090,7 +2257,7 @@
 	Component.prototype.refresh = function(options)
 	{
 
-		options = Object.assign({}, options);
+		options = Util.deepMerge({}, options);
 
 		return Promise.resolve().then(() => {
 			console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}`);
@@ -2103,8 +2270,6 @@
 			{
 				return this.fetch(options);
 			}
-		}).then(() => {
-			this.showConditionalElements(this.item);
 		}).then(() => {
 			// Fill
 			if (Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))
@@ -2133,7 +2298,7 @@
 	Component.prototype.fetch = function(options)
 	{
 
-		options = Object.assign({}, options);
+		options = Util.deepMerge({}, options);
 
 		return Promise.resolve().then(() => {
 			console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
@@ -2161,6 +2326,18 @@
 	 */
 	Component.prototype.fill = function(options)
 	{
+
+		options = Util.deepMerge({}, options);
+
+		return Promise.resolve().then(() => {
+			console.debug(`Component.fill(): Filling with data. name=${this.name}`);
+			return this.trigger("beforeFill", options);
+		}).then(() => {
+			return this.trigger("doFill", options);
+		}).then(() => {
+			return this.trigger("afterFill", options);
+		});
+
 	};
 
 	// -----------------------------------------------------------------------------
@@ -2221,124 +2398,6 @@
 	{
 
 		return {};
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Initialize start processing.
-	 *
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype._initStart = function(settings)
-	{
-
-		return Promise.resolve().then(() => {
-			return this._injectSettings(settings);
-		}).then((newSettings) => {
-			return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
-		}).then(() => {
-			this._adjustSettings();
-
-			return this.initOrganizers(this.settings.items);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Pre start processing.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype._preStart = function()
-	{
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
-			return this.changeState("starting");
-		}).then(() => {
-			return this.addOrganizers(this.settings.items);
-		}).then(() => {
-			return this.callOrganizers("beforeStart", this.settings.items);
-		}).then(() => {
-			return this.trigger("beforeStart");
-		}).then(() => {
-			// Switch template
-			if (this.settings.get("settings.hasTemplate"))
-			{
-				return this.switchTemplate(this.settings.get("settings.templateName"));
-			}
-			else
-			{
-				// Setup
-				let autoSetup = this.settings.get("settings.autoSetup");
-				if (autoSetup)
-				{
-					return this.setup(this.settings.items);
-				}
-			}
-		}).then(() => {
-			// Refresh
-			if (this.settings.get("settings.autoRefresh"))
-			{
-				return this.refresh();
-			}
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Post start processing.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype._postStart = function()
-	{
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
-			return this.changeState("started");
-		}).then(() => {
-			return this.callOrganizers("afterStart", this.settings.items);
-		}).then(() => {
-			return this.trigger("afterStart");
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Adjust default settings according to current setttings.
-	 *
-	 * @param	{Object}		settings			Settings.
-	 */
-	Component.prototype._adjustSettings = function()
-	{
-
-		// root element
-		this._rootElement = this.settings.get("settings.rootElement", this);
-
-		// Overwrite name if specified
-		let name = this.settings.get("settings.name");
-		if (name)
-		{
-			this._name = name;
-		}
-
-		// Do not refresh/setup on start when component is morphing
-		if (this.settings.get("settings.autoMorph"))
-		{
-			this.settings.set("settings.autoRefresh", false);
-			this.settings.set("settings.autoSetup", false);
-		}
 
 	};
 
@@ -2794,7 +2853,7 @@
 			for (let i = 0; i < waitlist.length; i++)
 			{
 				// Set default state when not specified
-				waitlist[i]["state"] = waitlist[i]["state"] || "started";
+				waitlist[i]["state"] = waitlist[i]["state"] || "ready";
 
 				// Index for component id + state
 				if (waitlist[i].id)
@@ -3029,23 +3088,42 @@
 		static __isStateMatch(currentState, expectedState)
 		{
 
-			expectedState = expectedState || "started"; // Default is "started"
-			let isMatch = true;
+			let isMatch = false;
 
-			switch (expectedState)
+			switch (currentState)
 			{
-				case "started":
+				case "ready":
 					if (
-						currentState !== "started"
+						expectedState === "ready" ||
+						expectedState === "started" ||
+						expectedState === "starting"
 					)
 					{
-						isMatch = false;
+						isMatch = true;
+					}
+					break;
+				case "started":
+					if (
+						expectedState === "started" ||
+						expectedState === "starting"
+					)
+					{
+						isMatch = true;
+					}
+					break;
+				case "stopped":
+					if (
+						expectedState === "stopped" ||
+						expectedState === "stopping"
+					)
+					{
+						isMatch = true;
 					}
 					break;
 				default:
-					if (currentState !== expectedState)
+					if ( currentState === expectedState )
 					{
-						isMatch = false;
+						isMatch = true;
 					}
 					break;
 			}
@@ -3160,8 +3238,6 @@
 			Component.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); };
 			Component.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); };
 			Component.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); };
-			Component.prototype.showConditionalElements = function(item) { return TemplateOrganizer._showConditionalElements(this, item); };
-			Component.prototype.hideConditionalElements = function() { return TemplateOrganizer._hideConditionalElements(this); };
 
 		}
 
@@ -3175,7 +3251,7 @@
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		static init(component, setttings)
+		static init(component, settings)
 		{
 
 			// Init vars
@@ -3185,7 +3261,7 @@
 			// Set defaults if not set
 			if (!component.settings.get("settings.templateName"))
 			{
-				let templateName = component.settings.get("settings.fileName") || component.tagName.toLowerCase();
+				let templateName = component.settings.get("loadings.fileName") || component.tagName.toLowerCase();
 				component.settings.set("settings.templateName", templateName);
 			}
 
@@ -3357,55 +3433,6 @@
 		}
 
 		// -------------------------------------------------------------------------
-
-		/**
-		 * Show "bm-visible" elements if condition passed.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		item				Item used to judge condition.
-		 */
-		static _showConditionalElements(component, item)
-		{
-
-			// Get elements with bm-visible attribute
-			let elements = Util.scopedSelectorAll(component, "[bm-visible]");
-
-			// Show elements
-			elements.forEach((element) => {
-				let condition = element.getAttribute("bm-visible");
-				if (Util.safeEval(condition, item, item))
-				{
-					element.style.removeProperty("display");
-				}
-				else
-				{
-					element.style.display = "none";
-				}
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Hide "bm-visible" elements.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		static _hideConditionalElements(component)
-		{
-
-			// Get elements with bm-visible attribute
-			let elements = Util.scopedSelectorAll(component, "[bm-visible]");
-
-			// Hide elements
-			elements.forEach((element) => {
-				element.style.display = "none";
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
 		//  Privates
 		// -------------------------------------------------------------------------
 
@@ -3473,11 +3500,6 @@
 				return EventOrganizer._removeEventHandler(this, element, eventName, handlerInfo)
 			};
 
-			// Add properties
-			Object.defineProperty(Component.prototype, 'eventResult', {
-				get() { return this._eventResult; },
-			});
-
 		}
 
 		// -------------------------------------------------------------------------
@@ -3492,10 +3514,6 @@
 		 */
 		static init(component, settings)
 		{
-
-			// Init vars
-			component._eventResult = {};
-
 		}
 
 		// -------------------------------------------------------------------------
@@ -3523,6 +3541,7 @@
 			}
 
 		}
+
 		// -------------------------------------------------------------------------
 
 		/**
@@ -3564,7 +3583,7 @@
 		{
 
 			element = element || component;
-			let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
+			let handlerOptions = (typeof handlerInfo === "object" ? Util.deepClone(handlerInfo) : {});
 
 			// Get handler
 			let handler = EventOrganizer._getEventHandler(component, handlerInfo);
@@ -3645,6 +3664,7 @@
 		{
 
 			rootNode = ( rootNode ? rootNode : component );
+			eventInfo = ( eventInfo ? eventInfo : component.settings.get("events." + elementName) );
 
 			// Get target elements
 			let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
@@ -3709,10 +3729,8 @@
 		static _trigger(component, eventName, options, element)
 		{
 
-			options = Object.assign({}, options);
+			options = Util.deepMerge({}, options);
 			options["sender"] = options["sender"] || component;
-			component._eventResult = {};
-			options["result"] = component._eventResult;
 			element = ( element ? element : component );
 			let e = null;
 
@@ -3934,17 +3952,30 @@
 			if (Util.safeGet(e, "detail.async", false) === false)
 			{
 				// Wait previous handler
-				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then((result) => {
+				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(() => {
 					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
 					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				}).catch((err) => {
+					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+					throw(err);
 				});
 			}
 			else
 			{
 				// Does not wait previous handler
-				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
-				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				try
+				{
+					this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
+					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				}
+				catch (err)
+				{
+					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
+					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+					throw err;
+				}
 			}
 
 		}
@@ -3979,7 +4010,7 @@
 					handler = ( typeof handler === "string" ? component[handler] : handler );
 					Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
 
-					// Execute handler
+					// Execute the handler
 					let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
 					return handler.call(bindTo, sender, e, ex);
 				});
@@ -4064,11 +4095,10 @@
 			// Add methods
 			BITSMIST.v1.Component.prototype.getLoader = function(...args) { return LoaderOrganizer._getLoader(this, ...args); };
 			BITSMIST.v1.Component.prototype.loadTags = function(...args) { return this.getLoader().loadTags(...args); };
-			BITSMIST.v1.Component.prototype.loadTag = function(...args) { return this.getLoader().loadTag(...args); };
 			BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return this.getLoader().loadComponent(...args); };
 			BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this.getLoader().loadTemplate(this, ...args); };
 			BITSMIST.v1.Component.prototype.loadSetting = function(...args) { return this.getLoader().loadSetting(this, ...args); };
-			BITSMIST.v1.Component.prototype.loadSettingFile = function(...args) { return this.getLoader().loadSettingFile(this, ...args); };
+			BITSMIST.v1.Component.prototype.loadSettingFile = function(...args) { return this.getLoader().loadSettingFile(...args); };
 
 			// Init vars
 			LoaderOrganizer._loaders = {};
@@ -4114,7 +4144,6 @@
 
 			// Init vars
 			component._components = {};
-
 			component.getLoader().init(component);
 
 		}
@@ -4172,7 +4201,7 @@
 		static register(key, value)
 		{
 
-			value = Object.assign({}, value);
+			value = Util.deepMerge({}, value);
 			value["name"] = ( value["name"] ? value["name"] : key );
 
 			LoaderOrganizer._loaders[key] = value;
@@ -4218,18 +4247,31 @@
 
 			console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
 
-			let className = Util.safeGet(settings, "loadings.className") || componentName;
-			let tagName = Util.safeGet(settings, "loadings.tagName") || Util.getTagNameFromClassName(className);
+			// Get a tag name
+			let tagName;
+			let tag = Util.safeGet(settings, "loadings.tag");
+			if (tag)
+			{
+				let pattern = /([\w-]+)\s+\w+.*?>/;
+				tagName = tag.match(pattern)[1];
+			}
+			else
+			{
+				tagName = Util.safeGet(settings, "loadings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
+			}
 
 			return Promise.resolve().then(() => {
-				// Load component
-				let splitComponent = Util.safeGet(settings, "loadings.splitComponent", component.settings.get("system.splitComponent", false));
-				let options = { "splitComponent":splitComponent };
-
-				return component.loadComponent(className, settings, options, tagName);
+				let loaderName = Util.safeGet(settings, "loadings.loaderName", "DefaultLoader");
+				let loader = LoaderOrganizer._loaders[loaderName].object;
+				if (Util.safeGet(settings, "loadings.autoLoad") || Util.safeGet(settings, "loadings.autoMorph"))
+				{
+					return loader.loadComponent(tagName, componentName, settings);
+				}
 			}).then(() => {
+				Util.assert(Util.safeGet(settings, "loadings.rootNode"), `Root node not specified. name=${component.name}, componentName=${componentName}`);
+
 				// Insert tag
-				if (Util.safeGet(settings, "loadings.rootNode") && !component._components[componentName])
+				if (!component._components[componentName])
 				{
 					component._components[componentName] = LoaderOrganizer.__insertTag(component, tagName, settings);
 				}
@@ -4238,10 +4280,9 @@
 				if (sync || Util.safeGet(settings, "loadings.sync"))
 				{
 					sync = sync || Util.safeGet(settings, "loadings.sync"); // sync precedes settings["sync"]
-					let state = (sync === true ? "started" : sync);
-					let c = className.split(".");
+					let state = (sync === true ? "ready" : sync);
 
-					return component.waitFor([{"name":c[c.length - 1], "state":state}]);
+					return component.waitFor([{"name":componentName, "state":state}]);
 				}
 			});
 
@@ -4266,13 +4307,12 @@
 
 			// Check root node
 			let root = component.rootElement.querySelector(Util.safeGet(settings, "loadings.rootNode"));
-			Util.assert(root, `LoaderOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "settings.rootNode")}`, ReferenceError);
+			Util.assert(root, `LoaderOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "loadings.rootNode")}`, ReferenceError);
 
 			// Build tag
 			let tag = ( Util.safeGet(settings, "loadings.tag") ? Util.safeGet(settings, "loadings.tag") : "<" + tagName +  "></" + tagName + ">" );
 
 			// Insert tag
-			//if (Util.safeGet(settings, "settings.overwrite"))
 			if (Util.safeGet(settings, "loadings.overwrite"))
 			{
 				root.outerHTML = tag;
@@ -4286,11 +4326,6 @@
 
 			// Inject settings to added component
 			addedComponent._injectSettings = function(curSettings){
-				// super()
-				if (addedComponent._super && addedComponent._super.prototype._injectSettings)
-				{
-					curSettings = addedComponent._super.prototype._injectSettings.call(addedComponent, curSettings);
-				}
 				return Util.deepMerge(curSettings, settings);
 			};
 
@@ -4324,14 +4359,14 @@
 		static init(component, options)
 		{
 
-			this._loadAttrSettings(component);
+			component.settings.merge(this._loadAttrSettings(component));
 
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Load scripts for tags which has bm-autoload attribute.
+		 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
 		 *
 		 * @param	{HTMLElement}	rootNode			Target node.
 		 * @param	{Object}		options				Load Options.
@@ -4344,85 +4379,31 @@
 			console.debug(`Loading tags. rootNode=${rootNode.tagName}`);
 
 			let promises = [];
-			let waitList = [];
 
 			// Load tags that has bm-autoload/bm-automorph attribute
 			let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered])");
 			targets.forEach((element) => {
 				element.setAttribute("bm-autoloading", "");
 
-				let loader = ( element.hasAttribute("bm-loader") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loader")).object : this);
-				promises.push(loader.loadTag(element, options).then(() => {
+				// Load a tag
+				let loader = ( element.hasAttribute("bm-loadername") ? LoaderOrganizer.getLoader(element.getAttribute("bm-loadername")).object : this);
+				let settings = this._loadAttrSettings(element);
+				let className = Util.getClassNameFromTagName(element.tagName);
+				element._injectSettings = function(curSettings){
+					return Util.deepMerge(curSettings, settings);
+				};
+				promises.push(loader.loadComponent(element.tagName.toLowerCase(), className, settings).then(() => {
 					element.removeAttribute("bm-autoloading");
 				}));
 			});
 
-			// Create waiting list to wait Bitsmist components
-			targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
-			targets.forEach((element) => {
-				if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
-				{
-					let waitItem = {"object":element, "state":"started"};
-					waitList.push(waitItem);
-				}
-			});
-
-			// Wait for the components to be loaded
 			return Promise.all(promises).then(() => {
-				let waitFor = Util.safeGet(options, "waitForTags") && waitList.length > 0;
+				let waitFor = Util.safeGet(options, "waitForTags");
 				if (waitFor)
 				{
-					// Wait for the components to become "started"
-					return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
+					return DefaultLoader._waitForChildren(rootNode);
 				}
 			});
-
-		}
-
-		// -----------------------------------------------------------------------------
-
-		/**
-		 * Load a tag.
-		 *
-		 * @param	{HTMLElement}	element				Target element.
-		 * @param	{Object}		options				Load Options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static loadTag(element, options)
-		{
-
-			console.debug(`Loading a tag. element=${element.tagName}`);
-
-			// Get settings from attributes
-			let href = element.getAttribute("bm-autoload");
-			let className = element.getAttribute("bm-classname") || Util.getClassNameFromTagName(element.tagName);
-			let path = element.getAttribute("bm-path") || "";
-			let split = Util.safeGet(options, "splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false));
-			let morph = ( element.hasAttribute("bm-automorph") ?
-				( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true ) :
-				false
-			);
-			let settings = {"loadings":{"autoMorph":morph, "path":path}};
-			let loadOptions = {"splitComponent":split};
-
-			// Override path,fileName,autoMorph when bm-autoload is set
-			if (href)
-			{
-				let arr = Util.getFilenameAndPathFromUrl(href);
-				loadOptions["path"] = arr[0];
-				if (href.slice(-3).toLowerCase() === ".js")
-				{
-					settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 3);
-				}
-				else if (href.slice(-5).toLowerCase() === ".html")
-				{
-					settings["loadings"]["autoMorph"] = true;
-					settings["loadings"]["fileName"] = arr[1].substring(0, arr[1].length - 5);
-				}
-			}
-
-			return this.loadComponent(className, settings, loadOptions, element.tagName);
 
 		}
 
@@ -4431,27 +4412,17 @@
 		/**
 		 * Load a component.
 		 *
+		 * @param	{String}		tagName				Tag name.
 		 * @param	{String}		className			Class name.
 		 * @param	{Object}		settings			Component settings.
-		 * @param	{Object}		options				Load options.
-		 * @param	{String}		tagName				Component's tag name
+		 * @param	{Object}		loadOptions			Load options.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static loadComponent(className, settings, options, tagName)
+		static loadComponent(tagName, className, settings, loadOptions)
 		{
 
-			console.debug(`Loading a component. className=${className}, tagName=${tagName}`);
-
-			tagName = tagName.toLowerCase();
-			let promise;
-			let path = Util.safeGet(options, "path",
-				Util.concatPath([
-					BITSMIST.v1.settings.get("system.appBaseUrl", ""),
-					BITSMIST.v1.settings.get("system.componentPath", ""),
-					Util.safeGet(settings, "loadings.path"),
-				])
-			);
+			console.debug(`Loading a component. tagName=${tagName}, className=${className}`);
 
 			// Check if the tag is already defined
 			if (customElements.get(tagName))
@@ -4460,28 +4431,59 @@
 				return Promise.resolve();
 			}
 
-			let morph = Util.safeGet(settings, "loadings.autoMorph");
-			if (morph)
+			loadOptions = Util.deepMerge({}, loadOptions);
+
+			// Override path and filename when url is specified in autoLoad option
+			let href = Util.safeGet(settings, "loadings.autoLoad");
+			href = ( href === true ? "" : href );
+			if (href)
 			{
+				let url = Util.parseURL(href);
+
+				settings["loadings"]["appBaseUrl"] = "";
+				settings["loadings"]["componentPath"] = "";
+				settings["loadings"]["templatePath"] = "";
+				settings["loadings"]["path"] = url.path;
+				settings["loadings"]["fileName"] = url.filenameWithoutExtension;
+
+				if (url.extension === "html")
+				{
+					settings["loadings"]["autoMorph"] = ( settings["loadings"]["autoMorph"] ? settings["loadings"]["autoMorph"] : true );
+				}
+
+				loadOptions["query"] = url.query;
+			}
+
+			// Get a base class name
+			let baseClassName = Util.safeGet(settings, "loadings.autoMorph", className );
+			baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
+
+			// Get a path
+			let path = Util.safeGet(loadOptions, "path",
+				Util.concatPath([
+					Util.safeGet(settings, "loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+					Util.safeGet(settings, "loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
+					Util.safeGet(settings, "loadings.path", ""),
+				])
+			);
+
+			// Load a class
+			let fileName = Util.safeGet(settings, "loadings.fileName", tagName.toLowerCase());
+			loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
+			loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "loadgings.query"), "");
+
+			return DefaultLoader._autoloadComponent(baseClassName, fileName, path, loadOptions).then(() => {
 				// Morphing
-				let superClass = ( morph === true ?  BITSMIST.v1.Component : ClassUtil.getClass(morph) );
-				console.debug(`Morphing component. className=${className}, superClassName=${superClass.name}, tagName=${tagName}`);
+				if (baseClassName !== className)
+				{
+					let superClass = ClassUtil.getClass(baseClassName);
+					ClassUtil.newComponent(className, settings, superClass, tagName);
+				}
 
-				ClassUtil.newComponent(superClass, settings, tagName, className);
-			}
-			else
-			{
-				// Loading
-				let fileName = Util.safeGet(settings, "loadings.fileName", tagName);
-				promise = this._autoloadComponent(className, fileName, path, options);
-			}
-
-			return Promise.all([promise]).then(() => {
-				// Define tag if not defined yet
 				if (!customElements.get(tagName))
 				{
-					let newClass = ClassUtil.getClass(className);
-					customElements.define(tagName, newClass);
+					let classDef = ClassUtil.getClass(className);
+					customElements.define(tagName, classDef);
 				}
 			});
 
@@ -4494,11 +4496,11 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 * @param	{String}		templateName		Template name.
-		 * @param	{Object}		options				Load options.
+		 * @param	{Object}		loadOptions			Load options.
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		static loadTemplate(component, templateName, options)
+		static loadTemplate(component, templateName, loadOptions)
 		{
 
 			let promise;
@@ -4516,7 +4518,15 @@
 				break;
 			case "url":
 			default:
-				promise = this._loadTemplateFile(component, templateInfo["name"], options).then((template) => {
+				let path = Util.safeGet(loadOptions, "path",
+					Util.concatPath([
+						component.settings.get("loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+						component.settings.get("loadings.templatePath", BITSMIST.v1.settings.get("system.templatePath", component.settings.get("loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")))),
+						component.settings.get("loadings.path", ""),
+					])
+				);
+
+				promise = this._loadTemplateFile(templateInfo["name"], path, loadOptions).then((template) => {
 					templateInfo["html"] = template;
 				});
 				break;
@@ -4531,28 +4541,28 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Get a template html according to settings.
+		 * Load a setting file and merge to component's settings.
 		 *
 		 * @param	{Component}		component			Component.
 		 * @param	{String}		settingName			Setting name.
-		 * @param	{Object}		options				Load options.
+		 * @param	{Object}		loadOptions			Load options.
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		static loadSetting(component, settingName, options)
+		static loadSetting(component, settingName, loadOptions)
 		{
 
 			let path;
 			return Promise.resolve().then(() => {
-				path = Util.safeGet(options, "path",
+				path = Util.safeGet(loadOptions, "path",
 					Util.concatPath([
-						BITSMIST.v1.settings.get("system.appBaseUrl", ""),
-						BITSMIST.v1.settings.get("system.componentPath", ""),
-						Util.safeGet(options, "path"),
+						component.settings.get("loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+						component.settings.get("loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
+						component.settings.get("loadings.path", ""),
 					])
 				);
 
-				return this.loadSettingFile(component, settingName, path, "js");
+				return this.loadSettingFile(settingName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions));
 			}).then((extraSettings) => {
 				if (extraSettings)
 				{
@@ -4574,17 +4584,18 @@
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static loadSettingFile(component, settingName, path, type)
+		static loadSettingFile(settingName, path, loadOptions)
 		{
 
-			type = type || "js";
-			let url = Util.concatPath([path, settingName + "." + type]);
+			let type = Util.safeGet(loadOptions, "type", "js");
+			let query = Util.safeGet(loadOptions, "query");
+			let url = Util.concatPath([path, settingName + "." + type]) + (query ? "?" + query : "");
 			let settings;
 
-			console.debug(`Loading settings. name=${component.name}, url=${url}`);
+			console.debug(`Loading setting. settingName=${settingName}, path=${path}`);
 
 			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`Loaded settings. name=${component.name}, url=${url}`);
+				console.debug(`Loaded settings. url=${url}`);
 
 				switch (type)
 				{
@@ -4607,7 +4618,8 @@
 					break;
 				case "js":
 				default:
-					settings = Function('"use strict";return (' + xhr.responseText + ')').call(component);
+					let bindTo = Util.safeGet(loadOptions, "bindTo");
+					settings = Function('"use strict";return (' + xhr.responseText + ')').call(bindTo);
 					break;
 				}
 
@@ -4618,6 +4630,32 @@
 
 		// -------------------------------------------------------------------------
 		//  Protected
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Wait for components under the specified root node.
+		 *
+		 * @param	{HTMLElement}	rootNode			Target node.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _waitForChildren(rootNode)
+		{
+
+			let waitList = [];
+			let targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
+			targets.forEach((element) => {
+				if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
+				{
+					let waitItem = {"object":element, "state":"ready"};
+					waitList.push(waitItem);
+				}
+			});
+
+			return BITSMIST.v1.StateOrganizer.waitFor(waitList, {"waiter":rootNode});
+
+		}
+
 		// -------------------------------------------------------------------------
 
 		/**
@@ -4653,11 +4691,11 @@
 		 * @param	{String}		className			Component class name.
 		 * @param	{String}		fileName			Component file name.
 		 * @param	{String}		path				Path to component.
-		 * @param	{Object}		options				Load Options.
+		 * @param	{Object}		loadOptions			Load Options.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static _autoloadComponent(className, fileName, path, options)
+		static _autoloadComponent(className, fileName, path, loadOptions)
 		{
 
 			console.debug(`Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
@@ -4668,7 +4706,7 @@
 			{
 				// Already loaded
 				console.debug(`Component Already exists. className=${className}`);
-				DefaultLoader._classes.set(className, {"state":"loaded"});
+				DefaultLoader._classes.set(className + ".state", "loaded");
 				promise = Promise.resolve();
 			}
 			else if (DefaultLoader._classes.get(className, {})["state"] === "loading")
@@ -4680,11 +4718,11 @@
 			else
 			{
 				// Not loaded
-				DefaultLoader._classes.set(className, {"state":"loading"});
-				promise = this._loadComponentScript(fileName, path, options).then(() => {
+				DefaultLoader._classes.set(className + ".state", "loading");
+				promise = this._loadComponentFile(fileName, path, loadOptions).then(() => {
 					DefaultLoader._classes.set(className, {"state":"loaded", "promise":null});
 				});
-				DefaultLoader._classes.set(className, {"promise":promise});
+				DefaultLoader._classes.set(className + ".promise", promise);
 			}
 
 			return promise;
@@ -4698,22 +4736,23 @@
 		 *
 		 * @param	{String}		className			Class name.
 		 * @param	{String}		path				Path to component.
-		 * @param	{Object}		options				Load Options.
+		 * @param	{Object}		loadOptions			Load Options.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static _loadComponentScript(fileName, path, options)
+		static _loadComponentFile(fileName, path, loadOptions)
 		{
 
 			console.debug(`Loading script. fileName=${fileName}, path=${path}`);
 
-			let url1 = Util.concatPath([path, fileName + ".js"]);
-			let url2 = Util.concatPath([path, fileName + ".settings.js"]);
+			let query = Util.safeGet(loadOptions, "query");
+			let url1 = Util.concatPath([path, fileName + ".js"]) + (query ? "?" + query : "");
+			let url2 = Util.concatPath([path, fileName + ".settings.js"]) + (query ? "?" + query : "");
 
 			return Promise.resolve().then(() => {
 				return AjaxUtil.loadScript(url1);
 			}).then(() => {
-				if (options["splitComponent"])
+				if (loadOptions["splitComponent"])
 				{
 					return AjaxUtil.loadScript(url2);
 				}
@@ -4728,24 +4767,19 @@
 		/**
 		 * Load the template html.
 		 *
-		 * @param	{Component}		component			Component.
 		 * @param	{String}		templateName		Template name.
-		 * @param	{Object}		options				Load options.
+		 * @param	{String}		path				Path to template.
+		 * @param	{Object}		loadOptions			Load options.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static _loadTemplateFile(component, templateName, options)
+		static _loadTemplateFile(templateName, path, loadOptions)
 		{
 
-			console.debug(`Loading template. name=${component.name}, templateName=${templateName}`);
+			console.debug(`Loading template. templateName=${templateName}, path=${path}`);
 
-			let path = Util.concatPath([
-				component.settings.get("system.appBaseUrl", ""),
-				component.settings.get("system.templatePath", ""),
-				component.settings.get("loadings.path", ""),
-			]);
-
-			let url = Util.concatPath([path, templateName]) + ".html";
+			let query = Util.safeGet(loadOptions, "query");
+			let url = Util.concatPath([path, templateName]) + ".html" + (query ? "?" + query : "");
 			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 				console.debug(`Loaded template. templateName=${templateName}, path=${path}`);
 
@@ -4761,32 +4795,44 @@
 		 *
 		 * @param	{Component}		component			Component.
 		 */
-		static _loadAttrSettings(component)
+		static _loadAttrSettings(element)
 		{
 
-			// Get path from  bm-autoload
-			if (component.getAttribute("bm-autoload"))
+			let settings = {
+				"loadings": {}
+			};
+
+			// Split component
+			if (element.hasAttribute("bm-split"))
 			{
-				let arr = Util.getFilenameAndPathFromUrl(component.getAttribute("bm-autoload"));
-				component._settings.set("system.appBaseUrl", "");
-				component._settings.set("system.templatePath", arr[0]);
-				component._settings.set("system.componentPath", arr[0]);
-				component._settings.set("loadings.path", "");
-				if (arr[1].slice(-3).toLowerCase() === ".js")
-				{
-					component._settings.set("loadings.fileName", arr[1].substring(0, arr[1].length - 3));
-				}
-				else if (arr[1].slice(-5).toLowerCase() === ".html")
-				{
-					component._settings.set("loadings.fileName", arr[1].substring(0, arr[1].length - 5));
-				}
+				settings["loadings"]["splitComponent"] = true;
 			}
 
-			// Get path from attribute
-			if (component.hasAttribute("bm-path"))
+			// Path
+			if (element.hasAttribute("bm-path"))
 			{
-				component._settings.set("loadings.path", component.getAttribute("bm-path"));
+				settings["loadings"]["path"] = element.getAttribute("bm-path");
 			}
+
+			// File name
+			if (element.hasAttribute("bm-filename"))
+			{
+				settings["loadings"]["fileName"] = element.getAttribute("bm-filename");
+			}
+
+			// Morphing
+			if (element.hasAttribute("bm-automorph"))
+			{
+				settings["loadings"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
+			}
+
+			// Auto loading
+			if (element.hasAttribute("bm-autoload"))
+			{
+				settings["loadings"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
+			}
+
+			return settings;
 
 		}
 
@@ -4820,7 +4866,7 @@
 	window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 	OrganizerOrganizer.register("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend", "afterSpecLoad"], "order":210});
 	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
-	OrganizerOrganizer.register("LoaderOrganizer", {"object":LoaderOrganizer, "targetWords":["molds", "components"], "targetEvents":["afterStart"], "order":400});
+	OrganizerOrganizer.register("LoaderOrganizer", {"object":LoaderOrganizer, "targetWords":["molds", "components"], "targetEvents":["afterStart", "afterSpecLoad"], "order":400});
 	window.BITSMIST.v1.LoaderOrganizer = LoaderOrganizer;
 	LoaderOrganizer.register("DefaultLoader", {"object":DefaultLoader});
 	window.BITSMIST.v1.DefaultLoader = DefaultLoader;
