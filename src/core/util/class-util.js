@@ -40,7 +40,7 @@ export default class ClassUtil
 		ClassUtil.inherit(classDef, superClass);
 
 		// Class settings
-		settings = Object.assign({}, settings);
+		settings = Util.deepMerge({}, settings);
 		settings.settings = ( settings.settings ? settings.settings : {} );
 		settings["settings"]["name"] = className;
 		classDef.prototype._getSettings = function() {

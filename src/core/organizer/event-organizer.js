@@ -141,7 +141,7 @@ export default class EventOrganizer extends Organizer
 	{
 
 		element = element || component;
-		let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
+		let handlerOptions = (typeof handlerInfo === "object" ? Util.deepClone(handlerInfo) : {});
 
 		// Get handler
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
@@ -287,7 +287,7 @@ export default class EventOrganizer extends Organizer
 	static _trigger(component, eventName, options, element)
 	{
 
-		options = Object.assign({}, options);
+		options = Util.deepMerge({}, options);
 		options["sender"] = options["sender"] || component;
 		component._eventResult = {};
 		options["result"] = component._eventResult;
@@ -512,7 +512,7 @@ export default class EventOrganizer extends Organizer
 		if (Util.safeGet(e, "detail.async", false) === false)
 		{
 			// Wait previous handler
-			this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then((result) => {
+			this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(() => {
 				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
 				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
 			}).catch((err) => {
@@ -570,7 +570,7 @@ export default class EventOrganizer extends Organizer
 				handler = ( typeof handler === "string" ? component[handler] : handler );
 				Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
 
-				// Execute handler
+				// Execute the handler
 				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
 				return handler.call(bindTo, sender, e, ex);
 			});

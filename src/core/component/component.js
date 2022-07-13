@@ -192,7 +192,7 @@ Component.prototype.start = function(settings)
 			"TemplateOrganizer":	{"settings":{"attach":true}},
 		}
 	};
-	settings = ( settings ? Util.deepMerge(defaults, settings) : defaults );
+	settings = Util.deepMerge(defaults, settings);
 
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
@@ -244,7 +244,7 @@ Component.prototype.start = function(settings)
 Component.prototype.stop = function(options)
 {
 
-	options = Object.assign({}, options);
+	options = Util.deepMerge({}, options);
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
@@ -275,7 +275,7 @@ Component.prototype.stop = function(options)
 Component.prototype.switchTemplate = function(templateName, options)
 {
 
-	options = Object.assign({}, options);
+	options = Util.deepMerge({}, options);
 
 	if (this.activeTemplateName === templateName)
 	{
@@ -324,7 +324,7 @@ Component.prototype.switchTemplate = function(templateName, options)
 Component.prototype.setup = function(options)
 {
 
-	options = Object.assign({}, options);
+	options = Util.deepMerge({}, options);
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
@@ -351,7 +351,7 @@ Component.prototype.setup = function(options)
 Component.prototype.refresh = function(options)
 {
 
-	options = Object.assign({}, options);
+	options = Util.deepMerge({}, options);
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}`);
@@ -392,7 +392,7 @@ Component.prototype.refresh = function(options)
 Component.prototype.fetch = function(options)
 {
 
-	options = Object.assign({}, options);
+	options = Util.deepMerge({}, options);
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
@@ -420,6 +420,8 @@ Component.prototype.fetch = function(options)
  */
 Component.prototype.fill = function(options)
 {
+
+	options = Util.deepMerge({}, options);
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.fill(): Filling with data. name=${this.name}`);

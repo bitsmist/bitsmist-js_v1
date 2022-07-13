@@ -108,7 +108,7 @@ export default class DefaultLoader
 			return Promise.resolve();
 		}
 
-		loadOptions = ( loadOptions ? Util.deepMerge({}, loadOptions) : {} );
+		loadOptions = Util.deepMerge({}, loadOptions);
 
 		// Override path and filename when url is specified in autoLoad option
 		let href = Util.safeGet(settings, "loadings.autoLoad");

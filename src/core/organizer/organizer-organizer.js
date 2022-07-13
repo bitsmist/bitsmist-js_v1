@@ -89,26 +89,25 @@ export default class OrganizerOrganizer extends Organizer
 	 * @param	{String}		key					Key to store.
 	 * @param	{Object}		value				Value to store.
 	 */
-	static register(key, value)
+	static register(organizerName, organizerInfo)
 	{
 
-		// Assert
-		value = Object.assign({}, value);
-		value["name"] = ( value["name"] ? value["name"] : key );
-		value["targetWords"] = ( value["targetWords"] ? value["targetWords"] : [] );
-		value["targetWords"] = ( Array.isArray(value["targetWords"]) ? value["targetWords"] : [value["targetWords"]] );
-		value["targetEvents"] = ( value["targetEvents"] ? value["targetEvents"] : [] );
-		value["targetEvents"] = ( Array.isArray(value["targetEvents"]) ? value["targetEvents"] : [value["targetEvents"]] );
+		let info = Util.deepMerge({}, organizerInfo);
+		info["name"] = ( organizerInfo["name"] ? organizerInfo["name"] : organizerName );
+		info["targetWords"] = ( organizerInfo["targetWords"] ? organizerInfo["targetWords"] : [] );
+		info["targetWords"] = ( Array.isArray(organizerInfo["targetWords"]) ? organizerInfo["targetWords"] : [organizerInfo["targetWords"]] );
+		info["targetEvents"] = ( organizerInfo["targetEvents"] ? organizerInfo["targetEvents"] : [] );
+		info["targetEvents"] = ( Array.isArray(organizerInfo["targetEvents"]) ? organizerInfo["targetEvents"] : [organizerInfo["targetEvents"]] );
 
-		OrganizerOrganizer._organizers[key] = value;
+		OrganizerOrganizer._organizers[organizerName] = info;
 
 		// Global init
-		value["object"].globalInit(value["targetClassName"]);
+		info["object"].globalInit(info["targetClassName"]);
 
 		// Create target index
-		for (let i = 0; i < value["targetWords"].length; i++)
+		for (let i = 0; i < info["targetWords"].length; i++)
 		{
-			OrganizerOrganizer._targetWords[value["targetWords"][i]] = value;
+			OrganizerOrganizer._targetWords[info["targetWords"][i]] = info;
 		}
 
 	}
@@ -124,6 +123,7 @@ export default class OrganizerOrganizer extends Organizer
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
+	/*
 	static addTarget(organizerName, targetName, targets)
 	{
 
@@ -145,6 +145,7 @@ export default class OrganizerOrganizer extends Organizer
 		}
 
 	}
+	*/
 
 	// ------------------------------------------------------------------------
 	//  Protected
@@ -187,7 +188,7 @@ export default class OrganizerOrganizer extends Organizer
 		// Add and init new organizers
 		OrganizerOrganizer._sortItems(targets).forEach((key) => {
 			chain = chain.then(() => {
-				component._organizers[key] = Object.assign({}, OrganizerOrganizer._organizers[key], Util.safeGet(settings, "organizers." + key));
+				component._organizers[key] = Util.deepMerge(Util.deepClone(OrganizerOrganizer._organizers[key]), Util.safeGet(settings, "organizers." + key));
 				return component._organizers[key].object.init(component, settings);
 			});
 		});
