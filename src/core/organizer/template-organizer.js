@@ -51,7 +51,7 @@ export default class TemplateOrganizer extends Organizer
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(component, setttings)
+	static init(component, settings)
 	{
 
 		// Init vars
