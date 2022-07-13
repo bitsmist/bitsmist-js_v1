@@ -97,7 +97,7 @@ export default class StateOrganizer extends Organizer
 		{
 			if (waitFor[conditions])
 			{
-				promise = StateOrganizer._waitFor(component, waitFor[conditions], component.settings.get("system.waitforTimeout"));
+				promise = StateOrganizer._waitFor(component, waitFor[conditions]);
 			}
 		}
 
@@ -164,7 +164,7 @@ export default class StateOrganizer extends Organizer
 	{
 
 		let promise;
-		let timeout = ( options && options["timeout"] ? options["timeout"] : 10000 );
+		let timeout = ( options && options["timeout"] ) || component.settings.get("system.waitForTimeout", 10000);
 		let waiter = ( options && options["waiter"] ? options["waiter"] : component );
 		let waitInfo = {"waiter":waiter, "waitlist":waitlist.slice()};
 
