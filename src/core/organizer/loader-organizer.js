@@ -108,7 +108,10 @@ export default class LoaderOrganizer extends Organizer
 		{
 			Object.keys(molds).forEach((moldName) => {
 				chain = chain.then(() => {
-					return LoaderOrganizer._addComponent(component, moldName, molds[moldName], true);
+					if (!component.components[moldName])
+					{
+						return LoaderOrganizer._addComponent(component, moldName, molds[moldName], true);
+					}
 				});
 			});
 		}
@@ -119,7 +122,10 @@ export default class LoaderOrganizer extends Organizer
 		{
 			Object.keys(components).forEach((componentName) => {
 				chain = chain.then(() => {
-					return LoaderOrganizer._addComponent(component, componentName, components[componentName]);
+					if (!component.components[componentName])
+					{
+						return LoaderOrganizer._addComponent(component, componentName, components[componentName]);
+					}
 				});
 			});
 		}
@@ -244,7 +250,7 @@ export default class LoaderOrganizer extends Organizer
 		let addedComponent;
 
 		// Check root node
-		let root = component.rootElement.querySelector(Util.safeGet(settings, "loadings.rootNode"));
+		let root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "loadings.rootNode"), {"penetrate":true})[0];
 		Util.assert(root, `LoaderOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "loadings.rootNode")}`, ReferenceError);
 
 		// Build tag
