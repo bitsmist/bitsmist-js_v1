@@ -696,10 +696,7 @@ export default class Util
 	static __isMergeable(target)
 	{
 
-		let type = typeof target;
-		let conName = (target && target.constructor && target.constructor.name);
-
-		return (target !== null && conName === "Object" && type !== "function") || Array.isArray(target);
+		return Util.__isObject(target) || Array.isArray(target);
 
 	}
 
