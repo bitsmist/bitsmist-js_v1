@@ -164,7 +164,7 @@ export default class StateOrganizer extends Organizer
 	{
 
 		let promise;
-		let timeout = ( options && options["timeout"] ) || component.settings.get("system.waitForTimeout", 10000);
+		let timeout = ( options && options["timeout"] ) || BITSMIST.v1.settings.get("system.waitForTimeout", 10000);
 		let waiter = ( options && options["waiter"] ? options["waiter"] : component );
 		let waitInfo = {"waiter":waiter, "waitlist":waitlist.slice()};
 
