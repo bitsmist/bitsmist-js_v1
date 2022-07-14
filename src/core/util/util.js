@@ -540,7 +540,7 @@ export default class Util
 	 *
 	 * @return  {Array}			Array of matched elements.
 	 */
-    static scopedSelectorAll(rootNode, query)
+    static scopedSelectorAll(rootNode, query, options)
     {
 
         // Set temp id
@@ -551,17 +551,20 @@ export default class Util
         // Query to select all
         let newQuery = id + query.replace(",", "," + id);
         let allElements = rootNode.querySelectorAll(newQuery);
+		let setAll = new Set(allElements);
 
-		// Query to select descendant of other component
-        let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
-        let removeElements = rootNode.querySelectorAll(removeQuery);
+		if (options && !options["penetrate"])
+		{
+			// Query to select descendant of other component
+			let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
+			let removeElements = rootNode.querySelectorAll(removeQuery);
 
-		// Remove elements descendant of other component
-        let setAll = new Set(allElements);
-        let setRemove = new Set(removeElements);
-        setRemove.forEach((item) => {
-            setAll.delete(item);
-        });
+			// Remove elements descendant of other component
+			let setRemove = new Set(removeElements);
+			setRemove.forEach((item) => {
+				setAll.delete(item);
+			});
+		}
 
         // Remove temp id
         rootNode.removeAttribute("__bm_tempid");
