@@ -16,7 +16,7 @@ BitsmistJS is a Web Components-based javascript framework.
 Load library from CDN in your HTML files.
 
 ```html
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.9.19/dist/bitsmist-js_v1.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/bitsmist/bitsmist-js_v1@0.10.2/dist/bitsmist-js_v1.min.js"></script>
 ```
 
 ### Download
