@@ -166,7 +166,7 @@ export default class StateOrganizer extends Organizer
 		let promise;
 		let timeout = ( options && options["timeout"] ) || BITSMIST.v1.settings.get("system.waitForTimeout", 10000);
 		let waiter = ( options && options["waiter"] ? options["waiter"] : component );
-		let waitInfo = {"waiter":waiter, "waitlist":waitlist.slice()};
+		let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 
 		if (StateOrganizer.__isAllReady(waitInfo))
 		{
@@ -178,7 +178,7 @@ export default class StateOrganizer extends Organizer
 			promise = new Promise((resolve, reject) => {
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
-				setTimeout(() => {
+				waitInfo["timer"] = setTimeout(() => {
 					let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
 					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}.`);
 				}, timeout);
@@ -378,67 +378,20 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check wait list and resolve() if components are ready.
+	 * Check wait list.
 	 */
 	static __processWaitingList(component, state)
 	{
 
-		// Process name index
-		let names = StateOrganizer.__waitingListIndexName.get(component.name + "." + state);
-		if (names && names.length > 0)
-		{
-			StateOrganizer.__processIndex(names);
-		}
-
-		// Process ID index
-		let ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + state);
-		if (ids && ids.length > 0)
-		{
-			StateOrganizer.__processIndex(ids);
-		}
-
-		// Process non indexables
-		let list = StateOrganizer.__waitingListIndexNone.get("none");
-		if (list && list.length > 0)
-		{
-			StateOrganizer.__processIndex(list);
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Process waiting list index.
-	 *
-	 * @param	{Array}			list				List of indexed waiting list id.
-	 */
-	static __processIndex(list)
-	{
-
-		let removeList = [];
-
-		for (let i = 0; i < list.length; i++)
-		{
-			let id = list[i];
-			let waitInfo = StateOrganizer.__waitingList.get(id);
-
+		Object.keys(StateOrganizer.__waitingList.items).forEach((id) => {
 			if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
 			{
-				// Remove from waiting list
+				// Resolve & Remove from waiting list
+				clearTimeout(StateOrganizer.__waitingList.get(id)["timer"]);
 				StateOrganizer.__waitingList.get(id).resolve();
 				StateOrganizer.__waitingList.remove(id);
-
-				// Add to remove list
-				removeList.push(id);
 			}
-		}
-
-		// Remove from index;
-		for (let i = removeList.length - 1; i >= 0; i--)
-		{
-			StateOrganizer.__removeFromIndex(list, removeList[i]);
-		}
+		});
 
 	}
 
@@ -452,78 +405,22 @@ export default class StateOrganizer extends Organizer
 	static __addToWaitingList(waitInfo)
 	{
 
-		// Add wait info to the waiting list.
 		let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+
+		/*
+		for (let i = 0; i < waitInfo["waitlist"].length; i++)
+		{
+			// Check if the node exists
+			if (waitInfo["waitlist"][i].rootNode)
+			{
+				let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
+
+				Util.assert(element && element.uniqueId, `StateOrganizer.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
+			}
+		}
+		*/
+
 		StateOrganizer.__waitingList.set(id, waitInfo);
-
-		// Create index for faster processing
-		let waitlist = waitInfo["waitlist"];
-		for (let i = 0; i < waitlist.length; i++)
-		{
-			// Set default state when not specified
-			waitlist[i]["state"] = waitlist[i]["state"] || "ready";
-
-			// Index for component id + state
-			if (waitlist[i].id)
-			{
-				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].state, id);
-			}
-			// Index for component name + state
-			else if (waitlist[i].name)
-			{
-				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].state, id);
-			}
-			// Not indexable
-			else
-			{
-				StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexNone, "none", id);
-			}
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add id to a waiting list index.
-	 *
-	 * @param	{Map}			index				Waiting list index.
-	 * @param	{String}		key					Index key.
-	 * @param	{String}		id					Waiting list id.
-	 */
-	static __addToIndex(index, key, id)
-	{
-
-		let list = index.get(key);
-		if (!list)
-		{
-			list = [];
-			index.set(key, list)
-		}
-
-		if (list.indexOf(id) === -1)
-		{
-			list.push(id);
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Remove id from a waiting list index.
-	 *
-	 * @param	{Array}			list				List of ids.
-	 * @param	{String}		id					Waiting list id.
-	 */
-	static __removeFromIndex(list, id)
-	{
-
-		let index = list.indexOf(id);
-		if (index > -1)
-		{
-			list.splice(index, 1);
-		}
 
 	}
 
@@ -656,25 +553,22 @@ export default class StateOrganizer extends Organizer
 		let isMatch = true;
 
 		// check instance
-		if (waitlistItem["component"] && componentInfo["object"] !== waitlistItem["component"])
+		if (waitlistItem["object"] && componentInfo["object"] !== waitlistItem["object"])
 		{
 			isMatch = false;
 		}
-
 		// check name
-		if (waitlistItem["name"] && componentInfo["object"].name !== waitlistItem["name"])
+		else if (waitlistItem["name"] && componentInfo["object"].name !== waitlistItem["name"])
 		{
 			isMatch = false;
 		}
-
 		// check id
-		if (waitlistItem["id"] && componentInfo["object"].uniqueId !== waitlistItem["id"])
+		else if (waitlistItem["id"] && componentInfo["object"].uniqueId !== waitlistItem["id"])
 		{
 			isMatch = false;
 		}
-
 		// check node
-		if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
+		else if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
 		{
 			isMatch = false;
 		}
@@ -696,6 +590,7 @@ export default class StateOrganizer extends Organizer
 	static __isStateMatch(currentState, expectedState)
 	{
 
+		expectedState = expectedState || "ready";
 		let isMatch = false;
 
 		switch (currentState)
@@ -754,13 +649,13 @@ export default class StateOrganizer extends Organizer
 
 		if (component.hasAttribute("bm-waitfor"))
 		{
-			let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"started"};
+			let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"ready"};
 			component.settings.merge({"waitFor": [waitInfo]});
 		}
 
 		if (component.hasAttribute("bm-waitfornode"))
 		{
-			let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"started"};
+			let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"ready"};
 			component.settings.merge({"waitFor": [waitInfo]});
 		}
 
