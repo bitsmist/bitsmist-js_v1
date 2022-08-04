@@ -226,7 +226,7 @@ export default class LoaderOrganizer extends Organizer
 				sync = sync || Util.safeGet(settings, "loadings.sync"); // sync precedes settings["sync"]
 				let state = (sync === true ? "ready" : sync);
 
-				return component.waitFor([{"name":componentName, "state":state}]);
+				return component.waitFor([{"id":component._components[componentName].uniqueId, "state":state}]);
 			}
 		});
 
