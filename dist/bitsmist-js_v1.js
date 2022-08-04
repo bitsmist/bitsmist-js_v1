@@ -542,7 +542,7 @@
 		 *
 		 * @return  {Array}			Array of matched elements.
 		 */
-	    static scopedSelectorAll(rootNode, query)
+	    static scopedSelectorAll(rootNode, query, options)
 	    {
 
 	        // Set temp id
@@ -553,17 +553,20 @@
 	        // Query to select all
 	        let newQuery = id + query.replace(",", "," + id);
 	        let allElements = rootNode.querySelectorAll(newQuery);
+			let setAll = new Set(allElements);
 
-			// Query to select descendant of other component
-	        let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
-	        let removeElements = rootNode.querySelectorAll(removeQuery);
+			if (options && !options["penetrate"])
+			{
+				// Query to select descendant of other component
+				let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
+				let removeElements = rootNode.querySelectorAll(removeQuery);
 
-			// Remove elements descendant of other component
-	        let setAll = new Set(allElements);
-	        let setRemove = new Set(removeElements);
-	        setRemove.forEach((item) => {
-	            setAll.delete(item);
-	        });
+				// Remove elements descendant of other component
+				let setRemove = new Set(removeElements);
+				setRemove.forEach((item) => {
+					setAll.delete(item);
+				});
+			}
 
 	        // Remove temp id
 	        rootNode.removeAttribute("__bm_tempid");
@@ -1349,7 +1352,7 @@
 		 */
 		static loadScript(url) {
 
-	console.log(`@@@Loading script: ${url}`);
+	//console.log(`@@@Loading script: ${url}`);
 			return new Promise((resolve, reject) => {
 				let script = document.createElement('script');
 				script.src = url;
@@ -2461,7 +2464,7 @@
 			component._suspends = {};
 
 			// Load settings from attributes
-			StateOrganizer.__loadAttrSettings(component);
+			StateOrganizer._loadAttrSettings(component);
 
 		}
 
@@ -2516,7 +2519,7 @@
 		static globalSuspend(state)
 		{
 
-			StateOrganizer.__suspends[state] = StateOrganizer._createSuspendInfo(state);
+			StateOrganizer.__suspends[state] = StateOrganizer.__createSuspendInfo(state);
 			StateOrganizer.__suspends[state].state = "pending";
 
 		}
@@ -2555,7 +2558,7 @@
 			let promise;
 			let timeout = ( options && options["timeout"] ) || BITSMIST.v1.settings.get("system.waitForTimeout", 10000);
 			let waiter = ( options && options["waiter"] ? options["waiter"] : component );
-			let waitInfo = {"waiter":waiter, "waitlist":waitlist.slice()};
+			let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 
 			if (StateOrganizer.__isAllReady(waitInfo))
 			{
@@ -2567,7 +2570,7 @@
 				promise = new Promise((resolve, reject) => {
 					waitInfo["resolve"] = resolve;
 					waitInfo["reject"] = reject;
-					setTimeout(() => {
+					waitInfo["timer"] = setTimeout(() => {
 						let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
 						reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}.`);
 					}, timeout);
@@ -2575,77 +2578,12 @@
 				waitInfo["promise"] = promise;
 
 				// Add to info to a waiting list.
-				StateOrganizer.__addToWaitingList(waitInfo, component);
+				StateOrganizer._addToWaitingList(waitInfo, component);
 			}
 
 			return promise;
 
 		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Wait for a component to become specific state.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		state				state.
-		 * @param	{integer}		timeout				Timeout in milliseconds.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static _waitForSingle(component, state, timeout)
-		{
-
-			let componentInfo = StateOrganizer.__components.get(component.uniqueId);
-			let waitlistItem = {"id":component.uniqueId, "state":state};
-
-			if (StateOrganizer.__isReady(waitlistItem, componentInfo))
-			{
-				return Promise.resolve();
-			}
-			else
-			{
-				return StateOrganizer.waitFor(component, [waitlistItem], timeout);
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Wait for a component to become transitionable state.
-		 *
-		 * @param	{Object}		component			Component to register.
-		 * @param	{String}		newState			New state.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		/*
-		static _waitForTransitionableState(component, newState)
-		{
-
-			if (newState === "starting")
-			{
-				return StateOrganizer._waitForSingle(component, "instantiated");
-			}
-
-			if (newState === "stopping")
-			{
-				return StateOrganizer._waitForSingle(component, "instantiated");
-			}
-
-			if (newState === "opening")
-			{
-				return StateOrganizer._waitForSingle(component, "started");
-			}
-
-			if (newState === "closing")
-			{
-				return StateOrganizer._waitForSingle(component, "opened");
-			}
-
-		}
-		*/
 
 		// -------------------------------------------------------------------------
 
@@ -2665,7 +2603,7 @@
 			component._state = state;
 			StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
 
-			StateOrganizer.__processWaitingList(component, state);
+			StateOrganizer._processWaitingList(component, state);
 
 		}
 
@@ -2680,7 +2618,7 @@
 		static _suspend(component, state)
 		{
 
-			component._suspends[state] = StateOrganizer._createSuspendInfo();
+			component._suspends[state] = StateOrganizer.__createSuspendInfo();
 		 	component._suspends[state].state = "pending";
 
 		}
@@ -2733,11 +2671,87 @@
 		}
 
 		// -------------------------------------------------------------------------
+
+		/**
+		 * Check wait list.
+		 */
+		static _processWaitingList(component, state)
+		{
+
+			Object.keys(StateOrganizer.__waitingList.items).forEach((id) => {
+				if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
+				{
+					// Resolve & Remove from waiting list
+					clearTimeout(StateOrganizer.__waitingList.get(id)["timer"]);
+					StateOrganizer.__waitingList.get(id).resolve();
+					StateOrganizer.__waitingList.remove(id);
+				}
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Add wait info to the waiting list.
+		 *
+		 * @param	{Object}		waitInfo			Wait info.
+		 */
+		static _addToWaitingList(waitInfo)
+		{
+
+			let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+
+			/*
+			for (let i = 0; i < waitInfo["waitlist"].length; i++)
+			{
+				// Check if the node exists
+				if (waitInfo["waitlist"][i].rootNode)
+				{
+					let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
+
+					Util.assert(element && element.uniqueId, `StateOrganizer.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
+				}
+			}
+			*/
+
+			StateOrganizer.__waitingList.set(id, waitInfo);
+
+		}
+
+
+		// -----------------------------------------------------------------------------
+
+		/**
+		 * Get settings from element's attribute.
+		 *
+		 * @param	{Component}		component			Component.
+		 */
+		static _loadAttrSettings(component)
+		{
+
+			// Get waitFor from attribute
+
+			if (component.hasAttribute("bm-waitfor"))
+			{
+				let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"ready"};
+				component.settings.merge({"waitFor": [waitInfo]});
+			}
+
+			if (component.hasAttribute("bm-waitfornode"))
+			{
+				let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"ready"};
+				component.settings.merge({"waitFor": [waitInfo]});
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
 		//  Privates
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Check whether changing curren state to new state is allowed.
+		 * Check whether changing current state to new state is allowed.
 		 *
 		 * @param	{String}		currentState		Current state.
 		 * @param	{String}		newState			New state.
@@ -2761,158 +2775,6 @@
 			}
 
 			return ret;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check wait list and resolve() if components are ready.
-		 */
-		static __processWaitingList(component, state)
-		{
-
-			// Process name index
-			let names = StateOrganizer.__waitingListIndexName.get(component.name + "." + state);
-			if (names && names.length > 0)
-			{
-				StateOrganizer.__processIndex(names);
-			}
-
-			// Process ID index
-			let ids = StateOrganizer.__waitingListIndexId.get(component.uniqueId + "." + state);
-			if (ids && ids.length > 0)
-			{
-				StateOrganizer.__processIndex(ids);
-			}
-
-			// Process non indexables
-			let list = StateOrganizer.__waitingListIndexNone.get("none");
-			if (list && list.length > 0)
-			{
-				StateOrganizer.__processIndex(list);
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Process waiting list index.
-		 *
-		 * @param	{Array}			list				List of indexed waiting list id.
-		 */
-		static __processIndex(list)
-		{
-
-			let removeList = [];
-
-			for (let i = 0; i < list.length; i++)
-			{
-				let id = list[i];
-				StateOrganizer.__waitingList.get(id);
-
-				if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
-				{
-					// Remove from waiting list
-					StateOrganizer.__waitingList.get(id).resolve();
-					StateOrganizer.__waitingList.remove(id);
-
-					// Add to remove list
-					removeList.push(id);
-				}
-			}
-
-			// Remove from index;
-			for (let i = removeList.length - 1; i >= 0; i--)
-			{
-				StateOrganizer.__removeFromIndex(list, removeList[i]);
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Add wait info to the waiting list.
-		 *
-		 * @param	{Object}		waitInfo			Wait info.
-		 */
-		static __addToWaitingList(waitInfo)
-		{
-
-			// Add wait info to the waiting list.
-			let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-			StateOrganizer.__waitingList.set(id, waitInfo);
-
-			// Create index for faster processing
-			let waitlist = waitInfo["waitlist"];
-			for (let i = 0; i < waitlist.length; i++)
-			{
-				// Set default state when not specified
-				waitlist[i]["state"] = waitlist[i]["state"] || "ready";
-
-				// Index for component id + state
-				if (waitlist[i].id)
-				{
-					StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexId, waitlist[i].id+ "." + waitlist[i].state, id);
-				}
-				// Index for component name + state
-				else if (waitlist[i].name)
-				{
-					StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexName, waitlist[i].name + "." + waitlist[i].state, id);
-				}
-				// Not indexable
-				else
-				{
-					StateOrganizer.__addToIndex(StateOrganizer.__waitingListIndexNone, "none", id);
-				}
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Add id to a waiting list index.
-		 *
-		 * @param	{Map}			index				Waiting list index.
-		 * @param	{String}		key					Index key.
-		 * @param	{String}		id					Waiting list id.
-		 */
-		static __addToIndex(index, key, id)
-		{
-
-			let list = index.get(key);
-			if (!list)
-			{
-				list = [];
-				index.set(key, list);
-			}
-
-			if (list.indexOf(id) === -1)
-			{
-				list.push(id);
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Remove id from a waiting list index.
-		 *
-		 * @param	{Array}			list				List of ids.
-		 * @param	{String}		id					Waiting list id.
-		 */
-		static __removeFromIndex(list, id)
-		{
-
-			let index = list.indexOf(id);
-			if (index > -1)
-			{
-				list.splice(index, 1);
-			}
 
 		}
 
@@ -3045,25 +2907,22 @@
 			let isMatch = true;
 
 			// check instance
-			if (waitlistItem["component"] && componentInfo["object"] !== waitlistItem["component"])
+			if (waitlistItem["object"] && componentInfo["object"] !== waitlistItem["object"])
 			{
 				isMatch = false;
 			}
-
 			// check name
-			if (waitlistItem["name"] && componentInfo["object"].name !== waitlistItem["name"])
+			else if (waitlistItem["name"] && componentInfo["object"].name !== waitlistItem["name"])
 			{
 				isMatch = false;
 			}
-
 			// check id
-			if (waitlistItem["id"] && componentInfo["object"].uniqueId !== waitlistItem["id"])
+			else if (waitlistItem["id"] && componentInfo["object"].uniqueId !== waitlistItem["id"])
 			{
 				isMatch = false;
 			}
-
 			// check node
-			if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
+			else if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
 			{
 				isMatch = false;
 			}
@@ -3085,6 +2944,7 @@
 		static __isStateMatch(currentState, expectedState)
 		{
 
+			expectedState = expectedState || "ready";
 			let isMatch = false;
 
 			switch (currentState)
@@ -3132,32 +2992,6 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Get settings from element's attribute.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		static __loadAttrSettings(component)
-		{
-
-			// Get waitFor from attribute
-
-			if (component.hasAttribute("bm-waitfor"))
-			{
-				let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"started"};
-				component.settings.merge({"waitFor": [waitInfo]});
-			}
-
-			if (component.hasAttribute("bm-waitfornode"))
-			{
-				let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"started"};
-				component.settings.merge({"waitFor": [waitInfo]});
-			}
-
-		}
-
-		// -----------------------------------------------------------------------------
-
-		/**
 		 * Dump wait list as string.
 		 *
 		 * @param	{Array}			Wait list.
@@ -3190,7 +3024,7 @@
 		 *
 		 * @return  {Object}		Suspend info.
 		 */
-		static _createSuspendInfo()
+		static __createSuspendInfo()
 		{
 
 			let suspendInfo = {};
@@ -4167,7 +4001,10 @@
 			{
 				Object.keys(molds).forEach((moldName) => {
 					chain = chain.then(() => {
-						return LoaderOrganizer._addComponent(component, moldName, molds[moldName], true);
+						if (!component.components[moldName])
+						{
+							return LoaderOrganizer._addComponent(component, moldName, molds[moldName], true);
+						}
 					});
 				});
 			}
@@ -4178,7 +4015,10 @@
 			{
 				Object.keys(components).forEach((componentName) => {
 					chain = chain.then(() => {
-						return LoaderOrganizer._addComponent(component, componentName, components[componentName]);
+						if (!component.components[componentName])
+						{
+							return LoaderOrganizer._addComponent(component, componentName, components[componentName]);
+						}
 					});
 				});
 			}
@@ -4279,7 +4119,7 @@
 					sync = sync || Util.safeGet(settings, "loadings.sync"); // sync precedes settings["sync"]
 					let state = (sync === true ? "ready" : sync);
 
-					return component.waitFor([{"name":componentName, "state":state}]);
+					return component.waitFor([{"id":component._components[componentName].uniqueId, "state":state}]);
 				}
 			});
 
@@ -4303,7 +4143,7 @@
 			let addedComponent;
 
 			// Check root node
-			let root = component.rootElement.querySelector(Util.safeGet(settings, "loadings.rootNode"));
+			let root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "loadings.rootNode"), {"penetrate":true})[0];
 			Util.assert(root, `LoaderOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "loadings.rootNode")}`, ReferenceError);
 
 			// Build tag
