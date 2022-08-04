@@ -72,7 +72,7 @@ export default class StateOrganizer extends Organizer
 		component._suspends = {};
 
 		// Load settings from attributes
-		StateOrganizer.__loadAttrSettings(component);
+		StateOrganizer._loadAttrSettings(component);
 
 	}
 
@@ -127,7 +127,7 @@ export default class StateOrganizer extends Organizer
 	static globalSuspend(state)
 	{
 
-		StateOrganizer.__suspends[state] = StateOrganizer._createSuspendInfo(state);
+		StateOrganizer.__suspends[state] = StateOrganizer.__createSuspendInfo(state);
 		StateOrganizer.__suspends[state].state = "pending";
 
 	}
@@ -186,77 +186,12 @@ export default class StateOrganizer extends Organizer
 			waitInfo["promise"] = promise;
 
 			// Add to info to a waiting list.
-			StateOrganizer.__addToWaitingList(waitInfo, component);
+			StateOrganizer._addToWaitingList(waitInfo, component);
 		}
 
 		return promise;
 
 	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Wait for a component to become specific state.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		state				state.
-	 * @param	{integer}		timeout				Timeout in milliseconds.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _waitForSingle(component, state, timeout)
-	{
-
-		let componentInfo = StateOrganizer.__components.get(component.uniqueId);
-		let waitlistItem = {"id":component.uniqueId, "state":state};
-
-		if (StateOrganizer.__isReady(waitlistItem, componentInfo))
-		{
-			return Promise.resolve();
-		}
-		else
-		{
-			return StateOrganizer.waitFor(component, [waitlistItem], timeout);
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Wait for a component to become transitionable state.
-	 *
-	 * @param	{Object}		component			Component to register.
-	 * @param	{String}		newState			New state.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	/*
-	static _waitForTransitionableState(component, newState)
-	{
-
-		if (newState === "starting")
-		{
-			return StateOrganizer._waitForSingle(component, "instantiated");
-		}
-
-		if (newState === "stopping")
-		{
-			return StateOrganizer._waitForSingle(component, "instantiated");
-		}
-
-		if (newState === "opening")
-		{
-			return StateOrganizer._waitForSingle(component, "started");
-		}
-
-		if (newState === "closing")
-		{
-			return StateOrganizer._waitForSingle(component, "opened");
-		}
-
-	}
-	*/
 
 	// -------------------------------------------------------------------------
 
@@ -276,7 +211,7 @@ export default class StateOrganizer extends Organizer
 		component._state = state;
 		StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
 
-		StateOrganizer.__processWaitingList(component, state);
+		StateOrganizer._processWaitingList(component, state);
 
 	}
 
@@ -291,7 +226,7 @@ export default class StateOrganizer extends Organizer
 	static _suspend(component, state)
 	{
 
-		component._suspends[state] = StateOrganizer._createSuspendInfo();
+		component._suspends[state] = StateOrganizer.__createSuspendInfo();
 	 	component._suspends[state].state = "pending";
 
 	}
@@ -344,11 +279,87 @@ export default class StateOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Check wait list.
+	 */
+	static _processWaitingList(component, state)
+	{
+
+		Object.keys(StateOrganizer.__waitingList.items).forEach((id) => {
+			if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
+			{
+				// Resolve & Remove from waiting list
+				clearTimeout(StateOrganizer.__waitingList.get(id)["timer"]);
+				StateOrganizer.__waitingList.get(id).resolve();
+				StateOrganizer.__waitingList.remove(id);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Add wait info to the waiting list.
+	 *
+	 * @param	{Object}		waitInfo			Wait info.
+	 */
+	static _addToWaitingList(waitInfo)
+	{
+
+		let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+
+		/*
+		for (let i = 0; i < waitInfo["waitlist"].length; i++)
+		{
+			// Check if the node exists
+			if (waitInfo["waitlist"][i].rootNode)
+			{
+				let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
+
+				Util.assert(element && element.uniqueId, `StateOrganizer.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
+			}
+		}
+		*/
+
+		StateOrganizer.__waitingList.set(id, waitInfo);
+
+	}
+
+
+	// -----------------------------------------------------------------------------
+
+	/**
+	 * Get settings from element's attribute.
+	 *
+	 * @param	{Component}		component			Component.
+	 */
+	static _loadAttrSettings(component)
+	{
+
+		// Get waitFor from attribute
+
+		if (component.hasAttribute("bm-waitfor"))
+		{
+			let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"ready"};
+			component.settings.merge({"waitFor": [waitInfo]});
+		}
+
+		if (component.hasAttribute("bm-waitfornode"))
+		{
+			let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"ready"};
+			component.settings.merge({"waitFor": [waitInfo]});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check whether changing curren state to new state is allowed.
+	 * Check whether changing current state to new state is allowed.
 	 *
 	 * @param	{String}		currentState		Current state.
 	 * @param	{String}		newState			New state.
@@ -372,55 +383,6 @@ export default class StateOrganizer extends Organizer
 		}
 
 		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check wait list.
-	 */
-	static __processWaitingList(component, state)
-	{
-
-		Object.keys(StateOrganizer.__waitingList.items).forEach((id) => {
-			if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
-			{
-				// Resolve & Remove from waiting list
-				clearTimeout(StateOrganizer.__waitingList.get(id)["timer"]);
-				StateOrganizer.__waitingList.get(id).resolve();
-				StateOrganizer.__waitingList.remove(id);
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add wait info to the waiting list.
-	 *
-	 * @param	{Object}		waitInfo			Wait info.
-	 */
-	static __addToWaitingList(waitInfo)
-	{
-
-		let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-
-		/*
-		for (let i = 0; i < waitInfo["waitlist"].length; i++)
-		{
-			// Check if the node exists
-			if (waitInfo["waitlist"][i].rootNode)
-			{
-				let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
-
-				Util.assert(element && element.uniqueId, `StateOrganizer.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
-			}
-		}
-		*/
-
-		StateOrganizer.__waitingList.set(id, waitInfo);
 
 	}
 
@@ -638,32 +600,6 @@ export default class StateOrganizer extends Organizer
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Get settings from element's attribute.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static __loadAttrSettings(component)
-	{
-
-		// Get waitFor from attribute
-
-		if (component.hasAttribute("bm-waitfor"))
-		{
-			let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"ready"};
-			component.settings.merge({"waitFor": [waitInfo]});
-		}
-
-		if (component.hasAttribute("bm-waitfornode"))
-		{
-			let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"ready"};
-			component.settings.merge({"waitFor": [waitInfo]});
-		}
-
-	}
-
-	// -----------------------------------------------------------------------------
-
-	/**
 	 * Dump wait list as string.
 	 *
 	 * @param	{Array}			Wait list.
@@ -696,7 +632,7 @@ export default class StateOrganizer extends Organizer
 	 *
 	 * @return  {Object}		Suspend info.
 	 */
-	static _createSuspendInfo()
+	static __createSuspendInfo()
 	{
 
 		let suspendInfo = {};
