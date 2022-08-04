@@ -44,12 +44,9 @@ export default class StateOrganizer extends Organizer
 		Component.prototype.pause = function(state) { return StateOrganizer._pause(this, state); }
 
 		// Init vars
+		StateOrganizer._components = new Store();
+		StateOrganizer._waitingList = new Store();
 		StateOrganizer.__suspends = {};
-		StateOrganizer.__components = new Store();
-		StateOrganizer.__waitingList = new Store();
-		StateOrganizer.__waitingListIndexName = new Map();
-		StateOrganizer.__waitingListIndexId = new Map();
-		StateOrganizer.__waitingListIndexNone = new Map();
 		StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); }
 
 	}
@@ -113,7 +110,7 @@ export default class StateOrganizer extends Organizer
 	static clear()
 	{
 
-		this.__waitingList.clear();
+		this._waitingList.clear();
 
 	}
 
@@ -209,7 +206,7 @@ export default class StateOrganizer extends Organizer
 		Util.assert(StateOrganizer.__isTransitionable(component._state, state), `StateOrganizer._changeState(): Illegal transition. name=${component.name}, fromState=${component._state}, toState=${state}, id=${component.id}`, Error);
 
 		component._state = state;
-		StateOrganizer.__components.set(component.uniqueId, {"object":component, "state":state});
+		StateOrganizer._components.set(component.uniqueId, {"object":component, "state":state});
 
 		StateOrganizer._processWaitingList(component, state);
 
@@ -286,13 +283,13 @@ export default class StateOrganizer extends Organizer
 	static _processWaitingList(component, state)
 	{
 
-		Object.keys(StateOrganizer.__waitingList.items).forEach((id) => {
-			if (StateOrganizer.__isAllReady(StateOrganizer.__waitingList.get(id)))
+		Object.keys(StateOrganizer._waitingList.items).forEach((id) => {
+			if (StateOrganizer.__isAllReady(StateOrganizer._waitingList.get(id)))
 			{
 				// Resolve & Remove from waiting list
-				clearTimeout(StateOrganizer.__waitingList.get(id)["timer"]);
-				StateOrganizer.__waitingList.get(id).resolve();
-				StateOrganizer.__waitingList.remove(id);
+				clearTimeout(StateOrganizer._waitingList.get(id)["timer"]);
+				StateOrganizer._waitingList.get(id).resolve();
+				StateOrganizer._waitingList.remove(id);
 			}
 		});
 
@@ -323,7 +320,7 @@ export default class StateOrganizer extends Organizer
 		}
 		*/
 
-		StateOrganizer.__waitingList.set(id, waitInfo);
+		StateOrganizer._waitingList.set(id, waitInfo);
 
 	}
 
@@ -402,14 +399,14 @@ export default class StateOrganizer extends Organizer
 
 		if (waitlistItem["id"])
 		{
-			componentInfo = StateOrganizer.__components.get(waitlistItem["id"]);
+			componentInfo = StateOrganizer._components.get(waitlistItem["id"]);
 		}
 		else if (waitlistItem["name"])
 		{
-			Object.keys(StateOrganizer.__components.items).forEach((key) => {
-				if (waitlistItem["name"] === StateOrganizer.__components.get(key).object.name)
+			Object.keys(StateOrganizer._components.items).forEach((key) => {
+				if (waitlistItem["name"] === StateOrganizer._components.get(key).object.name)
 				{
-					componentInfo = StateOrganizer.__components.get(key);
+					componentInfo = StateOrganizer._components.get(key);
 				}
 			});
 		}
@@ -418,7 +415,7 @@ export default class StateOrganizer extends Organizer
 			let element = document.querySelector(waitlistItem["rootNode"]);
 			if (element && element.uniqueId)
 			{
-				componentInfo = StateOrganizer.__components.get(element.uniqueId);
+				componentInfo = StateOrganizer._components.get(element.uniqueId);
 			}
 		}
 		else if (waitlistItem["object"])
@@ -426,7 +423,7 @@ export default class StateOrganizer extends Organizer
 			let element = waitlistItem["object"];
 			if (element.uniqueId)
 			{
-				componentInfo = StateOrganizer.__components.get(element.uniqueId);
+				componentInfo = StateOrganizer._components.get(element.uniqueId);
 			}
 		}
 
