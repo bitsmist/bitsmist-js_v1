@@ -147,7 +147,7 @@ export default class DefaultLoader
 		// Load a class
 		let fileName = Util.safeGet(settings, "loadings.fileName", tagName.toLowerCase());
 		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
-		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "loadgings.query"), "");
+		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "loadings.query"), "");
 
 		return DefaultLoader._autoloadComponent(baseClassName, fileName, path, loadOptions).then(() => {
 			// Morphing
