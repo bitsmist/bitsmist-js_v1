@@ -194,6 +194,16 @@ Component.prototype.start = function(settings)
 	};
 	settings = Util.deepMerge(defaults, settings);
 
+	// Merge parent settings if any
+	if (typeof(Object.getPrototypeOf(Object.getPrototypeOf(this))._getSettings) === "function")
+	{
+		let parentSettings = Object.getPrototypeOf(Object.getPrototypeOf(this))._getSettings();
+		if (Object.keys(parentSettings).length > 0)
+		{
+			BITSMIST.v1.Util.deepMerge(settings, parentSettings);
+		}
+	}
+
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
@@ -214,7 +224,7 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{
-			return this.refresh();
+			return this.refresh(this.settings.items);
 		}
 	}).then(() => {
 		return this.trigger("doStart");
@@ -303,7 +313,7 @@ Component.prototype.switchTemplate = function(templateName, options)
 			return this.setup(this.settings.items);
 		}
 	 }).then(() => {
- 		return this.loadTags(this.rootElement);
+ 		return this.loadTags(this.rootElement, this.settings.get("loadings"));
 	}).then(() => {
 		return this.callOrganizers("afterAppend", this.settings.items);
 	}).then(() => {
