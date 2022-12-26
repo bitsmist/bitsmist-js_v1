@@ -204,7 +204,10 @@ export default class LoaderOrganizer extends Organizer
 			tagName = Util.safeGet(settings, "loadings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
 		}
 
+		let addedComponent;
+
 		return Promise.resolve().then(() => {
+			// Load component
 			let loaderName = Util.safeGet(settings, "loadings.loaderName", "DefaultLoader");
 			let loader = LoaderOrganizer._loaders[loaderName].object;
 			if (Util.safeGet(settings, "loadings.autoLoad") || Util.safeGet(settings, "loadings.autoMorph"))
@@ -212,12 +215,11 @@ export default class LoaderOrganizer extends Organizer
 				return loader.loadComponent(tagName, componentName, settings);
 			}
 		}).then(() => {
-			Util.assert(Util.safeGet(settings, "loadings.rootNode"), `Root node not specified. name=${component.name}, componentName=${componentName}`);
-
 			// Insert tag
 			if (!component._components[componentName])
 			{
-				component._components[componentName] = LoaderOrganizer.__insertTag(component, tagName, settings);
+				addedComponent = LoaderOrganizer.__insertTag(component, tagName, settings);
+				component._components[componentName] = addedComponent;
 			}
 		}).then(() => {
 			// Wait for the added component to be ready
@@ -228,6 +230,8 @@ export default class LoaderOrganizer extends Organizer
 
 				return component.waitFor([{"id":component._components[componentName].uniqueId, "state":state}]);
 			}
+		}).then(() => {
+			return addedComponent;
 		});
 
 	}
@@ -248,9 +252,18 @@ export default class LoaderOrganizer extends Organizer
 	{
 
 		let addedComponent;
+		let root;
 
 		// Check root node
-		let root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "loadings.rootNode"), {"penetrate":true})[0];
+		if (Util.safeGet(settings, "loadings.rootNode"))
+		{
+			root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "loadings.rootNode"), {"penetrate":true})[0];
+		}
+		else
+		{
+			root = component;
+		}
+
 		Util.assert(root, `LoaderOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "loadings.rootNode")}`, ReferenceError);
 
 		// Build tag
@@ -264,8 +277,25 @@ export default class LoaderOrganizer extends Organizer
 		}
 		else
 		{
-			root.insertAdjacentHTML("afterbegin", tag);
-			addedComponent = root.children[0];
+			let position = Util.safeGet(settings, "loadings.position", "afterbegin");
+			root.insertAdjacentHTML(position, tag);
+
+			// Get new instance
+			switch (position)
+			{
+				case "beforebegin":
+					addedComponent = root.previousSibling;
+					break;
+				case "afterbegin":
+					addedComponent = root.children[0];
+					break;
+				case "beforeend":
+					addedComponent = root.lastChild;
+					break;
+				case "afterend":
+					addedComponent = root.nextSibling;
+					break;
+			}
 		}
 
 		// Inject settings to added component
