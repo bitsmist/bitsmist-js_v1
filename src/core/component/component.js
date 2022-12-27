@@ -224,7 +224,7 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{
-			return this.refresh(this.settings.items);
+			return this.refresh();
 		}
 	}).then(() => {
 		return this.trigger("doStart");
@@ -455,6 +455,16 @@ Component.prototype.fill = function(options)
  */
 Component.prototype.clear = function(options)
 {
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.clear(): Clearing the component. name=${this.name}`);
+		return this.trigger("beforeClear", options);
+	}).then(() => {
+		return this.trigger("doClear", options);
+	}).then(() => {
+		return this.trigger("afterClear", options);
+	});
+
 }
 
 // -----------------------------------------------------------------------------
