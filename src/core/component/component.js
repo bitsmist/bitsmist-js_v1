@@ -367,8 +367,6 @@ Component.prototype.refresh = function(options)
 		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", options);
 	}).then(() => {
-		return this.trigger("doTarget", options);
-	}).then(() => {
 		// Fetch
 		if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
 		{
