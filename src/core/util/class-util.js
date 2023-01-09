@@ -40,11 +40,11 @@ export default class ClassUtil
 		ClassUtil.inherit(classDef, superClass);
 
 		// Class settings
-		settings = Util.deepMerge({}, settings);
+		settings = settings || {};
 		settings.settings = ( settings.settings ? settings.settings : {} );
 		settings["settings"]["name"] = className;
 		classDef.prototype._getSettings = function() {
-			return Util.deepMerge(superClass.prototype._getSettings(), settings);
+			return settings;
 		}
 
 		// Export class

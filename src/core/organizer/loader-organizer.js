@@ -145,7 +145,6 @@ export default class LoaderOrganizer extends Organizer
 	static register(key, value)
 	{
 
-		value = Util.deepMerge({}, value);
 		value["name"] = ( value["name"] ? value["name"] : key );
 
 		LoaderOrganizer._loaders[key] = value;

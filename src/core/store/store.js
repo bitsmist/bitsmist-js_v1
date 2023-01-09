@@ -30,8 +30,8 @@ export default class Store
 	{
 
 		// Init
-		this.options = options || {};
-		this.items = Util.safeGet(options, "items", {});
+		this._options = options || {};
+		this._items = Util.safeGet(options, "items", {});
 		this.merger = Util.safeGet(options, "merger", Util.deepMerge);
 
 	}
@@ -55,7 +55,7 @@ export default class Store
 	set options(value)
 	{
 
-		this._options = Util.deepMerge({}, value);
+		this._options = value;
 
 	}
 
@@ -76,7 +76,7 @@ export default class Store
 	set items(value)
 	{
 
-		this._items = Util.deepMerge({}, value);
+		this._items = value;
 
 	}
 

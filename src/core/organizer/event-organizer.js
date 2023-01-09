@@ -278,7 +278,7 @@ export default class EventOrganizer extends Organizer
 	static _trigger(component, eventName, options, element)
 	{
 
-		options = Util.deepMerge({}, options);
+		options = options || {};
 		options["sender"] = options["sender"] || component;
 		element = ( element ? element : component );
 		let e = null;
