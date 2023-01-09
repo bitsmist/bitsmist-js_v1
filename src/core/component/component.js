@@ -254,7 +254,7 @@ Component.prototype.start = function(settings)
 Component.prototype.stop = function(options)
 {
 
-	options = Util.deepMerge({}, options);
+	options = options || {};
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
@@ -285,7 +285,7 @@ Component.prototype.stop = function(options)
 Component.prototype.switchTemplate = function(templateName, options)
 {
 
-	options = Util.deepMerge({}, options);
+	options = options || {};
 
 	if (this.activeTemplateName === templateName)
 	{
@@ -334,7 +334,7 @@ Component.prototype.switchTemplate = function(templateName, options)
 Component.prototype.setup = function(options)
 {
 
-	options = Util.deepMerge({}, options);
+	options = options || {};
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
@@ -361,11 +361,13 @@ Component.prototype.setup = function(options)
 Component.prototype.refresh = function(options)
 {
 
-	options = Util.deepMerge({}, options);
+	options = options || {};
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", options);
+	}).then(() => {
+		return this.trigger("doTarget", options);
 	}).then(() => {
 		// Fetch
 		if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
@@ -400,7 +402,7 @@ Component.prototype.refresh = function(options)
 Component.prototype.fetch = function(options)
 {
 
-	options = Util.deepMerge({}, options);
+	options = options || {};
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
@@ -429,11 +431,17 @@ Component.prototype.fetch = function(options)
 Component.prototype.fill = function(options)
 {
 
-	options = Util.deepMerge({}, options);
+	options = options || {};
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.fill(): Filling with data. name=${this.name}`);
 		return this.trigger("beforeFill", options);
+	}).then(() => {
+		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
+		if (autoClear)
+		{
+			return this.clear();
+		}
 	}).then(() => {
 		return this.trigger("doFill", options);
 	}).then(() => {
