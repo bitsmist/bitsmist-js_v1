@@ -363,7 +363,7 @@ export default class EventOrganizer extends Organizer
 				return EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
 			});
 			break;
-		case "afterAppend":
+		case "afterTransform":
 			// Return events only for elements inside the component.
 			keys = Object.keys(eventInfo).filter((elementName) => {
 				return !EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
