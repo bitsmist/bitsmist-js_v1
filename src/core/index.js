@@ -35,11 +35,11 @@ OrganizerOrganizer.register("StateOrganizer", {"object":StateOrganizer, "targetW
 window.BITSMIST.v1.StateOrganizer = StateOrganizer;
 
 import TemplateOrganizer from "./organizer/template-organizer.js";
-OrganizerOrganizer.register("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart", "afterAppend"], "order":200});
+OrganizerOrganizer.register("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart", "doTransform", "afterTransform"], "order":200});
 window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
 
 import EventOrganizer from "./organizer/event-organizer.js";
-OrganizerOrganizer.register("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterAppend", "afterSpecLoad"], "order":210});
+OrganizerOrganizer.register("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterTransform", "afterSpecLoad"], "order":210});
 window.BITSMIST.v1.EventOrganizer = EventOrganizer;
 
 import LoaderOrganizer from "./organizer/loader-organizer.js";
