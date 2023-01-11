@@ -220,7 +220,7 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {
-		return this.switchTemplate(this.settings.get("settings.templateName"));
+		return this.transform({"templateName":this.settings.get("settings.templateName")});
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{
@@ -275,49 +275,41 @@ Component.prototype.stop = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Change template html.
+ * Transform component.
  *
  * @param	{String}		templateName		Template name.
  * @param	{Object}		options				Options.
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.switchTemplate = function(templateName, options)
+Component.prototype.transform = function(options)
 {
 
 	options = options || {};
-
-	if (this.activeTemplateName === templateName)
-	{
-		return Promise.resolve();
-	}
+	let templateName = Util.safeGet(options, "templateName", "");
 
 	return Promise.resolve().then(() => {
-		// Switch template
-		if (this.settings.get("settings.hasTemplate"))
-		{
-			return Promise.resolve().then(() => {
-				console.debug(`Component.switchTemplate(): Switching template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-				return this.addTemplate(templateName);
-			}).then(() => {
-				return this.applyTemplate(templateName);
-			}).then(() => {
-				console.debug(`Component.switchTemplate(): Switched template. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-			});
-		}
+		console.debug(`Component.transform(): Transforming. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+		return this.trigger("beforeTransform", options);
+	}).then(() => {
+		return this.callOrganizers("doTransform", this.settings.items);
+	}).then(() => {
+		return this.trigger("doTransform", options);
 	}).then(() => {
 		// Setup
 		let autoSetup = this.settings.get("settings.autoSetup");
 		if (autoSetup)
 		{
-			return this.setup(this.settings.items);
+			return this.setup(options);
 		}
 	 }).then(() => {
  		return this.loadTags(this.rootElement, this.settings.get("loadings"));
+	 }).then(() => {
+		return this.callOrganizers("afterTransform", this.settings.items);
 	}).then(() => {
-		return this.callOrganizers("afterAppend", this.settings.items);
+		return this.trigger("afterTransform", options);
 	}).then(() => {
-		return this.trigger("afterAppend", options);
+		console.debug(`Component.transform(): Transformed. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 	});
 
 }
@@ -325,7 +317,7 @@ Component.prototype.switchTemplate = function(templateName, options)
 // -----------------------------------------------------------------------------
 
 /**
- * Apply settings.
+ * Setup component.
  *
  * @param	{Object}		options				Options.
  *
@@ -408,7 +400,7 @@ Component.prototype.fetch = function(options)
 		console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
 		return this.trigger("beforeFetch", options);
 	}).then(() => {
-		return this.callOrganizers("doFetch", options);
+		return this.callOrganizers("doFetch", this.settings.items);
 	}).then(() => {
 		return this.trigger("doFetch", options);
 	}).then(() => {
