@@ -82,30 +82,45 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		let promises = [];
-		let templates = settings["templates"];
-		if (templates)
+		let templates;
+
+		switch (conditions)
 		{
-			Object.keys(templates).forEach((templateName) => {
-				if (conditions === "beforeStart")
+			case "doTransform":
+				if (component.settings.get("settings.hasTemplate"))
 				{
-					switch (templates[templateName]["type"])
-					{
-						case "html":
-						case "url":
-							promises.push(TemplateOrganizer._addTemplate(component, templateName));
-							break;
-					}
+					let templateName = Util.safeGet(settings, "settings.templateName");
+					promises.push(Promise.resolve().then(() => {
+						return TemplateOrganizer._addTemplate(component, templateName);
+					}).then(() => {
+						return component.applyTemplate(templateName);
+					}));
 				}
-				else if (conditions === "afterAppend")
+				break;
+			case "beforeStart":
+				templates = settings["templates"];
+				if (templates)
 				{
-					switch (templates[templateName]["type"])
-					{
-						case "node":
-							promises.push(TemplateOrganizer._addTemplate(component, templateName));
-							break;
-					}
+					Object.keys(templates).forEach((templateName) => {
+						if (templates[templateName]["type"] === "html" || templates[templateName]["type"] === "url")
+						{
+							promises.push(TemplateOrganizer._addTemplate(component, templateName, {"type":templates[templateName]["type"]}));
+						}
+					});
 				}
-			});
+				break;
+			case "afterTransform":
+				templates = settings["templates"];
+				if (templates)
+				{
+					Object.keys(templates).forEach((templateName) => {
+						if (templates[templateName]["type"] === "node")
+						{
+							promises.push(TemplateOrganizer._addTemplate(component, templateName, {"type":templates[templateName]["type"]}));
+						}
+					});
+				}
+				break;
 		}
 
 		return Promise.all(promises);
