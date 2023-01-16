@@ -188,7 +188,7 @@ export default class OrganizerOrganizer extends Organizer
 		// Add and init new organizers
 		OrganizerOrganizer._sortItems(targets).forEach((key) => {
 			chain = chain.then(() => {
-				component._organizers[key] = Util.deepMerge(OrganizerOrganizer._organizers[key], Util.safeGet(settings, "organizers." + key));
+				component._organizers[key] = Util.deepMerge(Util.deepClone(OrganizerOrganizer._organizers[key]), Util.safeGet(settings, "organizers." + key));
 				return component._organizers[key].object.init(component, settings);
 			});
 		});
