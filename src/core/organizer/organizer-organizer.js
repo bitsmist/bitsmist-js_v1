@@ -22,9 +22,6 @@ export default class OrganizerOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Global init.
-	 */
 	static globalInit()
 	{
 

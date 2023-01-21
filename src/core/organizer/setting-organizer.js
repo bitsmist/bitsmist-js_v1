@@ -24,9 +24,6 @@ export default class SettingOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Global init.
-	 */
 	static globalInit()
 	{
 

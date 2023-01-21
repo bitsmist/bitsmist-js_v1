@@ -23,17 +23,14 @@ export default class TemplateOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Global init.
-	 */
 	static globalInit()
 	{
 
-		// Add properties
+		// Add properties to Component
 		Object.defineProperty(BITSMIST.v1.Component.prototype, 'templates', { get() { return this._templates; }, });
 		Object.defineProperty(BITSMIST.v1.Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
 
-		// Add methods
+		// Add methods to Component
 		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this._loadTemplate(this, ...args); }
 		BITSMIST.v1.Component.prototype.addTemplate = function(...args) { return TemplateOrganizer._addTemplate(this, ...args); }
 		BITSMIST.v1.Component.prototype.applyTemplate = function(...args) { return TemplateOrganizer._applyTemplate(this, ...args); }
@@ -57,7 +54,7 @@ export default class TemplateOrganizer extends Organizer
 			component.settings.set("settings.templateName", templateName);
 		}
 
-		// Add event handlers to the component
+		// Add event handlers to component
 		this._addOrganizerHandler(component, "beforeStart", TemplateOrganizer.onBeforeStart);
 		this._addOrganizerHandler(component, "doTransform", TemplateOrganizer.onDoTransform);
 		this._addOrganizerHandler(component, "afterTransform", TemplateOrganizer.onAfterTransform);
@@ -94,13 +91,6 @@ export default class TemplateOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Before start event handler.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 * @param	{Object}		ex					Extra event info.
-	 */
 	static onBeforeStart(sender, e, ex)
 	{
 
@@ -124,13 +114,6 @@ export default class TemplateOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Do transfer event handler.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 * @param	{Object}		ex					Extra event info.
-	 */
 	static onDoTransform(sender, e, ex)
 	{
 
@@ -146,13 +129,6 @@ export default class TemplateOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	/**
-	 * After transfer event handler.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 * @param	{Object}		ex					Extra event info.
-	 */
 	static onAfterTransform(sender, e, ex)
 	{
 

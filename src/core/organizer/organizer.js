@@ -19,9 +19,6 @@ export default class Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Global init.
-	 */
 	static globalInit()
 	{
 	}

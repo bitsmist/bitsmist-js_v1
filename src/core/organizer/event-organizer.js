@@ -22,9 +22,6 @@ export default class EventOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Global init.
-	 */
 	static globalInit()
 	{
 
@@ -52,7 +49,7 @@ export default class EventOrganizer extends Organizer
 			});
 		}
 
-		// Add event handlers to the component
+		// Add event handlers to component
 //		this._addOrganizerHandler(component, "beforeStart", EventOrganizer.onBeforeStart);
 		this._addOrganizerHandler(component, "afterTransform", EventOrganizer.onAfterTransform);
 		this._addOrganizerHandler(component, "afterSpecLoad", EventOrganizer.onAfterSpecLoad);
@@ -78,13 +75,6 @@ export default class EventOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Before start event handler.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 * @param	{Object}		ex					Extra event info.
-	 */
 	static onBeforeStart(sender, e, ex)
 	{
 
@@ -102,13 +92,6 @@ export default class EventOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	/**
-	 * After transform event handler.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 * @param	{Object}		ex					Extra event info.
-	 */
 	static onAfterTransform(sender, e, ex)
 	{
 
@@ -126,13 +109,6 @@ export default class EventOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	/**
-	 * After spec load event handler.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 * @param	{Object}		ex					Extra event info.
-	 */
 	static onAfterSpecLoad(sender, e, ex)
 	{
 
