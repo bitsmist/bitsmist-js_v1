@@ -184,43 +184,34 @@ Component.prototype.start = function(settings)
 			"useGlobalSettings":	true,
 		},
 		"organizers": {
-			"OrganizerOrganizer":	{"settings":{"attach":true}},
-			"SettingOrganizer":		{"settings":{"attach":true}},
+//			"OrganizerOrganizer":	{"settings":{"attach":true}},
+//			"SettingOrganizer":		{"settings":{"attach":true}},
 			"StateOrganizer":		{"settings":{"attach":true}},
 			"EventOrganizer":		{"settings":{"attach":true}},
-			"LoaderOrganizer":		{"settings":{"attach":true}},
 			"TemplateOrganizer":	{"settings":{"attach":true}},
+			"ComponentOrganizer":	{"settings":{"attach":true}},
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);
 
-	// Merge parent settings if any
-	if (typeof(Object.getPrototypeOf(Object.getPrototypeOf(this))._getSettings) === "function")
-	{
-		let parentSettings = Object.getPrototypeOf(Object.getPrototypeOf(this))._getSettings();
-		if (Object.keys(parentSettings).length > 0)
-		{
-			BITSMIST.v1.Util.deepMerge(settings, parentSettings);
-		}
-	}
-
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
-		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
+		return SettingOrganizer.attach(this, newSettings); // now settings are included in this.settings
 	}).then(() => {
 		this._name = this.settings.get("settings.name", this._name);
 		this._rootElement = this.settings.get("settings.rootElement", this);
-		return this.initOrganizers(this.settings.items);
+		return OrganizerOrganizer.attach(this);
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
 	}).then(() => {
-		return this.callOrganizers("beforeStart", this.settings.items);
-	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {
-		return this.transform({"templateName":this.settings.get("settings.templateName")});
+		if (this.settings.get("settings.hasTemplate"))
+		{
+			return this.transform({"templateName":this.settings.get("settings.templateName")});
+		}
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{
@@ -231,8 +222,6 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
-	}).then(() => {
-		return this.callOrganizers("afterStart", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterStart");
 	}).then(() => {
@@ -292,8 +281,6 @@ Component.prototype.transform = function(options)
 		console.debug(`Component.transform(): Transforming. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 		return this.trigger("beforeTransform", options);
 	}).then(() => {
-		return this.callOrganizers("doTransform", this.settings.items);
-	}).then(() => {
 		return this.trigger("doTransform", options);
 	}).then(() => {
 		// Setup
@@ -304,8 +291,6 @@ Component.prototype.transform = function(options)
 		}
 	 }).then(() => {
  		return this.loadTags(this.rootElement, this.settings.get("loadings"));
-	 }).then(() => {
-		return this.callOrganizers("afterTransform", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterTransform", options);
 	}).then(() => {
@@ -399,8 +384,6 @@ Component.prototype.fetch = function(options)
 	return Promise.resolve().then(() => {
 		console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
 		return this.trigger("beforeFetch", options);
-	}).then(() => {
-		return this.callOrganizers("doFetch", this.settings.items);
 	}).then(() => {
 		return this.trigger("doFetch", options);
 	}).then(() => {

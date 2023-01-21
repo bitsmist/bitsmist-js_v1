@@ -8,7 +8,6 @@
  */
 // =============================================================================
 
-import Component from "../component/component.js";
 import Organizer from "./organizer.js";
 import Util from "../util/util.js";
 
@@ -29,63 +28,73 @@ export default class EventOrganizer extends Organizer
 	static globalInit()
 	{
 
-		// Add methods
-		Component.prototype.initEvents = function(elementName, handlerInfo, rootNode) {
-			EventOrganizer._initEvents(this, elementName, handlerInfo, rootNode)
-		}
-		Component.prototype.addEventHandler = function(eventName, handlerInfo, element, bindTo) {
-			EventOrganizer._addEventHandler(this, element, eventName, handlerInfo, bindTo);
-		}
-		Component.prototype.trigger = function(eventName, options, element) {
-			return EventOrganizer._trigger(this, eventName, options, element)
-		}
-		Component.prototype.triggerAsync = function(eventName, options, element) {
-			return EventOrganizer._triggerAsync(this, eventName, options, element)
-		}
-		Component.prototype.getEventHandler = function(handlerInfo) {
-			return EventOrganizer._getEventHandler(this, handlerInfo)
-		}
-		Component.prototype.removeEventHandler = function(eventName, handlerInfo, element) {
-			return EventOrganizer._removeEventHandler(this, element, eventName, handlerInfo)
-		}
+		// Add methods to Component
+		BITSMIST.v1.Component.prototype.initEvents = function(...args) { EventOrganizer._initEvents(this, ...args) }
+		BITSMIST.v1.Component.prototype.addEventHandler = function(...args) { EventOrganizer._addEventHandler(this, ...args); }
+		BITSMIST.v1.Component.prototype.trigger = function(...args) { return EventOrganizer._trigger(this, ...args) }
+		BITSMIST.v1.Component.prototype.triggerAsync = function(...args) { return EventOrganizer._triggerAsync(this, ...args) }
+		BITSMIST.v1.Component.prototype.removeEventHandler = function(...args) { return EventOrganizer._removeEventHandler(this, ...args) }
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Init.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static init(component, settings)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Organize.
-	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static organize(conditions, component, settings)
+	static attach(component, options)
 	{
 
-		let events = settings["events"];
+		let events = component.settings.get("events");
 		if (events)
 		{
-			let targets = EventOrganizer.__filterElements(component, events, conditions);
+			let targets = EventOrganizer.__filterElements(component, events, "beforeStart");
 
 			Object.keys(targets).forEach((elementName) => {
 				EventOrganizer._initEvents(component, elementName, events[elementName]);
+			});
+		}
+
+		// Add event handlers to the component
+//		this._addOrganizerHandler(component, "beforeStart", EventOrganizer.onBeforeStart);
+		this._addOrganizerHandler(component, "afterTransform", EventOrganizer.onAfterTransform);
+		this._addOrganizerHandler(component, "afterSpecLoad", EventOrganizer.onAfterSpecLoad);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static detach(component, options)
+	{
+
+		let events = this.settings.get("events");
+		if (events)
+		{
+			Object.keys(events).forEach((elementName) => {
+				EventOrganizer._removeEvents(component, elementName, events[eventName]);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Before start event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 * @param	{Object}		ex					Extra event info.
+	 */
+	static onBeforeStart(sender, e, ex)
+	{
+
+		let events = this.settings.get("events");
+		if (events)
+		{
+			let targets = EventOrganizer.__filterElements(this, events, "beforeStart");
+
+			Object.keys(targets).forEach((elementName) => {
+				EventOrganizer._initEvents(this, elementName, events[elementName]);
 			});
 		}
 
@@ -94,22 +103,46 @@ export default class EventOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Unorganize.
+	 * After transform event handler.
 	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 * @param	{Object}		ex					Extra event info.
 	 */
-	static unorganize(conditions, component, settings)
+	static onAfterTransform(sender, e, ex)
 	{
 
-		let events = settings["events"];
+		let events = this.settings.get("events");
 		if (events)
 		{
-			Object.keys(events).forEach((elementName) => {
-				EventOrganizer._removeEvents(component, elementName, events[elementName]);
+			let targets = EventOrganizer.__filterElements(this, events, "afterTransform");
+
+			Object.keys(targets).forEach((elementName) => {
+				EventOrganizer._initEvents(this, elementName, events[elementName]);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * After spec load event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 * @param	{Object}		ex					Extra event info.
+	 */
+	static onAfterSpecLoad(sender, e, ex)
+	{
+
+		let events = e.detail.spec["events"];
+		if (events)
+		{
+			let targets = EventOrganizer.__filterElements(this, events, "afterSpecLoad");
+
+			Object.keys(targets).forEach((elementName) => {
+				EventOrganizer._initEvents(this, elementName, events[elementName]);
 			});
 		}
 
@@ -123,16 +156,16 @@ export default class EventOrganizer extends Organizer
 	 * Add an event handler.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{HTMLElement}	element					HTML element.
-	 * @param	{String}		eventName				Event name.
+	 * @param	{String}		eventName			Event name.
 	 * @param	{Object/Function/String}	handlerInfo	Event handler info.
-	 * @param	{Object}		bindTo					Object that binds to the handler.
+	 * @param	{HTMLElement}	element				HTML element.
+	 * @param	{Object}		bindTo				Object that binds to the handler.
 	 */
-	static _addEventHandler(component, element, eventName, handlerInfo, bindTo)
+	static _addEventHandler(component, eventName, handlerInfo, element, bindTo)
 	{
 
 		element = element || component;
-		let handlerOptions = (typeof handlerInfo === "object" ? Util.deepClone(handlerInfo) : {});
+		let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 		// Get handler
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
@@ -152,11 +185,12 @@ export default class EventOrganizer extends Organizer
 			element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerOptions["listnerOptions"]);
 		}
 
+		let order = Util.safeGet(handlerOptions, "order", 1000);
+
 		// Register listener info
-		listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo});
+		listeners[eventName].push({"handler":handler, "options":handlerOptions["options"], "bindTo":bindTo, "order":order});
 
 		// Stable sort by order
-		let order = Util.safeGet(handlerOptions, "order");
 		listeners[eventName].sort((a, b) => {
 			if (a.order === b.order)	return 0;
 			else if (a.order > b.order)	return 1;
@@ -279,7 +313,6 @@ export default class EventOrganizer extends Organizer
 	{
 
 		options = options || {};
-		options["sender"] = options["sender"] || component;
 		element = ( element ? element : component );
 		let e = null;
 

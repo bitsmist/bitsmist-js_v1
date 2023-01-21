@@ -9,7 +9,6 @@
 // =============================================================================
 
 import AjaxUtil from "../util/ajax-util";
-import Component from "../component/component.js";
 import Organizer from "./organizer";
 import Util from "../util/util";
 
@@ -31,30 +30,23 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(Component.prototype, 'templates', { get() { return this._templates; }, });
-		Object.defineProperty(Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
+		Object.defineProperty(BITSMIST.v1.Component.prototype, 'templates', { get() { return this._templates; }, });
+		Object.defineProperty(BITSMIST.v1.Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
 
 		// Add methods
-		Component.prototype.addTemplate = function(templateName, options) { return TemplateOrganizer._addTemplate(this, templateName, options); }
-		Component.prototype.applyTemplate = function(templateName) { return TemplateOrganizer._applyTemplate(this, templateName); }
-		Component.prototype.cloneTemplate = function(templateName) { return TemplateOrganizer._clone(this, templateName); }
+		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this._loadTemplate(this, ...args); }
+		BITSMIST.v1.Component.prototype.addTemplate = function(...args) { return TemplateOrganizer._addTemplate(this, ...args); }
+		BITSMIST.v1.Component.prototype.applyTemplate = function(...args) { return TemplateOrganizer._applyTemplate(this, ...args); }
+		BITSMIST.v1.Component.prototype.cloneTemplate = function(...args) { return TemplateOrganizer._clone(this, ...args); }
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Init.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static init(component, settings)
+	static attach(component, options)
 	{
 
-		// Init vars
+		// Init component vars
 		component._templates = {};
 		component._activeTemplateName = "";
 
@@ -65,62 +57,65 @@ export default class TemplateOrganizer extends Organizer
 			component.settings.set("settings.templateName", templateName);
 		}
 
+		// Add event handlers to the component
+		this._addOrganizerHandler(component, "beforeStart", TemplateOrganizer.onBeforeStart);
+		this._addOrganizerHandler(component, "doTransform", TemplateOrganizer.onDoTransform);
+		this._addOrganizerHandler(component, "afterTransform", TemplateOrganizer.onAfterTransform);
+
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Organize.
+	 * Load the template html.
 	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
+	 * @param	{String}		fileName			File name.
+	 * @param	{String}		path				Path to the file.
+	 * @param	{Object}		loadOptions			Load Options.
 	 *
-	 * @return 	{Promise}		Promise.
+	 * @return  {Promise}		Promise.
 	 */
-	static organize(conditions, component, settings)
+	static loadFile(fileName, path, loadOptions)
+	{
+
+		console.debug(`Loading template file. fileName=${fileName}, path=${path}`);
+
+		let query = Util.safeGet(loadOptions, "query");
+		let url = Util.concatPath([path, fileName]) + ".html" + (query ? "?" + query : "");
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			console.debug(`Loaded template. fileName=${fileName}, path=${path}`);
+
+			return xhr.responseText;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Before start event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 * @param	{Object}		ex					Extra event info.
+	 */
+	static onBeforeStart(sender, e, ex)
 	{
 
 		let promises = [];
-		let templates;
 
-		switch (conditions)
+
+		let templates = this.settings.get("templates");
+		if (templates)
 		{
-			case "doTransform":
-				if (component.settings.get("settings.hasTemplate"))
+			Object.keys(templates).forEach((templateName) => {
+				if (templates[templateName]["type"] === "html" || templates[templateName]["type"] === "url")
 				{
-					let templateName = Util.safeGet(settings, "settings.templateName");
-					promises.push(Promise.resolve().then(() => {
-						return TemplateOrganizer._addTemplate(component, templateName);
-					}).then(() => {
-						return component.applyTemplate(templateName);
-					}));
+					promises.push(TemplateOrganizer._addTemplate(this, templateName, {"type":templates[templateName]["type"]}));
 				}
-				break;
-			case "beforeStart":
-				templates = settings["templates"];
-				if (templates)
-				{
-					Object.keys(templates).forEach((templateName) => {
-						if (templates[templateName]["type"] === "html" || templates[templateName]["type"] === "url")
-						{
-							promises.push(TemplateOrganizer._addTemplate(component, templateName, {"type":templates[templateName]["type"]}));
-						}
-					});
-				}
-				break;
-			case "afterTransform":
-				templates = settings["templates"];
-				if (templates)
-				{
-					Object.keys(templates).forEach((templateName) => {
-						if (templates[templateName]["type"] === "node")
-						{
-							promises.push(TemplateOrganizer._addTemplate(component, templateName, {"type":templates[templateName]["type"]}));
-						}
-					});
-				}
-				break;
+			});
 		}
 
 		return Promise.all(promises);
@@ -130,19 +125,106 @@ export default class TemplateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Clear.
+	 * Do transfer event handler.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 * @param	{Object}		ex					Extra event info.
 	 */
-	static clear(component)
+	static onDoTransform(sender, e, ex)
 	{
 
-		component._templates = {};
+		let templateName = this.settings.get("settings.templateName");
+
+		return Promise.resolve().then(() => {
+			return this.addTemplate(templateName);
+		}).then(() => {
+			return this.applyTemplate(templateName);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * After transfer event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 * @param	{Object}		ex					Extra event info.
+	 */
+	static onAfterTransform(sender, e, ex)
+	{
+
+		let promises = [];
+
+		let templates = this.settings.get("templates");
+		if (templates)
+		{
+			Object.keys(templates).forEach((templateName) => {
+				if (templates[templateName]["type"] === "node")
+				{
+					promises.push(this.addTemplate(templateName, {"type":templates[templateName]["type"]}));
+					this.addTemplate(templateName, {"type":templates[templateName]["type"]});
+				}
+			});
+		}
+
+		return Promise.all(promises);
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get a template html according to settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		templateName		Template name.
+	 * @param	{Object}		loadOptions			Load options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static _loadTemplate(component, templateName, loadOptions)
+	{
+
+		let promise;
+		let templateInfo = component._templates[templateName];
+		let settings = component.settings.get("templates." + templateName, {});
+
+		switch (settings["type"]) {
+		case "html":
+			templateInfo["html"] = settings["html"];
+			promise = Promise.resolve();
+			break;
+		case "node":
+			templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
+			promise = Promise.resolve();
+			break;
+		case "url":
+		default:
+			let path = Util.safeGet(loadOptions, "path",
+				Util.concatPath([
+					component.settings.get("loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+					component.settings.get("loadings.templatePath", BITSMIST.v1.settings.get("system.templatePath", component.settings.get("loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")))),
+					component.settings.get("loadings.path", ""),
+				])
+			);
+
+			promise = TemplateOrganizer.loadFile(templateInfo["name"], path, loadOptions).then((template) => {
+				templateInfo["html"] = template;
+			});
+			break;
+		}
+
+		return promise.then(() => {
+			templateInfo["isLoaded"] = true;
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -166,12 +248,11 @@ export default class TemplateOrganizer extends Organizer
 			return Promise.resolve();
 		}
 
-		return component.loadTemplate(templateName);
+		return TemplateOrganizer._loadTemplate(component, templateName);
 
 	}
 
 	// -------------------------------------------------------------------------
-
 	/**
 	 * Apply template.
 	 *

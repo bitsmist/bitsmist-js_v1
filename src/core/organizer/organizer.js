@@ -22,93 +22,36 @@ export default class Organizer
 	/**
 	 * Global init.
 	 */
-	static globalInit(targetClass)
+	static globalInit()
 	{
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Init.
+	 * Attach the organizer to the component.
 	 *
-	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(conditions, component, settings)
+	static attach(component, options)
 	{
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Organize.
+	 * Detach the organizer from the component.
 	 *
-	 * @param	{Object}		conditions			Conditions.
 	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
+	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static organize(conditions, component, settings)
+	static detach(component, options)
 	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Unorganize.
-	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static unorganize(conditions, component, settings)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if event is target.
-	 *
-	 * @param	{String}		conditions			Event name.
-	 * @param	{Object}		organizerInfo		Organizer info.
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{Boolean}		True if it is target.
-	 */
-	static isTarget(conditions, organizerInfo, component)
-	{
-
-		if (organizerInfo["targetEvents"].indexOf("*") > -1)
-		{
-			return true;
-		}
-		else if (organizerInfo["targetEvents"].indexOf(conditions) > -1)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -122,6 +65,27 @@ export default class Organizer
 	{
 
 		return "";
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Set event handler for organizer.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		eventName			Event name.
+	 * @param	{Function}		handler				Event handler.
+	 */
+	static _addOrganizerHandler(component, eventName, handler)
+	{
+
+		component.addEventHandler(eventName, {
+			"handler":handler,
+			"order":BITSMIST.v1.OrganizerOrganizer.organizers[this.name].order
+		});
 
 	}
 

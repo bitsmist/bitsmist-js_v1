@@ -25,19 +25,16 @@ export default class OrganizerOrganizer extends Organizer
 	/**
 	 * Global init.
 	 */
-	static globalInit(targetClass)
+	static globalInit()
 	{
 
-		// Add properties
-		Object.defineProperty(targetClass.prototype, "organizers", {
+		// Add properties to Component
+		Object.defineProperty(BITSMIST.v1.Component.prototype, "organizers", {
 			get() { return this._organizers; },
 		});
 
-		// Add methods
-		targetClass.prototype.addOrganizers = function(settings) { return OrganizerOrganizer._addOrganizers(this, settings); }
-		targetClass.prototype.initOrganizers = function(settings) { return OrganizerOrganizer._initOrganizers(this, settings); }
-		targetClass.prototype.callOrganizers = function(condition, settings) { return OrganizerOrganizer._callOrganizers(this, condition, settings); }
-		targetClass.prototype.clearOrganizers = function(condition, settings) { return OrganizerOrganizer._clearOrganizers(this, condition, settings); }
+		// Add methods to Component
+		BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); }
 
 		// Init vars
 		OrganizerOrganizer._organizers = {};
@@ -51,33 +48,14 @@ export default class OrganizerOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Organize.
-	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static organize(conditions, component, settings)
+	static attach(component, options)
 	{
 
-		return OrganizerOrganizer._addOrganizers(component, settings);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static clear(component)
-	{
-
+		// Init component vars
 		component._organizers = {};
+
+		// Attach organizers to component
+		return OrganizerOrganizer._attachOrganizers(component, component.settings.items);
 
 	}
 
@@ -112,46 +90,17 @@ export default class OrganizerOrganizer extends Organizer
 
 	}
 
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add target words/events to oragnizer's settings.
-	 *
-	 * @param	{String}		organizerName		Organizer name.
-	 * @param	{String}		targetname			Target setting name. "words" or "events".
-	 * @param	{Array/String}	targets				Values to add.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	/*
-	static addTarget(organizerName, targetName, targets)
-	{
-
-		let organizer = OrganizerOrganizer._organizers[organizerName];
-
-		let ret1 = Util.warn(organizer, `Organizer not found. organizerName=${organizerName}`);
-		let ret2 = Util.warn(["targetEvents", "targetWords"].indexOf(targetName) > -1, `Target name is invalid. targetName=${targetName}`);
-
-		if (ret1 && ret2)
-		{
-			if (Array.isArray(targets))
-			{
-				organizer[targetName] = organizer[targetName].concat(targets);
-			}
-			else
-			{
-				organizer[targetName].push(targets);
-			}
-		}
-
-	}
-	*/
-
 	// ------------------------------------------------------------------------
 	//  Protected
 	// ------------------------------------------------------------------------
 
-	static _addOrganizers(component, settings)
+	/**
+	 * Attach organizers to component according to settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 */
+	static _attachOrganizers(component, settings)
 	{
 
 		let targets = {};
@@ -176,100 +125,19 @@ export default class OrganizerOrganizer extends Organizer
 		// List new organizers from settings keyword
 		Object.keys(settings).forEach((key) => {
 			let organizerInfo = OrganizerOrganizer._targetWords[key];
-			if (organizerInfo)
+
+			if (organizerInfo && !component._organizers[organizerInfo.name])
 			{
-				if (!component._organizers[organizerInfo.name])
-				{
-					targets[organizerInfo.name] = organizerInfo.object;
-				}
+				targets[organizerInfo.name] = organizerInfo
 			}
 		});
 
-		// Add and init new organizers
+		// Attach new organizers
 		OrganizerOrganizer._sortItems(targets).forEach((key) => {
 			chain = chain.then(() => {
 				component._organizers[key] = Util.deepMerge(Util.deepClone(OrganizerOrganizer._organizers[key]), Util.safeGet(settings, "organizers." + key));
-				return component._organizers[key].object.init(component, settings);
+				return component._organizers[key].object.attach(component, settings);
 			});
-		});
-
-		return chain;
-
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Init organizers.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static _initOrganizers(component, settings)
-	{
-
-		// Init
-		component._organizers = {};
-
-		// Add organizers
-		return OrganizerOrganizer.organize("*", component, settings);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Call organizers.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static _callOrganizers(component, conditions, settings)
-	{
-
-		let chain = Promise.resolve();
-
-		OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
-			if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
-			{
-				chain = chain.then(() => {
-					return component._organizers[key].object.organize(conditions, component, settings);
-				});
-			}
-		});
-
-		return chain;
-
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Clear organizers.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static _clearOrganizers(component, conditions, settings)
-	{
-
-		let chain = Promise.resolve();
-
-		OrganizerOrganizer._sortItems(component._organizers).forEach((key) => {
-			if (component._organizers[key].object.isTarget(conditions, component._organizers[key], component))
-			{
-				chain = chain.then(() => {
-					return component._organizers[key].object.unorganize(conditions, component, settings);
-				});
-			}
 		});
 
 		return chain;

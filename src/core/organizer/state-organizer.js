@@ -8,7 +8,6 @@
  */
 // =============================================================================
 
-import Component from "../component/component.js";
 import Organizer from "./organizer.js";
 import Store from "../store/store.js";
 import Util from "../util/util.js";
@@ -31,17 +30,17 @@ export default class StateOrganizer extends Organizer
 	{
 
 		// Add properties
-		Object.defineProperty(Component.prototype, "state", {
+		Object.defineProperty(BITSMIST.v1.Component.prototype, "state", {
 			get() { return this._state; },
 			set(value) { this._state = value; }
 		});
 
 		// Add methods
-		Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); }
-		Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
-		Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
-		Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
-		Component.prototype.pause = function(state) { return StateOrganizer._pause(this, state); }
+		BITSMIST.v1.Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); }
+		BITSMIST.v1.Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
+		BITSMIST.v1.Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
+		BITSMIST.v1.Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
+		BITSMIST.v1.Component.prototype.pause = function(state) { return StateOrganizer._pause(this, state); }
 
 		// Init vars
 		StateOrganizer._components = new Store();
@@ -53,64 +52,18 @@ export default class StateOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Init.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static init(component, settings)
+	static attach(component, options)
 	{
 
-		// Init vars
+		// Init component vars
 		component._state = "";
 		component._suspends = {};
 
 		// Load settings from attributes
 		StateOrganizer._loadAttrSettings(component);
 
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Organize.
-	 *
-	 * @param	{Object}		conditions			Conditions.
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static organize(conditions, component, settings)
-	{
-
-		let promise = Promise.resolve();
-
-		let waitFor = settings["waitFor"];
-		if (waitFor)
-		{
-			if (waitFor[conditions])
-			{
-				promise = StateOrganizer._waitFor(component, waitFor[conditions]);
-			}
-		}
-
-		return promise;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clear.
-	 */
-	static clear()
-	{
-
-		this._waitingList.clear();
+		// Add event handlers to the component
+		this._addOrganizerHandler(component, "beforeStart", StateOrganizer.onBeforeStart);
 
 	}
 
@@ -141,6 +94,35 @@ export default class StateOrganizer extends Organizer
 
 		StateOrganizer.__suspends[state].resolve();
 		StateOrganizer.__suspends[state].state = "resolved";
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Before start event handler.
+	 *
+	 * @param	{Object}		sender				Sender.
+	 * @param	{Object}		e					Event info.
+	 * @param	{Object}		ex					Extra event info.
+	 */
+	static onBeforeStart(sender, e, ex)
+	{
+
+		let promise = Promise.resolve();
+
+		let waitFor = this.settings.get("waitFor");
+		if (waitFor)
+		{
+			if (waitFor[conditions])
+			{
+				promise = StateOrganizer._waitFor(this, waitFor[conditions]);
+			}
+		}
+
+		return promise;
 
 	}
 
@@ -183,7 +165,7 @@ export default class StateOrganizer extends Organizer
 			waitInfo["promise"] = promise;
 
 			// Add to info to a waiting list.
-			StateOrganizer._addToWaitingList(waitInfo, component);
+			StateOrganizer.__addToWaitingList(waitInfo, component);
 		}
 
 		return promise;
@@ -208,7 +190,7 @@ export default class StateOrganizer extends Organizer
 		component._state = state;
 		StateOrganizer._components.set(component.uniqueId, {"object":component, "state":state});
 
-		StateOrganizer._processWaitingList(component, state);
+		StateOrganizer.__processWaitingList(component, state);
 
 	}
 
@@ -275,56 +257,6 @@ export default class StateOrganizer extends Organizer
 
 	}
 
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check wait list.
-	 */
-	static _processWaitingList(component, state)
-	{
-
-		Object.keys(StateOrganizer._waitingList.items).forEach((id) => {
-			if (StateOrganizer.__isAllReady(StateOrganizer._waitingList.get(id)))
-			{
-				// Resolve & Remove from waiting list
-				clearTimeout(StateOrganizer._waitingList.get(id)["timer"]);
-				StateOrganizer._waitingList.get(id).resolve();
-				StateOrganizer._waitingList.remove(id);
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add wait info to the waiting list.
-	 *
-	 * @param	{Object}		waitInfo			Wait info.
-	 */
-	static _addToWaitingList(waitInfo)
-	{
-
-		let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-
-		/*
-		for (let i = 0; i < waitInfo["waitlist"].length; i++)
-		{
-			// Check if the node exists
-			if (waitInfo["waitlist"][i].rootNode)
-			{
-				let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
-
-				Util.assert(element && element.uniqueId, `StateOrganizer.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
-			}
-		}
-		*/
-
-		StateOrganizer._waitingList.set(id, waitInfo);
-
-	}
-
-
 	// -----------------------------------------------------------------------------
 
 	/**
@@ -353,6 +285,55 @@ export default class StateOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 	//  Privates
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Process waiting list.
+	 */
+	static __processWaitingList()
+	{
+
+		Object.keys(StateOrganizer._waitingList.items).forEach((id) => {
+			if (StateOrganizer.__isAllReady(StateOrganizer._waitingList.get(id)))
+			{
+				// Resolve & Remove from waiting list
+				clearTimeout(StateOrganizer._waitingList.get(id)["timer"]);
+				StateOrganizer._waitingList.get(id).resolve();
+				StateOrganizer._waitingList.remove(id);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Add wait info to the waiting list.
+	 *
+	 * @param	{Object}		waitInfo			Wait info.
+	 */
+	static __addToWaitingList(waitInfo)
+	{
+
+		let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+
+		/*
+		for (let i = 0; i < waitInfo["waitlist"].length; i++)
+		{
+			// Check if the node exists
+			if (waitInfo["waitlist"][i].rootNode)
+			{
+				let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
+
+				Util.assert(element && element.uniqueId, `StateOrganizer.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
+			}
+		}
+		*/
+
+		StateOrganizer._waitingList.set(id, waitInfo);
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
