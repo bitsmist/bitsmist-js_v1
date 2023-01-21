@@ -23,19 +23,16 @@ export default class StateOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Global init.
-	 */
 	static globalInit()
 	{
 
-		// Add properties
+		// Add properties to Component
 		Object.defineProperty(BITSMIST.v1.Component.prototype, "state", {
 			get() { return this._state; },
 			set(value) { this._state = value; }
 		});
 
-		// Add methods
+		// Add methods to Component
 		BITSMIST.v1.Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); }
 		BITSMIST.v1.Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
 		BITSMIST.v1.Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
@@ -62,7 +59,7 @@ export default class StateOrganizer extends Organizer
 		// Load settings from attributes
 		StateOrganizer._loadAttrSettings(component);
 
-		// Add event handlers to the component
+		// Add event handlers to component
 		this._addOrganizerHandler(component, "beforeStart", StateOrganizer.onBeforeStart);
 
 	}
@@ -101,13 +98,6 @@ export default class StateOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Before start event handler.
-	 *
-	 * @param	{Object}		sender				Sender.
-	 * @param	{Object}		e					Event info.
-	 * @param	{Object}		ex					Extra event info.
-	 */
 	static onBeforeStart(sender, e, ex)
 	{
 
