@@ -208,10 +208,7 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {
-		if (this.settings.get("settings.hasTemplate"))
-		{
-			return this.transform({"templateName":this.settings.get("settings.templateName")});
-		}
+		return this.transform({"templateName":this.settings.get("settings.templateName")});
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{

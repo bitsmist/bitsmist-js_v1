@@ -119,11 +119,14 @@ export default class TemplateOrganizer extends Organizer
 
 		let templateName = this.settings.get("settings.templateName");
 
-		return Promise.resolve().then(() => {
-			return this.addTemplate(templateName);
-		}).then(() => {
-			return this.applyTemplate(templateName);
-		});
+		if (this.settings.get("settings.hasTemplate"))
+		{
+			return Promise.resolve().then(() => {
+				return this.addTemplate(templateName);
+			}).then(() => {
+				return this.applyTemplate(templateName);
+			});
+		}
 
 	}
 
