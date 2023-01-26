@@ -22,6 +22,19 @@ export default class EventOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	static getInfo()
+	{
+
+		return {
+			"name":			"EventOrganizer",
+			"targetWords":	"events",
+			"order":		210,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	static globalInit()
 	{
 

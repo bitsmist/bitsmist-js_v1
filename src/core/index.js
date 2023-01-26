@@ -42,26 +42,25 @@ window.BITSMIST.v1.Organizer = Organizer;
 
 import OrganizerOrganizer from "./organizer/organizer-organizer.js";
 window.BITSMIST.v1.OrganizerOrganizer = OrganizerOrganizer;
-OrganizerOrganizer.globalInit();
+OrganizerOrganizer.register(window.BITSMIST.v1.OrganizerOrganizer);
 
 import SettingOrganizer from "./organizer/setting-organizer.js";
 window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
-SettingOrganizer.globalInit();
+OrganizerOrganizer.register(window.BITSMIST.v1.SettingOrganizer);
 window.BITSMIST.v1.settings = SettingOrganizer.globalSettings;
-//window.BITSMIST.v1.settings = new ChainableStore();
 
 import StateOrganizer from "./organizer/state-organizer.js";
-OrganizerOrganizer.register("StateOrganizer", {"object":StateOrganizer, "targetWords":"waitFor", "targetEvents":"*", "order":100});
 window.BITSMIST.v1.StateOrganizer = StateOrganizer;
+OrganizerOrganizer.register(window.BITSMIST.v1.StateOrganizer);
 
 import TemplateOrganizer from "./organizer/template-organizer.js";
-OrganizerOrganizer.register("TemplateOrganizer", {"object":TemplateOrganizer, "targetWords":"templates", "targetEvents":["beforeStart", "doTransform", "afterTransform"], "order":200});
 window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
+OrganizerOrganizer.register(window.BITSMIST.v1.TemplateOrganizer);
 
 import EventOrganizer from "./organizer/event-organizer.js";
-OrganizerOrganizer.register("EventOrganizer", {"object":EventOrganizer, "targetWords":"events", "targetEvents":["beforeStart", "afterTransform", "afterSpecLoad"], "order":210});
 window.BITSMIST.v1.EventOrganizer = EventOrganizer;
+OrganizerOrganizer.register(window.BITSMIST.v1.EventOrganizer);
 
 import ComponentOrganizer from "./organizer/component-organizer.js";
-OrganizerOrganizer.register("ComponentOrganizer", {"object":ComponentOrganizer, "targetWords":["molds", "components"], "targetEvents":["afterStart", "afterSpecLoad"], "order":400});
 window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
+OrganizerOrganizer.register(window.BITSMIST.v1.ComponentOrganizer);

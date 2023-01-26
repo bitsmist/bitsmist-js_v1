@@ -197,11 +197,15 @@ Component.prototype.start = function(settings)
 	return Promise.resolve().then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
-		return SettingOrganizer.attach(this, newSettings); // now settings are included in this.settings
+		return this.__mergeSettings(newSettings);
+	}).then((newSettings) => {
+		return SettingOrganizer.attach(this, {"settings":newSettings});
 	}).then(() => {
 		this._name = this.settings.get("settings.name", this._name);
 		this._rootElement = this.settings.get("settings.rootElement", this);
 		return OrganizerOrganizer.attach(this);
+	}).then(() => {
+		return this.attachOrganizers({"settings":this.settings.items});
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
@@ -254,6 +258,33 @@ Component.prototype.stop = function(options)
 		return this.changeState("stopped");
 	}).then(() => {
 		return this.trigger("afterStop", options);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Attach organizers to component.
+ *
+ * @param	{Object}		options				Options for the component.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.attachOrganizers = function(options)
+{
+
+	options = options || {};
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.attachOrganizers(): Attaching organizers. name=${this.name}, id=${this.id}`);
+		return this.trigger("beforeAttachOrganizer", options);
+	}).then(() => {
+		return this.trigger("doAttachOrganizer", options);
+	}).then(() => {
+		return this.trigger("afterAttachOrganizer", options);
+	}).then(() => {
+		console.debug(`Component.attachOrganizers(): Attached organizers. name=${this.name}, id=${this.id}`);
 	});
 
 }
@@ -490,6 +521,45 @@ Component.prototype._getSettings = function()
 {
 
 	return {};
+
+}
+
+// -----------------------------------------------------------------------------
+//  Privates
+// -----------------------------------------------------------------------------
+
+/**
+ * Inject settings.
+ *
+ * @param	{Object}		settings			Settings.
+ *
+ * @return  {Object}		New settings.
+ */
+Component.prototype.__mergeSettings = function(settings)
+{
+
+	let curComponent = Object.getPrototypeOf(this);
+	let curSettings = {};
+	let parentSettings;
+
+	// Merge superclass settings
+	while (typeof(Object.getPrototypeOf(curComponent)._getSettings) === "function")
+	{
+		parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
+		if (Object.keys(parentSettings).length > 0)
+		{
+			BITSMIST.v1.Util.deepMerge(parentSettings, curSettings);
+			curSettings = parentSettings;
+		}
+
+		curComponent= Object.getPrototypeOf(curComponent);
+	}
+	BITSMIST.v1.Util.deepMerge(settings, curSettings);
+
+	// Merge this settings
+	BITSMIST.v1.Util.deepMerge(settings, this._getSettings());
+
+	return settings;
 
 }
 

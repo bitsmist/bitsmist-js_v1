@@ -23,6 +23,19 @@ export default class TemplateOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	static getInfo()
+	{
+
+		return {
+			"name":			"TemplateOrganizer",
+			"targetWords":	"templates",
+			"order":		200,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	static globalInit()
 	{
 

@@ -19,6 +19,15 @@ export default class Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	static getInfo()
+	{
+
+		return {};
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	static globalInit()
 	{
 	}
@@ -81,7 +90,7 @@ export default class Organizer
 
 		component.addEventHandler(eventName, {
 			"handler":handler,
-			"order":BITSMIST.v1.OrganizerOrganizer.organizers[this.name].order
+			"order":BITSMIST.v1.OrganizerOrganizer.organizers[this.getInfo()["name"]].order
 		});
 
 	}

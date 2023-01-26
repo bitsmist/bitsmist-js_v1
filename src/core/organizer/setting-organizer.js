@@ -24,6 +24,19 @@ export default class SettingOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	static getInfo()
+	{
+
+		return {
+			"name":			"SettingOrganizer",
+//			"targetWords":	"settings",
+//			"order":		1,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	static globalInit()
 	{
 
@@ -48,28 +61,10 @@ export default class SettingOrganizer extends Organizer
 	static attach(component, options)
 	{
 
-		let settings = options;
-
-		// Merge parent settings
-		let curComponent = Object.getPrototypeOf(component);
-		let curSettings = {};
-		let parentSettings;
-		while (typeof(Object.getPrototypeOf(curComponent)._getSettings) === "function")
-		{
-			parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
-			if (Object.keys(parentSettings).length > 0)
-			{
-				BITSMIST.v1.Util.deepMerge(parentSettings, curSettings);
-				curSettings = parentSettings;
-			}
-
-			curComponent= Object.getPrototypeOf(curComponent);
-		}
-		BITSMIST.v1.Util.deepMerge(settings, curSettings);
+		let settings = options["settings"] || {};
 
 		// Init vars
 		component._settings = new ChainableStore({"items":settings});
-		component._settings.merge(component._getSettings());
 
 		// Chain global settings
 		if (component._settings.get("settings.useGlobalSettings"))

@@ -23,6 +23,19 @@ export default class StateOrganizer extends Organizer
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	static getInfo()
+	{
+
+		return {
+			"name":			"StateOrganizer",
+			"targetWords":	"waitFor",
+			"order":		100,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	static globalInit()
 	{
 
