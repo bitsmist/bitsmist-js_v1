@@ -59,7 +59,7 @@ export default class OrganizerOrganizer extends Organizer
 		});
 
 		// Add methods to Component
-		//BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); }
+		BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); }
 
 	}
 
@@ -92,6 +92,7 @@ export default class OrganizerOrganizer extends Organizer
 		info["targetWords"] = ( Array.isArray(info["targetWords"]) ? info["targetWords"] : [info["targetWords"]] );
 
 		OrganizerOrganizer._organizers[info["name"]] = {
+		//let items = {
 			"name":			info["name"],
 			"object":		organizer,
 			"targetWords":	info["targetWords"],
@@ -116,9 +117,9 @@ export default class OrganizerOrganizer extends Organizer
 	static onBeforeAttachOrganizer(sender, e, ex)
 	{
 
-		// Attach organizers to component
-		let targets = OrganizerOrganizer._listNewOrganizers(this, e.detail.settings);
-		return OrganizerOrganizer._attachOrganizers(this, targets, e.detail.settings);
+		// Attach new organizers to component
+		let targets = OrganizerOrganizer.__listNewOrganizers(this, e.detail.settings);
+		return OrganizerOrganizer.__attachNewOrganizers(this, targets, e.detail.settings);
 
 	}
 
@@ -127,12 +128,42 @@ export default class OrganizerOrganizer extends Organizer
 	// ------------------------------------------------------------------------
 
 	/**
+	 * Attach organizers to component.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _attachOrganizers(component, options)
+	{
+
+		options = options || {};
+
+		return Promise.resolve().then(() => {
+			console.debug(`Component.attachOrganizers(): Attaching organizers. name=${component.name}, id=${component.id}`);
+			return component.trigger("beforeAttachOrganizer", options);
+		}).then(() => {
+			return component.trigger("doAttachOrganizer", options);
+		}).then(() => {
+			return component.trigger("afterAttachOrganizer", options);
+		}).then(() => {
+			console.debug(`Component.attachOrganizers(): Attached organizers. name=${component.name}, id=${component.id}`);
+		});
+
+	}
+
+	// ------------------------------------------------------------------------
+	//  Privates
+	// ------------------------------------------------------------------------
+
+	/**
 	 * List not-attached organizers according to settings.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static _listNewOrganizers(component, settings)
+	static __listNewOrganizers(component, settings)
 	{
 
 		let targets = {};
@@ -143,7 +174,7 @@ export default class OrganizerOrganizer extends Organizer
 		if (organizers)
 		{
 			Object.keys(organizers).forEach((organizerName) => {
-				BITSMIST.v1.Util.assert(OrganizerOrganizer._organizers[organizerName], `Organizer not found. name=${component.name}, organizerName=${organizerName}`);
+				Util.assert(OrganizerOrganizer._organizers[organizerName], `Organizer not found. name=${component.name}, organizerName=${organizerName}`);
 				if (Util.safeGet(organizers[organizerName], "settings.attach") && !component._organizers[organizerName])
 				{
 					targets[organizerName] = OrganizerOrganizer._organizers[organizerName];
@@ -173,12 +204,12 @@ export default class OrganizerOrganizer extends Organizer
 	 * @param	{Object}		targets				Target organizers.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static _attachOrganizers(component, targets, settings)
+	static __attachNewOrganizers(component, targets, settings)
 	{
 
 		let chain = Promise.resolve();
 
-		OrganizerOrganizer._sortItems(targets).forEach((organizerName) => {
+		OrganizerOrganizer.__sortItems(targets).forEach((organizerName) => {
 			chain = chain.then(() => {
 				if (!component._organizers[organizerName])
 				{
@@ -205,7 +236,7 @@ export default class OrganizerOrganizer extends Organizer
 	 *
 	 * @return  {Array}			Sorted keys.
 	 */
-	static _sortItems(organizers)
+	static __sortItems(organizers)
 	{
 
 		return Object.keys(organizers).sort((a,b) => {

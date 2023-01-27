@@ -265,71 +265,6 @@ Component.prototype.stop = function(options)
 // -----------------------------------------------------------------------------
 
 /**
- * Attach organizers to component.
- *
- * @param	{Object}		options				Options for the component.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.attachOrganizers = function(options)
-{
-
-	options = options || {};
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.attachOrganizers(): Attaching organizers. name=${this.name}, id=${this.id}`);
-		return this.trigger("beforeAttachOrganizer", options);
-	}).then(() => {
-		return this.trigger("doAttachOrganizer", options);
-	}).then(() => {
-		return this.trigger("afterAttachOrganizer", options);
-	}).then(() => {
-		console.debug(`Component.attachOrganizers(): Attached organizers. name=${this.name}, id=${this.id}`);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Transform component.
- *
- * @param	{String}		templateName		Template name.
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.transform = function(options)
-{
-
-	options = options || {};
-	let templateName = Util.safeGet(options, "templateName", "");
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.transform(): Transforming. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-		return this.trigger("beforeTransform", options);
-	}).then(() => {
-		return this.trigger("doTransform", options);
-	}).then(() => {
-		// Setup
-		let autoSetup = this.settings.get("settings.autoSetup");
-		if (autoSetup)
-		{
-			return this.setup(options);
-		}
-	 }).then(() => {
- 		return this.loadTags(this.rootElement, this.settings.get("loadings"));
-	}).then(() => {
-		return this.trigger("afterTransform", options);
-	}).then(() => {
-		console.debug(`Component.transform(): Transformed. name=${this.name}, templateName=${templateName}, id=${this.id}`);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
  * Setup component.
  *
  * @param	{Object}		options				Options.
@@ -548,16 +483,16 @@ Component.prototype.__mergeSettings = function(settings)
 		parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
 		if (Object.keys(parentSettings).length > 0)
 		{
-			BITSMIST.v1.Util.deepMerge(parentSettings, curSettings);
+			Util.deepMerge(parentSettings, curSettings);
 			curSettings = parentSettings;
 		}
 
 		curComponent= Object.getPrototypeOf(curComponent);
 	}
-	BITSMIST.v1.Util.deepMerge(settings, curSettings);
+	Util.deepMerge(settings, curSettings);
 
 	// Merge this settings
-	BITSMIST.v1.Util.deepMerge(settings, this._getSettings());
+	Util.deepMerge(settings, this._getSettings());
 
 	return settings;
 

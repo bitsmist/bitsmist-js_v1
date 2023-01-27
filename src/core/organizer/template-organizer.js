@@ -44,7 +44,8 @@ export default class TemplateOrganizer extends Organizer
 		Object.defineProperty(BITSMIST.v1.Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
 
 		// Add methods to Component
-		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return this._loadTemplate(this, ...args); }
+		BITSMIST.v1.Component.prototype.transform = function(...args) { return TemplateOrganizer._transform(this, ...args); }
+		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return TemplateOrganizer._loadTemplate(this, ...args); }
 		BITSMIST.v1.Component.prototype.addTemplate = function(...args) { return TemplateOrganizer._addTemplate(this, ...args); }
 		BITSMIST.v1.Component.prototype.applyTemplate = function(...args) { return TemplateOrganizer._applyTemplate(this, ...args); }
 		BITSMIST.v1.Component.prototype.cloneTemplate = function(...args) { return TemplateOrganizer._clone(this, ...args); }
@@ -168,6 +169,44 @@ export default class TemplateOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 	//  Protected
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Transform component (Load HTML and attach to node).
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _transform(component, options)
+	{
+
+		options = options || {};
+		let templateName = Util.safeGet(options, "templateName", "");
+
+		return Promise.resolve().then(() => {
+			console.debug(`Component.transform(): Transforming. name=${component.name}, templateName=${templateName}, id=${component.id}`);
+			return component.trigger("beforeTransform", options);
+		}).then(() => {
+			return component.trigger("doTransform", options);
+		}).then(() => {
+			// Setup
+			let autoSetup = component.settings.get("settings.autoSetup");
+			if (autoSetup)
+			{
+				return component.setup(options);
+			}
+		}).then(() => {
+			return component.loadTags(component.rootElement, component.settings.get("loadings"));
+		}).then(() => {
+			return component.trigger("afterTransform", options);
+		}).then(() => {
+			console.debug(`Component.transform(): Transformed. name=${component.name}, templateName=${templateName}, id=${component.id}`);
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
