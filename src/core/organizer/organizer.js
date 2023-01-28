@@ -89,8 +89,8 @@ export default class Organizer
 	{
 
 		component.addEventHandler(eventName, {
-			"handler":handler,
-			"order":BITSMIST.v1.OrganizerOrganizer.organizers[this.getInfo()["name"]].order
+			"handler":	handler,
+			"order":	this.getInfo()["order"],
 		});
 
 	}
