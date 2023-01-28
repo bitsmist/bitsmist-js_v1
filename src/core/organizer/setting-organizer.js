@@ -48,12 +48,6 @@ export default class SettingOrganizer extends Organizer
 		// Add methods to Component
 		BITSMIST.v1.Component.prototype.loadSettings = function(...args) { return SettingOrganizer._loadSettings(this, ...args); }
 
-		// Init vars
-		SettingOrganizer.__globalSettings = new ChainableStore();
-		Object.defineProperty(SettingOrganizer, "globalSettings", {
-			get() { return SettingOrganizer.__globalSettings; },
-		});
-
 	}
 
 	// -------------------------------------------------------------------------

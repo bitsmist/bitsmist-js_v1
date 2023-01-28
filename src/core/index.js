@@ -30,6 +30,10 @@ window.BITSMIST.v1.Store = Store;
 import ChainableStore from "./store/chainable-store.js";
 window.BITSMIST.v1.ChainableStore = ChainableStore;
 
+// Global Settings
+
+window.BITSMIST.v1.settings = new ChainableStore();
+
 // Component
 
 import Component from "./component/component.js";
@@ -47,7 +51,6 @@ OrganizerOrganizer.register(OrganizerOrganizer);
 import SettingOrganizer from "./organizer/setting-organizer.js";
 window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
 OrganizerOrganizer.register(SettingOrganizer);
-window.BITSMIST.v1.settings = SettingOrganizer.globalSettings;
 
 import StateOrganizer from "./organizer/state-organizer.js";
 window.BITSMIST.v1.StateOrganizer = StateOrganizer;
