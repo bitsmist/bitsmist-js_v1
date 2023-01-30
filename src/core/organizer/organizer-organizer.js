@@ -141,14 +141,14 @@ export default class OrganizerOrganizer extends Organizer
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`Component.attachOrganizers(): Attaching organizers. name=${component.name}, id=${component.id}`);
+			console.debug(`OrganizerOrganizer._attachOrganizers(): Attaching organizers. name=${component.name}, id=${component.id}`);
 			return component.trigger("beforeAttachOrganizer", options);
 		}).then(() => {
 			return component.trigger("doAttachOrganizer", options);
 		}).then(() => {
 			return component.trigger("afterAttachOrganizer", options);
 		}).then(() => {
-			console.debug(`Component.attachOrganizers(): Attached organizers. name=${component.name}, id=${component.id}`);
+			console.debug(`OrganizerOrganizer._attachOrganizers(): Attached organizers. name=${component.name}, id=${component.id}`);
 		});
 
 	}
