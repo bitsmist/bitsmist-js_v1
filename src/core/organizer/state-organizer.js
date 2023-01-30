@@ -119,9 +119,9 @@ export default class StateOrganizer extends Organizer
 		let waitFor = this.settings.get("waitFor");
 		if (waitFor)
 		{
-			if (waitFor[conditions])
+			if (waitFor[e.type])
 			{
-				promise = StateOrganizer._waitFor(this, waitFor[conditions]);
+				promise = StateOrganizer._waitFor(this, waitFor[e.type]);
 			}
 		}
 
