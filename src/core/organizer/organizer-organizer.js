@@ -43,7 +43,8 @@ export default class OrganizerOrganizer extends Organizer
 
 		return {
 			"name":			"OrganizerOrganizer",
-			"order":		10,
+//			"targetWords":	"organizers",
+//			"order":		0,
 		};
 
 	}
@@ -58,9 +59,6 @@ export default class OrganizerOrganizer extends Organizer
 			get() { return this._organizers; },
 		});
 
-		// Add methods to Component
-		BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); }
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -72,7 +70,7 @@ export default class OrganizerOrganizer extends Organizer
 		component._organizers = {};
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "beforeAttachOrganizer", OrganizerOrganizer.onBeforeAttachOrganizer);
+		this._addOrganizerHandler(component, "doAttachOrganizer", OrganizerOrganizer.onBeforeAttachOrganizer);
 
 	}
 
@@ -92,7 +90,6 @@ export default class OrganizerOrganizer extends Organizer
 		info["targetWords"] = ( Array.isArray(info["targetWords"]) ? info["targetWords"] : [info["targetWords"]] );
 
 		OrganizerOrganizer._organizers[info["name"]] = {
-		//let items = {
 			"name":			info["name"],
 			"object":		organizer,
 			"targetWords":	info["targetWords"],
@@ -120,36 +117,6 @@ export default class OrganizerOrganizer extends Organizer
 		// Attach new organizers to component
 		let targets = OrganizerOrganizer.__listNewOrganizers(this, e.detail.settings);
 		return OrganizerOrganizer.__attachNewOrganizers(this, targets, e.detail.settings);
-
-	}
-
-	// ------------------------------------------------------------------------
-	//  Protected
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Attach organizers to component.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		options				Options for the component.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _attachOrganizers(component, options)
-	{
-
-		options = options || {};
-
-		return Promise.resolve().then(() => {
-			console.debug(`OrganizerOrganizer._attachOrganizers(): Attaching organizers. name=${component.name}, id=${component.id}`);
-			return component.trigger("beforeAttachOrganizer", options);
-		}).then(() => {
-			return component.trigger("doAttachOrganizer", options);
-		}).then(() => {
-			return component.trigger("afterAttachOrganizer", options);
-		}).then(() => {
-			console.debug(`OrganizerOrganizer._attachOrganizers(): Attached organizers. name=${component.name}, id=${component.id}`);
-		});
 
 	}
 

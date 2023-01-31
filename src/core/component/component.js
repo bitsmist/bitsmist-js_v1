@@ -184,8 +184,8 @@ Component.prototype.start = function(settings)
 			"useGlobalSettings":	true,
 		},
 		"organizers": {
-//			"OrganizerOrganizer":	{"settings":{"attach":true}},
-//			"SettingOrganizer":		{"settings":{"attach":true}},
+//			"OrganizerOrganizer":	{"settings":{"attach":true}},	// Attach manually
+//			"SettingOrganizer":		{"settings":{"attach":true}},	// Attach manually
 			"StateOrganizer":		{"settings":{"attach":true}},
 			"EventOrganizer":		{"settings":{"attach":true}},
 			"TemplateOrganizer":	{"settings":{"attach":true}},
@@ -195,6 +195,8 @@ Component.prototype.start = function(settings)
 	settings = Util.deepMerge(defaults, settings);
 
 	return Promise.resolve().then(() => {
+		return OrganizerOrganizer.attach(this);
+	}).then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
 		return this.__mergeSettings(newSettings);
@@ -203,9 +205,6 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		this._name = this.settings.get("settings.name", this._name);
 		this._rootElement = this.settings.get("settings.rootElement", this);
-		return OrganizerOrganizer.attach(this);
-	}).then(() => {
-		return this.attachOrganizers({"settings":this.settings.items});
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");

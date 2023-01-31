@@ -74,8 +74,7 @@ export default class ComponentOrganizer extends Organizer
 		component._components = {};
 
 		// Add event handlers to the component
-		this._addOrganizerHandler(component, "afterStart", ComponentOrganizer.onAfterStart);
-		this._addOrganizerHandler(component, "afterSpecLoad", ComponentOrganizer.onAfterSpecLoad);
+		this._addOrganizerHandler(component, "afterLoadSettings", ComponentOrganizer.onAfterLoadSettings);
 
 	}
 
@@ -116,62 +115,34 @@ export default class ComponentOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onAfterStart(sender, e, ex)
-	{
-
-		return ComponentOrganizer._organize(this, this.settings.items);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static onAfterSpecLoad(sender, e, ex)
-	{
-
-		return ComponentOrganizer._organize(this, e.detail.spec);
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Organize.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static _organize(component, settings)
+	static onAfterLoadSettings(sender, e, ex)
 	{
 
 		let chain = Promise.resolve();
 
 		// Load molds
-		let molds = settings["molds"];
+		let molds = e.detail.settings["molds"];
 		if (molds)
 		{
 			Object.keys(molds).forEach((moldName) => {
 				chain = chain.then(() => {
-					if (!component.components[moldName])
+					if (!this.components[moldName])
 					{
-						return ComponentOrganizer._addComponent(component, moldName, molds[moldName], true);
+						return ComponentOrganizer._addComponent(this, moldName, molds[moldName], true);
 					}
 				});
 			});
 		}
 
 		// Load components
-		let components = settings["components"];
+		let components = e.detail.settings["components"];
 		if (components)
 		{
 			Object.keys(components).forEach((componentName) => {
 				chain = chain.then(() => {
-					if (!component.components[componentName])
+					if (!this.components[componentName])
 					{
-						return ComponentOrganizer._addComponent(component, componentName, components[componentName]);
+						return ComponentOrganizer._addComponent(this, componentName, components[componentName]);
 					}
 				});
 			});
@@ -181,6 +152,8 @@ export default class ComponentOrganizer extends Organizer
 
 	}
 
+	// -------------------------------------------------------------------------
+	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**

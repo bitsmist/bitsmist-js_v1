@@ -73,7 +73,7 @@ export default class StateOrganizer extends Organizer
 		StateOrganizer._loadAttrSettings(component);
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "beforeStart", StateOrganizer.onBeforeStart);
+		this._addOrganizerHandler(component, "afterLoadSettings", StateOrganizer.onAfterLoadSettings);
 
 	}
 
@@ -111,21 +111,25 @@ export default class StateOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onBeforeStart(sender, e, ex)
+	static onAfterLoadSettings(sender, e, ex)
 	{
 
-		let promise = Promise.resolve();
-
-		let waitFor = this.settings.get("waitFor");
+		let waitFor = e.detail.settings["waitFor"];
 		if (waitFor)
 		{
-			if (waitFor[e.type])
-			{
-				promise = StateOrganizer._waitFor(this, waitFor[e.type]);
-			}
+			Object.keys(waitFor).forEach((eventName) => {
+				this.addEventHandler(eventName, {"handler":StateOrganizer.onDoOrganize, "options":waitFor[eventName]});
+			});
 		}
 
-		return promise;
+	}
+
+	// -------------------------------------------------------------------------
+
+	static onDoOrganize(sender, e, ex)
+	{
+
+		return StateOrganizer._waitFor(this, ex.options);
 
 	}
 

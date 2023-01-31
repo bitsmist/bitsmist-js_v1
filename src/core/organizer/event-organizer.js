@@ -52,20 +52,9 @@ export default class EventOrganizer extends Organizer
 	static attach(component, options)
 	{
 
-		let events = component.settings.get("events");
-		if (events)
-		{
-			let targets = EventOrganizer.__filterElements(component, events, "beforeStart");
-
-			Object.keys(targets).forEach((elementName) => {
-				EventOrganizer._initEvents(component, elementName, events[elementName]);
-			});
-		}
-
 		// Add event handlers to component
-//		this._addOrganizerHandler(component, "beforeStart", EventOrganizer.onBeforeStart);
+		this._addOrganizerHandler(component, "afterLoadSettings", EventOrganizer.onAfterLoadSettings);
 		this._addOrganizerHandler(component, "afterTransform", EventOrganizer.onAfterTransform);
-		this._addOrganizerHandler(component, "afterSpecLoad", EventOrganizer.onAfterSpecLoad);
 
 	}
 
@@ -88,23 +77,6 @@ export default class EventOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onBeforeStart(sender, e, ex)
-	{
-
-		let events = this.settings.get("events");
-		if (events)
-		{
-			let targets = EventOrganizer.__filterElements(this, events, "beforeStart");
-
-			Object.keys(targets).forEach((elementName) => {
-				EventOrganizer._initEvents(this, elementName, events[elementName]);
-			});
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	static onAfterTransform(sender, e, ex)
 	{
 
@@ -122,13 +94,13 @@ export default class EventOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	static onAfterSpecLoad(sender, e, ex)
+	static onAfterLoadSettings(sender, e, ex)
 	{
 
-		let events = e.detail.spec["events"];
+		let events = e.detail.settings["events"];
 		if (events)
 		{
-			let targets = EventOrganizer.__filterElements(this, events, "afterSpecLoad");
+			let targets = EventOrganizer.__filterElements(this, events, "afterLoadSettings");
 
 			Object.keys(targets).forEach((elementName) => {
 				EventOrganizer._initEvents(this, elementName, events[elementName]);
@@ -379,19 +351,13 @@ export default class EventOrganizer extends Organizer
 
 		switch (conditions)
 		{
-		case "beforeStart":
-			// Return events only for the component itself.
-			keys = Object.keys(eventInfo).filter((elementName) => {
-				return EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
-			});
-			break;
 		case "afterTransform":
 			// Return events only for elements inside the component.
 			keys = Object.keys(eventInfo).filter((elementName) => {
 				return !EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
 			});
 			break;
-		case "afterSpecLoad":
+		case "afterLoadSettings":
 			// Return all
 			keys = Object.keys(eventInfo);
 			break;

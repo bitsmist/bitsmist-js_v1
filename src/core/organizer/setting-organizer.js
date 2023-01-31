@@ -30,7 +30,7 @@ export default class SettingOrganizer extends Organizer
 		return {
 			"name":			"SettingOrganizer",
 //			"targetWords":	"settings",
-//			"order":		1,
+//			"order":		0,
 		};
 
 	}
@@ -72,6 +72,10 @@ export default class SettingOrganizer extends Organizer
 		}).then(() => {
 			// Load settings from attributes
 			SettingOrganizer._loadAttrSettings(component);
+		}).then(() => {
+			return component.trigger("doAttachOrganizer", {"settings":component._settings.items});
+		}).then(() => {
+			return component.trigger("afterLoadSettings", {"settings":component._settings.items});
 		});
 
 	}
