@@ -206,10 +206,10 @@ Component.prototype.start = function(settings)
 		this._name = this.settings.get("settings.name", this._name);
 		this._rootElement = this.settings.get("settings.rootElement", this);
 	}).then(() => {
+		return this.trigger("beforeStart");
+	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("starting");
-	}).then(() => {
-		return this.trigger("beforeStart");
 	}).then(() => {
 		return this.transform({"templateName":this.settings.get("settings.templateName")});
 	}).then(() => {
