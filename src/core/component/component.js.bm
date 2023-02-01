@@ -8,10 +8,13 @@
  */
 // =============================================================================
 
+import BM from "../bm";
+/*
 import ClassUtil from "../util/class-util.js";
 import OrganizerOrganizer from "../organizer/organizer-organizer.js";
 import SettingOrganizer from "../organizer/setting-organizer.js";
 import Util from "../util/util.js";
+*/
 
 // =============================================================================
 //	Component class
@@ -32,7 +35,7 @@ export default function Component()
 
 }
 
-ClassUtil.inherit(Component, HTMLElement);
+BM.ClassUtil.inherit(Component, HTMLElement);
 
 // -----------------------------------------------------------------------------
 //  Callbacks
@@ -67,7 +70,7 @@ Component.prototype.connectedCallback = function()
 		}
 		else
 		{
-			console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}`);
 			return this.changeState("ready");
 		}
 	});
@@ -89,7 +92,7 @@ Component.prototype.disconnectedCallback = function()
 			return this.stop();
 		}
 	}).then(() => {
-		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.name}, id=${this.id}`);
 		return this.changeState("disconnected");
 	});
 
@@ -184,29 +187,30 @@ Component.prototype.start = function(settings)
 			"useGlobalSettings":	true,
 		},
 		"organizers": {
-//			"OrganizerOrganizer":	{"settings":{"attach":true}},	// Attach manually
-//			"SettingOrganizer":		{"settings":{"attach":true}},	// Attach manually
+//			"OrganizerOrganizer":	{"settings":{"attach":true}},
+//			"SettingOrganizer":		{"settings":{"attach":true}},
 			"StateOrganizer":		{"settings":{"attach":true}},
 			"EventOrganizer":		{"settings":{"attach":true}},
 			"TemplateOrganizer":	{"settings":{"attach":true}},
 			"ComponentOrganizer":	{"settings":{"attach":true}},
 		}
 	};
-	settings = Util.deepMerge(defaults, settings);
+	settings = BM.Util.deepMerge(defaults, settings);
 
 	return Promise.resolve().then(() => {
-		return OrganizerOrganizer.attach(this);
-	}).then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
 		return this.__mergeSettings(newSettings);
 	}).then((newSettings) => {
-		return SettingOrganizer.attach(this, {"settings":newSettings});
+		return BM.SettingOrganizer.attach(this, {"settings":newSettings});
 	}).then(() => {
 		this._name = this.settings.get("settings.name", this._name);
 		this._rootElement = this.settings.get("settings.rootElement", this);
+		return BM.OrganizerOrganizer.attach(this);
 	}).then(() => {
-		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		return this.attachOrganizers({"settings":this.settings.items});
+	}).then(() => {
+		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
 	}).then(() => {
 		return this.trigger("beforeStart");
@@ -220,12 +224,12 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("doStart");
 	}).then(() => {
-		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
 	}).then(() => {
 		return this.trigger("afterStart");
 	}).then(() => {
-		console.debug(`Component.start(): Component is ready. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.start(): Component is ready. name=${this.name}, id=${this.id}`);
 		return this.changeState("ready");
 	});
 
@@ -246,14 +250,14 @@ Component.prototype.stop = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopping");
 	}).then(() => {
 		return this.trigger("beforeStop", options);
 	}).then(() => {
 		return this.trigger("doStop", options);
 	}).then(() => {
-		console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopped");
 	}).then(() => {
 		return this.trigger("afterStop", options);
@@ -276,14 +280,14 @@ Component.prototype.setup = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 		return this.trigger("beforeSetup", options);
 	}).then(() => {
 		return this.trigger("doSetup", options);
 	}).then(() => {
 		return this.trigger("afterSetup", options);
 	}).then(() => {
-		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 	});
 
 }
@@ -303,19 +307,19 @@ Component.prototype.refresh = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", options);
 	}).then(() => {
 		return this.trigger("doTarget", options);
 	}).then(() => {
 		// Fetch
-		if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
+		if (BM.Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
 		{
 			return this.fetch(options);
 		}
 	}).then(() => {
 		// Fill
-		if (Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))
+		if (BM.Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))
 		{
 			return this.fill(options);
 		}
@@ -324,7 +328,7 @@ Component.prototype.refresh = function(options)
 	}).then(() => {
 		return this.trigger("afterRefresh", options);
 	}).then(() => {
-		console.debug(`Component.refresh(): Refreshed component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.refresh(): Refreshed component. name=${this.name}, id=${this.id}`);
 	});
 
 }
@@ -344,14 +348,14 @@ Component.prototype.fetch = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.fetch(): Fetching data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
 		return this.trigger("beforeFetch", options);
 	}).then(() => {
 		return this.trigger("doFetch", options);
 	}).then(() => {
 		return this.trigger("afterFetch", options);
 	}).then(() => {
-		console.debug(`Component.fetch(): Fetched data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fetch(): Fetched data. name=${this.name}`);
 	});
 
 }
@@ -371,10 +375,10 @@ Component.prototype.fill = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.fill(): Filling with data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fill(): Filling with data. name=${this.name}`);
 		return this.trigger("beforeFill", options);
 	}).then(() => {
-		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
+		let autoClear = BM.Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
 		if (autoClear)
 		{
 			return this.clear();
@@ -383,8 +387,6 @@ Component.prototype.fill = function(options)
 		return this.trigger("doFill", options);
 	}).then(() => {
 		return this.trigger("afterFill", options);
-	}).then(() => {
-		console.debug(`Component.fill(): Filled with data. name=${this.name}, uniqueId=${this._uniqueId}`);
 	});
 
 }
@@ -402,14 +404,12 @@ Component.prototype.clear = function(options)
 {
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.clear(): Clearing the component. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.clear(): Clearing the component. name=${this.name}`);
 		return this.trigger("beforeClear", options);
 	}).then(() => {
 		return this.trigger("doClear", options);
 	}).then(() => {
 		return this.trigger("afterClear", options);
-	}).then(() => {
-		console.debug(`Component.clear(): Cleared the component. name=${this.name}, uniqueId=${this._uniqueId}`);
 	});
 
 }
@@ -426,7 +426,7 @@ Component.prototype.clear = function(options)
 Component.prototype.scopedSelectorAll = function(query)
 {
 
-	return Util.scopedSelectorAll(this, query);
+	return BM.Util.scopedSelectorAll(this, query);
 
 }
 
@@ -486,16 +486,16 @@ Component.prototype.__mergeSettings = function(settings)
 		parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
 		if (Object.keys(parentSettings).length > 0)
 		{
-			Util.deepMerge(parentSettings, curSettings);
+			BM.Util.deepMerge(parentSettings, curSettings);
 			curSettings = parentSettings;
 		}
 
 		curComponent= Object.getPrototypeOf(curComponent);
 	}
-	Util.deepMerge(settings, curSettings);
+	BM.Util.deepMerge(settings, curSettings);
 
 	// Merge this settings
-	Util.deepMerge(settings, this._getSettings());
+	BM.Util.deepMerge(settings, this._getSettings());
 
 	return settings;
 

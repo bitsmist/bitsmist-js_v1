@@ -8,9 +8,10 @@
  */
 // =============================================================================
 
+import ChainableStore from "../store/chainable-store.js";
 import ClassUtil from "../util/class-util.js";
 import OrganizerOrganizer from "../organizer/organizer-organizer.js";
-import SettingOrganizer from "../organizer/setting-organizer.js";
+//import SettingOrganizer from "../organizer/setting-organizer.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -67,7 +68,7 @@ Component.prototype.connectedCallback = function()
 		}
 		else
 		{
-			console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}`);
 			return this.changeState("ready");
 		}
 	});
@@ -89,7 +90,7 @@ Component.prototype.disconnectedCallback = function()
 			return this.stop();
 		}
 	}).then(() => {
-		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.name}, id=${this.id}`);
 		return this.changeState("disconnected");
 	});
 
@@ -158,6 +159,20 @@ Object.defineProperty(Component.prototype, 'rootElement', {
 })
 
 // -----------------------------------------------------------------------------
+
+/**
+ * Settings.
+ *
+ * @type	{Store}
+ */
+Object.defineProperty(Component.prototype, 'settings', {
+	get()
+	{
+		return this._settings;
+	}
+})
+
+// -----------------------------------------------------------------------------
 //  Methods
 // -----------------------------------------------------------------------------
 
@@ -183,31 +198,44 @@ Component.prototype.start = function(settings)
 			"hasTemplate":			true,
 			"useGlobalSettings":	true,
 		},
+		/*
 		"organizers": {
-//			"OrganizerOrganizer":	{"settings":{"attach":true}},	// Attach manually
-//			"SettingOrganizer":		{"settings":{"attach":true}},	// Attach manually
+			"OrganizerOrganizer":	{"settings":{"attach":true}},
+			"SettingOrganizer":		{"settings":{"attach":true}},
 			"StateOrganizer":		{"settings":{"attach":true}},
 			"EventOrganizer":		{"settings":{"attach":true}},
+			"LoaderOrganizer":		{"settings":{"attach":true}},
 			"TemplateOrganizer":	{"settings":{"attach":true}},
-			"ComponentOrganizer":	{"settings":{"attach":true}},
 		}
+		*/
 	};
 	settings = Util.deepMerge(defaults, settings);
 
+	// Merge parent settings if any
+	if (typeof(Object.getPrototypeOf(Object.getPrototypeOf(this))._getSettings) === "function")
+	{
+		let parentSettings = Object.getPrototypeOf(Object.getPrototypeOf(this))._getSettings();
+		if (Object.keys(parentSettings).length > 0)
+		{
+			BITSMIST.v1.Util.deepMerge(settings, parentSettings);
+		}
+	}
+
 	return Promise.resolve().then(() => {
-		return OrganizerOrganizer.attach(this);
-	}).then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
-		return this.__mergeSettings(newSettings);
-	}).then((newSettings) => {
-		return SettingOrganizer.attach(this, {"settings":newSettings});
+//		return SettingOrganizer.init(this, newSettings); // now settings are included in this.settings
+		return this.init(newSettings);
 	}).then(() => {
+		console.log("@@@settings", this.constructor.name, this.settings.items);
 		this._name = this.settings.get("settings.name", this._name);
 		this._rootElement = this.settings.get("settings.rootElement", this);
+		return this.initOrganizers(this.settings.items);
 	}).then(() => {
-		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}`);
 		return this.changeState("starting");
+	}).then(() => {
+		return this.callOrganizers("beforeStart", this.settings.items);
 	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {
@@ -220,12 +248,14 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("doStart");
 	}).then(() => {
-		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}`);
 		return this.changeState("started");
+	}).then(() => {
+		return this.callOrganizers("afterStart", this.settings.items);
 	}).then(() => {
 		return this.trigger("afterStart");
 	}).then(() => {
-		console.debug(`Component.start(): Component is ready. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.start(): Component is ready. name=${this.name}, id=${this.id}`);
 		return this.changeState("ready");
 	});
 
@@ -246,17 +276,59 @@ Component.prototype.stop = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopping");
 	}).then(() => {
 		return this.trigger("beforeStop", options);
 	}).then(() => {
 		return this.trigger("doStop", options);
 	}).then(() => {
-		console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}`);
 		return this.changeState("stopped");
 	}).then(() => {
 		return this.trigger("afterStop", options);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Transform component.
+ *
+ * @param	{String}		templateName		Template name.
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.transform = function(options)
+{
+
+	options = options || {};
+	let templateName = Util.safeGet(options, "templateName", "");
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.transform(): Transforming. name=${this.name}, templateName=${templateName}, id=${this.id}`);
+		return this.trigger("beforeTransform", options);
+	}).then(() => {
+		return this.callOrganizers("doTransform", this.settings.items);
+	}).then(() => {
+		return this.trigger("doTransform", options);
+	}).then(() => {
+		// Setup
+		let autoSetup = this.settings.get("settings.autoSetup");
+		if (autoSetup)
+		{
+			return this.setup(options);
+		}
+	 }).then(() => {
+ 		return this.loadTags(this.rootElement, this.settings.get("loadings"));
+	 }).then(() => {
+		return this.callOrganizers("afterTransform", this.settings.items);
+	}).then(() => {
+		return this.trigger("afterTransform", options);
+	}).then(() => {
+		console.debug(`Component.transform(): Transformed. name=${this.name}, templateName=${templateName}, id=${this.id}`);
 	});
 
 }
@@ -276,14 +348,14 @@ Component.prototype.setup = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 		return this.trigger("beforeSetup", options);
 	}).then(() => {
 		return this.trigger("doSetup", options);
 	}).then(() => {
 		return this.trigger("afterSetup", options);
 	}).then(() => {
-		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}`);
 	});
 
 }
@@ -303,7 +375,7 @@ Component.prototype.refresh = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}`);
 		return this.trigger("beforeRefresh", options);
 	}).then(() => {
 		return this.trigger("doTarget", options);
@@ -324,7 +396,7 @@ Component.prototype.refresh = function(options)
 	}).then(() => {
 		return this.trigger("afterRefresh", options);
 	}).then(() => {
-		console.debug(`Component.refresh(): Refreshed component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.refresh(): Refreshed component. name=${this.name}, id=${this.id}`);
 	});
 
 }
@@ -344,14 +416,16 @@ Component.prototype.fetch = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.fetch(): Fetching data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fetch(): Fetching data. name=${this.name}`);
 		return this.trigger("beforeFetch", options);
+	}).then(() => {
+		return this.callOrganizers("doFetch", this.settings.items);
 	}).then(() => {
 		return this.trigger("doFetch", options);
 	}).then(() => {
 		return this.trigger("afterFetch", options);
 	}).then(() => {
-		console.debug(`Component.fetch(): Fetched data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fetch(): Fetched data. name=${this.name}`);
 	});
 
 }
@@ -371,7 +445,7 @@ Component.prototype.fill = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.fill(): Filling with data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fill(): Filling with data. name=${this.name}`);
 		return this.trigger("beforeFill", options);
 	}).then(() => {
 		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
@@ -383,8 +457,6 @@ Component.prototype.fill = function(options)
 		return this.trigger("doFill", options);
 	}).then(() => {
 		return this.trigger("afterFill", options);
-	}).then(() => {
-		console.debug(`Component.fill(): Filled with data. name=${this.name}, uniqueId=${this._uniqueId}`);
 	});
 
 }
@@ -402,14 +474,12 @@ Component.prototype.clear = function(options)
 {
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.clear(): Clearing the component. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.clear(): Clearing the component. name=${this.name}`);
 		return this.trigger("beforeClear", options);
 	}).then(() => {
 		return this.trigger("doClear", options);
 	}).then(() => {
 		return this.trigger("afterClear", options);
-	}).then(() => {
-		console.debug(`Component.clear(): Cleared the component. name=${this.name}, uniqueId=${this._uniqueId}`);
 	});
 
 }
@@ -427,6 +497,105 @@ Component.prototype.scopedSelectorAll = function(query)
 {
 
 	return Util.scopedSelectorAll(this, query);
+
+}
+
+// -------------------------------------------------------------------------
+
+/**
+ * Init.
+ *
+ * @param	{Component}		component			Component.
+ * @param	{Object}		settings			Settings.
+ *
+ * @return 	{Promise}		Promise.
+ */
+Component.prototype.init = function(settings)
+{
+
+	// Init vars
+	this._settings = new ChainableStore({"items":settings});
+	this._settings.merge(this._getSettings());
+
+	// Chain global settings
+	if (this._settings.get("settings.useGlobalSettings"))
+	{
+		this._settings.chain(BITSMIST.v1.settings);
+	}
+
+	return Promise.resolve().then(() => {
+		// Load settings from an external file.
+		return this._loadExternalSetting("setting");
+	}).then(() => {
+		// Load settings from attributes
+		this._loadAttrSettings();
+	});
+
+}
+
+// -------------------------------------------------------------------------
+//  Protected
+// -------------------------------------------------------------------------
+
+/**
+ * Load a setting file.
+ *
+ * @param	{String}		settingName			Setting name.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype._loadExternalSetting = function(settingName)
+{
+
+	let fileName;
+	let loadOptions = {};
+
+	if (this.hasAttribute("bm-" + settingName + "ref"))
+	{
+		let url = Util.parseURL(this.getAttribute("bm-" + settingName + "ref"));
+		fileName = url.filenameWithoutExtension;
+		loadOptions["path"] = url.path;
+		loadOptions["query"] = url.query;
+	}
+	else
+	{
+		let path = ( this.hasAttribute("bm-" + settingName + "path") ? this.getAttribute("bm-" + settingName + "path") : "" );
+		fileName = ( this.hasAttribute("bm-" + settingName + "name") ? this.getAttribute("bm-" + settingName + "name") : "" );
+		if (path && !fileName)
+		{
+			fileName = "settings";
+		}
+		loadOptions["path"] = path;
+	}
+
+	if (fileName || loadOptions["path"])
+	{
+		return this.loadSetting(fileName, loadOptions);
+	}
+
+}
+
+// -------------------------------------------------------------------------
+
+/**
+ * Get settings from element's attribute.
+ *
+ */
+Component.prototype._loadAttrSettings = function()
+{
+
+	// Get settings from the attribute
+
+	let dataSettings = ( document.querySelector(this._settings.get("settings.rootNode")) ?
+		document.querySelector(this._settings.get("settings.rootNode")).getAttribute("bm-settings") :
+		this.getAttribute("bm-settings")
+	);
+
+	if (dataSettings)
+	{
+		let settings = {"settings": JSON.parse(dataSettings)};
+		this._settings.merge(settings);
+	}
 
 }
 
@@ -459,45 +628,6 @@ Component.prototype._getSettings = function()
 {
 
 	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-//  Privates
-// -----------------------------------------------------------------------------
-
-/**
- * Inject settings.
- *
- * @param	{Object}		settings			Settings.
- *
- * @return  {Object}		New settings.
- */
-Component.prototype.__mergeSettings = function(settings)
-{
-
-	let curComponent = Object.getPrototypeOf(this);
-	let curSettings = {};
-	let parentSettings;
-
-	// Merge superclass settings
-	while (typeof(Object.getPrototypeOf(curComponent)._getSettings) === "function")
-	{
-		parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
-		if (Object.keys(parentSettings).length > 0)
-		{
-			Util.deepMerge(parentSettings, curSettings);
-			curSettings = parentSettings;
-		}
-
-		curComponent= Object.getPrototypeOf(curComponent);
-	}
-	Util.deepMerge(settings, curSettings);
-
-	// Merge this settings
-	Util.deepMerge(settings, this._getSettings());
-
-	return settings;
 
 }
 
