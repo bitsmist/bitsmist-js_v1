@@ -227,6 +227,8 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		console.debug(`Component.start(): Component is ready. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("ready");
+	}).then(() => {
+		return this.trigger("afterReady");
 	});
 
 }
