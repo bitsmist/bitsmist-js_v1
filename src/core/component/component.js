@@ -57,7 +57,7 @@ Component.prototype.connectedCallback = function()
 
 	// Start
 	this._ready = this._ready.then(() => {
-		console.debug(`Component.connectedCallback(): Component is connected. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.connectedCallback(): Component is connected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("connected");
 	}).then(() => {
 		if (!this._initialized || this.settings.get("settings.autoRestart"))
@@ -67,7 +67,7 @@ Component.prototype.connectedCallback = function()
 		}
 		else
 		{
-			console.debug(`Component.start(): Restarted component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			console.debug(`Component.start(): Restarted component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 			return this.changeState("ready");
 		}
 	});
@@ -89,7 +89,7 @@ Component.prototype.disconnectedCallback = function()
 			return this.stop();
 		}
 	}).then(() => {
-		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("disconnected");
 	});
 
@@ -208,7 +208,7 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {
-		console.debug(`Component.start(): Starting component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("starting");
 	}).then(() => {
 		return this.transform({"templateName":this.settings.get("settings.templateName")});
@@ -220,12 +220,12 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("doStart");
 	}).then(() => {
-		console.debug(`Component.start(): Started component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.start(): Started component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("started");
 	}).then(() => {
 		return this.trigger("afterStart");
 	}).then(() => {
-		console.debug(`Component.start(): Component is ready. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.start(): Component is ready. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("ready");
 	});
 
@@ -246,14 +246,14 @@ Component.prototype.stop = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.stop(): Stopping component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.stop(): Stopping component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("stopping");
 	}).then(() => {
 		return this.trigger("beforeStop", options);
 	}).then(() => {
 		return this.trigger("doStop", options);
 	}).then(() => {
-		console.debug(`Component.stop(): Stopped component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.stop(): Stopped component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("stopped");
 	}).then(() => {
 		return this.trigger("afterStop", options);
@@ -276,14 +276,14 @@ Component.prototype.setup = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.setup(): Setting up component. name=${this.name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.setup(): Setting up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.trigger("beforeSetup", options);
 	}).then(() => {
 		return this.trigger("doSetup", options);
 	}).then(() => {
 		return this.trigger("afterSetup", options);
 	}).then(() => {
-		console.debug(`Component.setup(): Set up component. name=${this.name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.setup(): Set up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
 	});
 
 }
@@ -303,7 +303,7 @@ Component.prototype.refresh = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.refresh(): Refreshing component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.refresh(): Refreshing component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.trigger("beforeRefresh", options);
 	}).then(() => {
 		return this.trigger("doTarget", options);
@@ -324,7 +324,7 @@ Component.prototype.refresh = function(options)
 	}).then(() => {
 		return this.trigger("afterRefresh", options);
 	}).then(() => {
-		console.debug(`Component.refresh(): Refreshed component. name=${this.name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.refresh(): Refreshed component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 	});
 
 }
@@ -344,14 +344,14 @@ Component.prototype.fetch = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.fetch(): Fetching data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fetch(): Fetching data. name=${this._name}, uniqueId=${this._uniqueId}`);
 		return this.trigger("beforeFetch", options);
 	}).then(() => {
 		return this.trigger("doFetch", options);
 	}).then(() => {
 		return this.trigger("afterFetch", options);
 	}).then(() => {
-		console.debug(`Component.fetch(): Fetched data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fetch(): Fetched data. name=${this._name}, uniqueId=${this._uniqueId}`);
 	});
 
 }
@@ -371,7 +371,7 @@ Component.prototype.fill = function(options)
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.fill(): Filling with data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fill(): Filling with data. name=${this._name}, uniqueId=${this._uniqueId}`);
 		return this.trigger("beforeFill", options);
 	}).then(() => {
 		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
@@ -384,7 +384,7 @@ Component.prototype.fill = function(options)
 	}).then(() => {
 		return this.trigger("afterFill", options);
 	}).then(() => {
-		console.debug(`Component.fill(): Filled with data. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.fill(): Filled with data. name=${this._name}, uniqueId=${this._uniqueId}`);
 	});
 
 }
@@ -402,14 +402,14 @@ Component.prototype.clear = function(options)
 {
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.clear(): Clearing the component. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.clear(): Clearing the component. name=${this._name}, uniqueId=${this._uniqueId}`);
 		return this.trigger("beforeClear", options);
 	}).then(() => {
 		return this.trigger("doClear", options);
 	}).then(() => {
 		return this.trigger("afterClear", options);
 	}).then(() => {
-		console.debug(`Component.clear(): Cleared the component. name=${this.name}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component.clear(): Cleared the component. name=${this._name}, uniqueId=${this._uniqueId}`);
 	});
 
 }
