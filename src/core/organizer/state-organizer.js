@@ -166,7 +166,7 @@ export default class StateOrganizer extends Organizer
 				waitInfo["reject"] = reject;
 				waitInfo["timer"] = setTimeout(() => {
 					let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
-					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}.`);
+					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}, uniqueId=${component.uniqueId}.`);
 				}, timeout);
 			});
 			waitInfo["promise"] = promise;
@@ -598,11 +598,11 @@ export default class StateOrganizer extends Organizer
 
 		for (let i = 0; i < waitlist.length; i++)
 		{
-			let id = ( waitlist[i].id ? "id:" + waitlist[i].id + "," : "" );
-			let name = ( waitlist[i].name ? "name:" + waitlist[i].name + "," : "" );
-			let object = ( waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "" );
-			let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "" );
-			let state = (waitlist[i].state ? "state:" + waitlist[i].state: "" );
+			let id = (waitlist[i].id ? "id:" + waitlist[i].id + "," : "");
+			let name = (waitlist[i].name ? "name:" + waitlist[i].name + "," : "");
+			let object = (waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "");
+			let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "");
+			let state = (waitlist[i].state ? "state:" + waitlist[i].state: "");
 			result += "\n\t{" + id + name + object + node + state + "},";
 		}
 
