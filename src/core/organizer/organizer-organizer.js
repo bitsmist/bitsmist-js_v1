@@ -44,7 +44,7 @@ export default class OrganizerOrganizer extends Organizer
 		return {
 			"name":			"OrganizerOrganizer",
 //			"targetWords":	"organizers",
-//			"order":		0,
+			"order":		0,
 		};
 
 	}
