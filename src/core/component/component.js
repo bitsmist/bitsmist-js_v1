@@ -205,13 +205,15 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		this._name = this.settings.get("settings.name", this._name);
 		this._rootElement = this.settings.get("settings.rootElement", this);
-	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("starting");
 	}).then(() => {
-		return this.transform({"templateName":this.settings.get("settings.templateName")});
+		if (this.settings.get("settings.hasTemplate"))
+		{
+			return this.transform({"templateName":this.settings.get("settings.templateName")});
+		}
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{
