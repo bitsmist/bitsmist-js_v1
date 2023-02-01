@@ -266,6 +266,43 @@ Component.prototype.stop = function(options)
 // -----------------------------------------------------------------------------
 
 /**
+ * Transform component (Load HTML and attach to node).
+ *
+ * @param	{Object}		options				Options.
+ *
+ * @return  {Promise}		Promise.
+ */
+Component.prototype.transform = function(options)
+{
+
+	options = options || {};
+	let templateName = Util.safeGet(options, "templateName", "");
+
+	return Promise.resolve().then(() => {
+		console.debug(`Component.transform(): Transforming. name=${this.name}, templateName=${templateName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+		return this.trigger("beforeTransform", options);
+	}).then(() => {
+		return this.trigger("doTransform", options);
+	}).then(() => {
+		// Setup
+		let autoSetup = this.settings.get("settings.autoSetup");
+		if (autoSetup)
+		{
+			return this.setup(options);
+		}
+	}).then(() => {
+		return this.loadTags(this.rootElement, this.settings.get("loadings"));
+	}).then(() => {
+		return this.trigger("afterTransform", options);
+	}).then(() => {
+		console.debug(`Component.transform(): Transformed. name=${this.name}, templateName=${templateName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+	});
+
+}
+
+// -----------------------------------------------------------------------------
+
+/**
  * Setup component.
  *
  * @param	{Object}		options				Options.

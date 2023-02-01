@@ -44,7 +44,6 @@ export default class TemplateOrganizer extends Organizer
 		Object.defineProperty(BITSMIST.v1.Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
 
 		// Add methods to Component
-		BITSMIST.v1.Component.prototype.transform = function(...args) { return TemplateOrganizer._transform(this, ...args); }
 		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return TemplateOrganizer._loadTemplate(this, ...args); }
 		BITSMIST.v1.Component.prototype.addTemplate = function(...args) { return TemplateOrganizer._addTemplate(this, ...args); }
 		BITSMIST.v1.Component.prototype.applyTemplate = function(...args) { return TemplateOrganizer._applyTemplate(this, ...args); }
@@ -172,44 +171,6 @@ export default class TemplateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Transform component (Load HTML and attach to node).
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _transform(component, options)
-	{
-
-		options = options || {};
-		let templateName = Util.safeGet(options, "templateName", "");
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.transform(): Transforming. name=${component.name}, templateName=${templateName}, id=${component.id}`);
-			return component.trigger("beforeTransform", options);
-		}).then(() => {
-			return component.trigger("doTransform", options);
-		}).then(() => {
-			// Setup
-			let autoSetup = component.settings.get("settings.autoSetup");
-			if (autoSetup)
-			{
-				return component.setup(options);
-			}
-		}).then(() => {
-			return component.loadTags(component.rootElement, component.settings.get("loadings"));
-		}).then(() => {
-			return component.trigger("afterTransform", options);
-		}).then(() => {
-			console.debug(`Component.transform(): Transformed. name=${component.name}, templateName=${templateName}, id=${component.id}`);
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Get a template html according to settings.
 	 *
 	 * @param	{Component}		component			Component.
@@ -275,7 +236,7 @@ export default class TemplateOrganizer extends Organizer
 		if (templateInfo["isLoaded"])
 		//if (templateInfo["isLoaded"] && options && !options["forceLoad"])
 		{
-			console.debug(`TemplateOrganizer._addTemplate(): Template already loaded. name=${component.name}, templateName=${templateName}`);
+			console.debug(`TemplateOrganizer._addTemplate(): Template already loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return Promise.resolve();
 		}
 
@@ -295,13 +256,13 @@ export default class TemplateOrganizer extends Organizer
 
 		if (component._activeTemplateName === templateName)
 		{
-			console.debug(`TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}`);
+			console.debug(`TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return Promise.resolve();
 		}
 
 		let templateInfo = component._templates[templateName];
 
-		Util.assert(templateInfo,`TemplateOrganizer._applyTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}`, ReferenceError);
+		Util.assert(templateInfo,`TemplateOrganizer._applyTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
 
 		if (templateInfo["node"])
 		{
@@ -318,7 +279,7 @@ export default class TemplateOrganizer extends Organizer
 		// Change active template
 		component._activeTemplateName = templateName;
 
-		console.debug(`TemplateOrganizer._applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}`);
+		console.debug(`TemplateOrganizer._applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
 
 	}
 
@@ -338,7 +299,7 @@ export default class TemplateOrganizer extends Organizer
 		templateName = templateName || component.settings.get("settings.templateName");
 		let templateInfo = component._templates[templateName];
 
-		Util.assert(templateInfo,`TemplateOrganizer._addTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}`, ReferenceError);
+		Util.assert(templateInfo,`TemplateOrganizer._addTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
 
 		let clone;
 		if (templateInfo["node"])
