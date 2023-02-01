@@ -30,7 +30,7 @@ export default class SettingOrganizer extends Organizer
 		return {
 			"name":			"SettingOrganizer",
 //			"targetWords":	"settings",
-//			"order":		0,
+			"order":		10,
 		};
 
 	}
@@ -51,6 +51,18 @@ export default class SettingOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static onAfterLoadSettings(sender, e, ex)
+	{
+
+		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
+		this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
+
+	}
+
+	// -------------------------------------------------------------------------
 
 	static attach(component, options)
 	{
@@ -59,6 +71,9 @@ export default class SettingOrganizer extends Organizer
 
 		// Init vars
 		component._settings = new ChainableStore({"items":settings});
+
+		// Add event handlers to component
+		this._addOrganizerHandler(component, "afterLoadSettings", SettingOrganizer.onAfterLoadSettings);
 
 		// Chain global settings
 		if (component._settings.get("settings.useGlobalSettings"))

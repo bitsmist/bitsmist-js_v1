@@ -53,6 +53,7 @@ Component.prototype.connectedCallback = function()
 		this.setAttribute("bm-powered", "");
 		this._uniqueId = this.__getUUID();
 		this._name = this.constructor.name;
+		this._rootElement = this;
 	}
 
 	// Start
@@ -203,8 +204,6 @@ Component.prototype.start = function(settings)
 	}).then((newSettings) => {
 		return SettingOrganizer.attach(this, {"settings":newSettings});
 	}).then(() => {
-		this._name = this.settings.get("settings.name", this._name);
-		this._rootElement = this.settings.get("settings.rootElement", this);
 		return this.trigger("beforeStart");
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
