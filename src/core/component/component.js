@@ -51,7 +51,7 @@ Component.prototype.connectedCallback = function()
 		this._ready = Promise.resolve();
 
 		this.setAttribute("bm-powered", "");
-		this._uniqueId = this.__getUUID();
+		this._uniqueId = Util.getUUID();
 		this._name = this.constructor.name;
 		this._rootElement = this;
 	}
@@ -504,33 +504,6 @@ Component.prototype._getSettings = function()
 
 // -----------------------------------------------------------------------------
 //  Privates
-// -----------------------------------------------------------------------------
-
-/**
- * Create UUID.
- *
- * @return  {String}		UUID.
- */
-Component.prototype.__getUUID = function()
-{
-
-	let uuid = "";
-
-	for (let i = 0; i < 32; i++)
-	{
-		let random = Math.random() * 16 | 0;
-
-		if (i == 8 || i == 12 || i == 16 || i == 20)
-		{
-			uuid += "-"
-		}
-		uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
-	}
-
-	return uuid;
-
-}
-
 // -----------------------------------------------------------------------------
 
 /**
