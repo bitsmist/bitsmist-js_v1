@@ -172,7 +172,7 @@ export default class StateOrganizer extends Organizer
 			waitInfo["promise"] = promise;
 
 			// Add to info to a waiting list.
-			StateOrganizer.__addToWaitingList(waitInfo, component);
+			StateOrganizer.__addToWaitingList(waitInfo);
 		}
 
 		return promise;
@@ -197,7 +197,7 @@ export default class StateOrganizer extends Organizer
 		component._state = state;
 		StateOrganizer._components.set(component.uniqueId, {"object":component, "state":state});
 
-		StateOrganizer.__processWaitingList(component, state);
+		StateOrganizer.__processWaitingList();
 
 	}
 
@@ -300,15 +300,21 @@ export default class StateOrganizer extends Organizer
 	static __processWaitingList()
 	{
 
+		let removeList = [];
 		Object.keys(StateOrganizer._waitingList.items).forEach((id) => {
 			if (StateOrganizer.__isAllReady(StateOrganizer._waitingList.get(id)))
 			{
-				// Resolve & Remove from waiting list
 				clearTimeout(StateOrganizer._waitingList.get(id)["timer"]);
 				StateOrganizer._waitingList.get(id).resolve();
-				StateOrganizer._waitingList.remove(id);
+				removeList.push(id);
 			}
 		});
+
+		// Remove from waiting list
+		for (let i = 0; i < removeList.length; i++)
+		{
+			StateOrganizer._waitingList.remove(removeList[i]);
+		}
 
 	}
 
@@ -322,7 +328,7 @@ export default class StateOrganizer extends Organizer
 	static __addToWaitingList(waitInfo)
 	{
 
-		let id = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
+		let id = Util.getUUID();
 
 		/*
 		for (let i = 0; i < waitInfo["waitlist"].length; i++)
