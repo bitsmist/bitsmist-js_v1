@@ -69,8 +69,8 @@ export default class OrganizerOrganizer extends Organizer
 		// Init component vars
 		component._organizers = {};
 
-		// Add event handlers to component
-		this._addOrganizerHandler(component, "doAttachOrganizer", OrganizerOrganizer.onBeforeAttachOrganizer);
+		// Add methods to Component
+		BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); }
 
 	}
 
@@ -108,15 +108,22 @@ export default class OrganizerOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
+	//  Protected
 	// -------------------------------------------------------------------------
 
-	static onBeforeAttachOrganizer(sender, e, ex)
+	/**
+	 * Attach new organizers to component according to settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		options				Options.
+	 */
+	static _attachOrganizers(component, options)
 	{
 
-		// Attach new organizers to component
-		let targets = OrganizerOrganizer.__listNewOrganizers(this, e.detail.settings);
-		return OrganizerOrganizer.__attachNewOrganizers(this, targets, e.detail.settings);
+		let settings = options["settings"];
+		let targets = OrganizerOrganizer.__listNewOrganizers(component, settings);
+
+		return OrganizerOrganizer.__attachNewOrganizers(component, targets, settings);
 
 	}
 

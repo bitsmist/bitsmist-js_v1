@@ -88,7 +88,7 @@ export default class SettingOrganizer extends Organizer
 			// Load settings from attributes
 			SettingOrganizer._loadAttrSettings(component);
 		}).then(() => {
-			return component.trigger("doAttachOrganizer", {"settings":component._settings.items});
+			return component.attachOrganizers({"settings":component._settings.items});
 		}).then(() => {
 			return component.trigger("afterLoadSettings", {"settings":component._settings.items});
 		});
