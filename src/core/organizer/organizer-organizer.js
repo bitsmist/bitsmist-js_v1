@@ -93,7 +93,8 @@ export default class OrganizerOrganizer extends Organizer
 
 		if (!component._organizers[organizerName])
 		{
-			component._organizers[organizerName] = organizer;
+			component._organizers[organizerName] = {"object":organizer};
+
 			return organizer.init(component, options);
 		}
 
