@@ -70,7 +70,7 @@ export default class EventOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	static detach(component, options)
+	static deinit(component, options)
 	{
 
 		let events = this.settings.get("events");
