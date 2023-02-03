@@ -43,7 +43,7 @@ export default class OrganizerOrganizer extends Organizer
 
 		return {
 			"name":			"OrganizerOrganizer",
-//			"targetWords":	"organizers",
+			"targetWords":	"organizers",
 			"order":		0,
 		};
 
@@ -63,11 +63,11 @@ export default class OrganizerOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	static attach(component, options)
+	static init(component, options)
 	{
 
 		// Init component vars
-		component._organizers = {};
+	//	component._organizers = {};
 
 		// Add methods to Component
 		BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); }
@@ -77,10 +77,34 @@ export default class OrganizerOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Attach an organizer to a component.
+	 *
+	 * @param	{Component}		component			Component to be attached.
+	 * @param	{Organizer}		organizer			Organizer to attach.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static attach(component, organizer, options)
+	{
+
+		component._organizers = component._organizers || {};
+		let organizerName = organizer.getInfo()["name"];
+
+		if (!component._organizers[organizerName])
+		{
+			component._organizers[organizerName] = organizer;
+			return organizer.init(component, options);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Register an organizer.
 	 *
-	 * @param	{String}		key					Key to store.
-	 * @param	{Object}		value				Value to store.
+	 * @param	{Organizer}		organizer			Organizer to register.
 	 */
 	static register(organizer)
 	{
@@ -121,9 +145,16 @@ export default class OrganizerOrganizer extends Organizer
 	{
 
 		let settings = options["settings"];
+		let chain = Promise.resolve();
 		let targets = OrganizerOrganizer.__listNewOrganizers(component, settings);
 
-		return OrganizerOrganizer.__attachNewOrganizers(component, targets, settings);
+		OrganizerOrganizer.__sortItems(targets).forEach((organizerName) => {
+			chain = chain.then(() => {
+				return OrganizerOrganizer.attach(component, OrganizerOrganizer._organizers[organizerName].object, options);
+			});
+		});
+
+		return chain;
 
 	}
 
@@ -166,38 +197,6 @@ export default class OrganizerOrganizer extends Organizer
 		});
 
 		return targets;
-
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Attach target organizers to component.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Object}		targets				Target organizers.
-	 * @param	{Object}		settings			Settings.
-	 */
-	static __attachNewOrganizers(component, targets, settings)
-	{
-
-		let chain = Promise.resolve();
-
-		OrganizerOrganizer.__sortItems(targets).forEach((organizerName) => {
-			chain = chain.then(() => {
-				if (!component._organizers[organizerName])
-				{
-					component._organizers[organizerName] = Util.deepMerge(
-						Util.deepClone(OrganizerOrganizer._organizers[organizerName]),
-						Util.safeGet(settings, "organizers." + organizerName)
-					);
-
-					return component._organizers[organizerName].object.attach(component, settings);
-				}
-			});
-		});
-
-		return chain;
 
 	}
 

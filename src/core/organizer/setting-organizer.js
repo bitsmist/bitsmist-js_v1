@@ -29,7 +29,7 @@ export default class SettingOrganizer extends Organizer
 
 		return {
 			"name":			"SettingOrganizer",
-//			"targetWords":	"settings",
+			"targetWords":	"settings",
 			"order":		10,
 		};
 
@@ -64,7 +64,7 @@ export default class SettingOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	static attach(component, options)
+	static init(component, options)
 	{
 
 		let settings = options["settings"] || {};

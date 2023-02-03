@@ -196,13 +196,13 @@ Component.prototype.start = function(settings)
 	settings = Util.deepMerge(defaults, settings);
 
 	return Promise.resolve().then(() => {
-		return OrganizerOrganizer.attach(this);
+		return OrganizerOrganizer.attach(this, OrganizerOrganizer);
 	}).then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
 		return this.__mergeSettings(newSettings);
 	}).then((newSettings) => {
-		return SettingOrganizer.attach(this, {"settings":newSettings});
+		return OrganizerOrganizer.attach(this, SettingOrganizer, {"settings":newSettings});
 	}).then(() => {
 		return this.trigger("beforeStart");
 	}).then(() => {

@@ -28,6 +28,14 @@ export default class Organizer
 
 	// -------------------------------------------------------------------------
 
+	/**
+	 *  Initialize an organizer and Component class when the organizer is registered.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
 	static globalInit()
 	{
 	}
@@ -35,28 +43,28 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Attach the organizer to the component.
+	 *  Initialize an attached component when organizer is attached.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static attach(component, options)
+	static init(component, options)
 	{
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Detach the organizer from the component.
+	 * Deinitialize a component when organizer is detached.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static detach(component, options)
+	static deinit(component, options)
 	{
 	}
 
