@@ -22,6 +22,15 @@ export default class OrganizerOrganizer extends Organizer
 	//  Setter/Getter
 	// -------------------------------------------------------------------------
 
+	static get name()
+	{
+
+		return "OrganizerOrganizer";
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	/**
 	 * Registered Organizers.
 	 *
@@ -42,7 +51,6 @@ export default class OrganizerOrganizer extends Organizer
 	{
 
 		return {
-			"name":			"OrganizerOrganizer",
 			"targetWords":	"organizers",
 			"order":		0,
 		};
@@ -89,11 +97,12 @@ export default class OrganizerOrganizer extends Organizer
 	{
 
 		component._organizers = component._organizers || {};
-		let organizerName = organizer.getInfo()["name"];
 
-		if (!component._organizers[organizerName])
+		if (!component._organizers[organizer.name])
 		{
-			component._organizers[organizerName] = {"object":organizer};
+			component._organizers[organizer.name] = {
+				"object":organizer
+			};
 
 			return organizer.init(component, options);
 		}
@@ -114,8 +123,8 @@ export default class OrganizerOrganizer extends Organizer
 		info["targetWords"] = info["targetWords"] || [];
 		info["targetWords"] = ( Array.isArray(info["targetWords"]) ? info["targetWords"] : [info["targetWords"]] );
 
-		OrganizerOrganizer._organizers[info["name"]] = {
-			"name":			info["name"],
+		OrganizerOrganizer._organizers[organizer.name] = {
+			"name":			organizer.name,
 			"object":		organizer,
 			"targetWords":	info["targetWords"],
 			"order":		info["order"],
@@ -127,7 +136,7 @@ export default class OrganizerOrganizer extends Organizer
 		// Create target word index
 		for (let i = 0; i < info["targetWords"].length; i++)
 		{
-			OrganizerOrganizer._targetWords[info["targetWords"][i]] = OrganizerOrganizer._organizers[info["name"]];
+			OrganizerOrganizer._targetWords[info["targetWords"][i]] = OrganizerOrganizer._organizers[organizer.name];
 		}
 
 	}

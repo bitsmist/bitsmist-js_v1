@@ -20,6 +20,17 @@ export default class TemplateOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	static get name()
+	{
+
+		return "TemplateOrganizer";
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -27,7 +38,6 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		return {
-			"name":			"TemplateOrganizer",
 			"targetWords":	"templates",
 			"order":		200,
 		};

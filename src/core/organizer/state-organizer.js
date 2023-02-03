@@ -20,6 +20,17 @@ export default class StateOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	static get name()
+	{
+
+		return "StateOrganizer";
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -27,7 +38,6 @@ export default class StateOrganizer extends Organizer
 	{
 
 		return {
-			"name":			"StateOrganizer",
 			"targetWords":	"waitFor",
 			"order":		100,
 		};

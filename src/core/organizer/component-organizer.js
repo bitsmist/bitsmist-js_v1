@@ -23,6 +23,17 @@ export default class ComponentOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	static get name()
+	{
+
+		return "ComponentOrganizer";
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -30,7 +41,6 @@ export default class ComponentOrganizer extends Organizer
 	{
 
 		return {
-			"name":			"ComponentOrganizer",
 			"targetWords":	["molds", "components"],
 			"order":		400,
 		};

@@ -21,6 +21,17 @@ export default class SettingOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	static get name()
+	{
+
+		return "SettingOrganizer";
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -28,7 +39,6 @@ export default class SettingOrganizer extends Organizer
 	{
 
 		return {
-			"name":			"SettingOrganizer",
 			"targetWords":	"settings",
 			"order":		10,
 		};

@@ -19,6 +19,17 @@ export default class EventOrganizer extends Organizer
 {
 
 	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	static get name()
+	{
+
+		return "EventOrganizer";
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -26,7 +37,6 @@ export default class EventOrganizer extends Organizer
 	{
 
 		return {
-			"name":			"EventOrganizer",
 			"targetWords":	"events",
 			"order":		210,
 		};
