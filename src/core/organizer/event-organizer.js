@@ -90,15 +90,13 @@ export default class EventOrganizer extends Organizer
 	static onAfterTransform(sender, e, ex)
 	{
 
-		let events = this.settings.get("events");
-		if (events)
-		{
-			let targets = EventOrganizer.__filterElements(this, events, "afterTransform");
-
-			Object.keys(targets).forEach((elementName) => {
-				EventOrganizer._initEvents(this, elementName, events[elementName]);
-			});
-		}
+		this._enumSettings(this.settings.get("events"), (sectionName, sectionValue) => {
+			// Initialize only elements inside component
+			if (!EventOrganizer.__isTargetSelf(sectionName, sectionValue))
+			{
+				EventOrganizer._initEvents(this, sectionName, sectionValue);
+			}
+		});
 
 	}
 
@@ -107,15 +105,9 @@ export default class EventOrganizer extends Organizer
 	static onAfterLoadSettings(sender, e, ex)
 	{
 
-		let events = e.detail.settings["events"];
-		if (events)
-		{
-			let targets = EventOrganizer.__filterElements(this, events, "afterLoadSettings");
-
-			Object.keys(targets).forEach((elementName) => {
-				EventOrganizer._initEvents(this, elementName, events[elementName]);
-			});
-		}
+		this._enumSettings(e.detail.settings["events"], (sectionName, sectionValue) => {
+			EventOrganizer._initEvents(this, sectionName, sectionValue);
+		});
 
 	}
 
@@ -343,45 +335,6 @@ export default class EventOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 	//  Privates
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Filter target elements according to a condition.
-	 *
-	 * @param	{Object}		component			Component.
-	 * @param	{Object}		eventInfo			Event settings.
-	 * @param	{Object}		conditions			Conditions.
-	 *
-	 * @return 	{Object}		Target elements.
-	 */
-	static __filterElements(component, eventInfo, conditions)
-	{
-
-		let keys;
-
-		switch (conditions)
-		{
-		case "afterTransform":
-			// Return events only for elements inside the component.
-			keys = Object.keys(eventInfo).filter((elementName) => {
-				return !EventOrganizer.__isTargetSelf(elementName, eventInfo[elementName]);
-			});
-			break;
-		case "afterLoadSettings":
-			// Return all
-			keys = Object.keys(eventInfo);
-			break;
-		}
-
-		let targets = keys.reduce((result, key) => {
-			result[key] = eventInfo[key];
-			return result;
-		}, {});
-
-		return targets;
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**

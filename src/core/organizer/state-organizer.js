@@ -124,13 +124,9 @@ export default class StateOrganizer extends Organizer
 	static onAfterLoadSettings(sender, e, ex)
 	{
 
-		let waitFor = e.detail.settings["waitFor"];
-		if (waitFor)
-		{
-			Object.keys(waitFor).forEach((eventName) => {
-				this.addEventHandler(eventName, {"handler":StateOrganizer.onDoOrganize, "options":waitFor[eventName]});
-			});
-		}
+		this._enumSettings(e.detail.settings["waitFor"], (sectionName, sectionValue) => {
+			this.addEventHandler(sectionName, {"handler":StateOrganizer.onDoOrganize, "options":sectionValue});
+		});
 
 	}
 

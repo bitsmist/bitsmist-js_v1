@@ -119,19 +119,12 @@ export default class TemplateOrganizer extends Organizer
 
 		let promises = [];
 
-
-		let templates = e.detail.settings["templates"];
-		if (templates)
-		{
-			Object.keys(templates).forEach((templateName) => {
-				if (templates[templateName]["type"] === "html" || templates[templateName]["type"] === "url")
-				{
-					promises.push(TemplateOrganizer._addTemplate(this, templateName, {"type":templates[templateName]["type"]}));
-				}
-			});
-		}
-
-		return Promise.all(promises);
+		this._enumSettings(e.detail.settings["templates"], (sectionName, sectionValue) => {
+			if (sectionValue["type"] === "html" || sectionValue["type"] === "url")
+			{
+				promises.push(TemplateOrganizer._addTemplate(this, sectionName, {"type":sectionValue["type"]}));
+			}
+		});
 
 	}
 
@@ -157,17 +150,13 @@ export default class TemplateOrganizer extends Organizer
 
 		let promises = [];
 
-		let templates = this.settings.get("templates");
-		if (templates)
-		{
-			Object.keys(templates).forEach((templateName) => {
-				if (templates[templateName]["type"] === "node")
-				{
-					promises.push(this.addTemplate(templateName, {"type":templates[templateName]["type"]}));
-					this.addTemplate(templateName, {"type":templates[templateName]["type"]});
-				}
-			});
-		}
+		this._enumSettings(this.settings.get("templates"), (sectionName, sectionValue) => {
+			if (sectionValue["type"] === "node")
+			{
+				promises.push(this.addTemplate(sectionName, {"type":sectionValue["type"]}));
+				this.addTemplate(sectionName, {"type":sectionValue["type"]});
+			}
+		});
 
 		return Promise.all(promises);
 

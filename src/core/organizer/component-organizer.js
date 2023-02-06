@@ -131,32 +131,24 @@ export default class ComponentOrganizer extends Organizer
 		let chain = Promise.resolve();
 
 		// Load molds
-		let molds = e.detail.settings["molds"];
-		if (molds)
-		{
-			Object.keys(molds).forEach((moldName) => {
-				chain = chain.then(() => {
-					if (!this.components[moldName])
-					{
-						return ComponentOrganizer._addComponent(this, moldName, molds[moldName], true);
-					}
-				});
+		this._enumSettings(e.detail.settings["molds"], (sectionName, sectionValue) => {
+			chain = chain.then(() => {
+				if (!this.components[sectionName])
+				{
+					return ComponentOrganizer._addComponent(this, sectionName, sectionValue, true);
+				}
 			});
-		}
+		});
 
 		// Load components
-		let components = e.detail.settings["components"];
-		if (components)
-		{
-			Object.keys(components).forEach((componentName) => {
-				chain = chain.then(() => {
-					if (!this.components[componentName])
-					{
-						return ComponentOrganizer._addComponent(this, componentName, components[componentName]);
-					}
-				});
+		this._enumSettings(e.detail.settings["components"], (sectionName, sectionValue) => {
+			chain = chain.then(() => {
+				if (!this.components[sectionName])
+				{
+					return ComponentOrganizer._addComponent(this, sectionName, sectionValue);
+				}
 			});
-		}
+		});
 
 		return chain;
 
