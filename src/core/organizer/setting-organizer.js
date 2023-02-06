@@ -57,6 +57,7 @@ export default class SettingOrganizer extends Organizer
 
 		// Add methods to Component
 		BITSMIST.v1.Component.prototype.loadSettings = function(...args) { return SettingOrganizer._loadSettings(this, ...args); }
+		BITSMIST.v1.Component.prototype._enumSettings = function(...args) { return SettingOrganizer._enumSettings(...args); }
 
 	}
 
@@ -258,6 +259,31 @@ export default class SettingOrganizer extends Organizer
 		{
 			let settings = {"settings": JSON.parse(dataSettings)};
 			component._settings.merge(settings);
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Enumerate enumerable settings.
+	 *
+	 * @param	{Settings}		setting				Settings.
+	 * @param	{Function}		callback			Callback function.
+	 */
+	static _enumSettings(settings, callback)
+	{
+
+		Util.assert(typeof(callback) === "function", "not function");
+
+		if (settings)
+		{
+			Object.keys(settings).forEach((key) => {
+				if (key !== "settings")
+				{
+					callback(key, settings[key]);
+				}
+			});
 		}
 
 	}
