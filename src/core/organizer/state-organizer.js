@@ -83,7 +83,7 @@ export default class StateOrganizer extends Organizer
 		StateOrganizer._loadAttrSettings(component);
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "afterLoadSettings", StateOrganizer.onAfterLoadSettings);
+		this._addOrganizerHandler(component, "doOrganize", StateOrganizer.onDoOrganize);
 
 	}
 
@@ -121,18 +121,18 @@ export default class StateOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onAfterLoadSettings(sender, e, ex)
+	static onDoOrganize(sender, e, ex)
 	{
 
 		this._enumSettings(e.detail.settings["waitFor"], (sectionName, sectionValue) => {
-			this.addEventHandler(sectionName, {"handler":StateOrganizer.onDoOrganize, "options":sectionValue});
+			this.addEventHandler(sectionName, {"handler":StateOrganizer.onDoProcess, "options":sectionValue});
 		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static onDoOrganize(sender, e, ex)
+	static onDoProcess(sender, e, ex)
 	{
 
 		return StateOrganizer._waitFor(this, ex.options);

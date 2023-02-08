@@ -84,7 +84,7 @@ export default class ComponentOrganizer extends Organizer
 		component._components = {};
 
 		// Add event handlers to the component
-		this._addOrganizerHandler(component, "afterLoadSettings", ComponentOrganizer.onAfterLoadSettings);
+		this._addOrganizerHandler(component, "doOrganize", ComponentOrganizer.onDoOrganize);
 
 	}
 
@@ -125,7 +125,7 @@ export default class ComponentOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onAfterLoadSettings(sender, e, ex)
+	static onDoOrganize(sender, e, ex)
 	{
 
 		let chain = Promise.resolve();

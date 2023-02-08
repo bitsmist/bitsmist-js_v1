@@ -63,7 +63,7 @@ export default class EventOrganizer extends Organizer
 	{
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "afterLoadSettings", EventOrganizer.onAfterLoadSettings);
+		this._addOrganizerHandler(component, "doOrganize", EventOrganizer.onDoOrganize);
 		this._addOrganizerHandler(component, "afterTransform", EventOrganizer.onAfterTransform);
 
 	}
@@ -102,7 +102,7 @@ export default class EventOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	static onAfterLoadSettings(sender, e, ex)
+	static onDoOrganize(sender, e, ex)
 	{
 
 		this._enumSettings(e.detail.settings["events"], (sectionName, sectionValue) => {

@@ -78,7 +78,7 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "afterLoadSettings", TemplateOrganizer.onAfterLoadSettings);
+		this._addOrganizerHandler(component, "doOrganize", TemplateOrganizer.onDoOrganize);
 		this._addOrganizerHandler(component, "doTransform", TemplateOrganizer.onDoTransform);
 		this._addOrganizerHandler(component, "afterTransform", TemplateOrganizer.onAfterTransform);
 
@@ -114,7 +114,7 @@ export default class TemplateOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onAfterLoadSettings(sender, e, ex)
+	static onDoOrganize(sender, e, ex)
 	{
 
 		let promises = [];

@@ -62,18 +62,6 @@ export default class SettingOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static onAfterLoadSettings(sender, e, ex)
-	{
-
-		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
-		this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
-
-	}
-
-	// -------------------------------------------------------------------------
 
 	static init(component, options)
 	{
@@ -84,7 +72,7 @@ export default class SettingOrganizer extends Organizer
 		component._settings = new ChainableStore({"items":settings});
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "afterLoadSettings", SettingOrganizer.onAfterLoadSettings);
+		this._addOrganizerHandler(component, "doOrganize", SettingOrganizer.onDoOrganize);
 
 		// Chain global settings
 		if (component._settings.get("settings.useGlobalSettings"))
@@ -100,6 +88,8 @@ export default class SettingOrganizer extends Organizer
 			SettingOrganizer._loadAttrSettings(component);
 		}).then(() => {
 			return component.attachOrganizers({"settings":component._settings.items});
+		}).then(() => {
+			return component.trigger("doOrganize", {"settings":component._settings.items});
 		}).then(() => {
 			return component.trigger("afterLoadSettings", {"settings":component._settings.items});
 		});
@@ -158,6 +148,18 @@ export default class SettingOrganizer extends Organizer
 
 			return settings;
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static onDoOrganize(sender, e, ex)
+	{
+
+		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
+		this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
 
 	}
 
