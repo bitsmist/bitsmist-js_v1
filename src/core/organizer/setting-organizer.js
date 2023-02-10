@@ -183,9 +183,9 @@ export default class SettingOrganizer extends Organizer
 		return Promise.resolve().then(() => {
 			path = Util.safeGet(loadOptions, "path",
 				Util.concatPath([
-					component.settings.get("loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
-					component.settings.get("loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
-					component.settings.get("loadings.path", ""),
+					component.settings.get("system.appBaseUrl"),
+					component.settings.get("system.componentPath"),
+					component.settings.get("settings.path", ""),
 				])
 			);
 

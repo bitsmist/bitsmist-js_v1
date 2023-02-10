@@ -73,7 +73,7 @@ export default class TemplateOrganizer extends Organizer
 		// Set defaults if not set
 		if (!component.settings.get("settings.templateName"))
 		{
-			let templateName = component.settings.get("loadings.fileName") || component.tagName.toLowerCase();
+			let templateName = component.settings.get("settings.fileName") || component.tagName.toLowerCase();
 			component.settings.set("settings.templateName", templateName);
 		}
 
@@ -195,9 +195,9 @@ export default class TemplateOrganizer extends Organizer
 		default:
 			let path = Util.safeGet(loadOptions, "path",
 				Util.concatPath([
-					component.settings.get("loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
-					component.settings.get("loadings.templatePath", BITSMIST.v1.settings.get("system.templatePath", component.settings.get("loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")))),
-					component.settings.get("loadings.path", ""),
+					component.settings.get("system.appBaseUrl", ""),
+					component.settings.get("system.templatePath", component.settings.get("system.componentPath", "")),
+					component.settings.get("settings.path", ""),
 				])
 			);
 

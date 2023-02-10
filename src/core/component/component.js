@@ -292,7 +292,7 @@ Component.prototype.transform = function(options)
 			return this.setup(options);
 		}
 	}).then(() => {
-		return this.loadTags(this.rootElement, this.settings.get("loadings"));
+		return this.loadTags(this.rootElement);
 	}).then(() => {
 		return this.trigger("afterTransform", options);
 	}).then(() => {

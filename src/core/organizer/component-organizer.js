@@ -223,46 +223,48 @@ export default class ComponentOrganizer extends Organizer
 			return Promise.resolve();
 		}
 
-		loadOptions = Util.deepMerge({}, loadOptions);
+		loadOptions = loadOptions || {};
 
 		// Override path and filename when url is specified in autoLoad option
-		let href = Util.safeGet(settings, "loadings.autoLoad");
+		let href = Util.safeGet(settings, "settings.autoLoad");
 		href = ( href === true ? "" : href );
 		if (href)
 		{
 			let url = Util.parseURL(href);
 
-			settings["loadings"]["appBaseUrl"] = "";
-			settings["loadings"]["componentPath"] = "";
-			settings["loadings"]["templatePath"] = "";
-			settings["loadings"]["path"] = url.path;
-			settings["loadings"]["fileName"] = url.filenameWithoutExtension;
+			settings["system"] = settings["system"] || {};
+			settings["system"]["appBaseUrl"] = "";
+			settings["system"]["componentPath"] = "";
+			settings["system"]["templatePath"] = "";
+			settings["settings"] = settings["settings"] || {};
+			settings["settings"]["path"] = url.path;
+			settings["settings"]["fileName"] = url.filenameWithoutExtension;
 
 			if (url.extension === "html")
 			{
-				settings["loadings"]["autoMorph"] = ( settings["loadings"]["autoMorph"] ? settings["loadings"]["autoMorph"] : true );
+				settings["settings"]["autoMorph"] = ( settings["settings"]["autoMorph"] ? settings["settings"]["autoMorph"] : true );
 			}
 
 			loadOptions["query"] = url.query;
 		}
 
 		// Get a base class name
-		let baseClassName = Util.safeGet(settings, "loadings.autoMorph", className );
+		let baseClassName = Util.safeGet(settings, "settings.autoMorph", className );
 		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
 
 		// Get a path
 		let path = Util.safeGet(loadOptions, "path",
 			Util.concatPath([
-				Util.safeGet(settings, "loadings.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
-				Util.safeGet(settings, "loadings.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
-				Util.safeGet(settings, "loadings.path", ""),
+				Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+				Util.safeGet(settings, "system.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
+				Util.safeGet(settings, "settings.path", ""),
 			])
 		);
 
 		// Load a class
-		let fileName = Util.safeGet(settings, "loadings.fileName", tagName.toLowerCase());
-		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "loadings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
-		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "loadings.query"), "");
+		let fileName = Util.safeGet(settings, "settings.fileName", tagName.toLowerCase());
+		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "settings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
+		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "settings.query"), "");
 
 		return ComponentOrganizer.__autoloadComponent(baseClassName, fileName, path, loadOptions).then(() => {
 			// Morphing
@@ -300,7 +302,7 @@ export default class ComponentOrganizer extends Organizer
 
 		// Get a tag name
 		let tagName;
-		let tag = Util.safeGet(settings, "loadings.tag");
+		let tag = Util.safeGet(settings, "settings.tag");
 		if (tag)
 		{
 			let pattern = /([\w-]+)\s+\w+.*?>/;
@@ -308,14 +310,14 @@ export default class ComponentOrganizer extends Organizer
 		}
 		else
 		{
-			tagName = Util.safeGet(settings, "loadings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
+			tagName = Util.safeGet(settings, "settings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
 		}
 
 		let addedComponent;
 
 		return Promise.resolve().then(() => {
 			// Load component
-			if (Util.safeGet(settings, "loadings.autoLoad") || Util.safeGet(settings, "loadings.autoMorph"))
+			if (Util.safeGet(settings, "settings.autoLoad") || Util.safeGet(settings, "settings.autoMorph"))
 			{
 				return ComponentOrganizer._loadComponent(tagName, componentName, settings);
 			}
@@ -328,9 +330,9 @@ export default class ComponentOrganizer extends Organizer
 			}
 		}).then(() => {
 			// Wait for the added component to be ready
-			if (sync || Util.safeGet(settings, "loadings.sync"))
+			if (sync || Util.safeGet(settings, "settings.syncOnAdd"))
 			{
-				sync = sync || Util.safeGet(settings, "loadings.sync"); // sync precedes settings["sync"]
+				sync = sync || Util.safeGet(settings, "settings.syncOnAdd");
 				let state = (sync === true ? "ready" : sync);
 
 				return component.waitFor([{"id":component._components[componentName].uniqueId, "state":state}]);
@@ -352,37 +354,37 @@ export default class ComponentOrganizer extends Organizer
 	{
 
 		let settings = {
-			"loadings": {}
+			"settings": {}
 		};
 
 		// Split component
 		if (element.hasAttribute("bm-split"))
 		{
-			settings["loadings"]["splitComponent"] = true;
+			settings["system"]["splitComponent"] = true;
 		}
 
 		// Path
 		if (element.hasAttribute("bm-path"))
 		{
-			settings["loadings"]["path"] = element.getAttribute("bm-path");
+			settings["settings"]["path"] = element.getAttribute("bm-path");
 		}
 
 		// File name
 		if (element.hasAttribute("bm-filename"))
 		{
-			settings["loadings"]["fileName"] = element.getAttribute("bm-filename");
+			settings["settings"]["fileName"] = element.getAttribute("bm-filename");
 		}
 
 		// Morphing
 		if (element.hasAttribute("bm-automorph"))
 		{
-			settings["loadings"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
+			settings["settings"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
 		}
 
 		// Auto loading
 		if (element.hasAttribute("bm-autoload"))
 		{
-			settings["loadings"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
+			settings["settings"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
 		}
 
 		return settings;
@@ -454,29 +456,29 @@ export default class ComponentOrganizer extends Organizer
 		let root;
 
 		// Check root node
-		if (Util.safeGet(settings, "loadings.rootNode"))
+		if (Util.safeGet(settings, "settings.parentNode"))
 		{
-			root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "loadings.rootNode"), {"penetrate":true})[0];
+			root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "settings.parentNode"), {"penetrate":true})[0];
 		}
 		else
 		{
 			root = component;
 		}
 
-		Util.assert(root, `ComponentOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, rootNode=${Util.safeGet(settings, "loadings.rootNode")}`, ReferenceError);
+		Util.assert(root, `ComponentOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "settings.parentNode")}`, ReferenceError);
 
 		// Build tag
-		let tag = ( Util.safeGet(settings, "loadings.tag") ? Util.safeGet(settings, "loadings.tag") : "<" + tagName +  "></" + tagName + ">" );
+		let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
 
 		// Insert tag
-		if (Util.safeGet(settings, "loadings.overwrite"))
+		if (Util.safeGet(settings, "settings.replaceParent"))
 		{
 			root.outerHTML = tag;
 			addedComponent = root;
 		}
 		else
 		{
-			let position = Util.safeGet(settings, "loadings.position", "afterbegin");
+			let position = Util.safeGet(settings, "settings.adjacentPosition", "afterbegin");
 			root.insertAdjacentHTML(position, tag);
 
 			// Get new instance
