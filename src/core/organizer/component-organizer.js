@@ -59,8 +59,7 @@ export default class ComponentOrganizer extends Organizer
 
 		// Add methods to Component
 		BITSMIST.v1.Component.prototype.loadTags = function(...args) { return ComponentOrganizer._loadTags(...args); }
-		BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return ComponentOrganizer._loadComponent(...args); }
-		BITSMIST.v1.Component.prototype.addComponent = function(...args) { return ComponentOrganizer._addComponent(this, ...args); }
+		BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return ComponentOrganizer._loadComponent(this, ...args); }
 
 		// Init vars
 		ComponentOrganizer.__classes = new Store();
@@ -135,7 +134,7 @@ export default class ComponentOrganizer extends Organizer
 			chain = chain.then(() => {
 				if (!this.components[sectionName])
 				{
-					return ComponentOrganizer._addComponent(this, sectionName, sectionValue, true);
+					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
 				}
 			});
 		});
@@ -145,7 +144,7 @@ export default class ComponentOrganizer extends Organizer
 			chain = chain.then(() => {
 				if (!this.components[sectionName])
 				{
-					return ComponentOrganizer._addComponent(this, sectionName, sectionValue);
+					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue);
 				}
 			});
 		});
@@ -184,7 +183,7 @@ export default class ComponentOrganizer extends Organizer
 			element._injectSettings = function(curSettings){
 				return Util.deepMerge(curSettings, settings);
 			};
-			promises.push(ComponentOrganizer._loadComponent(element.tagName.toLowerCase(), className, settings).then(() => {
+			promises.push(ComponentOrganizer._loadClass(element.tagName.toLowerCase(), className, settings).then(() => {
 				element.removeAttribute("bm-autoloading");
 			}));
 		});
@@ -202,7 +201,7 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load a component.
+	 * Load a class.
 	 *
 	 * @param	{String}		tagName				Tag name.
 	 * @param	{String}		className			Class name.
@@ -211,7 +210,7 @@ export default class ComponentOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadComponent(tagName, className, settings, loadOptions)
+	static _loadClass(tagName, className, settings, loadOptions)
 	{
 
 		console.debug(`Loading a component. tagName=${tagName}, className=${className}`);
@@ -266,7 +265,7 @@ export default class ComponentOrganizer extends Organizer
 		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "settings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
 		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "settings.query"), "");
 
-		return ComponentOrganizer.__autoloadComponent(baseClassName, fileName, path, loadOptions).then(() => {
+		return ComponentOrganizer.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
 			// Morphing
 			if (baseClassName !== className)
 			{
@@ -286,16 +285,16 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Add a component to parent component.
+	 * Load a component and add to parent component.
 	 *
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		componentName		Component name.
 	 * @param	{Object}		settings			Settings for the component.
-	 * @param	{Boolean}		sync				Wait for the component to become the state.
+	 * @param	{Object}		loadOptions			Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _addComponent(component, componentName, settings, sync)
+	static _loadComponent(component, componentName, settings, loadOptions)
 	{
 
 		console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
@@ -319,7 +318,7 @@ export default class ComponentOrganizer extends Organizer
 			// Load component
 			if (Util.safeGet(settings, "settings.autoLoad") || Util.safeGet(settings, "settings.autoMorph"))
 			{
-				return ComponentOrganizer._loadComponent(tagName, componentName, settings);
+				return ComponentOrganizer._loadClass(tagName, componentName, settings);
 			}
 		}).then(() => {
 			// Insert tag
@@ -330,9 +329,9 @@ export default class ComponentOrganizer extends Organizer
 			}
 		}).then(() => {
 			// Wait for the added component to be ready
-			if (sync || Util.safeGet(settings, "settings.syncOnAdd"))
+			let sync = Util.safeGet(loadOptions, "syncOnAdd", Util.safeGet(settings, "settings.syncOnAdd"));
+			if (sync)
 			{
-				sync = sync || Util.safeGet(settings, "settings.syncOnAdd");
 				let state = (sync === true ? "ready" : sync);
 
 				return component.waitFor([{"id":component._components[componentName].uniqueId, "state":state}]);
@@ -396,7 +395,7 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the component if not loaded yet.
+	 * Load a class if not loaded yet.
 	 *
 	 * @param	{String}		className			Component class name.
 	 * @param	{String}		fileName			Component file name.
@@ -405,7 +404,7 @@ export default class ComponentOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __autoloadComponent(className, fileName, path, loadOptions)
+	static __autoloadClass(className, fileName, path, loadOptions)
 	{
 
 		console.debug(`Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
