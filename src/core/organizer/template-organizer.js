@@ -121,7 +121,7 @@ export default class TemplateOrganizer extends Organizer
 		this._enumSettings(e.detail.settings["templates"], (sectionName, sectionValue) => {
 			if (sectionValue["type"] === "html" || sectionValue["type"] === "url")
 			{
-				promises.push(TemplateOrganizer._loadTemplate(this, sectionName));
+				promises.push(this.loadTemplate(sectionName));
 			}
 		});
 
