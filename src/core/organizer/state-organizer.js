@@ -56,11 +56,11 @@ export default class StateOrganizer extends Organizer
 		});
 
 		// Add methods to Component
-		BITSMIST.v1.Component.prototype.changeState= function(newState) { return StateOrganizer._changeState(this, newState); }
-		BITSMIST.v1.Component.prototype.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(this, waitlist, timeout); }
-		BITSMIST.v1.Component.prototype.suspend = function(state) { return StateOrganizer._suspend(this, state); }
-		BITSMIST.v1.Component.prototype.resume = function(state) { return StateOrganizer._resume(this, state); }
-		BITSMIST.v1.Component.prototype.pause = function(state) { return StateOrganizer._pause(this, state); }
+		BITSMIST.v1.Component.prototype.changeState= function(...args) { return StateOrganizer._changeState(this, ...args); }
+		BITSMIST.v1.Component.prototype.waitFor = function(...args) { return StateOrganizer._waitFor(this, ...args); }
+		BITSMIST.v1.Component.prototype.suspend = function(...args) { return StateOrganizer._suspend(this, ...args); }
+		BITSMIST.v1.Component.prototype.resume = function(...args) { return StateOrganizer._resume(this, ...args); }
+		BITSMIST.v1.Component.prototype.pause = function(...args) { return StateOrganizer._pause(this, ...args); }
 
 		// Init vars
 		StateOrganizer._components = new Store();
