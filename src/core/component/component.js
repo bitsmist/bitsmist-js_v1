@@ -175,13 +175,13 @@ Component.prototype.start = function(settings)
 	// Defaults
 	let defaults = {
 		"settings": {
+			"autoClear":			true,
 			"autoFetch":			true,
 			"autoFill":				true,
 			"autoRefresh":			true,
 			"autoRestart":			false,
 			"autoSetup":			true,
 			"autoStop":				true,
-			"hasTemplate":			true,
 			"useGlobalSettings":	true,
 		},
 		"organizers": {
@@ -209,10 +209,7 @@ Component.prototype.start = function(settings)
 		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("starting");
 	}).then(() => {
-		if (this.settings.get("settings.hasTemplate"))
-		{
-			return this.transform({"templateName":this.settings.get("settings.templateName")});
-		}
+		return this.transform();
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{

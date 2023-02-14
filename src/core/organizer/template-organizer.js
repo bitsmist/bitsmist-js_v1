@@ -70,10 +70,10 @@ export default class TemplateOrganizer extends Organizer
 		component._activeTemplateName = "";
 
 		// Set defaults if not set
-		if (!component.settings.get("settings.templateName"))
+		if (!component.settings.get("templates.settings.templateName"))
 		{
-			let templateName = component.settings.get("settings.fileName") || component.tagName.toLowerCase();
-			component.settings.set("settings.templateName", templateName);
+			let templateName = component.settings.get("settings.fileName", component.tagName.toLowerCase());
+			component.settings.set("templates.settings.templateName", templateName);
 		}
 
 		// Add event handlers to component
@@ -132,13 +132,16 @@ export default class TemplateOrganizer extends Organizer
 	static onDoTransform(sender, e, ex)
 	{
 
-		let templateName = this.settings.get("settings.templateName");
+		if (this.settings.get("templates.settings.hasTemplate", true))
+		{
+			let templateName = this.settings.get("templates.settings.templateName");
 
-		return Promise.resolve().then(() => {
-			return this.loadTemplate(templateName);
-		}).then(() => {
-			return this.applyTemplate(templateName);
-		});
+			return Promise.resolve().then(() => {
+				return this.loadTemplate(templateName);
+			}).then(() => {
+				return this.applyTemplate(templateName);
+			});
+		}
 
 	}
 
