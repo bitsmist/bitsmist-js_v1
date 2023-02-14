@@ -122,6 +122,7 @@ export default class OrganizerOrganizer extends Organizer
 		let info = organizer.getInfo();
 		info["targetWords"] = info["targetWords"] || [];
 		info["targetWords"] = ( Array.isArray(info["targetWords"]) ? info["targetWords"] : [info["targetWords"]] );
+		info["order"] = ("order" in info ? info["order"] : 500);
 
 		OrganizerOrganizer._organizers[organizer.name] = {
 			"name":			organizer.name,
