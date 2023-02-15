@@ -51,7 +51,7 @@ export default class OrganizerOrganizer extends Organizer
 	{
 
 		return {
-			"targetWords":	"organizers",
+			"sections":		"organizers",
 			"order":		0,
 		};
 
@@ -100,6 +100,13 @@ export default class OrganizerOrganizer extends Organizer
 
 		if (!component._organizers[organizer.name])
 		{
+			// Attach dependencies first
+			let deps = OrganizerOrganizer._organizers[organizer.name]["depends"];
+			for (let i = 0; i < deps.length; i++)
+			{
+				OrganizerOrganizer.attach(component, OrganizerOrganizer._organizers[deps[i]].object, options);
+			}
+
 			component._organizers[organizer.name] = {
 				"object":organizer
 			};
@@ -120,24 +127,27 @@ export default class OrganizerOrganizer extends Organizer
 	{
 
 		let info = organizer.getInfo();
-		info["targetWords"] = info["targetWords"] || [];
-		info["targetWords"] = ( Array.isArray(info["targetWords"]) ? info["targetWords"] : [info["targetWords"]] );
+		info["sections"] = info["sections"] || [];
+		info["sections"] = ( Array.isArray(info["sections"]) ? info["sections"] : [info["sections"]] );
 		info["order"] = ("order" in info ? info["order"] : 500);
+		info["depends"] = info["depends"] || [];
+		info["depends"] = ( Array.isArray(info["depends"]) ? info["depends"] : [info["depends"]] );
 
 		OrganizerOrganizer._organizers[organizer.name] = {
 			"name":			organizer.name,
 			"object":		organizer,
-			"targetWords":	info["targetWords"],
+			"sections":		info["sections"],
 			"order":		info["order"],
+			"depends":		info["depends"],
 		};
 
 		// Global init
 		organizer.globalInit();
 
 		// Create target word index
-		for (let i = 0; i < info["targetWords"].length; i++)
+		for (let i = 0; i < info["sections"].length; i++)
 		{
-			OrganizerOrganizer._targetWords[info["targetWords"][i]] = OrganizerOrganizer._organizers[organizer.name];
+			OrganizerOrganizer._sections[info["sections"][i]] = OrganizerOrganizer._organizers[organizer.name];
 		}
 
 	}
@@ -200,7 +210,7 @@ export default class OrganizerOrganizer extends Organizer
 
 		// List new organizers from settings keyword
 		Object.keys(settings).forEach((key) => {
-			let organizerInfo = OrganizerOrganizer._targetWords[key];
+			let organizerInfo = OrganizerOrganizer._sections[key];
 			if (organizerInfo && !component._organizers[organizerInfo.name])
 			{
 				targets[organizerInfo.name] = organizerInfo
@@ -233,4 +243,4 @@ export default class OrganizerOrganizer extends Organizer
 
 // Init vars
 OrganizerOrganizer._organizers = {};
-OrganizerOrganizer._targetWords = {};
+OrganizerOrganizer._sections = {};
