@@ -41,7 +41,7 @@ export default class ComponentOrganizer extends Organizer
 	{
 
 		return {
-			"targetWords":	["molds", "components"],
+			"sections":		["molds", "components"],
 			"order":		400,
 		};
 

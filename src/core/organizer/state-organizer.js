@@ -38,7 +38,7 @@ export default class StateOrganizer extends Organizer
 	{
 
 		return {
-			"targetWords":	"waitFor",
+			"sections":		"waitFor",
 			"order":		100,
 		};
 

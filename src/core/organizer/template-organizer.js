@@ -38,7 +38,7 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		return {
-			"targetWords":	"templates",
+			"sections":		"templates",
 			"order":		200,
 		};
 

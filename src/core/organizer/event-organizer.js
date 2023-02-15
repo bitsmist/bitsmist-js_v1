@@ -37,7 +37,7 @@ export default class EventOrganizer extends Organizer
 	{
 
 		return {
-			"targetWords":	"events",
+			"sections":		"events",
 			"order":		210,
 		};
 

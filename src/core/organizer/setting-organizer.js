@@ -39,7 +39,7 @@ export default class SettingOrganizer extends Organizer
 	{
 
 		return {
-			"targetWords":	"settings",
+			"sections":		"settings",
 			"order":		10,
 		};
 
