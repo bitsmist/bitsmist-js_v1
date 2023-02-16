@@ -200,7 +200,7 @@ export default class OrganizerOrganizer extends Organizer
 		if (organizers)
 		{
 			Object.keys(organizers).forEach((organizerName) => {
-				Util.assert(OrganizerOrganizer._organizers[organizerName], `Organizer not found. name=${component.name}, organizerName=${organizerName}`);
+				Util.assert(OrganizerOrganizer._organizers[organizerName], `OrganizerOrganizer.__listNewOrganizer(): Organizer not found. name=${component.name}, organizerName=${organizerName}`);
 				if (Util.safeGet(organizers[organizerName], "settings.attach") && !component._organizers[organizerName])
 				{
 					targets[organizerName] = OrganizerOrganizer._organizers[organizerName];
