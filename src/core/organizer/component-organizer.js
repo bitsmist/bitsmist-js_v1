@@ -218,7 +218,7 @@ export default class ComponentOrganizer extends Organizer
 		// Check if the tag is already defined
 		if (customElements.get(tagName))
 		{
-			console.warn(`Tag already defined. tagName=${tagName}, className=${className}`);
+			console.debug(`Tag already defined. tagName=${tagName}, className=${className}`);
 			return Promise.resolve();
 		}
 
