@@ -179,7 +179,7 @@ export default class ComponentOrganizer extends Organizer
 
 			// Load a tag
 			let settings = this._loadAttrSettings(element);
-			let className = Util.getClassNameFromTagName(element.tagName);
+			let className = Util.safeGet(settings, "settings.className", Util.getClassNameFromTagName(element.tagName));
 			element._injectSettings = function(curSettings){
 				return Util.deepMerge(curSettings, settings);
 			};
@@ -218,7 +218,7 @@ export default class ComponentOrganizer extends Organizer
 		// Check if the tag is already defined
 		if (customElements.get(tagName))
 		{
-			console.debug(`Tag already defined. className=${className}, tagName=${tagName}`);
+			console.warn(`Tag already defined. tagName=${tagName}, className=${className}`);
 			return Promise.resolve();
 		}
 
@@ -273,9 +273,12 @@ export default class ComponentOrganizer extends Organizer
 				ClassUtil.newComponent(className, settings, superClass, tagName);
 			}
 
+			// Define the tag
 			if (!customElements.get(tagName))
 			{
 				let classDef = ClassUtil.getClass(className);
+				Util.assert(classDef, `ComponentOrganizer_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
+
 				customElements.define(tagName, classDef);
 			}
 		});
@@ -318,7 +321,8 @@ export default class ComponentOrganizer extends Organizer
 			// Load component
 			if (Util.safeGet(settings, "settings.autoLoad") || Util.safeGet(settings, "settings.autoMorph"))
 			{
-				return ComponentOrganizer._loadClass(tagName, componentName, settings);
+				let className = Util.safeGet(settings, "settings.className", componentName);
+				return ComponentOrganizer._loadClass(tagName, className, settings);
 			}
 		}).then(() => {
 			// Insert tag
@@ -355,6 +359,12 @@ export default class ComponentOrganizer extends Organizer
 		let settings = {
 			"settings": {}
 		};
+
+		// Class name
+		if (element.hasAttribute("bm-classname"))
+		{
+			settings["settings"]["className"] = element.getAttribute("bm-classname");
+		}
 
 		// Split component
 		if (element.hasAttribute("bm-split"))
