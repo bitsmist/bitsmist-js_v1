@@ -31,6 +31,28 @@ export default class StateOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static StateOrganizer_onDoOrganize(sender, e, ex)
+	{
+
+		this._enumSettings(e.detail.settings["waitFor"], (sectionName, sectionValue) => {
+			this.addEventHandler(sectionName, {"handler":StateOrganizer.StateOrganizer_onDoProcess, "options":sectionValue});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static StateOrganizer_onDoProcess(sender, e, ex)
+	{
+
+		return StateOrganizer._waitFor(this, ex.options);
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -114,28 +136,6 @@ export default class StateOrganizer extends Organizer
 
 		StateOrganizer.__suspends[state].resolve();
 		StateOrganizer.__suspends[state].state = "resolved";
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static StateOrganizer_onDoOrganize(sender, e, ex)
-	{
-
-		this._enumSettings(e.detail.settings["waitFor"], (sectionName, sectionValue) => {
-			this.addEventHandler(sectionName, {"handler":StateOrganizer.StateOrganizer_onDoProcess, "options":sectionValue});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static StateOrganizer_onDoProcess(sender, e, ex)
-	{
-
-		return StateOrganizer._waitFor(this, ex.options);
 
 	}
 

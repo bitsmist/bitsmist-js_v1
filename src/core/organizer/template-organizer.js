@@ -31,6 +31,60 @@ export default class TemplateOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static TemplateOrganizer_onDoOrganize(sender, e, ex)
+	{
+
+		let promises = [];
+
+		this._enumSettings(e.detail.settings["templates"], (sectionName, sectionValue) => {
+			if (sectionValue["type"] === "html" || sectionValue["type"] === "url")
+			{
+				promises.push(this.loadTemplate(sectionName));
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static TemplateOrganizer_onDoTransform(sender, e, ex)
+	{
+
+		if (this.settings.get("templates.settings.hasTemplate", true))
+		{
+			let templateName = this.settings.get("templates.settings.templateName");
+
+			return Promise.resolve().then(() => {
+				return this.loadTemplate(templateName);
+			}).then(() => {
+				return this.applyTemplate(templateName);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static TemplateOrganizer_onAfterTransform(sender, e, ex)
+	{
+
+		let promises = [];
+
+		this._enumSettings(this.settings.get("templates"), (sectionName, sectionValue) => {
+			if (sectionValue["type"] === "node")
+			{
+				promises.push(this.loadTemplate(sectionName));
+			}
+		});
+
+		return Promise.all(promises);
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -106,60 +160,6 @@ export default class TemplateOrganizer extends Organizer
 
 			return xhr.responseText;
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static TemplateOrganizer_onDoOrganize(sender, e, ex)
-	{
-
-		let promises = [];
-
-		this._enumSettings(e.detail.settings["templates"], (sectionName, sectionValue) => {
-			if (sectionValue["type"] === "html" || sectionValue["type"] === "url")
-			{
-				promises.push(this.loadTemplate(sectionName));
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static TemplateOrganizer_onDoTransform(sender, e, ex)
-	{
-
-		if (this.settings.get("templates.settings.hasTemplate", true))
-		{
-			let templateName = this.settings.get("templates.settings.templateName");
-
-			return Promise.resolve().then(() => {
-				return this.loadTemplate(templateName);
-			}).then(() => {
-				return this.applyTemplate(templateName);
-			});
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static TemplateOrganizer_onAfterTransform(sender, e, ex)
-	{
-
-		let promises = [];
-
-		this._enumSettings(this.settings.get("templates"), (sectionName, sectionValue) => {
-			if (sectionValue["type"] === "node")
-			{
-				promises.push(this.loadTemplate(sectionName));
-			}
-		});
-
-		return Promise.all(promises);
 
 	}
 

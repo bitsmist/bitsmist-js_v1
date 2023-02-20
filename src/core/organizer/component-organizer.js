@@ -34,6 +34,39 @@ export default class ComponentOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static ComponentOrganizer_onDoOrganize(sender, e, ex)
+	{
+
+		let chain = Promise.resolve();
+
+		// Load molds
+		this._enumSettings(e.detail.settings["molds"], (sectionName, sectionValue) => {
+			chain = chain.then(() => {
+				if (!this.components[sectionName])
+				{
+					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
+				}
+			});
+		});
+
+		// Load components
+		this._enumSettings(e.detail.settings["components"], (sectionName, sectionValue) => {
+			chain = chain.then(() => {
+				if (!this.components[sectionName])
+				{
+					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue);
+				}
+			});
+		});
+
+		return chain;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -117,39 +150,6 @@ export default class ComponentOrganizer extends Organizer
 		}).then(() => {
 			console.debug(`Loaded script. fileName=${fileName}`);
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static ComponentOrganizer_onDoOrganize(sender, e, ex)
-	{
-
-		let chain = Promise.resolve();
-
-		// Load molds
-		this._enumSettings(e.detail.settings["molds"], (sectionName, sectionValue) => {
-			chain = chain.then(() => {
-				if (!this.components[sectionName])
-				{
-					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
-				}
-			});
-		});
-
-		// Load components
-		this._enumSettings(e.detail.settings["components"], (sectionName, sectionValue) => {
-			chain = chain.then(() => {
-				if (!this.components[sectionName])
-				{
-					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue);
-				}
-			});
-		});
-
-		return chain;
 
 	}
 

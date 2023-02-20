@@ -32,6 +32,18 @@ export default class SettingOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static SettingOrganizer_onDoOrganize(sender, e, ex)
+	{
+
+		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
+		this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -148,18 +160,6 @@ export default class SettingOrganizer extends Organizer
 
 			return settings;
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static SettingOrganizer_onDoOrganize(sender, e, ex)
-	{
-
-		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
-		this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
 
 	}
 

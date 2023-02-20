@@ -30,6 +30,34 @@ export default class EventOrganizer extends Organizer
 	}
 
 	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static EventOrganizer_onDoOrganize(sender, e, ex)
+	{
+
+		this._enumSettings(e.detail.settings["events"], (sectionName, sectionValue) => {
+			EventOrganizer._initEvents(this, sectionName, sectionValue);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static EventOrganizer_onAfterTransform(sender, e, ex)
+	{
+
+		this._enumSettings(this.settings.get("events"), (sectionName, sectionValue) => {
+			// Initialize only elements inside component
+			if (!EventOrganizer.__isTargetSelf(sectionName, sectionValue))
+			{
+				EventOrganizer._initEvents(this, sectionName, sectionValue);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -80,34 +108,6 @@ export default class EventOrganizer extends Organizer
 				EventOrganizer._removeEvents(component, elementName, events[eventName]);
 			});
 		}
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static EventOrganizer_onDoOrganize(sender, e, ex)
-	{
-
-		this._enumSettings(e.detail.settings["events"], (sectionName, sectionValue) => {
-			EventOrganizer._initEvents(this, sectionName, sectionValue);
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static EventOrganizer_onAfterTransform(sender, e, ex)
-	{
-
-		this._enumSettings(this.settings.get("events"), (sectionName, sectionValue) => {
-			// Initialize only elements inside component
-			if (!EventOrganizer.__isTargetSelf(sectionName, sectionValue))
-			{
-				EventOrganizer._initEvents(this, sectionName, sectionValue);
-			}
-		});
 
 	}
 
