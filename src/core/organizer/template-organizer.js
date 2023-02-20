@@ -77,9 +77,9 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "doOrganize", TemplateOrganizer.onDoOrganize);
-		this._addOrganizerHandler(component, "doTransform", TemplateOrganizer.onDoTransform);
-		this._addOrganizerHandler(component, "afterTransform", TemplateOrganizer.onAfterTransform);
+		this._addOrganizerHandler(component, "doOrganize", TemplateOrganizer.TemplateOrganizer_onDoOrganize);
+		this._addOrganizerHandler(component, "doTransform", TemplateOrganizer.TemplateOrganizer_onDoTransform);
+		this._addOrganizerHandler(component, "afterTransform", TemplateOrganizer.TemplateOrganizer_onAfterTransform);
 
 	}
 
@@ -113,7 +113,7 @@ export default class TemplateOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onDoOrganize(sender, e, ex)
+	static TemplateOrganizer_onDoOrganize(sender, e, ex)
 	{
 
 		let promises = [];
@@ -129,7 +129,7 @@ export default class TemplateOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	static onDoTransform(sender, e, ex)
+	static TemplateOrganizer_onDoTransform(sender, e, ex)
 	{
 
 		if (this.settings.get("templates.settings.hasTemplate", true))
@@ -147,7 +147,7 @@ export default class TemplateOrganizer extends Organizer
 
 	// -------------------------------------------------------------------------
 
-	static onAfterTransform(sender, e, ex)
+	static TemplateOrganizer_onAfterTransform(sender, e, ex)
 	{
 
 		let promises = [];

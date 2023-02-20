@@ -72,7 +72,7 @@ export default class SettingOrganizer extends Organizer
 		component._settings = new ChainableStore({"items":settings});
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "doOrganize", SettingOrganizer.onDoOrganize);
+		this._addOrganizerHandler(component, "doOrganize", SettingOrganizer.SettingOrganizer_onDoOrganize);
 
 		// Chain global settings
 		if (component._settings.get("settings.useGlobalSettings"))
@@ -155,7 +155,7 @@ export default class SettingOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onDoOrganize(sender, e, ex)
+	static SettingOrganizer_onDoOrganize(sender, e, ex)
 	{
 
 		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);

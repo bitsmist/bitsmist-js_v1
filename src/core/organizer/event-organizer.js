@@ -63,8 +63,8 @@ export default class EventOrganizer extends Organizer
 	{
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "doOrganize", EventOrganizer.onDoOrganize);
-		this._addOrganizerHandler(component, "afterTransform", EventOrganizer.onAfterTransform);
+		this._addOrganizerHandler(component, "doOrganize", EventOrganizer.EventOrganizer_onDoOrganize);
+		this._addOrganizerHandler(component, "afterTransform", EventOrganizer.EventOrganizer_onAfterTransform);
 
 	}
 
@@ -87,7 +87,18 @@ export default class EventOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static onAfterTransform(sender, e, ex)
+	static EventOrganizer_onDoOrganize(sender, e, ex)
+	{
+
+		this._enumSettings(e.detail.settings["events"], (sectionName, sectionValue) => {
+			EventOrganizer._initEvents(this, sectionName, sectionValue);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static EventOrganizer_onAfterTransform(sender, e, ex)
 	{
 
 		this._enumSettings(this.settings.get("events"), (sectionName, sectionValue) => {
@@ -96,17 +107,6 @@ export default class EventOrganizer extends Organizer
 			{
 				EventOrganizer._initEvents(this, sectionName, sectionValue);
 			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static onDoOrganize(sender, e, ex)
-	{
-
-		this._enumSettings(e.detail.settings["events"], (sectionName, sectionValue) => {
-			EventOrganizer._initEvents(this, sectionName, sectionValue);
 		});
 
 	}
