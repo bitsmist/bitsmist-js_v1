@@ -182,6 +182,7 @@ Component.prototype.start = function(settings)
 			"autoRestart":			false,
 			"autoSetup":			true,
 			"autoStop":				true,
+			"autoTransform":		true,
 			"useGlobalSettings":	true,
 		},
 		"organizers": {
@@ -209,7 +210,10 @@ Component.prototype.start = function(settings)
 		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("starting");
 	}).then(() => {
-		return this.transform();
+		if (this.settings.get("settings.autoTransform"))
+		{
+			return this.transform();
+		}
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{
