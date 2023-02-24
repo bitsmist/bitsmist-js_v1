@@ -347,6 +347,12 @@ Component.prototype.refresh = function(options)
 		console.debug(`Component.refresh(): Refreshing component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.trigger("beforeRefresh", options);
 	}).then(() => {
+		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
+		if (autoClear)
+		{
+			return this.clear();
+		}
+	}).then(() => {
 		return this.trigger("doTarget", options);
 	}).then(() => {
 		// Fetch
@@ -414,12 +420,6 @@ Component.prototype.fill = function(options)
 	return Promise.resolve().then(() => {
 		console.debug(`Component.fill(): Filling with data. name=${this._name}, uniqueId=${this._uniqueId}`);
 		return this.trigger("beforeFill", options);
-	}).then(() => {
-		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
-		if (autoClear)
-		{
-			return this.clear();
-		}
 	}).then(() => {
 		return this.trigger("doFill", options);
 	}).then(() => {
