@@ -295,9 +295,8 @@ Component.prototype.transform = function(options)
 	}).then(() => {
 		return this.loadTags(this.rootElement);
 	}).then(() => {
-		return this.trigger("afterTransform", options);
-	}).then(() => {
 		console.debug(`Component.transform(): Transformed. name=${this.name}, templateName=${templateName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+		return this.trigger("afterTransform", options);
 	});
 
 }
@@ -322,9 +321,8 @@ Component.prototype.setup = function(options)
 	}).then(() => {
 		return this.trigger("doSetup", options);
 	}).then(() => {
-		return this.trigger("afterSetup", options);
-	}).then(() => {
 		console.debug(`Component.setup(): Set up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		return this.trigger("afterSetup", options);
 	});
 
 }
@@ -369,9 +367,8 @@ Component.prototype.refresh = function(options)
 	}).then(() => {
 		return this.trigger("doRefresh", options);
 	}).then(() => {
-		return this.trigger("afterRefresh", options);
-	}).then(() => {
 		console.debug(`Component.refresh(): Refreshed component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		return this.trigger("afterRefresh", options);
 	});
 
 }
@@ -423,9 +420,8 @@ Component.prototype.fill = function(options)
 	}).then(() => {
 		return this.trigger("doFill", options);
 	}).then(() => {
-		return this.trigger("afterFill", options);
-	}).then(() => {
 		console.debug(`Component.fill(): Filled with data. name=${this._name}, uniqueId=${this._uniqueId}`);
+		return this.trigger("afterFill", options);
 	});
 
 }
@@ -448,9 +444,8 @@ Component.prototype.clear = function(options)
 	}).then(() => {
 		return this.trigger("doClear", options);
 	}).then(() => {
-		return this.trigger("afterClear", options);
-	}).then(() => {
 		console.debug(`Component.clear(): Cleared the component. name=${this._name}, uniqueId=${this._uniqueId}`);
+		return this.trigger("afterClear", options);
 	});
 
 }
