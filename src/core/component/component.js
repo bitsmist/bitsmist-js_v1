@@ -222,6 +222,8 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.trigger("doStart");
 	}).then(() => {
+		window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
+
 		console.debug(`Component.start(): Started component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.changeState("started");
 	}).then(() => {
