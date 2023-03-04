@@ -127,10 +127,10 @@ export default class SettingOrganizer extends Organizer
 		let url = Util.concatPath([path, fileName + "." + type]) + (query ? "?" + query : "");
 		let settings;
 
-		console.debug(`Loading settings file. fileName=${fileName}, path=${path}`);
+		console.debug(`SettingOrganizer.loadFile(): Loading settings file. fileName=${fileName}, path=${path}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`Loaded settings. url=${url}`);
+			console.debug(`SettingOrganizer.loadFile(): Loaded settings. url=${url}`);
 
 			switch (type)
 			{

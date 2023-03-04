@@ -151,12 +151,12 @@ export default class TemplateOrganizer extends Organizer
 	static loadFile(fileName, path, loadOptions)
 	{
 
-		console.debug(`Loading template file. fileName=${fileName}, path=${path}`);
+		console.debug(`TemplateOrganizer.loadFile(): Loading template file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
 		let url = Util.concatPath([path, fileName]) + ".html" + (query ? "?" + query : "");
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`Loaded template. fileName=${fileName}, path=${path}`);
+			console.debug(`TemplateOrganizer.loadFile(): Loaded template. fileName=${fileName}, path=${path}`);
 
 			return xhr.responseText;
 		});

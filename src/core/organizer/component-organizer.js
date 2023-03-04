@@ -134,7 +134,7 @@ export default class ComponentOrganizer extends Organizer
 	static loadFile(fileName, path, loadOptions)
 	{
 
-		console.debug(`Loading component file. fileName=${fileName}, path=${path}`);
+		console.debug(`ComponentOrganizer.loadFile(): ComponentOrganizer.loadFile(): Loading component file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
 		let url1 = Util.concatPath([path, fileName + ".js"]) + (query ? "?" + query : "");
@@ -148,7 +148,7 @@ export default class ComponentOrganizer extends Organizer
 				return AjaxUtil.loadScript(url2);
 			}
 		}).then(() => {
-			console.debug(`Loaded script. fileName=${fileName}`);
+			console.debug(`ComponentOrganizer.loadFile(): Loaded script. fileName=${fileName}`);
 		});
 
 	}
@@ -168,7 +168,7 @@ export default class ComponentOrganizer extends Organizer
 	static _loadTags(rootNode, options)
 	{
 
-		console.debug(`Loading tags. rootNode=${rootNode.tagName}`);
+		console.debug(`ComponentOrganizer._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
 
 		let promises = [];
 
@@ -213,12 +213,12 @@ export default class ComponentOrganizer extends Organizer
 	static _loadClass(tagName, className, settings, loadOptions)
 	{
 
-		console.debug(`Loading a component. tagName=${tagName}, className=${className}`);
+		console.debug(`ComponentOrganizer._loadClass(): Loading a component. tagName=${tagName}, className=${className}`);
 
 		// Check if the tag is already defined
 		if (customElements.get(tagName))
 		{
-			console.debug(`Tag already defined. tagName=${tagName}, className=${className}`);
+			console.debug(`ComponentOrganizer._loadClass(): Tag already defined. tagName=${tagName}, className=${className}`);
 			return Promise.resolve();
 		}
 
@@ -300,7 +300,7 @@ export default class ComponentOrganizer extends Organizer
 	static _loadComponent(component, componentName, settings, loadOptions)
 	{
 
-		console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
+		console.debug(`ComponentOrganizer._loadComponent(): Adding a component. name=${component.name}, componentName=${componentName}`);
 
 		// Get a tag name
 		let tagName;
@@ -417,21 +417,21 @@ export default class ComponentOrganizer extends Organizer
 	static __autoloadClass(className, fileName, path, loadOptions)
 	{
 
-		console.debug(`Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
+		console.debug(`ComponentOrganizer.__autoLoadClass(): Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
 
 		let promise;
 
 		if (ComponentOrganizer.__isLoadedClass(className))
 		{
 			// Already loaded
-			console.debug(`Component Already exists. className=${className}`);
+			console.debug(`ComponentOrganizer.__autoLoadClass(): Component Already exists. className=${className}`);
 			ComponentOrganizer.__classes.set(className + ".state", "loaded");
 			promise = Promise.resolve();
 		}
 		else if (ComponentOrganizer.__classes.get(className, {})["state"] === "loading")
 		{
 			// Already loading
-			console.debug(`Component Already loading. className=${className}`);
+			console.debug(`ComponentOrganizer.__autoLoadClass(): Component Already loading. className=${className}`);
 			promise = ComponentOrganizer.__classes.get(className)["promise"];
 		}
 		else
