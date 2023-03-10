@@ -350,7 +350,7 @@ Component.prototype.refresh = function(options)
 		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
 		if (autoClear)
 		{
-			return this.clear();
+			return this.clear(options);
 		}
 	}).then(() => {
 		return this.trigger("doTarget", options);
@@ -439,6 +439,8 @@ Component.prototype.fill = function(options)
  */
 Component.prototype.clear = function(options)
 {
+
+	options = options || {};
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.clear(): Clearing the component. name=${this._name}, uniqueId=${this._uniqueId}`);
