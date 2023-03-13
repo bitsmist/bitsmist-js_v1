@@ -279,11 +279,11 @@ export default class EventOrganizer extends Organizer
 		element = ( element ? element : component );
 		let e = null;
 
-		try
+		if (typeof window.CustomEvent === "function")
 		{
 			e = new CustomEvent(eventName, { detail: options });
 		}
-		catch(error)
+		else
 		{
 			e  = document.createEvent("CustomEvent");
 			e.initCustomEvent(eventName, false, false, options);
