@@ -181,30 +181,18 @@ export default class Util
  	 * Execute Javascript code from string.
 	 *
 	 * @param	{String}		code				Code to execute.
-	 * @param	{Object}		context				Context refered as "this" inside the code.
 	 * @param	{Object}		parameters			Parameters passed to the code.
 	 *
 	 * @return	{*}				Result of eval.
 	 */
-	static safeEval(code, context, parameters)
+	static safeEval(code, parameters)
 	{
-
-		let names;
-		let values = [];
-
-		if (parameters)
-		{
-			names = Object.keys(parameters).join(",");
-			Object.keys(parameters).forEach((key) => {
-				values.push(parameters[key]);
-			});
-		}
 
 		let ret = false;
 
 		try
 		{
-			ret = Function(names, '"use strict";return (' + code + ')').apply(context, values);
+			ret = Function('"use strict";return (' + code + ')').apply(parameters);
 		}
 		catch(e)
 		{
