@@ -94,7 +94,10 @@ export default class SettingOrganizer extends Organizer
 
 		return Promise.resolve().then(() => {
 			// Load settings from an external file.
-			return SettingOrganizer._loadExternalSetting(component, "setting");
+			if (SettingOrganizer._hasExternalSettings(component, "setting"))
+			{
+				return SettingOrganizer._loadExternalSettings(component, "setting");
+			}
 		}).then(() => {
 			// Load settings from attributes
 			SettingOrganizer._loadAttrSettings(component);
@@ -171,26 +174,29 @@ export default class SettingOrganizer extends Organizer
 	 * Load a settings file and merge to component's settings.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		settingName			Setting name.
+	 * @param	{String}		fileName			File name. Use "" to use default name.
 	 * @param	{Object}		loadOptions			Load options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadSettings(component, settingName, loadOptions)
+	static _loadSettings(component, fileName, loadOptions)
 	{
 
-		let path;
-		return Promise.resolve().then(() => {
-			path = Util.safeGet(loadOptions, "path",
-				Util.concatPath([
-					component.settings.get("system.appBaseUrl"),
-					component.settings.get("system.componentPath"),
-					component.settings.get("settings.path", ""),
-				])
-			);
+		// Filename
+		fileName = fileName ||
+			component.settings.get("settings.fileName",
+				component.tagName.toLowerCase()) + ".settings";
 
-			return SettingOrganizer.loadFile(settingName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions));
-		}).then((extraSettings) => {
+		// Path
+		let path = Util.safeGet(loadOptions, "path",
+			Util.concatPath([
+				component.settings.get("system.appBaseUrl"),
+				component.settings.get("system.componentPath"),
+				component.settings.get("settings.path", ""),
+			])
+		);
+
+		return SettingOrganizer.loadFile(fileName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions)).then((extraSettings) => {
 			if (extraSettings)
 			{
 				component.settings.merge(extraSettings);
@@ -202,41 +208,59 @@ export default class SettingOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load an external setting file.
+	 * Check if the component has an external settings file.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		settingName			Setting name.
+	 *
+	 * @return  {Boolean}		True if the component has an external settings file.
+	 */
+	static _hasExternalSettings(component, settingName)
+	{
+
+		let ret = false;
+
+		if (component.hasAttribute(`bm-${settingName}ref`) || component.settings.get("settings.settingRef"))
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load an external settings file.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		settingName			Setting name.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadExternalSetting(component, settingName)
+	static _loadExternalSettings(component, settingName)
 	{
 
+		settingName = settingName || "setting";
+		let settingRef = ( component.hasAttribute(`bm-${settingName}ref`) ?
+			component.getAttribute(`bm-${settingName}ref`) || true :
+			component.settings.get("settings.settingRef")
+		);
+
 		let fileName;
-		let loadOptions = {};
-
-		if (component.hasAttribute("bm-" + settingName + "ref"))
+		let loadOptions;
+		if (settingRef !== true)
 		{
-			let url = Util.parseURL(component.getAttribute("bm-" + settingName + "ref"));
+			let url = Util.parseURL(settingRef);
 			fileName = url.filenameWithoutExtension;
-			loadOptions["path"] = url.path;
-			loadOptions["query"] = url.query;
-		}
-		else
-		{
-			let path = ( component.hasAttribute("bm-" + settingName + "path") ? component.getAttribute("bm-" + settingName + "path") : "" );
-			fileName = ( component.hasAttribute("bm-" + settingName + "name") ? component.getAttribute("bm-" + settingName + "name") : "" );
-			if (path && !fileName)
-			{
-				fileName = "settings";
-			}
-			loadOptions["path"] = path;
+			loadOptions = {
+				"path":			url.path,
+				"query":		url.query,
+			};
 		}
 
-		if (fileName || loadOptions["path"])
-		{
-			return SettingOrganizer._loadSettings(component, fileName, loadOptions);
-		}
+		return SettingOrganizer._loadSettings(component, fileName, loadOptions);
 
 	}
 
