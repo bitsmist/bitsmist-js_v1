@@ -34,53 +34,22 @@ export default class TemplateOrganizer extends Organizer
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static TemplateOrganizer_onDoOrganize(sender, e, ex)
-	{
-
-		let promises = [];
-
-		this._enumSettings(e.detail.settings["templates"], (sectionName, sectionValue) => {
-			if (sectionValue["type"] === "html" || sectionValue["type"] === "url")
-			{
-				promises.push(this.loadTemplate(sectionName));
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	static TemplateOrganizer_onDoTransform(sender, e, ex)
 	{
 
 		if (this.settings.get("templates.settings.hasTemplate", true))
 		{
-			let templateName = this.settings.get("templates.settings.templateName");
+			let templateName = TemplateOrganizer._getTemplateName(this);
 
 			return Promise.resolve().then(() => {
-				return this.loadTemplate(templateName);
+				if (TemplateOrganizer._hasExternalTemplate(this, templateName))
+				{
+					return TemplateOrganizer._loadExternalTemplate(this, templateName)
+				}
 			}).then(() => {
 				return this.applyTemplate(templateName);
 			});
 		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static TemplateOrganizer_onAfterTransform(sender, e, ex)
-	{
-
-		let promises = [];
-
-		this._enumSettings(this.settings.get("templates"), (sectionName, sectionValue) => {
-			if (sectionValue["type"] === "node")
-			{
-				promises.push(this.loadTemplate(sectionName));
-			}
-		});
-
-		return Promise.all(promises);
 
 	}
 
@@ -123,17 +92,8 @@ export default class TemplateOrganizer extends Organizer
 		component._templates = {};
 		component._activeTemplateName = "";
 
-		// Set defaults if not set
-		if (!component.settings.get("templates.settings.templateName"))
-		{
-			let templateName = component.settings.get("settings.fileName", component.tagName.toLowerCase());
-			component.settings.set("templates.settings.templateName", templateName);
-		}
-
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "doOrganize", TemplateOrganizer.TemplateOrganizer_onDoOrganize);
 		this._addOrganizerHandler(component, "doTransform", TemplateOrganizer.TemplateOrganizer_onDoTransform);
-		this._addOrganizerHandler(component, "afterTransform", TemplateOrganizer.TemplateOrganizer_onAfterTransform);
 
 	}
 
@@ -168,10 +128,30 @@ export default class TemplateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get a template html according to settings.
+	 * Get the template name.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		templateName		Template name.
+	 *
+	 * @return 	{String}		Template name.
+	 */
+	static _getTemplateName(component)
+	{
+
+		let templateName = component.settings.get("templates.settings.fileName",
+			component.settings.get("settings.fileName",
+				component.tagName.toLowerCase()));
+
+		return templateName;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get the template html according to settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		templateName		Template name. Use "" to use default name.
 	 * @param	{Object}		loadOptions			Load options.
 	 *
 	 * @return 	{Promise}		Promise.
@@ -179,10 +159,12 @@ export default class TemplateOrganizer extends Organizer
 	static _loadTemplate(component, templateName, loadOptions)
 	{
 
-		let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
+		// Template Name
+		templateName = templateName || TemplateOrganizer._getTemplateName(component);
 
+		// Check if the template is already loaded
+		let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
 		if (templateInfo["isLoaded"])
-		//if (templateInfo["isLoaded"] && options && !options["forceLoad"])
 		{
 			console.debug(`TemplateOrganizer._loadTemplate(): Template already loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return Promise.resolve();
@@ -190,7 +172,6 @@ export default class TemplateOrganizer extends Organizer
 
 		let promise;
 		let settings = component.settings.get("templates." + templateName, {});
-
 		switch (settings["type"]) {
 		case "html":
 			templateInfo["html"] = settings["html"];
@@ -202,6 +183,7 @@ export default class TemplateOrganizer extends Organizer
 			break;
 		case "url":
 		default:
+			// Path
 			let path = Util.safeGet(loadOptions, "path",
 				Util.concatPath([
 					component.settings.get("system.appBaseUrl", ""),
@@ -219,6 +201,70 @@ export default class TemplateOrganizer extends Organizer
 		return promise.then(() => {
 			templateInfo["isLoaded"] = true;
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the component has an external template file.
+	 *
+	 * @param	{Component}		component			Component.
+	 *
+	 * @return  {Boolean}		True if the component has an external messages file.
+	 */
+	static _hasExternalTemplate(component, templateName)
+	{
+
+		let ret = false;
+
+		if (component.hasAttribute("bm-templateref") || component.settings.get("templates.settings.templateRef"))
+		{
+			ret = true;
+		}
+		else if (!component._templates[templateName])
+		{
+			ret = true;
+		}
+		else if (!component._templates[templateName]["isLoaded"])
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load an external template file.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		Name			Setting name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _loadExternalTemplate(component, fileName)
+	{
+
+		let templateRef = ( component.hasAttribute("bm-templateref") ?
+			component.getAttribute("bm-templateref") || true :
+			component.settings.get("templates.settings.templateRef")
+		);
+
+		let loadOptions;
+		if (templateRef && templateRef !== true)
+		{
+			let url = Util.parseURL(templateRef);
+			fileName = url.filenameWithoutExtension;
+			loadOptions = {
+				"path":			url.path,
+				"query":		url.query,
+			};
+		}
+
+		return TemplateOrganizer._loadTemplate(component, fileName, loadOptions);
 
 	}
 
