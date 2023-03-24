@@ -85,7 +85,7 @@ export default class OrganizerOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Attach an organizer to a component.
+	 * Attach an organizer to the component.
 	 *
 	 * @param	{Component}		component			Component to be attached.
 	 * @param	{Organizer}		organizer			Organizer to attach.
