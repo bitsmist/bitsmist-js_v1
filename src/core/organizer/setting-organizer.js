@@ -94,9 +94,9 @@ export default class SettingOrganizer extends Organizer
 
 		return Promise.resolve().then(() => {
 			// Load settings from an external file.
-			if (SettingOrganizer._hasExternalSettings(component, "setting"))
+			if (SettingOrganizer.__hasExternalSettings(component, "setting"))
 			{
-				return SettingOrganizer._loadExternalSettings(component, "setting");
+				return SettingOrganizer.__loadExternalSettings(component, "setting");
 			}
 		}).then(() => {
 			// Load settings from attributes
@@ -208,65 +208,6 @@ export default class SettingOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component has an external settings file.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		settingName			Setting name.
-	 *
-	 * @return  {Boolean}		True if the component has an external settings file.
-	 */
-	static _hasExternalSettings(component, settingName)
-	{
-
-		let ret = false;
-
-		if (component.hasAttribute(`bm-${settingName}ref`) || component.settings.get("settings.settingRef"))
-		{
-			ret = true;
-		}
-
-		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load the external settings file.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		settingName			Setting name.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _loadExternalSettings(component, settingName)
-	{
-
-		settingName = settingName || "setting";
-		let settingRef = ( component.hasAttribute(`bm-${settingName}ref`) ?
-			component.getAttribute(`bm-${settingName}ref`) || true :
-			component.settings.get("settings.settingRef")
-		);
-
-		let fileName;
-		let loadOptions;
-		if (settingRef && settingRef !== true)
-		{
-			let url = Util.parseURL(settingRef);
-			fileName = url.filenameWithoutExtension;
-			loadOptions = {
-				"path":			url.path,
-				"query":		url.query,
-			};
-		}
-
-		return SettingOrganizer._loadSettings(component, fileName, loadOptions);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Get settings from element's attribute.
 	 *
 	 * @param	{Component}		component			Component.
@@ -313,5 +254,66 @@ export default class SettingOrganizer extends Organizer
 		}
 
 	}
+
+	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the component has the external settings file.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		settingName			Setting name.
+	 *
+	 * @return  {Boolean}		True if the component has the external settings file.
+	 */
+	static __hasExternalSettings(component, settingName)
+	{
+
+		let ret = false;
+
+		if (component.hasAttribute(`bm-${settingName}ref`) || component.settings.get("settings.settingRef"))
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the external settings file.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		settingName			Setting name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static __loadExternalSettings(component, settingName)
+	{
+
+		let fileName;
+		let loadOptions;
+		let settingRef = ( component.hasAttribute(`bm-${settingName}ref`) ?
+			component.getAttribute(`bm-${settingName}ref`) || true :
+			component.settings.get("settings.settingRef")
+		);
+
+		if (settingRef && settingRef !== true)
+		{
+			let url = Util.parseURL(settingRef);
+			fileName = url.filenameWithoutExtension;
+			loadOptions = {
+				"path":			url.path,
+				"query":		url.query,
+			};
+		}
+
+		return SettingOrganizer._loadSettings(component, fileName, loadOptions);
+
+	}
+
 
 }
