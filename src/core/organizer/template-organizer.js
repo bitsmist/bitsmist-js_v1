@@ -42,9 +42,9 @@ export default class TemplateOrganizer extends Organizer
 			let templateName = TemplateOrganizer._getTemplateName(this);
 
 			return Promise.resolve().then(() => {
-				if (TemplateOrganizer._hasExternalTemplate(this, templateName))
+				if (TemplateOrganizer.__hasExternalTemplate(this, templateName))
 				{
-					return TemplateOrganizer._loadExternalTemplate(this, templateName)
+					return TemplateOrganizer.__loadExternalTemplate(this, templateName)
 				}
 			}).then(() => {
 				return this.applyTemplate(templateName);
@@ -111,12 +111,12 @@ export default class TemplateOrganizer extends Organizer
 	static loadFile(fileName, path, loadOptions)
 	{
 
-		console.debug(`TemplateOrganizer.loadFile(): Loading template file. fileName=${fileName}, path=${path}`);
+		console.debug(`TemplateOrganizer.loadFile(): Loading the template file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
 		let url = Util.concatPath([path, fileName]) + ".html" + (query ? "?" + query : "");
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`TemplateOrganizer.loadFile(): Loaded template. fileName=${fileName}, path=${path}`);
+			console.debug(`TemplateOrganizer.loadFile(): Loaded the template. fileName=${fileName}, path=${path}`);
 
 			return xhr.responseText;
 		});
@@ -162,23 +162,17 @@ export default class TemplateOrganizer extends Organizer
 		// Template Name
 		templateName = templateName || TemplateOrganizer._getTemplateName(component);
 
-		// Check if the template is already loaded
-		let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
-		if (templateInfo["isLoaded"])
-		{
-			console.debug(`TemplateOrganizer._loadTemplate(): Template already loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`);
-			return Promise.resolve();
-		}
-
 		let promise;
-		let settings = component.settings.get("templates." + templateName, {});
-		switch (settings["type"]) {
+		let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
+
+		switch (component.settings.get(`templates.${templateName}.type`)) {
 		case "html":
-			templateInfo["html"] = settings["html"];
+			templateInfo["html"] = component.settings.get(`templates.${templateName}.html`);
 			promise = Promise.resolve();
 			break;
 		case "node":
-			templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
+			let rootNode = component.settings.get(`templates.${templateName}.rootNode`);
+			templateInfo["html"] = component.querySelector(rootNode).innerHTML;
 			promise = Promise.resolve();
 			break;
 		case "url":
@@ -201,70 +195,6 @@ export default class TemplateOrganizer extends Organizer
 		return promise.then(() => {
 			templateInfo["isLoaded"] = true;
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if the component has an external template file.
-	 *
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return  {Boolean}		True if the component has an external messages file.
-	 */
-	static _hasExternalTemplate(component, templateName)
-	{
-
-		let ret = false;
-
-		if (component.hasAttribute("bm-templateref") || component.settings.get("templates.settings.templateRef"))
-		{
-			ret = true;
-		}
-		else if (!component._templates[templateName])
-		{
-			ret = true;
-		}
-		else if (!component._templates[templateName]["isLoaded"])
-		{
-			ret = true;
-		}
-
-		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load an external template file.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		Name			Setting name.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _loadExternalTemplate(component, fileName)
-	{
-
-		let templateRef = ( component.hasAttribute("bm-templateref") ?
-			component.getAttribute("bm-templateref") || true :
-			component.settings.get("templates.settings.templateRef")
-		);
-
-		let loadOptions;
-		if (templateRef && templateRef !== true)
-		{
-			let url = Util.parseURL(templateRef);
-			fileName = url.filenameWithoutExtension;
-			loadOptions = {
-				"path":			url.path,
-				"query":		url.query,
-			};
-		}
-
-		return TemplateOrganizer._loadTemplate(component, fileName, loadOptions);
 
 	}
 
@@ -369,6 +299,66 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		return component._templates[templateName];
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Check if the component has the external template file.
+	 *
+	 * @param	{Component}		component			Component.
+	 *
+	 * @return  {Boolean}		True if the component has the external messages file.
+	 */
+	static __hasExternalTemplate(component, templateName)
+	{
+
+		let ret = false;
+
+		if (component.hasAttribute("bm-templateref") || component.settings.get("templates.settings.templateRef"))
+		{
+			ret = true;
+		}
+		else if (!component._templates[templateName] || !component._templates[templateName]["isLoaded"])
+		{
+			ret = true;
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the external template file.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		Name			Setting name.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static __loadExternalTemplate(component, fileName)
+	{
+
+		let loadOptions;
+		let templateRef = ( component.hasAttribute("bm-templateref") ?
+			component.getAttribute("bm-templateref") || true :
+			component.settings.get("templates.settings.templateRef")
+		);
+
+		if (templateRef && templateRef !== true)
+		{
+			let url = Util.parseURL(templateRef);
+			fileName = url.filenameWithoutExtension;
+			loadOptions = {
+				"path":			url.path,
+				"query":		url.query,
+			};
+		}
+
+		return TemplateOrganizer._loadTemplate(component, fileName, loadOptions);
 
 	}
 
