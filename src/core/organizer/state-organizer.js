@@ -112,7 +112,7 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Suspend all components at a specified state.
+	 * Suspend all components at the specified state.
 	 *
 	 * @param	{String}		state				Component state.
 	 */
@@ -127,7 +127,7 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Resume all components at a specified state.
+	 * Resume all components at the specified state.
 	 *
 	 * @param	{String}		state				Component state.
 	 */
@@ -180,7 +180,7 @@ export default class StateOrganizer extends Organizer
 			});
 			waitInfo["promise"] = promise;
 
-			// Add to info to a waiting list.
+			// Add info to the waiting list.
 			StateOrganizer.__addToWaitingList(waitInfo);
 		}
 
@@ -213,7 +213,7 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Suspend a component at a specified state.
+	 * Suspend the component at the specified state.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		state				Component state.
@@ -229,7 +229,7 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Resume a component at a specified state.
+	 * Resume the component at the specified state.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		state				Component state.
@@ -245,7 +245,7 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Pause a component if it is suspended.
+	 * Pause the component if it is suspended.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		state				Component state.
@@ -476,7 +476,7 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if a component is ready.
+	 * Check if the component is ready.
 	 *
 	 * @param	{Object}		waitlistItem		Wait list item.
 	 * @param	{Object}		componentInfo		Registered component info.
@@ -628,7 +628,7 @@ export default class StateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Create a suspend info object.
+	 * Create the suspend info object.
 	 *
 	 * @return  {Object}		Suspend info.
 	 */

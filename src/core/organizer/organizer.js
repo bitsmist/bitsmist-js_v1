@@ -73,7 +73,7 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Deinitialize a component when organizer is detached.
+	 * Deinitialize the component when organizer is detached.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		options				Options.

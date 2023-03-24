@@ -104,7 +104,7 @@ export default class ChainableStore extends Store
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Get a value from store. Return default value when specified key is not available.
+	 * Get the value from store. Return default value when specified key is not available.
 	 * If chained, chained store is also considiered (Override).
 	 *
 	 * @param	{String}		key					Key to get.
@@ -155,7 +155,7 @@ export default class ChainableStore extends Store
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Set a value to the store. If key is empty, it sets the value to the root.
+	 * Set the value to the store. If key is empty, it sets the value to the root.
 	 *
 	 * @param	{String}		key					Key to store.
 	 * @param	{Object}		value				Value to store.

@@ -80,7 +80,7 @@ export default class ClassUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Instantiate a component.
+	 * Instantiate the component.
 	 *
 	 * @param	{String}		className			Class name.
 	 * @param	{Object}		options				Options for the component.
@@ -100,7 +100,7 @@ export default class ClassUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get a class.
+	 * Get the class.
 	 *
 	 * @param	{String}		className			Class name.
 	 *

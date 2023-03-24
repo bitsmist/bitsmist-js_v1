@@ -114,7 +114,7 @@ export default class SettingOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load a settings file.
+	 * Load the settings file.
 	 *
 	 * @param	{String}		fileName			File name.
 	 * @param	{String}		path				Path to the file.
@@ -130,7 +130,7 @@ export default class SettingOrganizer extends Organizer
 		let url = Util.concatPath([path, fileName + "." + type]) + (query ? "?" + query : "");
 		let settings;
 
-		console.debug(`SettingOrganizer.loadFile(): Loading settings file. fileName=${fileName}, path=${path}`);
+		console.debug(`SettingOrganizer.loadFile(): Loading the settings file. fileName=${fileName}, path=${path}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`SettingOrganizer.loadFile(): Loaded settings. url=${url}`);
@@ -171,7 +171,7 @@ export default class SettingOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load a settings file and merge to component's settings.
+	 * Load the settings file and merge to component's settings.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		fileName			File name. Use "" to use default name.
@@ -232,7 +232,7 @@ export default class SettingOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load an external settings file.
+	 * Load the external settings file.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		settingName			Setting name.

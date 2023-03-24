@@ -55,7 +55,7 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Set a value to object.
+	 * Set the value to object.
 	 *
 	 * @param	{Object}		store				Object that holds keys/values.
 	 * @param	{String}		key					Key to store.
@@ -81,7 +81,7 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Remove a value from object.
+	 * Remove the value from object.
 	 *
 	 * @param	{Object}		store				Object that holds keys/values.
 	 * @param	{String}		key					Key to store.
@@ -118,7 +118,7 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Merge a value to store.
+	 * Merge the value to store.
 	 *
 	 * @param	{Object}		store				Object that holds keys/values.
 	 * @param	{String}		key					Key to store.
@@ -331,7 +331,7 @@ export default class Util
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Get a class name from tag name.
+	 * Get the class name from tag name.
 	 *
 	 * @param	{String}		tagName				Tag name.
 	 *

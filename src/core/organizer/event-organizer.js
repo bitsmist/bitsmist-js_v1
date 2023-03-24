@@ -319,7 +319,7 @@ export default class EventOrganizer extends Organizer
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Get an event handler from a handler info object.
+	 * Get the event handler from the handler info object.
 	 *
 	 * @param	{Component}		component				Component.
 	 * @param	{Object/Function/String}	handlerInfo	Handler info.
@@ -338,7 +338,7 @@ export default class EventOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if a target element is component itself.
+	 * Check if the target element is component itself.
 	 *
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Object}		elementInfo			Element info.
@@ -365,7 +365,7 @@ export default class EventOrganizer extends Organizer
 	 * Get target elements for the eventInfo.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{HTMLElement}	rootNode			A root node to search elements.
+	 * @param	{HTMLElement}	rootNode			Root node to search elements.
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Object}		elementInfo			Element info.
 	 *
@@ -505,7 +505,7 @@ export default class EventOrganizer extends Organizer
 			}
 
 			chain = chain.then(() => {
-				// Get a handler
+				// Get the handler
 				let handler = listeners[i]["handler"];
 				handler = ( typeof handler === "string" ? component[handler] : handler );
 				Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
@@ -550,7 +550,7 @@ export default class EventOrganizer extends Organizer
 				"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 			}
 
-			// Get a handler
+			// Get the handler
 			let handler = listeners[i]["handler"];
 			handler = ( typeof handler === "string" ? component[handler] : handler );
 			Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
