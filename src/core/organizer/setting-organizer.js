@@ -185,7 +185,7 @@ export default class SettingOrganizer extends Organizer
 		// Filename
 		fileName = fileName ||
 			component.settings.get("settings.fileName",
-				component.tagName.toLowerCase() + ".settings");
+				component.tagName.toLowerCase()) + ".settings";
 
 		// Path
 		let path = Util.safeGet(loadOptions, "path",
