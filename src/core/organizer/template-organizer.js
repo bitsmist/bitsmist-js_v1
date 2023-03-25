@@ -335,7 +335,7 @@ export default class TemplateOrganizer extends Organizer
 	 * Load the external template file.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		Name			Setting name.
+	 * @param	{String}		Name				Setting name.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
