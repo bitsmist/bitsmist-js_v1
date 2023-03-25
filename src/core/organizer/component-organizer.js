@@ -173,19 +173,22 @@ export default class ComponentOrganizer extends Organizer
 		let promises = [];
 
 		// Load tags that has bm-autoload/bm-automorph attribute
-		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered])");
+		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
 		targets.forEach((element) => {
-			element.setAttribute("bm-autoloading", "");
-
-			// Load a tag
+			let tagName = element.tagName.toLowerCase();
 			let settings = this._loadAttrSettings(element);
-			let className = Util.safeGet(settings, "settings.className", Util.getClassNameFromTagName(element.tagName));
-			element._injectSettings = function(curSettings){
-				return Util.deepMerge(curSettings, settings);
-			};
-			promises.push(ComponentOrganizer._loadClass(element.tagName.toLowerCase(), className, settings).then(() => {
-				element.removeAttribute("bm-autoloading");
-			}));
+			if (ComponentOrganizer._hasExternalClass(tagName, settings))
+			{
+				// Load the tag
+				element.setAttribute("bm-autoloading", "");
+
+				element._injectSettings = function(curSettings){
+					return Util.deepMerge(curSettings, settings);
+				};
+				promises.push(ComponentOrganizer._loadExternalClass(tagName, settings).then(() => {
+					element.removeAttribute("bm-autoloading");
+				}));
+			}
 		});
 
 		return Promise.all(promises).then(() => {
@@ -201,57 +204,29 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load a class.
+	 * Load the class.
 	 *
 	 * @param	{String}		tagName				Tag name.
-	 * @param	{String}		className			Class name.
 	 * @param	{Object}		settings			Component settings.
 	 * @param	{Object}		loadOptions			Load options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadClass(tagName, className, settings, loadOptions)
+	static _loadClass(tagName, settings, loadOptions)
 	{
 
-		console.debug(`ComponentOrganizer._loadClass(): Loading a component. tagName=${tagName}, className=${className}`);
-
-		// Check if the tag is already defined
-		if (customElements.get(tagName))
-		{
-			console.debug(`ComponentOrganizer._loadClass(): Tag already defined. tagName=${tagName}, className=${className}`);
-			return Promise.resolve();
-		}
+		console.debug(`ComponentOrganizer._loadClass(): Loading the class. tagName=${tagName}`);
 
 		loadOptions = loadOptions || {};
 
-		// Override path and filename when url is specified in autoLoad option
-		let href = Util.safeGet(settings, "settings.autoLoad");
-		href = ( href === true ? "" : href );
-		if (href)
-		{
-			let url = Util.parseURL(href);
+		// Class name
+		let className = Util.safeGet(settings, "settings.className", Util.getClassNameFromTagName(tagName));
 
-			settings["system"] = settings["system"] || {};
-			settings["system"]["appBaseUrl"] = "";
-			settings["system"]["componentPath"] = "";
-			settings["system"]["templatePath"] = "";
-			settings["settings"] = settings["settings"] || {};
-			settings["settings"]["path"] = url.path;
-			settings["settings"]["fileName"] = url.filenameWithoutExtension;
-
-			if (url.extension === "html")
-			{
-				settings["settings"]["autoMorph"] = ( settings["settings"]["autoMorph"] ? settings["settings"]["autoMorph"] : true );
-			}
-
-			loadOptions["query"] = url.query;
-		}
-
-		// Get a base class name
+		// Base class name (Used when morphing)
 		let baseClassName = Util.safeGet(settings, "settings.autoMorph", className );
 		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
 
-		// Get a path
+		// Path
 		let path = Util.safeGet(loadOptions, "path",
 			Util.concatPath([
 				Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
@@ -260,7 +235,7 @@ export default class ComponentOrganizer extends Organizer
 			])
 		);
 
-		// Load a class
+		// Load the class
 		let fileName = Util.safeGet(settings, "settings.fileName", tagName.toLowerCase());
 		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "settings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
 		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "settings.query"), "");
@@ -288,7 +263,7 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load a component and add to parent component.
+	 * Load the component and add to parent component.
 	 *
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		componentName		Component name.
@@ -300,9 +275,9 @@ export default class ComponentOrganizer extends Organizer
 	static _loadComponent(component, componentName, settings, loadOptions)
 	{
 
-		console.debug(`ComponentOrganizer._loadComponent(): Adding a component. name=${component.name}, componentName=${componentName}`);
+		console.debug(`ComponentOrganizer._loadComponent(): Adding the component. name=${component.name}, componentName=${componentName}`);
 
-		// Get a tag name
+		// Get the tag name
 		let tagName;
 		let tag = Util.safeGet(settings, "settings.tag");
 		if (tag)
@@ -318,11 +293,10 @@ export default class ComponentOrganizer extends Organizer
 		let addedComponent;
 
 		return Promise.resolve().then(() => {
-			// Load component
-			if (Util.safeGet(settings, "settings.autoLoad") || Util.safeGet(settings, "settings.autoMorph"))
+			// Load the class
+			if (ComponentOrganizer._hasExternalClass(tagName, settings))
 			{
-				let className = Util.safeGet(settings, "settings.className", componentName);
-				return ComponentOrganizer._loadClass(tagName, className, settings);
+				return ComponentOrganizer._loadExternalClass(tagName, settings);
 			}
 		}).then(() => {
 			// Insert tag
@@ -389,11 +363,19 @@ export default class ComponentOrganizer extends Organizer
 		{
 			settings["settings"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
 		}
+		if (element.hasAttribute("bm-htmlref"))
+		{
+			settings["settings"]["autoMorph"] = ( element.getAttribute("bm-htmlref") ? element.getAttribute("bm-htmlref") : true );
+		}
 
 		// Auto loading
 		if (element.hasAttribute("bm-autoload"))
 		{
 			settings["settings"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
+		}
+		if (element.hasAttribute("bm-classref"))
+		{
+			settings["settings"]["autoLoad"] = ( element.getAttribute("bm-classref") ? element.getAttribute("bm-classref") : true );
 		}
 
 		return settings;
@@ -405,7 +387,80 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load a class if not loaded yet.
+	 * Check if the component has the external class file.
+	 *
+	 * @param	{String}		tagName				Tag name.
+	 * @param	{Object}		settings			Component settings.
+	 *
+	 * @return  {Boolean}		True if the component has the external class file.
+	 */
+	static _hasExternalClass(tagName, settings)
+	{
+
+		let ret = false;
+
+		// Check if the tag is already defined
+		if (!customElements.get(tagName))
+		{
+			if ((Util.safeGet(settings, "settings.classRef"))
+				|| (Util.safeGet(settings, "settings.htmlRef"))
+				|| (Util.safeGet(settings, "settings.autoLoad"))
+				|| (Util.safeGet(settings, "settings.autoMorph")))
+			{
+				ret = true;
+			}
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the external class file.
+	 *
+	 * @param	{String}		tagName				Tag name.
+	 * @param	{Object}		settings			Component settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _loadExternalClass(tagName, settings)
+	{
+
+		let loadOptions;
+		let classRef = Util.safeGet(settings, "settings.autoLoad");
+
+		if (classRef && classRef !== true)
+		{
+			let url = Util.parseURL(classRef);
+			loadOptions = {
+				"path":			url.path,
+				"query":		url.query,
+			};
+
+			// Override settings
+			settings["system"] = settings["system"] || {};
+			settings["system"]["appBaseUrl"] = "";
+			settings["system"]["componentPath"] = "";
+			settings["system"]["templatePath"] = "";
+			settings["settings"] = settings["settings"] || {};
+			settings["settings"]["path"] = url.path;
+			settings["settings"]["fileName"] = url.filenameWithoutExtension;
+			if (url.extension === "html")
+			{
+				settings["settings"]["autoMorph"] = ( settings["settings"]["autoMorph"] ? settings["settings"]["autoMorph"] : true );
+			}
+		}
+
+		return ComponentOrganizer._loadClass(tagName, settings, loadOptions);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the class if not loaded yet.
 	 *
 	 * @param	{String}		className			Component class name.
 	 * @param	{String}		fileName			Component file name.
@@ -451,7 +506,7 @@ export default class ComponentOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Insert a tag and return the inserted component.
+	 * Insert the tag and return the inserted component.
 	 *
 	 * @param	{String}		tagName				Tagname.
 	 * @param	{Object}		settings			Component settings.
@@ -493,18 +548,18 @@ export default class ComponentOrganizer extends Organizer
 			// Get new instance
 			switch (position)
 			{
-				case "beforebegin":
-					addedComponent = root.previousSibling;
-					break;
-				case "afterbegin":
-					addedComponent = root.children[0];
-					break;
-				case "beforeend":
-					addedComponent = root.lastChild;
-					break;
-				case "afterend":
-					addedComponent = root.nextSibling;
-					break;
+			case "beforebegin":
+				addedComponent = root.previousSibling;
+				break;
+			case "afterbegin":
+				addedComponent = root.children[0];
+				break;
+			case "beforeend":
+				addedComponent = root.lastChild;
+				break;
+			case "afterend":
+				addedComponent = root.nextSibling;
+				break;
 			}
 		}
 
