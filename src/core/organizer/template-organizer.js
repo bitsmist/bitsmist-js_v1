@@ -39,7 +39,7 @@ export default class TemplateOrganizer extends Organizer
 
 		if (this.settings.get("templates.settings.hasTemplate", true))
 		{
-			let templateName = TemplateOrganizer._getTemplateName(this);
+			let templateName = TemplateOrganizer.__getTemplateName(this);
 
 			return Promise.resolve().then(() => {
 				if (TemplateOrganizer.__hasExternalTemplate(this, templateName))
@@ -128,26 +128,6 @@ export default class TemplateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get the template name.
-	 *
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return 	{String}		Template name.
-	 */
-	static _getTemplateName(component)
-	{
-
-		let templateName = component.settings.get("templates.settings.fileName",
-			component.settings.get("settings.fileName",
-				component.tagName.toLowerCase()));
-
-		return templateName;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Get the template html according to settings.
 	 *
 	 * @param	{Component}		component			Component.
@@ -160,7 +140,7 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		// Template Name
-		templateName = templateName || TemplateOrganizer._getTemplateName(component);
+		templateName = templateName || TemplateOrganizer.__getTemplateName(component);
 
 		let promise;
 		let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
@@ -299,6 +279,26 @@ export default class TemplateOrganizer extends Organizer
 		}
 
 		return component._templates[templateName];
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get the template name.
+	 *
+	 * @param	{Component}		component			Component.
+	 *
+	 * @return 	{String}		Template name.
+	 */
+	static __getTemplateName(component)
+	{
+
+		let templateName = component.settings.get("templates.settings.fileName",
+			component.settings.get("settings.fileName",
+				component.tagName.toLowerCase()));
+
+		return templateName;
 
 	}
 
