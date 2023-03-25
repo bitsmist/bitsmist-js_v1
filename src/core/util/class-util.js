@@ -36,7 +36,7 @@ export default class ClassUtil
 
 		// Define class
 		let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
-		let classDef = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "()" + funcDef)(superClass);
+		let classDef = Function("superClass", `return function ${ClassUtil.__validateClassName(className)}()${funcDef}`)(superClass);
 		ClassUtil.inherit(classDef, superClass);
 
 		// Class settings
@@ -113,7 +113,7 @@ export default class ClassUtil
 
 		try
 		{
-			ret = Function("return (" + ClassUtil.__validateClassName(className) + ")")();
+			ret = Function(`return (${ClassUtil.__validateClassName(className)})`)();
 		}
 		catch(e)
 		{

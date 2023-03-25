@@ -127,7 +127,7 @@ export default class SettingOrganizer extends Organizer
 
 		let type = Util.safeGet(loadOptions, "type", "js");
 		let query = Util.safeGet(loadOptions, "query");
-		let url = Util.concatPath([path, fileName + "." + type]) + (query ? "?" + query : "");
+		let url = Util.concatPath([path, `${fileName}.${type}`]) + (query ? `?${query}` : "");
 		let settings;
 
 		console.debug(`SettingOrganizer.loadFile(): Loading the settings file. fileName=${fileName}, path=${path}`);
@@ -157,7 +157,7 @@ export default class SettingOrganizer extends Organizer
 			case "js":
 			default:
 				let bindTo = Util.safeGet(loadOptions, "bindTo");
-				settings = Function('"use strict";return (' + xhr.responseText + ')').call(bindTo);
+				settings = Function(`"use strict";return (${xhr.responseText})`).call(bindTo);
 				break;
 			}
 

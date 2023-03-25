@@ -613,15 +613,15 @@ export default class StateOrganizer extends Organizer
 
 		for (let i = 0; i < waitlist.length; i++)
 		{
-			let id = (waitlist[i].id ? "id:" + waitlist[i].id + "," : "");
-			let name = (waitlist[i].name ? "name:" + waitlist[i].name + "," : "");
-			let object = (waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "");
-			let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "");
-			let state = (waitlist[i].state ? "state:" + waitlist[i].state: "");
-			result += "\n\t{" + id + name + object + node + state + "},";
+			let id = (waitlist[i].id ? `id:${waitlist[i].id},` : "");
+			let name = (waitlist[i].name ? `name:${waitlist[i].name},` : "");
+			let object = (waitlist[i].object ? `element:${waitlist[i].object.tagName},` : "");
+			let node = (waitlist[i].rootNode ? `node:${waitlist[i].rootNode},` : "");
+			let state = (waitlist[i].state ? `state:${waitlist[i].state}` : "");
+			result += `\n\t{${id}${name}${object}${node}${state}},`;
 		}
 
-		return "[" + result + "\n]";
+		return `[${result}\n]`;
 
 	}
 

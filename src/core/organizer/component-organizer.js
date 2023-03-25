@@ -137,8 +137,8 @@ export default class ComponentOrganizer extends Organizer
 		console.debug(`ComponentOrganizer.loadFile(): ComponentOrganizer.loadFile(): Loading component file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
-		let url1 = Util.concatPath([path, fileName + ".js"]) + (query ? "?" + query : "");
-		let url2 = Util.concatPath([path, fileName + ".settings.js"]) + (query ? "?" + query : "");
+		let url1 = Util.concatPath([path, `${fileName}.js`]) + (query ? `?${query}` : "");
+		let url2 = Util.concatPath([path, `${fileName}.settings.js`]) + (query ? `?${query}` : "");
 
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
@@ -480,7 +480,7 @@ export default class ComponentOrganizer extends Organizer
 		{
 			// Already loaded
 			console.debug(`ComponentOrganizer.__autoLoadClass(): Component Already exists. className=${className}`);
-			ComponentOrganizer.__classes.set(className + ".state", "loaded");
+			ComponentOrganizer.__classes.set(`${className}.state`, "loaded");
 			promise = Promise.resolve();
 		}
 		else if (ComponentOrganizer.__classes.get(className, {})["state"] === "loading")
@@ -492,11 +492,11 @@ export default class ComponentOrganizer extends Organizer
 		else
 		{
 			// Not loaded
-			ComponentOrganizer.__classes.set(className + ".state", "loading");
+			ComponentOrganizer.__classes.set(`${className}.state`, "loading");
 			promise = ComponentOrganizer.loadFile(fileName, path, loadOptions).then(() => {
 				ComponentOrganizer.__classes.set(className, {"state":"loaded", "promise":null});
 			});
-			ComponentOrganizer.__classes.set(className + ".promise", promise);
+			ComponentOrganizer.__classes.set(`${className}.promise`, promise);
 		}
 
 		return promise;
@@ -532,7 +532,7 @@ export default class ComponentOrganizer extends Organizer
 		Util.assert(root, `ComponentOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "settings.parentNode")}`, ReferenceError);
 
 		// Build tag
-		let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
+		let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : `<${tagName}></${tagName}>` );
 
 		// Insert tag
 		if (Util.safeGet(settings, "settings.replaceParent"))

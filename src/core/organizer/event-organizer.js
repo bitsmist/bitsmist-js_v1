@@ -181,7 +181,7 @@ export default class EventOrganizer extends Organizer
 		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
 		Util.assert(handler, `EventOrganizer._removeEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
 
-		let listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
+		let listeners = Util.safeGet(element, `__bm_eventinfo.listeners.${eventName}`);
 		if (listeners)
 		{
 			for (let i = listeners.length - 1; i >= 0; i--)
@@ -210,7 +210,7 @@ export default class EventOrganizer extends Organizer
 	{
 
 		rootNode = ( rootNode ? rootNode : component );
-		eventInfo = ( eventInfo ? eventInfo : component.settings.get("events." + elementName) );
+		eventInfo = ( eventInfo ? eventInfo : component.settings.get(`events.${elementName}`) );
 
 		// Get target elements
 		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
@@ -292,7 +292,7 @@ export default class EventOrganizer extends Organizer
 		element.dispatchEvent(e);
 
 		// return the promise if exists
-		return Util.safeGet(element, "__bm_eventinfo.promises." + eventName) || Promise.resolve();
+		return Util.safeGet(element, `__bm_eventinfo.promises.${eventName}`) || Promise.resolve();
 
 	}
 
@@ -386,7 +386,7 @@ export default class EventOrganizer extends Organizer
 		}
 		else
 		{
-			elements = Util.scopedSelectorAll(rootNode, "#" + elementName);
+			elements = Util.scopedSelectorAll(rootNode, `#${elementName}`);
 		}
 
 		return elements;
@@ -408,7 +408,7 @@ export default class EventOrganizer extends Organizer
 	{
 
 		let isInstalled = false;
-		let listeners = Util.safeGet(element.__bm_eventinfo, "listeners." + eventName);
+		let listeners = Util.safeGet(element.__bm_eventinfo, `listeners.${eventName}`);
 
 		if (listeners)
 		{
@@ -439,25 +439,27 @@ export default class EventOrganizer extends Organizer
 	static __callEventHandler(e)
 	{
 
-		let listeners = Util.safeGet(this, "__bm_eventinfo.listeners." + e.type);
+		let listeners = Util.safeGet(this, `__bm_eventinfo.listeners.${e.type}`);
 		let sender = Util.safeGet(e, "detail.sender", this);
 		let component = Util.safeGet(this, "__bm_eventinfo.component");
+		let templateStatuses = `__bm_eventinfo.statuses.${e.type}`;
+		let templatePromises = `__bm_eventinfo.promises.${e.type}`;
 
 		// Check if handler is already running
-		//Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
-		Util.warn(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
+		//Util.assert(Util.safeGet(this, templateStatuses) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
+		Util.warn(Util.safeGet(this, templateStatuses) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
 
-		Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
+		Util.safeSet(this, templateStatuses, "handling");
 
 		if (Util.safeGet(e, "detail.async", false) === false)
 		{
 			// Wait previous handler
 			this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(() => {
-				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				Util.safeSet(this, templatePromises, null);
+				Util.safeSet(this, templateStatuses, "");
 			}).catch((err) => {
-				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				Util.safeSet(this, templatePromises, null);
+				Util.safeSet(this, templateStatuses, "");
 				throw(err);
 			});
 		}
@@ -467,13 +469,13 @@ export default class EventOrganizer extends Organizer
 			try
 			{
 				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
-				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				Util.safeSet(this, templatePromises, null);
+				Util.safeSet(this, templateStatuses, "");
 			}
 			catch (err)
 			{
-				Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-				Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				Util.safeSet(this, templatePromises, null);
+				Util.safeSet(this, templateStatuses, "");
 				throw err;
 			}
 		}
