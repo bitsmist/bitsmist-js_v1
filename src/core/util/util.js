@@ -541,7 +541,7 @@ export default class Util
         let allElements = rootNode.querySelectorAll(newQuery);
 		let setAll = new Set(allElements);
 
-		if (options && !options["penetrate"])
+		if (!options || !options["penetrate"])
 		{
 			// Query to select descendant of other component
 			let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
