@@ -89,13 +89,10 @@ export default class ChainableStore extends Store
 	/**
      * Chain another store.
      *
-	 * @param	{Object}		component			Component to attach.
-	 * @param	{Object}		options				Plugin options.
+	 * @param	{Store}			store				Store to chain.
      */
 	chain(store)
 	{
-
-		Util.assert(store instanceof ChainableStore, `ChainableStore.chain(): "store" parameter must be a ChainableStore.`, TypeError);
 
 		this._chain = store;
 
