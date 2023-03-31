@@ -47,7 +47,7 @@ export default class TemplateOrganizer extends Organizer
 					return TemplateOrganizer.__loadExternalTemplate(this, templateName)
 				}
 			}).then(() => {
-				return this.applyTemplate(templateName);
+				return TemplateOrganizer._applyTemplate(this, templateName);
 			});
 		}
 
