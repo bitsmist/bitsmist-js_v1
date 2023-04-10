@@ -67,6 +67,9 @@ export default class OrganizerOrganizer extends Organizer
 			get() { return this._organizers; },
 		});
 
+		// Add methods to Component
+		BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); }
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -76,9 +79,6 @@ export default class OrganizerOrganizer extends Organizer
 
 		// Init component vars
 	//	component._organizers = {};
-
-		// Add methods to Component
-		BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); }
 
 	}
 
