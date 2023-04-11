@@ -215,12 +215,12 @@ Component.prototype.start = function(settings)
 			return this.transform();
 		}
 	}).then(() => {
+		return this.trigger("doStart");
+	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{
 			return this.refresh();
 		}
-	}).then(() => {
-		return this.trigger("doStart");
 	}).then(() => {
 		window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
 
