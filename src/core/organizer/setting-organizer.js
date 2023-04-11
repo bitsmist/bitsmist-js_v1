@@ -80,7 +80,7 @@ export default class SettingOrganizer extends Organizer
 
 		let settings = options["settings"] || {};
 
-		// Init vars
+		// Init component vars
 		component._settings = new ChainableStore({"items":settings});
 
 		// Add event handlers to component
