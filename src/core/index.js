@@ -67,3 +67,20 @@ OrganizerOrganizer.register(EventOrganizer);
 import ComponentOrganizer from "./organizer/component-organizer.js";
 window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
 OrganizerOrganizer.register(ComponentOrganizer);
+
+// Global promises
+
+BITSMIST.v1.promises = {};
+BITSMIST.v1.promises.documentReady = new Promise((resolve, reject) => {
+	if ((document.readyState === "interactive" || document.readyState === "complete"))
+	{
+		resolve();
+	}
+	else
+	{
+		document.addEventListener("DOMContentLoaded", () => {
+			resolve();
+		});
+	}
+});
+
