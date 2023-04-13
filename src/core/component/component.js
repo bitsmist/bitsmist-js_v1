@@ -205,6 +205,8 @@ Component.prototype.start = function(settings)
 	}).then((newSettings) => {
 		return OrganizerOrganizer.attach(this, SettingOrganizer, {"settings":newSettings});
 	}).then(() => {
+		this._initialize();
+
 		return this.trigger("beforeStart");
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
@@ -296,6 +298,7 @@ Component.prototype.transform = function(options)
 		}
 	}).then(() => {
 		return this.loadTags(this.rootElement);
+		//return this.organizers["ComponentOrganizer"]["methods"].loadTags(this.rootElement);
 	}).then(() => {
 		console.debug(`Component.transform(): Transformed. name=${this.name}, templateName=${templateName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 		return this.trigger("afterTransform", options);
@@ -500,6 +503,15 @@ Component.prototype._getSettings = function()
 
 	return {};
 
+}
+
+// -----------------------------------------------------------------------------
+
+/**
+ * Initialize component.
+ */
+Component.prototype._initialize = function()
+{
 }
 
 // -----------------------------------------------------------------------------
