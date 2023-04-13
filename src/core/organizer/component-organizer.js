@@ -45,7 +45,7 @@ export default class ComponentOrganizer extends Organizer
 		// Load molds
 		this._enumSettings(e.detail.settings["molds"], (sectionName, sectionValue) => {
 			chain = chain.then(() => {
-				if (!this.components[sectionName])
+				if (!this._components[sectionName])
 				{
 					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
 				}
@@ -55,7 +55,7 @@ export default class ComponentOrganizer extends Organizer
 		// Load components
 		this._enumSettings(e.detail.settings["components"], (sectionName, sectionValue) => {
 			chain = chain.then(() => {
-				if (!this.components[sectionName])
+				if (!this._components[sectionName])
 				{
 					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue);
 				}
