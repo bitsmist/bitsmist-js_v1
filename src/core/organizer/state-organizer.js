@@ -175,7 +175,7 @@ export default class StateOrganizer extends Organizer
 				waitInfo["reject"] = reject;
 				waitInfo["timer"] = setTimeout(() => {
 					let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
-					let uniqueId = ( component && component.uniqueId );
+					let uniqueId = (component && component.uniqueId) || "";
 					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}, uniqueId=${uniqueId}.`);
 				}, timeout);
 			});
