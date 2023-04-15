@@ -39,34 +39,34 @@ window.BITSMIST.v1.settings = new ChainableStore();
 import Component from "./component/component.js";
 window.BITSMIST.v1.Component = Component;
 
-// Organizer
+// Perk
 
-import Organizer from "./organizer/organizer.js";
-window.BITSMIST.v1.Organizer = Organizer;
+import Perk from "./perk/perk.js";
+window.BITSMIST.v1.Perk = Perk;
 
-import OrganizerOrganizer from "./organizer/organizer-organizer.js";
-window.BITSMIST.v1.OrganizerOrganizer = OrganizerOrganizer;
-OrganizerOrganizer.register(OrganizerOrganizer);
+import PerkPerk from "./perk/perk-perk.js";
+window.BITSMIST.v1.PerkPerk = PerkPerk;
+PerkPerk.register(PerkPerk);
 
-import SettingOrganizer from "./organizer/setting-organizer.js";
-window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
-OrganizerOrganizer.register(SettingOrganizer);
+import SettingPerk from "./perk/setting-perk.js";
+window.BITSMIST.v1.SettingPerk = SettingPerk;
+PerkPerk.register(SettingPerk);
 
-import StateOrganizer from "./organizer/state-organizer.js";
-window.BITSMIST.v1.StateOrganizer = StateOrganizer;
-OrganizerOrganizer.register(StateOrganizer);
+import StatePerk from "./perk/state-perk.js";
+window.BITSMIST.v1.StatePerk = StatePerk;
+PerkPerk.register(StatePerk);
 
-import TemplateOrganizer from "./organizer/template-organizer.js";
-window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
-OrganizerOrganizer.register(TemplateOrganizer);
+import SkinPerk from "./perk/skin-perk.js";
+window.BITSMIST.v1.SkinPerk = SkinPerk;
+PerkPerk.register(SkinPerk);
 
-import EventOrganizer from "./organizer/event-organizer.js";
-window.BITSMIST.v1.EventOrganizer = EventOrganizer;
-OrganizerOrganizer.register(EventOrganizer);
+import EventPerk from "./perk/event-perk.js";
+window.BITSMIST.v1.EventPerk = EventPerk;
+PerkPerk.register(EventPerk);
 
-import ComponentOrganizer from "./organizer/component-organizer.js";
-window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
-OrganizerOrganizer.register(ComponentOrganizer);
+import ComponentPerk from "./perk/component-perk.js";
+window.BITSMIST.v1.ComponentPerk = ComponentPerk;
+PerkPerk.register(ComponentPerk);
 
 // Global promises
 
