@@ -62,7 +62,7 @@ export default class PerkPerk extends Perk
 
 		//component._perks = component._perks || {};
 
-		if (!(component.inventory.get("perk.perks")[perk.name]))
+		if (!component.inventory.get(`perk.perks.${perk.name}`))
 		{
 			// Attach dependencies first
 			let deps = PerkPerk._perks[perk.name]["depends"];
@@ -71,9 +71,9 @@ export default class PerkPerk extends Perk
 				PerkPerk.attach(component, PerkPerk._perks[deps[i]].object, options);
 			}
 
-			component.inventory.get(`perk.perks`)[perk.name] = {
+			component.inventory.set(`perk.perks.${perk.name}`, {
 				"object":perk
-			};
+			});
 
 			return perk.init(component, options);
 		}
@@ -258,7 +258,7 @@ export default class PerkPerk extends Perk
 		{
 			Object.keys(perks).forEach((perkName) => {
 				Util.assert(PerkPerk._perks[perkName], `PerkPerk.__listNewPerk(): Perk not found. name=${component.name}, perkName=${perkName}`);
-				if (Util.safeGet(perks[perkName], "settings.attach") && !component.inventory.get("perk.perks")[perkName])
+				if (Util.safeGet(perks[perkName], "settings.attach") && !component.inventory.get(`perk.perks.${perkName}`))
 				{
 					targets[perkName] = PerkPerk._perks[perkName];
 				}
@@ -268,7 +268,7 @@ export default class PerkPerk extends Perk
 		// List new perks from settings keyword
 		Object.keys(settings).forEach((key) => {
 			let perkInfo = PerkPerk._sections[key];
-			if (perkInfo && !component.inventory.get("perk.perks")[perkInfo.name])
+			if (perkInfo && !component.inventory.get(`perk.perks.${perkInfo.name}`))
 			{
 				targets[perkInfo.name] = perkInfo
 			}

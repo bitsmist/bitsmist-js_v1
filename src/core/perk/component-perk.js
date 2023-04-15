@@ -111,10 +111,10 @@ export default class ComponentPerk extends Perk
 			}
 		}).then(() => {
 			// Insert tag
-			if (!component.inventory.get("component.components")[componentName])
+			if (!component.inventory.get(`component.components.${componentName}`))
 			{
 				addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
-				component.inventory.get("component.components")[componentName] = addedComponent;
+				component.inventory.set(`component.components.${componentName}`, addedComponent);
 			}
 		}).then(() => {
 			// Wait for the added component to be ready
@@ -123,7 +123,10 @@ export default class ComponentPerk extends Perk
 			{
 				let state = (sync === true ? "ready" : sync);
 
-				return component.skills.use("state.waitFor", [{"id":component.inventory.get("component.components")[componentName].uniqueId, "state":state}]);
+				return component.skills.use("state.waitFor", [{
+					"id":		component.inventory.get(`component.components.${componentName}`).uniqueId,
+					"state":	state
+				}]);
 			}
 		}).then(() => {
 			return addedComponent;
@@ -143,7 +146,7 @@ export default class ComponentPerk extends Perk
 		// Load molds
 		this.skills.use("setting.enumSettings", e.detail.settings["molds"], (sectionName, sectionValue) => {
 			chain = chain.then(() => {
-				if (!this.inventory.get("component.components")[sectionName])
+				if (!this.inventory.get(`component.components.${sectionName}`))
 				{
 					return ComponentPerk._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
 				}
@@ -153,7 +156,7 @@ export default class ComponentPerk extends Perk
 		// Load components
 		this.skills.use("setting.enumSettings", e.detail.settings["components"], (sectionName, sectionValue) => {
 			chain = chain.then(() => {
-				if (!this.inventory.get("component.components")[sectionName])
+				if (!this.inventory.get(`component.components.${sectionName}`))
 				{
 					return ComponentPerk._loadComponent(this, sectionName, sectionValue);
 				}

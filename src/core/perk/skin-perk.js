@@ -39,7 +39,7 @@ export default class SkinPerk extends Perk
 		skinName = skinName || SkinPerk.__getSkinName(component);
 
 		let promise;
-		let skinInfo = component.inventory.get("skin.skins")[skinName] || SkinPerk.__createSkinInfo(component, skinName);
+		let skinInfo = component.inventory.get(`skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(component, skinName);
 
 		switch (component.settings.get(`skins.${skinName}.type`)) {
 		case "html":
@@ -91,7 +91,7 @@ export default class SkinPerk extends Perk
 			return Promise.resolve();
 		}
 
-		let skinInfo = component.inventory.get("skin.skins")[skinName];
+		let skinInfo = component.inventory.get(`skin.skins.${skinName}`);
 
 		Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
 
@@ -128,7 +128,7 @@ export default class SkinPerk extends Perk
 	{
 
 		skinName = skinName || component.settings.get("settings.skinName");
-		let skinInfo = component.inventory.get("skin.skins")[skinName];
+		let skinInfo = component.inventory.get(`skin.skins.${skinName}`);
 
 		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
 
@@ -285,17 +285,17 @@ export default class SkinPerk extends Perk
 	static __createSkinInfo(component, skinName)
 	{
 
-		if (!component.inventory.get("skin.skins")[skinName])
+		if (!component.inventory.get(`skin.skins.${skinName}`))
 		{
 
 			let skinInfo = {};
 			skinInfo["name"] = skinName;
 			skinInfo["html"] = "";
 			skinInfo["isLoaded"] = false;
-			component.inventory.get("skin.skins")[skinName] = skinInfo;
+			component.inventory.set(`skin.skins.${skinName}`, skinInfo);
 		}
 
-		return component.inventory.get("skin.skins")[skinName];
+		return component.inventory.get(`skin.skins.${skinName}`);
 
 	}
 
@@ -337,7 +337,7 @@ export default class SkinPerk extends Perk
 		{
 			ret = true;
 		}
-		else if (!component.inventory.get("skin.skins")[skinName] || !component.inventory.get("skin.skins")[skinName]["isLoaded"])
+		else if (!component.inventory.get(`skin.skins.${skinName}`) || !component.inventory.get(`skin.skins.${skinName}.isLoaded`))
 		{
 			ret = true;
 		}
