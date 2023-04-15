@@ -187,7 +187,7 @@ export default class ChainableStore extends Store
 
 		if (result === false && this._chain)
 		{
-			result = Util.safeHas(this._chain._items, key);
+			result = this._chain.has(key);
 		}
 
 		return result;
