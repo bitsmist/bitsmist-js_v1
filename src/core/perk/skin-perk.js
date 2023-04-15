@@ -9,15 +9,170 @@
 // =============================================================================
 
 import AjaxUtil from "../util/ajax-util";
-import Organizer from "./organizer";
+import Perk from "./perk";
 import Util from "../util/util";
 
 // =============================================================================
-//	Template organizer class
+//	Skin Perk Class
 // =============================================================================
 
-export default class TemplateOrganizer extends Organizer
+export default class SkinPerk extends Perk
 {
+
+	// -------------------------------------------------------------------------
+	//  Skills
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get the skin html according to settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		skinName			Skin name. Use "" to use default name.
+	 * @param	{Object}		loadOptions			Load options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static _loadSkin(component, skinName, loadOptions)
+	{
+
+		// Skin Name
+		skinName = skinName || SkinPerk.__getSkinName(component);
+
+		let promise;
+		let skinInfo = component.inventory.get("skin.skins")[skinName] || SkinPerk.__createSkinInfo(component, skinName);
+
+		switch (component.settings.get(`skins.${skinName}.type`)) {
+		case "html":
+			skinInfo["html"] = component.settings.get(`skins.${skinName}.html`);
+			promise = Promise.resolve();
+			break;
+		case "node":
+			let rootNode = component.settings.get(`skins.${skinName}.rootNode`);
+			skinInfo["html"] = component.querySelector(rootNode).innerHTML;
+			promise = Promise.resolve();
+			break;
+		case "url":
+		default:
+			// Path
+			let path = Util.safeGet(loadOptions, "path",
+				Util.concatPath([
+					component.settings.get("system.appBaseUrl", ""),
+					component.settings.get("system.skinPath", component.settings.get("system.componentPath", "")),
+					component.settings.get("settings.path", ""),
+				])
+			);
+
+			promise = SkinPerk.loadFile(skinInfo["name"], path, loadOptions).then((skin) => {
+				skinInfo["html"] = skin;
+			});
+			break;
+		}
+
+		return promise.then(() => {
+			skinInfo["isLoaded"] = true;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Apply skin.
+	 *
+	 * @param	{Component}		component			Parent component.
+	 * @param	{String}		skinName			Skin name.
+	 */
+	static _applySkin(component, skinName)
+	{
+
+		if (component._activeSkinName === skinName)
+		{
+			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`);
+			return Promise.resolve();
+		}
+
+		let skinInfo = component.inventory.get("skin.skins")[skinName];
+
+		Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
+
+		if (skinInfo["node"])
+		{
+			// Template node
+			let clone = SkinPerk.clone(component, skinInfo["name"]);
+			component.insertBefore(clone, component.firstChild);
+		}
+		else
+		{
+			// HTML
+			component.innerHTML = skinInfo["html"];
+		}
+
+		// Change active skin
+		component._activeSkinName = skinName;
+
+		console.debug(`SkinPerk._applySkin(): Applied skin. name=${component.name}, skinName=${skinInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clone the component.
+	 *
+	 * @param	{Component}		component			Parent component.
+	 * @param	{String}		skinName			Skin name.
+	 *
+	 * @return  {Object}		Cloned component.
+	 */
+	static _clone(component, skinName)
+	{
+
+		skinName = skinName || component.settings.get("settings.skinName");
+		let skinInfo = component.inventory.get("skin.skins")[skinName];
+
+		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
+
+		let clone;
+		if (skinInfo["node"])
+		{
+			// A template tag
+			clone = document.importNode(skinInfo["node"], true);
+		}
+		else
+		{
+			// Not a template tag
+			let ele = document.createElement("div");
+			ele.innerHTML = skinInfo["html"];
+
+			clone = ele.firstElementChild;
+		}
+
+		return clone;
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static SkinPerk_onDoTransform(sender, e, ex)
+	{
+
+		if (this.settings.get("skins.settings.hasSkin", true))
+		{
+			let skinName = SkinPerk.__getSkinName(this);
+
+			return Promise.resolve().then(() => {
+				if (SkinPerk.__hasExternalSkin(this, skinName))
+				{
+					return SkinPerk.__loadExternalSkin(this, skinName)
+				}
+			}).then(() => {
+				return SkinPerk._applySkin(this, skinName);
+			});
+		}
+
+	}
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
@@ -26,30 +181,19 @@ export default class TemplateOrganizer extends Organizer
 	static get name()
 	{
 
-		return "TemplateOrganizer";
+		return "SkinPerk";
 
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
 
-	static TemplateOrganizer_onDoTransform(sender, e, ex)
+	static get info()
 	{
 
-		if (this.settings.get("templates.settings.hasTemplate", true))
-		{
-			let templateName = TemplateOrganizer.__getTemplateName(this);
-
-			return Promise.resolve().then(() => {
-				if (TemplateOrganizer.__hasExternalTemplate(this, templateName))
-				{
-					return TemplateOrganizer.__loadExternalTemplate(this, templateName)
-				}
-			}).then(() => {
-				return TemplateOrganizer._applyTemplate(this, templateName);
-			});
-		}
+		return {
+			"sections":		"skins",
+			"order":		200,
+		};
 
 	}
 
@@ -61,7 +205,7 @@ export default class TemplateOrganizer extends Organizer
 	{
 
 		return {
-			"sections":		"templates",
+			"sections":		"skins",
 			"order":		200,
 		};
 
@@ -72,14 +216,10 @@ export default class TemplateOrganizer extends Organizer
 	static globalInit()
 	{
 
-		// Add properties to Component
-		Object.defineProperty(BITSMIST.v1.Component.prototype, 'templates', { get() { return this._templates; }, });
-		Object.defineProperty(BITSMIST.v1.Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
-
-		// Add methods to Component
-		BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return TemplateOrganizer._loadTemplate(this, ...args); }
-		BITSMIST.v1.Component.prototype.applyTemplate = function(...args) { return TemplateOrganizer._applyTemplate(this, ...args); }
-		BITSMIST.v1.Component.prototype.cloneTemplate = function(...args) { return TemplateOrganizer._clone(this, ...args); }
+		// Add skills to Component
+		BITSMIST.v1.Component.skills.set("skin.loadSkin", function(...args) { return SkinPerk._loadSkin(...args); });
+		BITSMIST.v1.Component.skills.set("skin.applySkin", function(...args) { return SkinPerk._applySkin(...args); });
+		BITSMIST.v1.Component.skills.set("skin.cloneSkin", function(...args) { return SkinPerk._cloneSkin(...args); });
 
 	}
 
@@ -88,19 +228,26 @@ export default class TemplateOrganizer extends Organizer
 	static init(component, options)
 	{
 
-		// Init component vars
-		component._templates = {};
-		component._activeTemplateName = "";
+		/*
+		// Add skills to Component
+		component.skills.set("skin.loadSkin", function(...args) { return SkinPerk._loadSkin(...args); });
+		component.skills.set("skin.applySkin", function(...args) { return SkinPerk._applySkin(...args); });
+		component.skills.set("skin.cloneSkin", function(...args) { return SkinPerk._cloneSkin(...args); });
+		*/
+
+		// Add inventory items to Component
+		component.inventory.set("skin.skins", {});
+		component.inventory.set("skin.activeSkinName", "");
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "doTransform", TemplateOrganizer.TemplateOrganizer_onDoTransform);
+		this._addPerkHandler(component, "doTransform", SkinPerk.SkinPerk_onDoTransform);
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the template html.
+	 * Load the skin html.
 	 *
 	 * @param	{String}		fileName			File name.
 	 * @param	{String}		path				Path to the file.
@@ -111,147 +258,15 @@ export default class TemplateOrganizer extends Organizer
 	static loadFile(fileName, path, loadOptions)
 	{
 
-		console.debug(`TemplateOrganizer.loadFile(): Loading the template file. fileName=${fileName}, path=${path}`);
+		//console.debug(`SkinPerk.loadFile(): Loading the skin file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
 		let url = `${Util.concatPath([path, fileName])}.html` + (query ? `?${query}` : "");
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`TemplateOrganizer.loadFile(): Loaded the template. fileName=${fileName}, path=${path}`);
+			console.debug(`SkinPerk.loadFile(): Loaded the skin. fileName=${fileName}, path=${path}`);
 
 			return xhr.responseText;
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get the template html according to settings.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		templateName		Template name. Use "" to use default name.
-	 * @param	{Object}		loadOptions			Load options.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static _loadTemplate(component, templateName, loadOptions)
-	{
-
-		// Template Name
-		templateName = templateName || TemplateOrganizer.__getTemplateName(component);
-
-		let promise;
-		let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
-
-		switch (component.settings.get(`templates.${templateName}.type`)) {
-		case "html":
-			templateInfo["html"] = component.settings.get(`templates.${templateName}.html`);
-			promise = Promise.resolve();
-			break;
-		case "node":
-			let rootNode = component.settings.get(`templates.${templateName}.rootNode`);
-			templateInfo["html"] = component.querySelector(rootNode).innerHTML;
-			promise = Promise.resolve();
-			break;
-		case "url":
-		default:
-			// Path
-			let path = Util.safeGet(loadOptions, "path",
-				Util.concatPath([
-					component.settings.get("system.appBaseUrl", ""),
-					component.settings.get("system.templatePath", component.settings.get("system.componentPath", "")),
-					component.settings.get("settings.path", ""),
-				])
-			);
-
-			promise = TemplateOrganizer.loadFile(templateInfo["name"], path, loadOptions).then((template) => {
-				templateInfo["html"] = template;
-			});
-			break;
-		}
-
-		return promise.then(() => {
-			templateInfo["isLoaded"] = true;
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Apply template.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		templateName		Template name.
-	 */
-	static _applyTemplate(component, templateName)
-	{
-
-		if (component._activeTemplateName === templateName)
-		{
-			console.debug(`TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`);
-			return Promise.resolve();
-		}
-
-		let templateInfo = component._templates[templateName];
-
-		Util.assert(templateInfo,`TemplateOrganizer._applyTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
-
-		if (templateInfo["node"])
-		{
-			// Template node
-			let clone = TemplateOrganizer.clone(component, templateInfo["name"]);
-			component.insertBefore(clone, component.firstChild);
-		}
-		else
-		{
-			// HTML
-			component.innerHTML = templateInfo["html"];
-		}
-
-		// Change active template
-		component._activeTemplateName = templateName;
-
-		console.debug(`TemplateOrganizer._applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Clone the component.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		templateName		Template name.
-	 *
-	 * @return  {Object}		Cloned component.
-	 */
-	static _clone(component, templateName)
-	{
-
-		templateName = templateName || component.settings.get("settings.templateName");
-		let templateInfo = component._templates[templateName];
-
-		Util.assert(templateInfo,`TemplateOrganizer._clone(): Template not loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
-
-		let clone;
-		if (templateInfo["node"])
-		{
-			// A template tag
-			clone = document.importNode(templateInfo["node"], true);
-		}
-		else
-		{
-			// Not a template tag
-			let ele = document.createElement("div");
-			ele.innerHTML = templateInfo["html"];
-
-			clone = ele.firstElementChild;
-		}
-
-		return clone;
 
 	}
 
@@ -260,67 +275,69 @@ export default class TemplateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Returns a new template info object.
+	 * Returns a new skin info object.
 	 *
 	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		templateName		Template name.
+	 * @param	{String}		skinName			Skin name.
 	 *
-	 * @return  {Object}		Template info.
+	 * @return  {Object}		Skin info.
 	 */
-	static __createTemplateInfo(component, templateName)
+	static __createSkinInfo(component, skinName)
 	{
 
-		if (!component._templates[templateName])
+		if (!component.inventory.get("skin.skins")[skinName])
 		{
-			component._templates[templateName] = {};
-			component._templates[templateName]["name"] = templateName;
-			component._templates[templateName]["html"] = "";
-			component._templates[templateName]["isLoaded"] = false;
+
+			let skinInfo = {};
+			skinInfo["name"] = skinName;
+			skinInfo["html"] = "";
+			skinInfo["isLoaded"] = false;
+			component.inventory.get("skin.skins")[skinName] = skinInfo;
 		}
 
-		return component._templates[templateName];
+		return component.inventory.get("skin.skins")[skinName];
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get the template name.
+	 * Get the skin name.
 	 *
 	 * @param	{Component}		component			Component.
 	 *
-	 * @return 	{String}		Template name.
+	 * @return 	{String}		Skin name.
 	 */
-	static __getTemplateName(component)
+	static __getSkinName(component)
 	{
 
-		let templateName = component.settings.get("templates.settings.fileName",
+		let skinName = component.settings.get("skins.settings.fileName",
 			component.settings.get("settings.fileName",
 				component.tagName.toLowerCase()));
 
-		return templateName;
+		return skinName;
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component has the external template file.
+	 * Check if the component has the external skin file.
 	 *
 	 * @param	{Component}		component			Component.
 	 *
 	 * @return  {Boolean}		True if the component has the external messages file.
 	 */
-	static __hasExternalTemplate(component, templateName)
+	static __hasExternalSkin(component, skinName)
 	{
 
 		let ret = false;
 
-		if (component.hasAttribute("bm-templateref") || component.settings.get("templates.settings.templateRef"))
+		if (component.hasAttribute("bm-skinref") || component.settings.get("skins.settings.skinRef"))
 		{
 			ret = true;
 		}
-		else if (!component._templates[templateName] || !component._templates[templateName]["isLoaded"])
+		else if (!component.inventory.get("skin.skins")[skinName] || !component.inventory.get("skin.skins")[skinName]["isLoaded"])
 		{
 			ret = true;
 		}
@@ -332,25 +349,25 @@ export default class TemplateOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the external template file.
+	 * Load the external skin file.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		Name				Setting name.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __loadExternalTemplate(component, fileName)
+	static __loadExternalSkin(component, fileName)
 	{
 
 		let loadOptions;
-		let templateRef = ( component.hasAttribute("bm-templateref") ?
-			component.getAttribute("bm-templateref") || true :
-			component.settings.get("templates.settings.templateRef")
+		let skinRef = ( component.hasAttribute("bm-skinref") ?
+			component.getAttribute("bm-skinref") || true :
+			component.settings.get("skins.settings.skinRef")
 		);
 
-		if (templateRef && templateRef !== true)
+		if (skinRef && skinRef !== true)
 		{
-			let url = Util.parseURL(templateRef);
+			let url = Util.parseURL(skinRef);
 			fileName = url.filenameWithoutExtension;
 			loadOptions = {
 				"path":			url.path,
@@ -358,7 +375,7 @@ export default class TemplateOrganizer extends Organizer
 			};
 		}
 
-		return TemplateOrganizer._loadTemplate(component, fileName, loadOptions);
+		return SkinPerk._loadSkin(component, fileName, loadOptions);
 
 	}
 

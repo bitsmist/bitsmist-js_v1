@@ -8,111 +8,18 @@
  */
 // =============================================================================
 
-import Organizer from "./organizer.js";
+import Perk from "./perk.js";
 import Util from "../util/util.js";
 
 // =============================================================================
-//	Event organizer class
+//	Event Perk class
 // =============================================================================
 
-export default class EventOrganizer extends Organizer
+export default class EventPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get name()
-	{
-
-		return "EventOrganizer";
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static EventOrganizer_onDoOrganize(sender, e, ex)
-	{
-
-		this._enumSettings(e.detail.settings["events"], (sectionName, sectionValue) => {
-			EventOrganizer._initEvents(this, sectionName, sectionValue);
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static EventOrganizer_onAfterTransform(sender, e, ex)
-	{
-
-		this._enumSettings(this.settings.get("events"), (sectionName, sectionValue) => {
-			// Initialize only elements inside component
-			if (!EventOrganizer.__isTargetSelf(sectionName, sectionValue))
-			{
-				EventOrganizer._initEvents(this, sectionName, sectionValue);
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static getInfo()
-	{
-
-		return {
-			"sections":		"events",
-			"order":		210,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static globalInit()
-	{
-
-		// Add methods to Component
-		BITSMIST.v1.Component.prototype.initEvents = function(...args) { EventOrganizer._initEvents(this, ...args) }
-		BITSMIST.v1.Component.prototype.addEventHandler = function(...args) { EventOrganizer._addEventHandler(this, ...args); }
-		BITSMIST.v1.Component.prototype.trigger = function(...args) { return EventOrganizer._trigger(this, ...args) }
-		BITSMIST.v1.Component.prototype.triggerAsync = function(...args) { return EventOrganizer._triggerAsync(this, ...args) }
-		BITSMIST.v1.Component.prototype.removeEventHandler = function(...args) { return EventOrganizer._removeEventHandler(this, ...args) }
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Add event handlers to component
-		this._addOrganizerHandler(component, "doOrganize", EventOrganizer.EventOrganizer_onDoOrganize);
-		this._addOrganizerHandler(component, "afterTransform", EventOrganizer.EventOrganizer_onAfterTransform);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static deinit(component, options)
-	{
-
-		let events = this.settings.get("events");
-		if (events)
-		{
-			Object.keys(events).forEach((elementName) => {
-				EventOrganizer._removeEvents(component, elementName, events[eventName]);
-			});
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Protected
+	//  Skills
 	// -------------------------------------------------------------------------
 
 	/**
@@ -131,8 +38,8 @@ export default class EventOrganizer extends Organizer
 		let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 		// Get handler
-		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-		Util.assert(handler, `EventOrganizer._addEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
+		let handler = EventPerk._getEventHandler(component, handlerInfo);
+		Util.assert(handler, `EventPerk._addEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
 
 		// Init holder object for the element
 		if (!element.__bm_eventinfo)
@@ -145,7 +52,7 @@ export default class EventOrganizer extends Organizer
 		if (!listeners[eventName])
 		{
 			listeners[eventName] = [];
-			element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerOptions["listnerOptions"]);
+			element.addEventListener(eventName, EventPerk.__callEventHandler, handlerOptions["listnerOptions"]);
 		}
 
 		let order = Util.safeGet(handlerOptions, "order", 1000);
@@ -178,8 +85,8 @@ export default class EventOrganizer extends Organizer
 		element = element || component;
 
 		// Get handler
-		let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-		Util.assert(handler, `EventOrganizer._removeEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
+		let handler = EventPerk._getEventHandler(component, handlerInfo);
+		Util.assert(handler, `EventPerk._removeEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
 
 		let listeners = Util.safeGet(element, `__bm_eventinfo.listeners.${eventName}`);
 		if (listeners)
@@ -213,8 +120,8 @@ export default class EventOrganizer extends Organizer
 		eventInfo = ( eventInfo ? eventInfo : component.settings.get(`events.${elementName}`) );
 
 		// Get target elements
-		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
-		//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
+		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
+		//Util.assert(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
 
 		// Set event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -223,7 +130,7 @@ export default class EventOrganizer extends Organizer
 			{
 				for (let j = 0; j < elements.length; j++)
 				{
-					component.addEventHandler(eventName, handlers[i], elements[j]);
+					EventPerk._addEventHandler(component, eventName, handlers[i], elements[j]);
 				}
 			}
 		});
@@ -246,7 +153,7 @@ export default class EventOrganizer extends Organizer
 		rootNode = ( rootNode ? rootNode : component );
 
 		// Get target elements
-		let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
+		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
 
 		// Remove event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -312,11 +219,119 @@ export default class EventOrganizer extends Organizer
 		options = options || {};
 		options["async"] = true;
 
-		return EventOrganizer._trigger.call(component, component, eventName, options, element);
+		return EventPerk._trigger.call(component, component, eventName, options, element);
 
 	}
 
-	// -----------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static EventPerk_onDoOrganize(sender, e, ex)
+	{
+
+		this.skills.use("setting.enumSettings", e.detail.settings["events"], (sectionName, sectionValue) => {
+			EventPerk._initEvents(this, sectionName, sectionValue);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static EventPerk_onAfterTransform(sender, e, ex)
+	{
+
+		this.skills.use("setting.enumSettings", this.settings.get("events"), (sectionName, sectionValue) => {
+			// Initialize only elements inside component
+			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
+			{
+				EventPerk._initEvents(this, sectionName, sectionValue);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	static get name()
+	{
+
+		return "EventPerk";
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"sections":		"events",
+			"order":		210,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static getInfo()
+	{
+
+		return {
+			"sections":		"events",
+			"order":		210,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		// Add skills to Component
+		BITSMIST.v1.Component._skills.set("event.addEventHandler", function(...args) { return EventPerk._addEventHandler(...args); });
+		BITSMIST.v1.Component._skills.set("event.removeEventHandler", function(...args) { return EventPerk._removeEventHandler(...args); });
+		BITSMIST.v1.Component._skills.set("event.initEvents", function(...args) { return EventPerk._initEvents(...args); });
+		BITSMIST.v1.Component._skills.set("event.removeEvents", function(...args) { return EventPerk._removeEvents(...args); });
+		BITSMIST.v1.Component._skills.set("event.trigger", function(...args) { return EventPerk._trigger(...args); });
+		BITSMIST.v1.Component._skills.set("event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Add event handlers to component
+		this._addPerkHandler(component, "doOrganize", EventPerk.EventPerk_onDoOrganize);
+		this._addPerkHandler(component, "afterTransform", EventPerk.EventPerk_onAfterTransform);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static deinit(component, options)
+	{
+
+		let events = this.settings.get("events");
+		if (events)
+		{
+			Object.keys(events).forEach((elementName) => {
+				EventPerk._removeEvents(component, elementName, events[eventName]);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Get the event handler from the handler info object.
@@ -376,7 +391,7 @@ export default class EventOrganizer extends Organizer
 
 		let elements;
 
-		if (EventOrganizer.__isTargetSelf(elementName, eventInfo))
+		if (EventPerk.__isTargetSelf(elementName, eventInfo))
 		{
 			elements = [rootNode];
 		}
@@ -446,15 +461,15 @@ export default class EventOrganizer extends Organizer
 		let templatePromises = `__bm_eventinfo.promises.${e.type}`;
 
 		// Check if handler is already running
-		//Util.assert(Util.safeGet(this, templateStatuses) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
-		Util.warn(Util.safeGet(this, templateStatuses) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
+		//Util.assert(Util.safeGet(this, templateStatuses) !== "handling", `EventPerk.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
+		Util.warn(Util.safeGet(this, templateStatuses) !== "handling", `EventPerk.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
 
 		Util.safeSet(this, templateStatuses, "handling");
 
 		if (Util.safeGet(e, "detail.async", false) === false)
 		{
 			// Wait previous handler
-			this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(() => {
+			this.__bm_eventinfo["promises"][e.type] = EventPerk.__handle(e, sender, component, listeners).then(() => {
 				Util.safeSet(this, templatePromises, null);
 				Util.safeSet(this, templateStatuses, "");
 			}).catch((err) => {
@@ -468,7 +483,7 @@ export default class EventOrganizer extends Organizer
 			// Does not wait previous handler
 			try
 			{
-				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
+				this.__bm_eventinfo["promises"][e.type] = EventPerk.__handleAsync(e, sender, component, listeners);
 				Util.safeSet(this, templatePromises, null);
 				Util.safeSet(this, templateStatuses, "");
 			}
@@ -510,7 +525,7 @@ export default class EventOrganizer extends Organizer
 				// Get the handler
 				let handler = listeners[i]["handler"];
 				handler = ( typeof handler === "string" ? component[handler] : handler );
-				Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
+				Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
 
 				// Execute the handler
 				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
@@ -555,7 +570,7 @@ export default class EventOrganizer extends Organizer
 			// Get the handler
 			let handler = listeners[i]["handler"];
 			handler = ( typeof handler === "string" ? component[handler] : handler );
-			Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
+			Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
 
 			// Execute handler
 			let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );

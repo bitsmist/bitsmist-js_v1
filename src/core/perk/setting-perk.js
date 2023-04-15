@@ -10,15 +10,92 @@
 
 import AjaxUtil from "../util/ajax-util.js";
 import ChainableStore from "../store/chainable-store.js";
-import Organizer from "./organizer.js";
+import Perk from "./perk.js";
 import Util from "../util/util.js";
 
 // =============================================================================
-//	Setting organizer class
+//	Setting Perk Class
 // =============================================================================
 
-export default class SettingOrganizer extends Organizer
+export default class SettingPerk extends Perk
 {
+
+	// -------------------------------------------------------------------------
+	//  Skills
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the settings file and merge to component's settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		fileName			File name. Use "" to use default name.
+	 * @param	{Object}		loadOptions			Load options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static _loadSettings(component, fileName, loadOptions)
+	{
+
+		// Filename
+		fileName = fileName ||
+			component.settings.get("settings.fileName",
+				component.tagName.toLowerCase()) + ".settings";
+
+		// Path
+		let path = Util.safeGet(loadOptions, "path",
+			Util.concatPath([
+				component.settings.get("system.appBaseUrl"),
+				component.settings.get("system.componentPath"),
+				component.settings.get("settings.path", ""),
+			])
+		);
+
+		return SettingPerk.loadFile(fileName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions)).then((extraSettings) => {
+			if (extraSettings)
+			{
+				component.settings.merge(extraSettings);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Enumerate enumerable settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Settings}		setting				Settings.
+	 * @param	{Function}		callback			Callback function.
+	 */
+	static _enumSettings(component, settings, callback)
+	{
+
+		Util.assert(typeof(callback) === "function", "call back is not a function");
+
+		if (settings)
+		{
+			Object.keys(settings).forEach((key) => {
+				if (key !== "settings")
+				{
+					callback(key, settings[key]);
+				}
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static SettingPerk_onDoOrganize(sender, e, ex)
+	{
+
+		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
+		this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
+
+	}
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
@@ -27,19 +104,19 @@ export default class SettingOrganizer extends Organizer
 	static get name()
 	{
 
-		return "SettingOrganizer";
+		return "SettingPerk";
 
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
 
-	static SettingOrganizer_onDoOrganize(sender, e, ex)
+	static get info()
 	{
 
-		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
-		this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
+		return {
+			"sections":		"settings",
+			"order":		10,
+		};
 
 	}
 
@@ -67,9 +144,9 @@ export default class SettingOrganizer extends Organizer
 			get() { return this._settings; },
 		});
 
-		// Add methods to Component
-		BITSMIST.v1.Component.prototype.loadSettings = function(...args) { return SettingOrganizer._loadSettings(this, ...args); }
-		BITSMIST.v1.Component.prototype._enumSettings = function(...args) { return SettingOrganizer._enumSettings(...args); }
+		// Add skills to Component
+		BITSMIST.v1.Component.skills.set("setting.loadSettings", function(...args) { return SettingPerk._loadSettings(...args); });
+		BITSMIST.v1.Component.skills.set("setting.enumSettings", function(...args) { return SettingPerk._enumSettings(...args); });
 
 	}
 
@@ -84,7 +161,7 @@ export default class SettingOrganizer extends Organizer
 		component._settings = new ChainableStore({"items":settings});
 
 		// Add event handlers to component
-		this._addOrganizerHandler(component, "doOrganize", SettingOrganizer.SettingOrganizer_onDoOrganize);
+		this._addPerkHandler(component, "doOrganize", SettingPerk.SettingPerk_onDoOrganize);
 
 		// Chain global settings
 		if (component._settings.get("settings.useGlobalSettings"))
@@ -94,19 +171,19 @@ export default class SettingOrganizer extends Organizer
 
 		return Promise.resolve().then(() => {
 			// Load settings from an external file.
-			if (SettingOrganizer.__hasExternalSettings(component, "setting"))
+			if (SettingPerk.__hasExternalSettings(component, "setting"))
 			{
-				return SettingOrganizer.__loadExternalSettings(component, "setting");
+				return SettingPerk.__loadExternalSettings(component, "setting");
 			}
 		}).then(() => {
 			// Load settings from attributes
-			SettingOrganizer._loadAttrSettings(component);
+			SettingPerk._loadAttrSettings(component);
 		}).then(() => {
-			return component.attachOrganizers({"settings":component._settings.items});
+			return component.skills.use("perk.attachPerks", {"settings":component._settings.items});
 		}).then(() => {
-			return component.trigger("doOrganize", {"settings":component._settings.items});
+			return component.skills.use("event.trigger", "doOrganize", {"settings":component._settings.items});
 		}).then(() => {
-			return component.trigger("afterLoadSettings", {"settings":component._settings.items});
+			return component.skills.use("event.trigger", "afterLoadSettings", {"settings":component._settings.items});
 		});
 
 	}
@@ -130,10 +207,10 @@ export default class SettingOrganizer extends Organizer
 		let url = Util.concatPath([path, `${fileName}.${type}`]) + (query ? `?${query}` : "");
 		let settings;
 
-		console.debug(`SettingOrganizer.loadFile(): Loading the settings file. fileName=${fileName}, path=${path}`);
+		console.debug(`SettingPerk.loadFile(): Loading the settings file. fileName=${fileName}, path=${path}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SettingOrganizer.loadFile(): Loaded settings. url=${url}`);
+			console.debug(`SettingPerk.loadFile(): Loaded settings. url=${url}`);
 
 			switch (type)
 			{
@@ -171,43 +248,6 @@ export default class SettingOrganizer extends Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the settings file and merge to component's settings.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		fileName			File name. Use "" to use default name.
-	 * @param	{Object}		loadOptions			Load options.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static _loadSettings(component, fileName, loadOptions)
-	{
-
-		// Filename
-		fileName = fileName ||
-			component.settings.get("settings.fileName",
-				component.tagName.toLowerCase()) + ".settings";
-
-		// Path
-		let path = Util.safeGet(loadOptions, "path",
-			Util.concatPath([
-				component.settings.get("system.appBaseUrl"),
-				component.settings.get("system.componentPath"),
-				component.settings.get("settings.path", ""),
-			])
-		);
-
-		return SettingOrganizer.loadFile(fileName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions)).then((extraSettings) => {
-			if (extraSettings)
-			{
-				component.settings.merge(extraSettings);
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Get settings from element's attribute.
 	 *
 	 * @param	{Component}		component			Component.
@@ -226,31 +266,6 @@ export default class SettingOrganizer extends Organizer
 		{
 			let settings = {"settings": JSON.parse(dataSettings)};
 			component._settings.merge(settings);
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Enumerate enumerable settings.
-	 *
-	 * @param	{Settings}		setting				Settings.
-	 * @param	{Function}		callback			Callback function.
-	 */
-	static _enumSettings(settings, callback)
-	{
-
-		Util.assert(typeof(callback) === "function", "not function");
-
-		if (settings)
-		{
-			Object.keys(settings).forEach((key) => {
-				if (key !== "settings")
-				{
-					callback(key, settings[key]);
-				}
-			});
 		}
 
 	}
@@ -311,7 +326,7 @@ export default class SettingOrganizer extends Organizer
 			};
 		}
 
-		return SettingOrganizer._loadSettings(component, fileName, loadOptions);
+		return SettingPerk._loadSettings(component, fileName, loadOptions);
 
 	}
 

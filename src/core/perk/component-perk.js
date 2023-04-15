@@ -10,17 +10,159 @@
 
 import AjaxUtil from "../util/ajax-util.js";
 import ClassUtil from "../util/class-util.js";
-import Organizer from "./organizer.js";
-import StateOrganizer from "./state-organizer.js";
+import Perk from "./perk.js";
+import StatePerk from "./state-perk.js";
 import Store from "../store/store.js";
 import Util from "../util/util.js";
 
 // =============================================================================
-//	Component organizer class
+//	Component Perk Class
 // =============================================================================
 
-export default class ComponentOrganizer extends Organizer
+export default class ComponentPerk extends Perk
 {
+
+	// -------------------------------------------------------------------------
+	//  Skills
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
+	 *
+	 * @param	{Component}		component			Component. Nullable.
+	 * @param	{HTMLElement}	rootNode			Target node.
+	 * @param	{Object}		options				Load Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _loadTags(component, rootNode, options)
+	{
+
+		console.debug(`ComponentPerk._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
+
+		let promises = [];
+
+		// Load tags that has bm-autoload/bm-automorph attribute
+		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
+		targets.forEach((element) => {
+			let tagName = element.tagName.toLowerCase();
+			let settings = this._loadAttrSettings(element);
+			if (ComponentPerk.__hasExternalClass(tagName, settings))
+			{
+				// Load the tag
+				element.setAttribute("bm-autoloading", "");
+
+				element._injectSettings = function(curSettings){
+					return Util.deepMerge(curSettings, settings);
+				};
+				promises.push(ComponentPerk.__loadExternalClass(tagName, settings).then(() => {
+					element.removeAttribute("bm-autoloading");
+				}));
+			}
+		});
+
+		return Promise.all(promises).then(() => {
+			let waitFor = Util.safeGet(options, "waitForTags");
+			if (waitFor)
+			{
+				return ComponentPerk.__waitForChildren(rootNode);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the component and add to parent component.
+	 *
+	 * @param	{Component}		component			Parent component.
+	 * @param	{String}		componentName		Component name.
+	 * @param	{Object}		settings			Settings for the component.
+	 * @param	{Object}		loadOptions			Load Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _loadComponent(component, componentName, settings, loadOptions)
+	{
+
+		console.debug(`ComponentPerk._loadComponent(): Adding the component. name=${component.name}, componentName=${componentName}`);
+
+		// Get the tag name
+		let tagName;
+		let tag = Util.safeGet(settings, "settings.tag");
+		if (tag)
+		{
+			let pattern = /([\w-]+)\s+\w+.*?>/;
+			tagName = tag.match(pattern)[1];
+		}
+		else
+		{
+			tagName = Util.safeGet(settings, "settings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
+		}
+
+		let addedComponent;
+
+		return Promise.resolve().then(() => {
+			// Load the class
+			if (ComponentPerk.__hasExternalClass(tagName, settings))
+			{
+				return ComponentPerk.__loadExternalClass(tagName, settings);
+			}
+		}).then(() => {
+			// Insert tag
+			if (!component.inventory.get("component.components")[componentName])
+			{
+				addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
+				component.inventory.get("component.components")[componentName] = addedComponent;
+			}
+		}).then(() => {
+			// Wait for the added component to be ready
+			let sync = Util.safeGet(loadOptions, "syncOnAdd", Util.safeGet(settings, "settings.syncOnAdd"));
+			if (sync)
+			{
+				let state = (sync === true ? "ready" : sync);
+
+				return component.skills.use("state.waitFor", [{"id":component.inventory.get("component.components")[componentName].uniqueId, "state":state}]);
+			}
+		}).then(() => {
+			return addedComponent;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static ComponentPerk_onDoOrganize(sender, e, ex)
+	{
+
+		let chain = Promise.resolve();
+
+		// Load molds
+		this.skills.use("setting.enumSettings", e.detail.settings["molds"], (sectionName, sectionValue) => {
+			chain = chain.then(() => {
+				if (!this.inventory.get("component.components")[sectionName])
+				{
+					return ComponentPerk._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
+				}
+			});
+		});
+
+		// Load components
+		this.skills.use("setting.enumSettings", e.detail.settings["components"], (sectionName, sectionValue) => {
+			chain = chain.then(() => {
+				if (!this.inventory.get("component.components")[sectionName])
+				{
+					return ComponentPerk._loadComponent(this, sectionName, sectionValue);
+				}
+			});
+		});
+
+		return chain;
+
+	}
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
@@ -29,40 +171,19 @@ export default class ComponentOrganizer extends Organizer
 	static get name()
 	{
 
-		return "ComponentOrganizer";
+		return "ComponentPerk";
 
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
 
-	static ComponentOrganizer_onDoOrganize(sender, e, ex)
+	static get info()
 	{
 
-		let chain = Promise.resolve();
-
-		// Load molds
-		this._enumSettings(e.detail.settings["molds"], (sectionName, sectionValue) => {
-			chain = chain.then(() => {
-				if (!this._components[sectionName])
-				{
-					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
-				}
-			});
-		});
-
-		// Load components
-		this._enumSettings(e.detail.settings["components"], (sectionName, sectionValue) => {
-			chain = chain.then(() => {
-				if (!this._components[sectionName])
-				{
-					return ComponentOrganizer._loadComponent(this, sectionName, sectionValue);
-				}
-			});
-		});
-
-		return chain;
+		return {
+			"sections":		["molds", "components"],
+			"order":		400,
+		};
 
 	}
 
@@ -85,23 +206,18 @@ export default class ComponentOrganizer extends Organizer
 	static globalInit()
 	{
 
-		// Add properties to Component
-		Object.defineProperty(BITSMIST.v1.Component.prototype, "components", {
-			get() { return this._components; },
-		});
-
-		// Add methods to Component
-		BITSMIST.v1.Component.prototype.loadTags = function(...args) { return ComponentOrganizer._loadTags(...args); }
-		BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return ComponentOrganizer._loadComponent(this, ...args); }
-
 		// Init vars
-		ComponentOrganizer.__classes = new Store();
+		ComponentPerk.__classes = new Store();
+
+		// Add skills to Component
+		BITSMIST.v1.Component.skills.set("component.loadTags", function(...args) { return ComponentPerk._loadTags(...args); });
+		BITSMIST.v1.Component.skills.set("component.loadComponent", function(...args) { return ComponentPerk._loadComponent(...args); });
 
 		// Load tags on DOMContentLoaded event
 		document.addEventListener("DOMContentLoaded", () => {
-			if (BITSMIST.v1.settings.get("organizers.ComponentOrgaznier.settings.autoLoadOnStartup", true))
+			if (BITSMIST.v1.settings.get("perks.ComponentPerk.settings.autoLoadOnStartup", true))
 			{
-				ComponentOrganizer._loadTags(document.body, {"waitForTags":false});
+				ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
 			}
 		});
 
@@ -112,11 +228,11 @@ export default class ComponentOrganizer extends Organizer
 	static init(component, options)
 	{
 
-		// Init component vars
-		component._components = {};
+		// Add inventory items to component;
+		component.inventory.set("component.components", {});
 
-		// Add event handlers to the component
-		this._addOrganizerHandler(component, "doOrganize", ComponentOrganizer.ComponentOrganizer_onDoOrganize);
+		// Add event handlers to component
+		this._addPerkHandler(component, "doOrganize", ComponentPerk.ComponentPerk_onDoOrganize);
 
 	}
 
@@ -134,7 +250,7 @@ export default class ComponentOrganizer extends Organizer
 	static loadFile(fileName, path, loadOptions)
 	{
 
-		console.debug(`ComponentOrganizer.loadFile(): ComponentOrganizer.loadFile(): Loading component file. fileName=${fileName}, path=${path}`);
+		console.debug(`ComponentPerk.loadFile(): ComponentPerk.loadFile(): Loading component file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
 		let url1 = Util.concatPath([path, `${fileName}.js`]) + (query ? `?${query}` : "");
@@ -148,59 +264,13 @@ export default class ComponentOrganizer extends Organizer
 				return AjaxUtil.loadScript(url2);
 			}
 		}).then(() => {
-			console.debug(`ComponentOrganizer.loadFile(): Loaded script. fileName=${fileName}`);
+			console.debug(`ComponentPerk.loadFile(): Loaded script. fileName=${fileName}`);
 		});
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
-	 *
-	 * @param	{HTMLElement}	rootNode			Target node.
-	 * @param	{Object}		options				Load Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _loadTags(rootNode, options)
-	{
-
-		console.debug(`ComponentOrganizer._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
-
-		let promises = [];
-
-		// Load tags that has bm-autoload/bm-automorph attribute
-		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
-		targets.forEach((element) => {
-			let tagName = element.tagName.toLowerCase();
-			let settings = this._loadAttrSettings(element);
-			if (ComponentOrganizer._hasExternalClass(tagName, settings))
-			{
-				// Load the tag
-				element.setAttribute("bm-autoloading", "");
-
-				element._injectSettings = function(curSettings){
-					return Util.deepMerge(curSettings, settings);
-				};
-				promises.push(ComponentOrganizer._loadExternalClass(tagName, settings).then(() => {
-					element.removeAttribute("bm-autoloading");
-				}));
-			}
-		});
-
-		return Promise.all(promises).then(() => {
-			let waitFor = Util.safeGet(options, "waitForTags");
-			if (waitFor)
-			{
-				return ComponentOrganizer.__waitForChildren(rootNode);
-			}
-		});
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -215,7 +285,7 @@ export default class ComponentOrganizer extends Organizer
 	static _loadClass(tagName, settings, loadOptions)
 	{
 
-		console.debug(`ComponentOrganizer._loadClass(): Loading the class. tagName=${tagName}`);
+		console.debug(`ComponentPerk._loadClass(): Loading the class. tagName=${tagName}`);
 
 		loadOptions = loadOptions || {};
 
@@ -240,7 +310,7 @@ export default class ComponentOrganizer extends Organizer
 		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "settings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
 		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "settings.query"), "");
 
-		return ComponentOrganizer.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
+		return ComponentPerk.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
 			// Morphing
 			if (baseClassName !== className)
 			{
@@ -252,70 +322,10 @@ export default class ComponentOrganizer extends Organizer
 			if (!customElements.get(tagName))
 			{
 				let classDef = ClassUtil.getClass(className);
-				Util.assert(classDef, `ComponentOrganizer_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
+				Util.assert(classDef, `ComponentPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
 
 				customElements.define(tagName, classDef);
 			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load the component and add to parent component.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		componentName		Component name.
-	 * @param	{Object}		settings			Settings for the component.
-	 * @param	{Object}		loadOptions			Load Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _loadComponent(component, componentName, settings, loadOptions)
-	{
-
-		console.debug(`ComponentOrganizer._loadComponent(): Adding the component. name=${component.name}, componentName=${componentName}`);
-
-		// Get the tag name
-		let tagName;
-		let tag = Util.safeGet(settings, "settings.tag");
-		if (tag)
-		{
-			let pattern = /([\w-]+)\s+\w+.*?>/;
-			tagName = tag.match(pattern)[1];
-		}
-		else
-		{
-			tagName = Util.safeGet(settings, "settings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
-		}
-
-		let addedComponent;
-
-		return Promise.resolve().then(() => {
-			// Load the class
-			if (ComponentOrganizer._hasExternalClass(tagName, settings))
-			{
-				return ComponentOrganizer._loadExternalClass(tagName, settings);
-			}
-		}).then(() => {
-			// Insert tag
-			if (!component._components[componentName])
-			{
-				addedComponent = ComponentOrganizer.__insertTag(component, tagName, settings);
-				component._components[componentName] = addedComponent;
-			}
-		}).then(() => {
-			// Wait for the added component to be ready
-			let sync = Util.safeGet(loadOptions, "syncOnAdd", Util.safeGet(settings, "settings.syncOnAdd"));
-			if (sync)
-			{
-				let state = (sync === true ? "ready" : sync);
-
-				return component.waitFor([{"id":component._components[componentName].uniqueId, "state":state}]);
-			}
-		}).then(() => {
-			return addedComponent;
 		});
 
 	}
@@ -394,7 +404,7 @@ export default class ComponentOrganizer extends Organizer
 	 *
 	 * @return  {Boolean}		True if the component has the external class file.
 	 */
-	static _hasExternalClass(tagName, settings)
+	static __hasExternalClass(tagName, settings)
 	{
 
 		let ret = false;
@@ -425,7 +435,7 @@ export default class ComponentOrganizer extends Organizer
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadExternalClass(tagName, settings)
+	static __loadExternalClass(tagName, settings)
 	{
 
 		let loadOptions;
@@ -453,7 +463,7 @@ export default class ComponentOrganizer extends Organizer
 			}
 		}
 
-		return ComponentOrganizer._loadClass(tagName, settings, loadOptions);
+		return ComponentPerk._loadClass(tagName, settings, loadOptions);
 
 	}
 
@@ -472,31 +482,31 @@ export default class ComponentOrganizer extends Organizer
 	static __autoloadClass(className, fileName, path, loadOptions)
 	{
 
-		console.debug(`ComponentOrganizer.__autoLoadClass(): Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
+		console.debug(`ComponentPerk.__autoLoadClass(): Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
 
 		let promise;
 
-		if (ComponentOrganizer.__isLoadedClass(className))
+		if (ComponentPerk.__isLoadedClass(className))
 		{
 			// Already loaded
-			console.debug(`ComponentOrganizer.__autoLoadClass(): Component Already exists. className=${className}`);
-			ComponentOrganizer.__classes.set(`${className}.state`, "loaded");
+			console.debug(`ComponentPerk.__autoLoadClass(): Component Already exists. className=${className}`);
+			ComponentPerk.__classes.set(`${className}.state`, "loaded");
 			promise = Promise.resolve();
 		}
-		else if (ComponentOrganizer.__classes.get(className, {})["state"] === "loading")
+		else if (ComponentPerk.__classes.get(className, {})["state"] === "loading")
 		{
 			// Already loading
-			console.debug(`ComponentOrganizer.__autoLoadClass(): Component Already loading. className=${className}`);
-			promise = ComponentOrganizer.__classes.get(className)["promise"];
+			console.debug(`ComponentPerk.__autoLoadClass(): Component Already loading. className=${className}`);
+			promise = ComponentPerk.__classes.get(className)["promise"];
 		}
 		else
 		{
 			// Not loaded
-			ComponentOrganizer.__classes.set(`${className}.state`, "loading");
-			promise = ComponentOrganizer.loadFile(fileName, path, loadOptions).then(() => {
-				ComponentOrganizer.__classes.set(className, {"state":"loaded", "promise":null});
+			ComponentPerk.__classes.set(`${className}.state`, "loading");
+			promise = ComponentPerk.loadFile(fileName, path, loadOptions).then(() => {
+				ComponentPerk.__classes.set(className, {"state":"loaded", "promise":null});
 			});
-			ComponentOrganizer.__classes.set(`${className}.promise`, promise);
+			ComponentPerk.__classes.set(`${className}.promise`, promise);
 		}
 
 		return promise;
@@ -529,7 +539,7 @@ export default class ComponentOrganizer extends Organizer
 			root = component;
 		}
 
-		Util.assert(root, `ComponentOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "settings.parentNode")}`, ReferenceError);
+		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "settings.parentNode")}`, ReferenceError);
 
 		// Build tag
 		let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : `<${tagName}></${tagName}>` );
@@ -594,7 +604,7 @@ export default class ComponentOrganizer extends Organizer
 			}
 		});
 
-		return StateOrganizer.waitFor(waitList, {"waiter":rootNode});
+		return StatePerk.waitFor(waitList, {"waiter":rootNode});
 
 	}
 
@@ -612,7 +622,7 @@ export default class ComponentOrganizer extends Organizer
 
 		let ret = false;
 
-		if (ComponentOrganizer.__classes.get(className, {})["state"] === "loaded")
+		if (ComponentPerk.__classes.get(className, {})["state"] === "loaded")
 		{
 			ret = true;
 		}

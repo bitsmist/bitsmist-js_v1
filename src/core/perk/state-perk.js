@@ -8,139 +8,41 @@
  */
 // =============================================================================
 
-import Organizer from "./organizer.js";
+import Perk from "./perk.js";
 import Store from "../store/store.js";
 import Util from "../util/util.js";
 
 // =============================================================================
-//	State organizer class
+//	State Perk Class
 // =============================================================================
 
-export default class StateOrganizer extends Organizer
+export default class StatePerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get name()
-	{
-
-		return "StateOrganizer";
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static StateOrganizer_onDoOrganize(sender, e, ex)
-	{
-
-		this._enumSettings(e.detail.settings["waitFor"], (sectionName, sectionValue) => {
-			this.addEventHandler(sectionName, {"handler":StateOrganizer.StateOrganizer_onDoProcess, "options":sectionValue});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static StateOrganizer_onDoProcess(sender, e, ex)
-	{
-
-		return StateOrganizer._waitFor(this, ex.options);
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static getInfo()
-	{
-
-		return {
-			"sections":		"waitFor",
-			"order":		100,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static globalInit()
-	{
-
-		// Add properties to Component
-		Object.defineProperty(BITSMIST.v1.Component.prototype, "state", {
-			get() { return this._state; },
-			set(value) { this._state = value; }
-		});
-
-		// Add methods to Component
-		BITSMIST.v1.Component.prototype.changeState= function(...args) { return StateOrganizer._changeState(this, ...args); }
-		BITSMIST.v1.Component.prototype.waitFor = function(...args) { return StateOrganizer._waitFor(this, ...args); }
-		BITSMIST.v1.Component.prototype.suspend = function(...args) { return StateOrganizer._suspend(this, ...args); }
-		BITSMIST.v1.Component.prototype.resume = function(...args) { return StateOrganizer._resume(this, ...args); }
-		BITSMIST.v1.Component.prototype.pause = function(...args) { return StateOrganizer._pause(this, ...args); }
-
-		// Init vars
-		StateOrganizer._components = new Store();
-		StateOrganizer._waitingList = new Store();
-		StateOrganizer.__suspends = {};
-		StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); }
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Init component vars
-		component._state = "";
-		component._suspends = {};
-
-		// Load settings from attributes
-		StateOrganizer._loadAttrSettings(component);
-
-		// Add event handlers to component
-		this._addOrganizerHandler(component, "doOrganize", StateOrganizer.StateOrganizer_onDoOrganize);
-
-	}
-
+	//  Skills
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Suspend all components at the specified state.
+	 * Change component state and check waiting list.
 	 *
+	 * @param	{Component}		component			Component to register.
 	 * @param	{String}		state				Component state.
+	 *
+	 * @return  {Promise}		Promise.
 	 */
-	static globalSuspend(state)
+	static _changeState(component, state)
 	{
 
-		StateOrganizer.__suspends[state] = StateOrganizer.__createSuspendInfo(state);
-		StateOrganizer.__suspends[state].state = "pending";
+		Util.assert(StatePerk.__isTransitionable(component.stats.get("state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.name}, fromState=${component.stats.get("state.state")}, toState=${state}, id=${component.id}`, Error);
+
+		component.stats.set("state.state", state);
+		StatePerk._components.set(component.uniqueId, {"object":component, "state":state});
+
+		StatePerk.__processWaitingList();
 
 	}
 
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Resume all components at the specified state.
-	 *
-	 * @param	{String}		state				Component state.
-	 */
-	static globalResume(state)
-	{
-
-		StateOrganizer.__suspends[state].resolve();
-		StateOrganizer.__suspends[state].state = "resolved";
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Protected
 	// -------------------------------------------------------------------------
 
 	/**
@@ -163,7 +65,7 @@ export default class StateOrganizer extends Organizer
 		let waiter = ( options && options["waiter"] ? options["waiter"] : component );
 		let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 
-		if (StateOrganizer.__isAllReady(waitInfo))
+		if (StatePerk.__isAllReady(waitInfo))
 		{
 			promise = Promise.resolve();
 		}
@@ -176,38 +78,16 @@ export default class StateOrganizer extends Organizer
 				waitInfo["timer"] = setTimeout(() => {
 					let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
 					let uniqueId = (component && component.uniqueId) || "";
-					reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}, uniqueId=${uniqueId}.`);
+					reject(`StatePerk._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StatePerk.__dumpWaitlist(waitlist)}, name=${name}, uniqueId=${uniqueId}.`);
 				}, timeout);
 			});
 			waitInfo["promise"] = promise;
 
 			// Add info to the waiting list.
-			StateOrganizer.__addToWaitingList(waitInfo);
+			StatePerk.__addToWaitingList(waitInfo);
 		}
 
 		return promise;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Change component state and check waiting list.
-	 *
-	 * @param	{Component}		component			Component to register.
-	 * @param	{String}		state				Component state.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _changeState(component, state)
-	{
-
-		Util.assert(StateOrganizer.__isTransitionable(component._state, state), `StateOrganizer._changeState(): Illegal transition. name=${component.name}, fromState=${component._state}, toState=${state}, id=${component.id}`, Error);
-
-		component._state = state;
-		StateOrganizer._components.set(component.uniqueId, {"object":component, "state":state});
-
-		StateOrganizer.__processWaitingList();
 
 	}
 
@@ -222,8 +102,10 @@ export default class StateOrganizer extends Organizer
 	static _suspend(component, state)
 	{
 
-		component._suspends[state] = StateOrganizer.__createSuspendInfo();
+		/*
+		component._suspends[state] = StatePerk.__createSuspendInfo();
 	 	component._suspends[state].state = "pending";
+		*/
 
 	}
 
@@ -238,8 +120,10 @@ export default class StateOrganizer extends Organizer
 	static _resume(component, state)
 	{
 
+		/*
 	 	component._suspends[state].resolve();
 	 	component._suspends[state].state = "resolved";
+		*/
 
 	}
 
@@ -256,12 +140,13 @@ export default class StateOrganizer extends Organizer
 	static _pause(component, state)
 	{
 
+		/*
 		let ret = [];
 
 		// Globally suspended?
-		if (StateOrganizer.__suspends[state] && StateOrganizer.__suspends[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
+		if (StatePerk.__suspends[state] && StatePerk.__suspends[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
 		{
-			ret.push(StateOrganizer.__suspends[state].promise);
+			ret.push(StatePerk.__suspends[state].promise);
 		}
 
 		// Component suspended?
@@ -271,10 +156,141 @@ export default class StateOrganizer extends Organizer
 		}
 
 		return Promise.all(ret);
+		*/
 
 	}
 
-	// -----------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static StatePerk_onDoOrganize(sender, e, ex)
+	{
+
+		this.skills.use("setting.enumSettings", e.detail.settings["waitFor"], (sectionName, sectionValue) => {
+			this.addEventHandler(sectionName, {"handler":StatePerk.StatePerk_onDoProcess, "options":sectionValue});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static StatePerk_onDoProcess(sender, e, ex)
+	{
+
+		return StatePerk._waitFor(this, ex.options);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	static get name()
+	{
+
+		return "StatePerk";
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"sections":		"waitFor",
+			"order":		100,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static getInfo()
+	{
+
+		return {
+			"sections":		"waitFor",
+			"order":		100,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		// Init vars
+		StatePerk._components = new Store();
+		StatePerk._waitingList = new Store();
+		StatePerk.__suspends = {};
+		StatePerk.waitFor = function(waitlist, timeout) { return StatePerk._waitFor(null, waitlist, timeout); }
+
+		// Add skills to Component
+		BITSMIST.v1.Component.skills.set("state.changeState", function(...args) { return StatePerk._changeState(...args); });
+		BITSMIST.v1.Component.skills.set("state.waitFor", function(...args) { return StatePerk._waitFor(...args); });
+		BITSMIST.v1.Component.skills.set("state.suspend", function(...args) { return StatePerk._suspend(...args); });
+		BITSMIST.v1.Component.skills.set("state.resume", function(...args) { return StatePerk._resume(...args); });
+		BITSMIST.v1.Component.skills.set("state.pause", function(...args) { return StatePerk._pause(...args); });
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Add stats to component;
+		component.stats.set("state.state", "connected");
+
+		// Add inventory items to component;
+		component.inventory.set("state.suspends", {});
+
+		// Add event handlers to component
+		this._addPerkHandler(component, "doOrganize", StatePerk.StatePerk_onDoOrganize);
+
+		// Load settings from attributes
+		StatePerk._loadAttrSettings(component);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Suspend all components at the specified state.
+	 *
+	 * @param	{String}		state				Component state.
+	 */
+	static globalSuspend(state)
+	{
+
+		StatePerk.__suspends[state] = StatePerk.__createSuspendInfo(state);
+		StatePerk.__suspends[state].state = "pending";
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Resume all components at the specified state.
+	 *
+	 * @param	{String}		state				Component state.
+	 */
+	static globalResume(state)
+	{
+
+		StatePerk.__suspends[state].resolve();
+		StatePerk.__suspends[state].state = "resolved";
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Get settings from element's attribute.
@@ -311,11 +327,11 @@ export default class StateOrganizer extends Organizer
 	{
 
 		let removeList = [];
-		Object.keys(StateOrganizer._waitingList.items).forEach((id) => {
-			if (StateOrganizer.__isAllReady(StateOrganizer._waitingList.get(id)))
+		Object.keys(StatePerk._waitingList.items).forEach((id) => {
+			if (StatePerk.__isAllReady(StatePerk._waitingList.get(id)))
 			{
-				clearTimeout(StateOrganizer._waitingList.get(id)["timer"]);
-				StateOrganizer._waitingList.get(id).resolve();
+				clearTimeout(StatePerk._waitingList.get(id)["timer"]);
+				StatePerk._waitingList.get(id).resolve();
 				removeList.push(id);
 			}
 		});
@@ -323,7 +339,7 @@ export default class StateOrganizer extends Organizer
 		// Remove from waiting list
 		for (let i = 0; i < removeList.length; i++)
 		{
-			StateOrganizer._waitingList.remove(removeList[i]);
+			StatePerk._waitingList.remove(removeList[i]);
 		}
 
 	}
@@ -348,12 +364,12 @@ export default class StateOrganizer extends Organizer
 			{
 				let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
 
-				Util.assert(element && element.uniqueId, `StateOrganizer.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
+				Util.assert(element && element.uniqueId, `StatePerk.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
 			}
 		}
 		*/
 
-		StateOrganizer._waitingList.set(id, waitInfo);
+		StatePerk._waitingList.set(id, waitInfo);
 
 	}
 
@@ -403,14 +419,14 @@ export default class StateOrganizer extends Organizer
 
 		if (waitlistItem["id"])
 		{
-			componentInfo = StateOrganizer._components.get(waitlistItem["id"]);
+			componentInfo = StatePerk._components.get(waitlistItem["id"]);
 		}
 		else if (waitlistItem["name"])
 		{
-			Object.keys(StateOrganizer._components.items).forEach((key) => {
-				if (waitlistItem["name"] === StateOrganizer._components.get(key).object.name)
+			Object.keys(StatePerk._components.items).forEach((key) => {
+				if (waitlistItem["name"] === StatePerk._components.get(key).object.name)
 				{
-					componentInfo = StateOrganizer._components.get(key);
+					componentInfo = StatePerk._components.get(key);
 				}
 			});
 		}
@@ -419,7 +435,7 @@ export default class StateOrganizer extends Organizer
 			let element = document.querySelector(waitlistItem["rootNode"]);
 			if (element && element.uniqueId)
 			{
-				componentInfo = StateOrganizer._components.get(element.uniqueId);
+				componentInfo = StatePerk._components.get(element.uniqueId);
 			}
 		}
 		else if (waitlistItem["object"])
@@ -427,7 +443,7 @@ export default class StateOrganizer extends Organizer
 			let element = waitlistItem["object"];
 			if (element.uniqueId)
 			{
-				componentInfo = StateOrganizer._components.get(element.uniqueId);
+				componentInfo = StatePerk._components.get(element.uniqueId);
 			}
 		}
 
@@ -456,7 +472,7 @@ export default class StateOrganizer extends Organizer
 			let componentInfo = this.__getComponentInfo(waitlist[i]);
 			if (componentInfo)
 			{
-				if (StateOrganizer.__isReady(waitlist[i], componentInfo))
+				if (StatePerk.__isReady(waitlist[i], componentInfo))
 				{
 					match = true;
 				}
@@ -488,12 +504,12 @@ export default class StateOrganizer extends Organizer
 	{
 
 		// Check component
-		let isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
+		let isMatch = StatePerk.__isComponentMatch(componentInfo, waitlistItem);
 
 		// Check state
 		if (isMatch)
 		{
-			isMatch = StateOrganizer.__isStateMatch(componentInfo["state"], waitlistItem["state"]);
+			isMatch = StatePerk.__isStateMatch(componentInfo["state"], waitlistItem["state"]);
 		}
 
 		return isMatch;

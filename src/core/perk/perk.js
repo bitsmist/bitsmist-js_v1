@@ -9,10 +9,10 @@
 // =============================================================================
 
 // =============================================================================
-//	Base organizer class
+//	Base Perk Class
 // =============================================================================
 
-export default class Organizer
+export default class Perk
 {
 
 	// -------------------------------------------------------------------------
@@ -20,14 +20,14 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Organizer name.
+	 * Perk name.
 	 *
 	 * @type	{Object}
 	 */
 	static get name()
 	{
 
-		return "Organizer";
+		return "Perk";
 
 	}
 
@@ -45,7 +45,7 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 *  Initialize an organizer and Component class when the organizer is registered.
+	 *  Initialize an perk and Component class when the perk is registered.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		options				Options.
@@ -59,7 +59,7 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 *  Initialize an attached component when organizer is attached.
+	 *  Initialize an attached component when perk is attached.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		options				Options.
@@ -73,7 +73,7 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Deinitialize the component when organizer is detached.
+	 * Deinitialize the component when perk is detached.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{Object}		options				Options.
@@ -87,7 +87,7 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get editor for the organizer.
+	 * Get editor for the perk.
 	 *
 	 * @return 	{String}		Editor.
 	 */
@@ -103,16 +103,16 @@ export default class Organizer
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Set event handler for organizer.
+	 * Set event handler for perk.
 	 *
 	 * @param	{Component}		component			Component.
 	 * @param	{String}		eventName			Event name.
 	 * @param	{Function}		handler				Event handler.
 	 */
-	static _addOrganizerHandler(component, eventName, handler)
+	static _addPerkHandler(component, eventName, handler)
 	{
 
-		component.addEventHandler(eventName, {
+		component.skills.use("event.addEventHandler", eventName, {
 			"handler":	handler,
 			"order":	this.getInfo()["order"],
 		});
