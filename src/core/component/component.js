@@ -59,7 +59,7 @@ Component.prototype.connectedCallback = function()
 	// Start
 	this._ready = this._ready.then(() => {
 		console.debug(`Component.connectedCallback(): Component is connected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			//return this.skills.use("state.changeState", "connected");
+		//return this.skills.use("state.change", "connected");
 	}).then(() => {
 		if (!this._initialized || this.settings.get("settings.autoRestart"))
 		{
@@ -69,7 +69,7 @@ Component.prototype.connectedCallback = function()
 		else
 		{
 			console.debug(`Component.start(): Restarted component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.skills.use("state.changeState", "ready");
+			return this.skills.use("state.change", "ready");
 		}
 	});
 
@@ -91,7 +91,7 @@ Component.prototype.disconnectedCallback = function()
 		}
 	}).then(() => {
 		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.changeState", "disconnected");
+		return this.skills.use("state.change", "disconnected");
 	});
 
 }
@@ -209,7 +209,7 @@ Component.prototype.start = function(settings)
 		return this.skills.use("event.trigger", "beforeStart");
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.changeState", "starting");
+		return this.skills.use("state.change", "starting");
 	}).then(() => {
 		if (this.settings.get("settings.autoTransform"))
 		{
@@ -226,12 +226,12 @@ Component.prototype.start = function(settings)
 		window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
 
 		console.debug(`Component.start(): Started component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.changeState", "started");
+		return this.skills.use("state.change", "started");
 	}).then(() => {
 		return this.skills.use("event.trigger", "afterStart");
 	}).then(() => {
 		console.debug(`Component.start(): Component is ready. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.changeState", "ready");
+		return this.skills.use("state.change", "ready");
 	}).then(() => {
 		return this.skills.use("event.trigger", "afterReady");
 	});
@@ -254,14 +254,14 @@ Component.prototype.stop = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.changeState", "stopping");
+		return this.skills.use("state.change", "stopping");
 	}).then(() => {
 		return this.skills.use("event.trigger", "beforeStop", options);
 	}).then(() => {
 		return this.skills.use("event.trigger", "doStop", options);
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.changeState", "stopped");
+		return this.skills.use("state.change", "stopped");
 	}).then(() => {
 		return this.skills.use("event.trigger", "afterStop", options);
 	});

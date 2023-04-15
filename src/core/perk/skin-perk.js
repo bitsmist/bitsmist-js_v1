@@ -217,9 +217,9 @@ export default class SkinPerk extends Perk
 	{
 
 		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("skin.loadSkin", function(...args) { return SkinPerk._loadSkin(...args); });
-		BITSMIST.v1.Component.skills.set("skin.applySkin", function(...args) { return SkinPerk._applySkin(...args); });
-		BITSMIST.v1.Component.skills.set("skin.cloneSkin", function(...args) { return SkinPerk._cloneSkin(...args); });
+		BITSMIST.v1.Component.skills.set("skin.load", function(...args) { return SkinPerk._loadSkin(...args); });
+		BITSMIST.v1.Component.skills.set("skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
+		BITSMIST.v1.Component.skills.set("skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
 
 	}
 
@@ -227,13 +227,6 @@ export default class SkinPerk extends Perk
 
 	static init(component, options)
 	{
-
-		/*
-		// Add skills to Component
-		component.skills.set("skin.loadSkin", function(...args) { return SkinPerk._loadSkin(...args); });
-		component.skills.set("skin.applySkin", function(...args) { return SkinPerk._applySkin(...args); });
-		component.skills.set("skin.cloneSkin", function(...args) { return SkinPerk._cloneSkin(...args); });
-		*/
 
 		// Add inventory items to Component
 		component.inventory.set("skin.skins", {});

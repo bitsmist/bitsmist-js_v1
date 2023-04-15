@@ -112,7 +112,7 @@ export default class Perk
 	static _addPerkHandler(component, eventName, handler)
 	{
 
-		component.skills.use("event.addEventHandler", eventName, {
+		component.skills.use("event.add", eventName, {
 			"handler":	handler,
 			"order":	this.getInfo()["order"],
 		});

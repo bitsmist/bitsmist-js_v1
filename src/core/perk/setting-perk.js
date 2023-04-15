@@ -145,8 +145,8 @@ export default class SettingPerk extends Perk
 		});
 
 		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("setting.loadSettings", function(...args) { return SettingPerk._loadSettings(...args); });
-		BITSMIST.v1.Component.skills.set("setting.enumSettings", function(...args) { return SettingPerk._enumSettings(...args); });
+		BITSMIST.v1.Component.skills.set("setting.load", function(...args) { return SettingPerk._loadSettings(...args); });
+		BITSMIST.v1.Component.skills.set("setting.enum", function(...args) { return SettingPerk._enumSettings(...args); });
 
 	}
 

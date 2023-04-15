@@ -123,7 +123,7 @@ export default class ComponentPerk extends Perk
 			{
 				let state = (sync === true ? "ready" : sync);
 
-				return component.skills.use("state.waitFor", [{
+				return component.skills.use("state.wait", [{
 					"id":		component.inventory.get(`component.components.${componentName}`).uniqueId,
 					"state":	state
 				}]);
@@ -144,7 +144,7 @@ export default class ComponentPerk extends Perk
 		let chain = Promise.resolve();
 
 		// Load molds
-		this.skills.use("setting.enumSettings", e.detail.settings["molds"], (sectionName, sectionValue) => {
+		this.skills.use("setting.enum", e.detail.settings["molds"], (sectionName, sectionValue) => {
 			chain = chain.then(() => {
 				if (!this.inventory.get(`component.components.${sectionName}`))
 				{
@@ -154,7 +154,7 @@ export default class ComponentPerk extends Perk
 		});
 
 		// Load components
-		this.skills.use("setting.enumSettings", e.detail.settings["components"], (sectionName, sectionValue) => {
+		this.skills.use("setting.enum", e.detail.settings["components"], (sectionName, sectionValue) => {
 			chain = chain.then(() => {
 				if (!this.inventory.get(`component.components.${sectionName}`))
 				{
@@ -214,7 +214,7 @@ export default class ComponentPerk extends Perk
 
 		// Add skills to Component
 		BITSMIST.v1.Component.skills.set("component.loadTags", function(...args) { return ComponentPerk._loadTags(...args); });
-		BITSMIST.v1.Component.skills.set("component.loadComponent", function(...args) { return ComponentPerk._loadComponent(...args); });
+		BITSMIST.v1.Component.skills.set("component.load", function(...args) { return ComponentPerk._loadComponent(...args); });
 
 		// Load tags on DOMContentLoaded event
 		document.addEventListener("DOMContentLoaded", () => {

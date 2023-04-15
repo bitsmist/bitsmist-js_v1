@@ -230,7 +230,7 @@ export default class EventPerk extends Perk
 	static EventPerk_onDoOrganize(sender, e, ex)
 	{
 
-		this.skills.use("setting.enumSettings", e.detail.settings["events"], (sectionName, sectionValue) => {
+		this.skills.use("setting.enum", e.detail.settings["events"], (sectionName, sectionValue) => {
 			EventPerk._initEvents(this, sectionName, sectionValue);
 		});
 
@@ -241,7 +241,7 @@ export default class EventPerk extends Perk
 	static EventPerk_onAfterTransform(sender, e, ex)
 	{
 
-		this.skills.use("setting.enumSettings", this.settings.get("events"), (sectionName, sectionValue) => {
+		this.skills.use("setting.enum", this.settings.get("events"), (sectionName, sectionValue) => {
 			// Initialize only elements inside component
 			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
 			{
@@ -294,10 +294,10 @@ export default class EventPerk extends Perk
 	{
 
 		// Add skills to Component
-		BITSMIST.v1.Component._skills.set("event.addEventHandler", function(...args) { return EventPerk._addEventHandler(...args); });
-		BITSMIST.v1.Component._skills.set("event.removeEventHandler", function(...args) { return EventPerk._removeEventHandler(...args); });
-		BITSMIST.v1.Component._skills.set("event.initEvents", function(...args) { return EventPerk._initEvents(...args); });
-		BITSMIST.v1.Component._skills.set("event.removeEvents", function(...args) { return EventPerk._removeEvents(...args); });
+		BITSMIST.v1.Component._skills.set("event.add", function(...args) { return EventPerk._addEventHandler(...args); });
+		BITSMIST.v1.Component._skills.set("event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
+		BITSMIST.v1.Component._skills.set("event.init", function(...args) { return EventPerk._initEvents(...args); });
+		BITSMIST.v1.Component._skills.set("event.reset", function(...args) { return EventPerk._removeEvents(...args); });
 		BITSMIST.v1.Component._skills.set("event.trigger", function(...args) { return EventPerk._trigger(...args); });
 		BITSMIST.v1.Component._skills.set("event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
 

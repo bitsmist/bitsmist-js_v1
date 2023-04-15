@@ -167,7 +167,7 @@ export default class StatePerk extends Perk
 	static StatePerk_onDoOrganize(sender, e, ex)
 	{
 
-		this.skills.use("setting.enumSettings", e.detail.settings["waitFor"], (sectionName, sectionValue) => {
+		this.skills.use("setting.enum", e.detail.settings["waitFor"], (sectionName, sectionValue) => {
 			this.addEventHandler(sectionName, {"handler":StatePerk.StatePerk_onDoProcess, "options":sectionValue});
 		});
 
@@ -231,8 +231,8 @@ export default class StatePerk extends Perk
 		StatePerk.waitFor = function(waitlist, timeout) { return StatePerk._waitFor(null, waitlist, timeout); }
 
 		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("state.changeState", function(...args) { return StatePerk._changeState(...args); });
-		BITSMIST.v1.Component.skills.set("state.waitFor", function(...args) { return StatePerk._waitFor(...args); });
+		BITSMIST.v1.Component.skills.set("state.change", function(...args) { return StatePerk._changeState(...args); });
+		BITSMIST.v1.Component.skills.set("state.wait", function(...args) { return StatePerk._waitFor(...args); });
 		BITSMIST.v1.Component.skills.set("state.suspend", function(...args) { return StatePerk._suspend(...args); });
 		BITSMIST.v1.Component.skills.set("state.resume", function(...args) { return StatePerk._resume(...args); });
 		BITSMIST.v1.Component.skills.set("state.pause", function(...args) { return StatePerk._pause(...args); });
