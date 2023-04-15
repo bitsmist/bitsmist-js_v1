@@ -9,8 +9,8 @@
 // =============================================================================
 
 import ClassUtil from "../util/class-util.js";
-import OrganizerOrganizer from "../organizer/organizer-organizer.js";
-import SettingOrganizer from "../organizer/setting-organizer.js";
+import PerkPerk from "../perk/perk-perk.js";
+import SettingPerk from "../perk/setting-perk.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -59,7 +59,7 @@ Component.prototype.connectedCallback = function()
 	// Start
 	this._ready = this._ready.then(() => {
 		console.debug(`Component.connectedCallback(): Component is connected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.changeState("connected");
+			//return this.skills.use("state.changeState", "connected");
 	}).then(() => {
 		if (!this._initialized || this.settings.get("settings.autoRestart"))
 		{
@@ -69,7 +69,7 @@ Component.prototype.connectedCallback = function()
 		else
 		{
 			console.debug(`Component.start(): Restarted component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.changeState("ready");
+			return this.skills.use("state.changeState", "ready");
 		}
 	});
 
@@ -91,7 +91,7 @@ Component.prototype.disconnectedCallback = function()
 		}
 	}).then(() => {
 		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.changeState("disconnected");
+		return this.skills.use("state.changeState", "disconnected");
 	});
 
 }
@@ -185,37 +185,38 @@ Component.prototype.start = function(settings)
 			"autoTransform":		true,
 			"useGlobalSettings":	true,
 		},
-		"organizers": {
-//			"OrganizerOrganizer":	{"settings":{"attach":true}},	// Attach manually
-//			"SettingOrganizer":		{"settings":{"attach":true}},	// Attach manually
-			"StateOrganizer":		{"settings":{"attach":true}},
-			"EventOrganizer":		{"settings":{"attach":true}},
-			"TemplateOrganizer":	{"settings":{"attach":true}},
-			"ComponentOrganizer":	{"settings":{"attach":true}},
+		"perks": {
+//			"PerkPerk":			{"settings":{"attach":true}},	// Attach manually
+//			"SettingPerk":		{"settings":{"attach":true}},	// Attach manually
+			"StatePerk":		{"settings":{"attach":true}},
+			"EventPerk":		{"settings":{"attach":true}},
+			"SkinPerk":			{"settings":{"attach":true}},
+			"ComponentPerk":	{"settings":{"attach":true}},
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);
 
 	return Promise.resolve().then(() => {
-		return OrganizerOrganizer.attach(this, OrganizerOrganizer);
+		return PerkPerk.init(this, PerkPerk);
+	//	return PerkPerk.attach(this, PerkPerk);
 	}).then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
 		return this.__mergeSettings(newSettings);
 	}).then((newSettings) => {
-		return OrganizerOrganizer.attach(this, SettingOrganizer, {"settings":newSettings});
+		return PerkPerk.attach(this, SettingPerk, {"settings":newSettings});
 	}).then(() => {
-		return this.trigger("beforeStart");
+		return this.skills.use("event.trigger", "beforeStart");
 	}).then(() => {
 		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.changeState("starting");
+		return this.skills.use("state.changeState", "starting");
 	}).then(() => {
 		if (this.settings.get("settings.autoTransform"))
 		{
 			return this.transform();
 		}
 	}).then(() => {
-		return this.trigger("doStart");
+		return this.skills.use("event.trigger", "doStart");
 	}).then(() => {
 		if (this.settings.get("settings.autoRefresh"))
 		{
@@ -225,14 +226,14 @@ Component.prototype.start = function(settings)
 		window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
 
 		console.debug(`Component.start(): Started component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.changeState("started");
+		return this.skills.use("state.changeState", "started");
 	}).then(() => {
-		return this.trigger("afterStart");
+		return this.skills.use("event.trigger", "afterStart");
 	}).then(() => {
 		console.debug(`Component.start(): Component is ready. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.changeState("ready");
+		return this.skills.use("state.changeState", "ready");
 	}).then(() => {
-		return this.trigger("afterReady");
+		return this.skills.use("event.trigger", "afterReady");
 	});
 
 }
@@ -253,16 +254,16 @@ Component.prototype.stop = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.stop(): Stopping component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.changeState("stopping");
+		return this.skills.use("state.changeState", "stopping");
 	}).then(() => {
-		return this.trigger("beforeStop", options);
+		return this.skills.use("event.trigger", "beforeStop", options);
 	}).then(() => {
-		return this.trigger("doStop", options);
+		return this.skills.use("event.trigger", "doStop", options);
 	}).then(() => {
 		console.debug(`Component.stop(): Stopped component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.changeState("stopped");
+		return this.skills.use("state.changeState", "stopped");
 	}).then(() => {
-		return this.trigger("afterStop", options);
+		return this.skills.use("event.trigger", "afterStop", options);
 	});
 
 }
@@ -280,13 +281,12 @@ Component.prototype.transform = function(options)
 {
 
 	options = options || {};
-	let templateName = Util.safeGet(options, "templateName", "");
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.transform(): Transforming. name=${this.name}, templateName=${templateName}, id=${this.id}, uniqueId=${this.uniqueId}`);
-		return this.trigger("beforeTransform", options);
+		console.debug(`Component.transform(): Transforming. name=${this.name}, id=${this.id}, uniqueId=${this.uniqueId}`);
+		return this.skills.use("event.trigger", "beforeTransform", options);
 	}).then(() => {
-		return this.trigger("doTransform", options);
+		return this.skills.use("event.trigger", "doTransform", options);
 	}).then(() => {
 		// Setup
 		let autoSetup = this.settings.get("settings.autoSetup");
@@ -295,10 +295,10 @@ Component.prototype.transform = function(options)
 			return this.setup(options);
 		}
 	}).then(() => {
-		return this.loadTags(this.rootElement);
+		return this.skills.use("component.loadTags", this.rootElement);
 	}).then(() => {
-		console.debug(`Component.transform(): Transformed. name=${this.name}, templateName=${templateName}, id=${this.id}, uniqueId=${this.uniqueId}`);
-		return this.trigger("afterTransform", options);
+		console.debug(`Component.transform(): Transformed. name=${this.name}, id=${this.id}, uniqueId=${this.uniqueId}`);
+		return this.skills.use("event.trigger", "afterTransform", options);
 	});
 
 }
@@ -319,12 +319,12 @@ Component.prototype.setup = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.setup(): Setting up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.trigger("beforeSetup", options);
+		return this.skills.use("event.trigger", "beforeSetup", options);
 	}).then(() => {
-		return this.trigger("doSetup", options);
+		return this.skills.use("event.trigger", "doSetup", options);
 	}).then(() => {
 		console.debug(`Component.setup(): Set up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.trigger("afterSetup", options);
+		return this.skills.use("event.trigger", "afterSetup", options);
 	});
 
 }
@@ -345,7 +345,7 @@ Component.prototype.refresh = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.refresh(): Refreshing component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.trigger("beforeRefresh", options);
+		return this.skills.use("event.trigger", "beforeRefresh", options);
 	}).then(() => {
 		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
 		if (autoClear)
@@ -353,7 +353,7 @@ Component.prototype.refresh = function(options)
 			return this.clear(options);
 		}
 	}).then(() => {
-		return this.trigger("doTarget", options);
+		return this.skills.use("event.trigger", "doTarget", options);
 	}).then(() => {
 		// Fetch
 		if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
@@ -367,10 +367,10 @@ Component.prototype.refresh = function(options)
 			return this.fill(options);
 		}
 	}).then(() => {
-		return this.trigger("doRefresh", options);
+		return this.skills.use("event.trigger", "doRefresh", options);
 	}).then(() => {
 		console.debug(`Component.refresh(): Refreshed component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.trigger("afterRefresh", options);
+		return this.skills.use("event.trigger", "afterRefresh", options);
 	});
 
 }
@@ -391,11 +391,11 @@ Component.prototype.fetch = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.fetch(): Fetching data. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.trigger("beforeFetch", options);
+		return this.skills.use("event.trigger", "beforeFetch", options);
 	}).then(() => {
-		return this.trigger("doFetch", options);
+		return this.skills.use("event.trigger", "doFetch", options);
 	}).then(() => {
-		return this.trigger("afterFetch", options);
+		return this.skills.use("event.trigger", "afterFetch", options);
 	}).then(() => {
 		console.debug(`Component.fetch(): Fetched data. name=${this._name}, uniqueId=${this._uniqueId}`);
 	});
@@ -418,12 +418,12 @@ Component.prototype.fill = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.fill(): Filling with data. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.trigger("beforeFill", options);
+		return this.skills.use("event.trigger", "beforeFill", options);
 	}).then(() => {
-		return this.trigger("doFill", options);
+		return this.skills.use("event.trigger", "doFill", options);
 	}).then(() => {
 		console.debug(`Component.fill(): Filled with data. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.trigger("afterFill", options);
+		return this.skills.use("event.trigger", "afterFill", options);
 	});
 
 }
@@ -444,12 +444,12 @@ Component.prototype.clear = function(options)
 
 	return Promise.resolve().then(() => {
 		console.debug(`Component.clear(): Clearing the component. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.trigger("beforeClear", options);
+		return this.skills.use("event.trigger", "beforeClear", options);
 	}).then(() => {
-		return this.trigger("doClear", options);
+		return this.skills.use("event.trigger", "doClear", options);
 	}).then(() => {
 		console.debug(`Component.clear(): Cleared the component. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.trigger("afterClear", options);
+		return this.skills.use("event.trigger", "afterClear", options);
 	});
 
 }
