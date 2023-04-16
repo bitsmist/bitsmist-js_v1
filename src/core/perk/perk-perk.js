@@ -38,7 +38,7 @@ export default class PerkPerk extends Perk
 
 		PerkPerk.__sortItems(targets).forEach((perkName) => {
 			chain = chain.then(() => {
-				return PerkPerk.attach(component, PerkPerk._perks[perkName].object, options);
+				return PerkPerk._attach(component, PerkPerk._perks[perkName].object, options);
 			});
 		});
 
@@ -57,7 +57,7 @@ export default class PerkPerk extends Perk
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static attach(component, perk, options)
+	static _attach(component, perk, options)
 	{
 
 		//component._perks = component._perks || {};
@@ -68,7 +68,7 @@ export default class PerkPerk extends Perk
 			let deps = PerkPerk._perks[perk.name]["depends"];
 			for (let i = 0; i < deps.length; i++)
 			{
-				PerkPerk.attach(component, PerkPerk._perks[deps[i]].object, options);
+				PerkPerk._attach(component, PerkPerk._perks[deps[i]].object, options);
 			}
 
 			component.inventory.set(`perk.perks.${perk.name}`, {

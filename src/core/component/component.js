@@ -204,7 +204,7 @@ Component.prototype.start = function(settings)
 	}).then((newSettings) => {
 		return this.__mergeSettings(newSettings);
 	}).then((newSettings) => {
-		return PerkPerk.attach(this, SettingPerk, {"settings":newSettings});
+		return this.skills.use("perk.attach", SettingPerk, {"settings":newSettings});
 	}).then(() => {
 		return this.skills.use("event.trigger", "beforeStart");
 	}).then(() => {
