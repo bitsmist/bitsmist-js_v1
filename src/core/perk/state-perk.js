@@ -144,7 +144,7 @@ export default class StatePerk extends Perk
 		let ret = [];
 
 		// Globally suspended?
-		if (StatePerk.__suspends[state] && StatePerk.__suspends[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
+		if (StatePerk.__suspends[state] && StatePerk.__suspends[state].state === "pending" && !component.settings.get("setting.ignoreGlobalSuspend"))
 		{
 			ret.push(StatePerk.__suspends[state].promise);
 		}
@@ -199,7 +199,7 @@ export default class StatePerk extends Perk
 	{
 
 		return {
-			"sections":		"waitFor",
+			"section":		"state",
 			"order":		100,
 		};
 

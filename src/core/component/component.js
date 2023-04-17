@@ -61,7 +61,7 @@ Component.prototype.connectedCallback = function()
 		console.debug(`Component.connectedCallback(): Component is connected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		//return this.skills.use("state.change", "connected");
 	}).then(() => {
-		if (!this._initialized || this.settings.get("settings.autoRestart"))
+		if (!this._initialized || this.settings.get("setting.autoRestart"))
 		{
 			this._initialized = true;
 			return this.start();
@@ -85,7 +85,7 @@ Component.prototype.disconnectedCallback = function()
 
 	// Stop
 	this._ready = this._ready.then(() => {
-		if (this.settings.get("settings.autoStop"))
+		if (this.settings.get("setting.autoStop"))
 		{
 			return this.stop();
 		}
@@ -174,7 +174,7 @@ Component.prototype.start = function(settings)
 
 	// Defaults
 	let defaults = {
-		"settings": {
+		"setting": {
 			"autoClear":			true,
 			"autoFetch":			true,
 			"autoFill":				true,
@@ -185,13 +185,13 @@ Component.prototype.start = function(settings)
 			"autoTransform":		true,
 			"useGlobalSettings":	true,
 		},
-		"perks": {
-//			"PerkPerk":			{"settings":{"attach":true}},	// Attach manually
-//			"SettingPerk":		{"settings":{"attach":true}},	// Attach manually
-			"StatePerk":		{"settings":{"attach":true}},
-			"EventPerk":		{"settings":{"attach":true}},
-			"SkinPerk":			{"settings":{"attach":true}},
-			"ComponentPerk":	{"settings":{"attach":true}},
+		"perk": {
+//			"PerkPerk":			{"setting":{"attach":true}},	// Attach manually
+//			"SettingPerk":		{"setting":{"attach":true}},	// Attach manually
+			"StatePerk":		{"setting":{"attach":true}},
+			"EventPerk":		{"setting":{"attach":true}},
+			"SkinPerk":			{"setting":{"attach":true}},
+			"ComponentPerk":	{"setting":{"attach":true}},
 		}
 	};
 	settings = Util.deepMerge(defaults, settings);
@@ -211,14 +211,14 @@ Component.prototype.start = function(settings)
 		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.skills.use("state.change", "starting");
 	}).then(() => {
-		if (this.settings.get("settings.autoTransform"))
+		if (this.settings.get("setting.autoTransform"))
 		{
 			return this.transform();
 		}
 	}).then(() => {
 		return this.skills.use("event.trigger", "doStart");
 	}).then(() => {
-		if (this.settings.get("settings.autoRefresh"))
+		if (this.settings.get("setting.autoRefresh"))
 		{
 			return this.refresh();
 		}
@@ -289,7 +289,7 @@ Component.prototype.transform = function(options)
 		return this.skills.use("event.trigger", "doTransform", options);
 	}).then(() => {
 		// Setup
-		let autoSetup = this.settings.get("settings.autoSetup");
+		let autoSetup = this.settings.get("setting.autoSetup");
 		if (autoSetup)
 		{
 			return this.setup(options);
@@ -347,7 +347,7 @@ Component.prototype.refresh = function(options)
 		console.debug(`Component.refresh(): Refreshing component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.skills.use("event.trigger", "beforeRefresh", options);
 	}).then(() => {
-		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
+		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("setting.autoClear"));
 		if (autoClear)
 		{
 			return this.clear(options);
@@ -356,13 +356,13 @@ Component.prototype.refresh = function(options)
 		return this.skills.use("event.trigger", "doTarget", options);
 	}).then(() => {
 		// Fetch
-		if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
+		if (Util.safeGet(options, "autoFetch", this.settings.get("setting.autoFetch")))
 		{
 			return this.fetch(options);
 		}
 	}).then(() => {
 		// Fill
-		if (Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))
+		if (Util.safeGet(options, "autoFill", this.settings.get("setting.autoFill")))
 		{
 			return this.fill(options);
 		}

@@ -109,7 +109,7 @@ export default class PerkPerk extends Perk
 	{
 
 		return {
-			"sections":		"perks",
+			"section":		"perk",
 			"order":		0,
 		};
 
@@ -197,8 +197,7 @@ export default class PerkPerk extends Perk
 	{
 
 		let info = perk.info;
-		info["sections"] = info["sections"] || [];
-		info["sections"] = ( Array.isArray(info["sections"]) ? info["sections"] : [info["sections"]] );
+		info["section"] = info["section"];
 		info["order"] = ("order" in info ? info["order"] : 500);
 		info["depends"] = info["depends"] || [];
 		info["depends"] = ( Array.isArray(info["depends"]) ? info["depends"] : [info["depends"]] );
@@ -206,7 +205,7 @@ export default class PerkPerk extends Perk
 		PerkPerk._perks[perk.name] = {
 			"name":			perk.name,
 			"object":		perk,
-			"sections":		info["sections"],
+			"section":		info["section"],
 			"order":		info["order"],
 			"depends":		info["depends"],
 		};
@@ -215,10 +214,7 @@ export default class PerkPerk extends Perk
 		perk.globalInit();
 
 		// Create target word index
-		for (let i = 0; i < info["sections"].length; i++)
-		{
-			PerkPerk._sections[info["sections"][i]] = PerkPerk._perks[perk.name];
-		}
+		PerkPerk._sections[info["section"]] = PerkPerk._perks[perk.name];
 
 	}
 
@@ -239,12 +235,12 @@ export default class PerkPerk extends Perk
 		let chain = Promise.resolve();
 
 		// List new perks
-		let perks = settings["perks"];
+		let perks = settings["perk"];
 		if (perks)
 		{
 			Object.keys(perks).forEach((perkName) => {
 				Util.assert(PerkPerk._perks[perkName], `PerkPerk.__listNewPerk(): Perk not found. name=${component.name}, perkName=${perkName}`);
-				if (Util.safeGet(perks[perkName], "settings.attach") && !component.inventory.get(`perk.perks.${perkName}`))
+				if (Util.safeGet(perks[perkName], "setting.attach") && !component.inventory.get(`perk.perks.${perkName}`))
 				{
 					targets[perkName] = PerkPerk._perks[perkName];
 				}
@@ -254,6 +250,7 @@ export default class PerkPerk extends Perk
 		// List new perks from settings keyword
 		Object.keys(settings).forEach((key) => {
 			let perkInfo = PerkPerk._sections[key];
+
 			if (perkInfo && !component.inventory.get(`perk.perks.${perkInfo.name}`))
 			{
 				targets[perkInfo.name] = perkInfo

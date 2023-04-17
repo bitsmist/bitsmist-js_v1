@@ -38,7 +38,7 @@ export default class SettingPerk extends Perk
 
 		// Filename
 		fileName = fileName ||
-			component.settings.get("settings.fileName",
+			component.settings.get("setting.fileName",
 				component.tagName.toLowerCase()) + ".settings";
 
 		// Path
@@ -46,7 +46,7 @@ export default class SettingPerk extends Perk
 			Util.concatPath([
 				component.settings.get("system.appBaseUrl"),
 				component.settings.get("system.componentPath"),
-				component.settings.get("settings.path", ""),
+				component.settings.get("setting.path", ""),
 			])
 		);
 
@@ -92,8 +92,8 @@ export default class SettingPerk extends Perk
 	static SettingPerk_onDoOrganize(sender, e, ex)
 	{
 
-		this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
-		this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
+		this._name = Util.safeGet(e.detail.settings, "setting.name", this._name);
+		this._rootElement = Util.safeGet(e.detail.settings, "setting.rootElement", this._rootElement);
 
 	}
 
@@ -114,7 +114,7 @@ export default class SettingPerk extends Perk
 	{
 
 		return {
-			"sections":		"settings",
+			"section":		"setting",
 			"order":		10,
 		};
 
@@ -152,7 +152,7 @@ export default class SettingPerk extends Perk
 		this._addPerkHandler(component, "doOrganize", SettingPerk.SettingPerk_onDoOrganize);
 
 		// Chain global settings
-		if (component._settings.get("settings.useGlobalSettings"))
+		if (component._settings.get("setting.useGlobalSettings"))
 		{
 			component._settings.chain(BITSMIST.v1.settings);
 		}
@@ -245,14 +245,14 @@ export default class SettingPerk extends Perk
 
 		// Get settings from the attribute
 
-		let dataSettings = ( document.querySelector(component._settings.get("settings.rootNode")) ?
-			document.querySelector(component._settings.get("settings.rootNode")).getAttribute("bm-settings") :
+		let dataSettings = ( document.querySelector(component._settings.get("setting.rootNode")) ?
+			document.querySelector(component._settings.get("setting.rootNode")).getAttribute("bm-settings") :
 			component.getAttribute("bm-settings")
 		);
 
 		if (dataSettings)
 		{
-			let settings = {"settings": JSON.parse(dataSettings)};
+			let settings = {"setting": JSON.parse(dataSettings)};
 			component._settings.merge(settings);
 		}
 
@@ -275,7 +275,7 @@ export default class SettingPerk extends Perk
 
 		let ret = false;
 
-		if (component.hasAttribute(`bm-${settingName}ref`) || component.settings.get("settings.settingRef"))
+		if (component.hasAttribute(`bm-${settingName}ref`) || component.settings.get("setting.settingRef"))
 		{
 			ret = true;
 		}
@@ -301,7 +301,7 @@ export default class SettingPerk extends Perk
 		let loadOptions;
 		let settingRef = ( component.hasAttribute(`bm-${settingName}ref`) ?
 			component.getAttribute(`bm-${settingName}ref`) || true :
-			component.settings.get("settings.settingRef")
+			component.settings.get("setting.settingRef")
 		);
 
 		if (settingRef && settingRef !== true)

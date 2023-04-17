@@ -41,13 +41,13 @@ export default class SkinPerk extends Perk
 		let promise;
 		let skinInfo = component.inventory.get(`skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(component, skinName);
 
-		switch (component.settings.get(`skins.${skinName}.type`)) {
+		switch (component.settings.get(`skin.${skinName}.type`)) {
 		case "html":
-			skinInfo["html"] = component.settings.get(`skins.${skinName}.html`);
+			skinInfo["html"] = component.settings.get(`skin.${skinName}.html`);
 			promise = Promise.resolve();
 			break;
 		case "node":
-			let rootNode = component.settings.get(`skins.${skinName}.rootNode`);
+			let rootNode = component.settings.get(`skin.${skinName}.rootNode`);
 			skinInfo["html"] = component.querySelector(rootNode).innerHTML;
 			promise = Promise.resolve();
 			break;
@@ -58,7 +58,7 @@ export default class SkinPerk extends Perk
 				Util.concatPath([
 					component.settings.get("system.appBaseUrl", ""),
 					component.settings.get("system.skinPath", component.settings.get("system.componentPath", "")),
-					component.settings.get("settings.path", ""),
+					component.settings.get("setting.path", ""),
 				])
 			);
 
@@ -127,7 +127,7 @@ export default class SkinPerk extends Perk
 	static _clone(component, skinName)
 	{
 
-		skinName = skinName || component.settings.get("settings.skinName");
+		skinName = skinName || component.settings.get("setting.skinName");
 		let skinInfo = component.inventory.get(`skin.skins.${skinName}`);
 
 		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
@@ -158,7 +158,7 @@ export default class SkinPerk extends Perk
 	static SkinPerk_onDoTransform(sender, e, ex)
 	{
 
-		if (this.settings.get("skins.settings.hasSkin", true))
+		if (this.settings.get("skin.settings.hasSkin", true))
 		{
 			let skinName = SkinPerk.__getSkinName(this);
 
@@ -191,7 +191,7 @@ export default class SkinPerk extends Perk
 	{
 
 		return {
-			"sections":		"skins",
+			"section":		"skin",
 			"order":		200,
 		};
 
@@ -292,8 +292,8 @@ export default class SkinPerk extends Perk
 	static __getSkinName(component)
 	{
 
-		let skinName = component.settings.get("skins.settings.fileName",
-			component.settings.get("settings.fileName",
+		let skinName = component.settings.get("skin.settings.fileName",
+			component.settings.get("setting.fileName",
 				component.tagName.toLowerCase()));
 
 		return skinName;
@@ -314,7 +314,7 @@ export default class SkinPerk extends Perk
 
 		let ret = false;
 
-		if (component.hasAttribute("bm-skinref") || component.settings.get("skins.settings.skinRef"))
+		if (component.hasAttribute("bm-skinref") || component.settings.get("skin.settings.skinRef"))
 		{
 			ret = true;
 		}
@@ -343,7 +343,7 @@ export default class SkinPerk extends Perk
 		let loadOptions;
 		let skinRef = ( component.hasAttribute("bm-skinref") ?
 			component.getAttribute("bm-skinref") || true :
-			component.settings.get("skins.settings.skinRef")
+			component.settings.get("skin.settings.skinRef")
 		);
 
 		if (skinRef && skinRef !== true)

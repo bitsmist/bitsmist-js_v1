@@ -117,7 +117,7 @@ export default class EventPerk extends Perk
 	{
 
 		rootNode = ( rootNode ? rootNode : component );
-		eventInfo = ( eventInfo ? eventInfo : component.settings.get(`events.${elementName}`) );
+		eventInfo = ( eventInfo ? eventInfo : component.settings.get(`event.${elementName}`) );
 
 		// Get target elements
 		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
@@ -230,7 +230,7 @@ export default class EventPerk extends Perk
 	static EventPerk_onDoOrganize(sender, e, ex)
 	{
 
-		this.skills.use("setting.enum", e.detail.settings["events"], (sectionName, sectionValue) => {
+		this.skills.use("setting.enum", e.detail.settings["event"], (sectionName, sectionValue) => {
 			EventPerk._initEvents(this, sectionName, sectionValue);
 		});
 
@@ -241,7 +241,7 @@ export default class EventPerk extends Perk
 	static EventPerk_onAfterTransform(sender, e, ex)
 	{
 
-		this.skills.use("setting.enum", this.settings.get("events"), (sectionName, sectionValue) => {
+		this.skills.use("setting.enum", this.settings.get("event"), (sectionName, sectionValue) => {
 			// Initialize only elements inside component
 			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
 			{
@@ -268,7 +268,7 @@ export default class EventPerk extends Perk
 	{
 
 		return {
-			"sections":		"events",
+			"section":		"event",
 			"order":		210,
 		};
 
@@ -307,7 +307,7 @@ export default class EventPerk extends Perk
 	static deinit(component, options)
 	{
 
-		let events = this.settings.get("events");
+		let events = this.settings.get("event");
 		if (events)
 		{
 			Object.keys(events).forEach((elementName) => {

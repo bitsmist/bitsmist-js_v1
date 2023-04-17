@@ -90,7 +90,7 @@ export default class ComponentPerk extends Perk
 
 		// Get the tag name
 		let tagName;
-		let tag = Util.safeGet(settings, "settings.tag");
+		let tag = Util.safeGet(settings, "setting.tag");
 		if (tag)
 		{
 			let pattern = /([\w-]+)\s+\w+.*?>/;
@@ -98,7 +98,7 @@ export default class ComponentPerk extends Perk
 		}
 		else
 		{
-			tagName = Util.safeGet(settings, "settings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
+			tagName = Util.safeGet(settings, "setting.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
 		}
 
 		let addedComponent;
@@ -118,7 +118,7 @@ export default class ComponentPerk extends Perk
 			}
 		}).then(() => {
 			// Wait for the added component to be ready
-			let sync = Util.safeGet(loadOptions, "syncOnAdd", Util.safeGet(settings, "settings.syncOnAdd"));
+			let sync = Util.safeGet(loadOptions, "syncOnAdd", Util.safeGet(settings, "setting.syncOnAdd"));
 			if (sync)
 			{
 				let state = (sync === true ? "ready" : sync);
@@ -143,18 +143,7 @@ export default class ComponentPerk extends Perk
 
 		let chain = Promise.resolve();
 
-		// Load molds
-		this.skills.use("setting.enum", e.detail.settings["molds"], (sectionName, sectionValue) => {
-			chain = chain.then(() => {
-				if (!this.inventory.get(`component.components.${sectionName}`))
-				{
-					return ComponentPerk._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
-				}
-			});
-		});
-
-		// Load components
-		this.skills.use("setting.enum", e.detail.settings["components"], (sectionName, sectionValue) => {
+		this.skills.use("setting.enum", e.detail.settings["component"], (sectionName, sectionValue) => {
 			chain = chain.then(() => {
 				if (!this.inventory.get(`component.components.${sectionName}`))
 				{
@@ -184,7 +173,7 @@ export default class ComponentPerk extends Perk
 	{
 
 		return {
-			"sections":		["molds", "components"],
+			"section":		"component",
 			"order":		400,
 		};
 
@@ -206,7 +195,7 @@ export default class ComponentPerk extends Perk
 
 		// Load tags on DOMContentLoaded event
 		document.addEventListener("DOMContentLoaded", () => {
-			if (BITSMIST.v1.settings.get("perks.ComponentPerk.settings.autoLoadOnStartup", true))
+			if (BITSMIST.v1.settings.get("perk.ComponentPerk.settings.autoLoadOnStartup", true))
 			{
 				ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
 			}
@@ -281,10 +270,10 @@ export default class ComponentPerk extends Perk
 		loadOptions = loadOptions || {};
 
 		// Class name
-		let className = Util.safeGet(settings, "settings.className", Util.getClassNameFromTagName(tagName));
+		let className = Util.safeGet(settings, "setting.className", Util.getClassNameFromTagName(tagName));
 
 		// Base class name (Used when morphing)
-		let baseClassName = Util.safeGet(settings, "settings.autoMorph", className );
+		let baseClassName = Util.safeGet(settings, "setting.autoMorph", className );
 		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
 
 		// Path
@@ -292,14 +281,14 @@ export default class ComponentPerk extends Perk
 			Util.concatPath([
 				Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
 				Util.safeGet(settings, "system.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
-				Util.safeGet(settings, "settings.path", ""),
+				Util.safeGet(settings, "setting.path", ""),
 			])
 		);
 
 		// Load the class
-		let fileName = Util.safeGet(settings, "settings.fileName", tagName.toLowerCase());
-		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "settings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
-		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "settings.query"), "");
+		let fileName = Util.safeGet(settings, "setting.fileName", tagName.toLowerCase());
+		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "setting.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
+		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "setting.query"), "");
 
 		return ComponentPerk.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
 			// Morphing
@@ -332,13 +321,13 @@ export default class ComponentPerk extends Perk
 	{
 
 		let settings = {
-			"settings": {}
+			"setting": {}
 		};
 
 		// Class name
 		if (element.hasAttribute("bm-classname"))
 		{
-			settings["settings"]["className"] = element.getAttribute("bm-classname");
+			settings["setting"]["className"] = element.getAttribute("bm-classname");
 		}
 
 		// Split component
@@ -350,33 +339,33 @@ export default class ComponentPerk extends Perk
 		// Path
 		if (element.hasAttribute("bm-path"))
 		{
-			settings["settings"]["path"] = element.getAttribute("bm-path");
+			settings["setting"]["path"] = element.getAttribute("bm-path");
 		}
 
 		// File name
 		if (element.hasAttribute("bm-filename"))
 		{
-			settings["settings"]["fileName"] = element.getAttribute("bm-filename");
+			settings["setting"]["fileName"] = element.getAttribute("bm-filename");
 		}
 
 		// Morphing
 		if (element.hasAttribute("bm-automorph"))
 		{
-			settings["settings"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
+			settings["setting"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
 		}
 		if (element.hasAttribute("bm-htmlref"))
 		{
-			settings["settings"]["autoMorph"] = ( element.getAttribute("bm-htmlref") ? element.getAttribute("bm-htmlref") : true );
+			settings["setting"]["autoMorph"] = ( element.getAttribute("bm-htmlref") ? element.getAttribute("bm-htmlref") : true );
 		}
 
 		// Auto loading
 		if (element.hasAttribute("bm-autoload"))
 		{
-			settings["settings"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
+			settings["setting"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
 		}
 		if (element.hasAttribute("bm-classref"))
 		{
-			settings["settings"]["autoLoad"] = ( element.getAttribute("bm-classref") ? element.getAttribute("bm-classref") : true );
+			settings["setting"]["autoLoad"] = ( element.getAttribute("bm-classref") ? element.getAttribute("bm-classref") : true );
 		}
 
 		return settings;
@@ -403,10 +392,10 @@ export default class ComponentPerk extends Perk
 		// Check if the tag is already defined
 		if (!customElements.get(tagName))
 		{
-			if ((Util.safeGet(settings, "settings.classRef"))
-				|| (Util.safeGet(settings, "settings.htmlRef"))
-				|| (Util.safeGet(settings, "settings.autoLoad"))
-				|| (Util.safeGet(settings, "settings.autoMorph")))
+			if ((Util.safeGet(settings, "setting.classRef"))
+				|| (Util.safeGet(settings, "setting.htmlRef"))
+				|| (Util.safeGet(settings, "setting.autoLoad"))
+				|| (Util.safeGet(settings, "setting.autoMorph")))
 			{
 				ret = true;
 			}
@@ -430,7 +419,7 @@ export default class ComponentPerk extends Perk
 	{
 
 		let loadOptions;
-		let classRef = Util.safeGet(settings, "settings.autoLoad");
+		let classRef = Util.safeGet(settings, "setting.autoLoad");
 
 		if (classRef && classRef !== true)
 		{
@@ -445,12 +434,12 @@ export default class ComponentPerk extends Perk
 			settings["system"]["appBaseUrl"] = "";
 			settings["system"]["componentPath"] = "";
 			settings["system"]["templatePath"] = "";
-			settings["settings"] = settings["settings"] || {};
-			settings["settings"]["path"] = url.path;
-			settings["settings"]["fileName"] = url.filenameWithoutExtension;
+			settings["setting"] = settings["setting"] || {};
+			settings["setting"]["path"] = url.path;
+			settings["setting"]["fileName"] = url.filenameWithoutExtension;
 			if (url.extension === "html")
 			{
-				settings["settings"]["autoMorph"] = ( settings["settings"]["autoMorph"] ? settings["settings"]["autoMorph"] : true );
+				settings["setting"]["autoMorph"] = ( settings["setting"]["autoMorph"] ? settings["setting"]["autoMorph"] : true );
 			}
 		}
 
@@ -521,29 +510,29 @@ export default class ComponentPerk extends Perk
 		let root;
 
 		// Check root node
-		if (Util.safeGet(settings, "settings.parentNode"))
+		if (Util.safeGet(settings, "setting.parentNode"))
 		{
-			root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "settings.parentNode"), {"penetrate":true})[0];
+			root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "setting.parentNode"), {"penetrate":true})[0];
 		}
 		else
 		{
 			root = component;
 		}
 
-		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "settings.parentNode")}`, ReferenceError);
+		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "setting.parentNode")}`, ReferenceError);
 
 		// Build tag
-		let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : `<${tagName}></${tagName}>` );
+		let tag = ( Util.safeGet(settings, "setting.tag") ? Util.safeGet(settings, "setting.tag") : `<${tagName}></${tagName}>` );
 
 		// Insert tag
-		if (Util.safeGet(settings, "settings.replaceParent"))
+		if (Util.safeGet(settings, "setting.replaceParent"))
 		{
 			root.outerHTML = tag;
 			addedComponent = root;
 		}
 		else
 		{
-			let position = Util.safeGet(settings, "settings.adjacentPosition", "afterbegin");
+			let position = Util.safeGet(settings, "setting.adjacentPosition", "afterbegin");
 			root.insertAdjacentHTML(position, tag);
 
 			// Get new instance
