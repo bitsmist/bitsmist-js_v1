@@ -195,7 +195,7 @@ export default class ComponentPerk extends Perk
 
 		// Load tags on DOMContentLoaded event
 		document.addEventListener("DOMContentLoaded", () => {
-			if (BITSMIST.v1.settings.get("perk.ComponentPerk.settings.autoLoadOnStartup", true))
+			if (BITSMIST.v1.settings.get("system.autoLoadOnStartup", true))
 			{
 				ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
 			}
