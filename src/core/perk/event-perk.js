@@ -278,18 +278,6 @@ export default class EventPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	static getInfo()
-	{
-
-		return {
-			"sections":		"events",
-			"order":		210,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	static globalInit()
 	{
 

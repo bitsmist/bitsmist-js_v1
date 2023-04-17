@@ -60,8 +60,6 @@ export default class PerkPerk extends Perk
 	static _attach(component, perk, options)
 	{
 
-		//component._perks = component._perks || {};
-
 		if (!component.inventory.get(`perk.perks.${perk.name}`))
 		{
 			// Attach dependencies first
@@ -119,18 +117,6 @@ export default class PerkPerk extends Perk
 
 	// -------------------------------------------------------------------------
 	//  Methods
-	// -------------------------------------------------------------------------
-
-	static getInfo()
-	{
-
-		return {
-			"sections":		"perks",
-			"order":		0,
-		};
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	static globalInit()
@@ -210,7 +196,7 @@ export default class PerkPerk extends Perk
 	static register(perk)
 	{
 
-		let info = perk.getInfo();
+		let info = perk.info;
 		info["sections"] = info["sections"] || [];
 		info["sections"] = ( Array.isArray(info["sections"]) ? info["sections"] : [info["sections"]] );
 		info["order"] = ("order" in info ? info["order"] : 500);

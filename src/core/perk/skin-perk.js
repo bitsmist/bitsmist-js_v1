@@ -201,18 +201,6 @@ export default class SkinPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	static getInfo()
-	{
-
-		return {
-			"sections":		"skins",
-			"order":		200,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	static globalInit()
 	{
 

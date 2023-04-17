@@ -209,18 +209,6 @@ export default class StatePerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	static getInfo()
-	{
-
-		return {
-			"sections":		"waitFor",
-			"order":		100,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	static globalInit()
 	{
 

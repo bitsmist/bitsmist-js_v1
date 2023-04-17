@@ -114,7 +114,7 @@ export default class Perk
 
 		component.skills.use("event.add", eventName, {
 			"handler":	handler,
-			"order":	this.getInfo()["order"],
+			"order":	this.info["order"],
 		});
 
 	}
