@@ -41,13 +41,13 @@ export default class SkinPerk extends Perk
 		let promise;
 		let skinInfo = component.inventory.get(`skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(component, skinName);
 
-		switch (component.settings.get(`skin.${skinName}.type`)) {
+		switch (component.settings.get(`skin.skins.${skinName}.type`)) {
 		case "html":
-			skinInfo["html"] = component.settings.get(`skin.${skinName}.html`);
+			skinInfo["html"] = component.settings.get(`skin.skins.${skinName}.html`);
 			promise = Promise.resolve();
 			break;
 		case "node":
-			let rootNode = component.settings.get(`skin.${skinName}.rootNode`);
+			let rootNode = component.settings.get(`skin.skins.${skinName}.rootNode`);
 			skinInfo["html"] = component.querySelector(rootNode).innerHTML;
 			promise = Promise.resolve();
 			break;
@@ -85,7 +85,7 @@ export default class SkinPerk extends Perk
 	static _applySkin(component, skinName)
 	{
 
-		if (component._activeSkinName === skinName)
+		if (component.stats.get("skin.activeSkinName") === skinName)
 		{
 			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return Promise.resolve();
@@ -108,7 +108,7 @@ export default class SkinPerk extends Perk
 		}
 
 		// Change active skin
-		component._activeSkinName = skinName;
+		component.stats.set("skin.activeSkinName", skinName);
 
 		console.debug(`SkinPerk._applySkin(): Applied skin. name=${component.name}, skinName=${skinInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
 
@@ -218,7 +218,9 @@ export default class SkinPerk extends Perk
 
 		// Add inventory items to Component
 		component.inventory.set("skin.skins", {});
-		component.inventory.set("skin.activeSkinName", "");
+
+		// Add stats to Component
+		component.stats.set("skin.activeSkinName", "");
 
 		// Add event handlers to component
 		this._addPerkHandler(component, "doTransform", SkinPerk.SkinPerk_onDoTransform);
