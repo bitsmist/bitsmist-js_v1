@@ -219,8 +219,8 @@ export default class SettingPerk extends Perk
 		// Get settings from the attribute
 
 		let dataSettings = ( document.querySelector(component._settings.get("setting.rootNode")) ?
-			document.querySelector(component._settings.get("setting.rootNode")).getAttribute("bm-settings") :
-			component.getAttribute("bm-settings")
+			document.querySelector(component._settings.get("setting.rootNode")).getAttribute("bm-setting") :
+			component.getAttribute("bm-setting")
 		);
 
 		if (dataSettings)
