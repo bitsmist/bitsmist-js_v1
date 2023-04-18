@@ -143,7 +143,7 @@ export default class ComponentPerk extends Perk
 
 		let chain = Promise.resolve();
 
-		this.skills.use("setting.enum", e.detail.settings["component"], (sectionName, sectionValue) => {
+		Object.entries(this.settings.get("component.components", {})).forEach(([sectionName, sectionValue]) => {
 			chain = chain.then(() => {
 				if (!this.inventory.get(`component.components.${sectionName}`))
 				{

@@ -60,32 +60,6 @@ export default class SettingPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Enumerate enumerable settings.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Settings}		setting				Settings.
-	 * @param	{Function}		callback			Callback function.
-	 */
-	static _enumSettings(component, settings, callback)
-	{
-
-		Util.assert(typeof(callback) === "function", "call back is not a function");
-
-		if (settings)
-		{
-			Object.keys(settings).forEach((key) => {
-				if (key !== "settings")
-				{
-					callback(key, settings[key]);
-				}
-			});
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
@@ -134,7 +108,6 @@ export default class SettingPerk extends Perk
 
 		// Add skills to Component
 		BITSMIST.v1.Component.skills.set("setting.load", function(...args) { return SettingPerk._loadSettings(...args); });
-		BITSMIST.v1.Component.skills.set("setting.enum", function(...args) { return SettingPerk._enumSettings(...args); });
 
 	}
 
