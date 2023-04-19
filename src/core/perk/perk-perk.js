@@ -141,12 +141,16 @@ export default class PerkPerk extends Perk
 
 		// Init Component vars (static)
 		BITSMIST.v1.Component._stats = new ChainableStore();
+		BITSMIST.v1.Component._vault = new ChainableStore();
 		BITSMIST.v1.Component._inventory = new ChainableStore();
 		BITSMIST.v1.Component._skills = new ChainableStore();
 
 		// Add properties to Component
 		Object.defineProperty(BITSMIST.v1.Component.prototype, "stats", {
 			get() { return this._stats; },
+		});
+		Object.defineProperty(BITSMIST.v1.Component.prototype, "vault", {
+			get() { return this._vault; },
 		});
 		Object.defineProperty(BITSMIST.v1.Component.prototype, "inventory", {
 			get() { return this._inventory; },
