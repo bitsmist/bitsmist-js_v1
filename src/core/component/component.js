@@ -64,11 +64,11 @@ Component.prototype.connectedCallback = function()
 		if (!this._initialized || this.settings.get("setting.autoRestart"))
 		{
 			this._initialized = true;
-			return this.start();
+			return this._start();
 		}
 		else
 		{
-			console.debug(`Component.start(): Restarted component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			console.debug(`Component.connectedCallback(): Restarted component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 			return this.skills.use("state.change", "ready");
 		}
 	});
@@ -87,7 +87,7 @@ Component.prototype.disconnectedCallback = function()
 	this._ready = this._ready.then(() => {
 		if (this.settings.get("setting.autoStop"))
 		{
-			return this.stop();
+			return this._stop();
 		}
 	}).then(() => {
 		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
@@ -159,7 +159,7 @@ Object.defineProperty(Component.prototype, 'rootElement', {
 })
 
 // -----------------------------------------------------------------------------
-//  Methods
+//  Protected
 // -----------------------------------------------------------------------------
 
 /**
@@ -169,7 +169,7 @@ Object.defineProperty(Component.prototype, 'rootElement', {
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.start = function(settings)
+Component.prototype._start = function(settings)
 {
 
 	// Defaults
@@ -208,7 +208,7 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		return this.skills.use("event.trigger", "beforeStart");
 	}).then(() => {
-		console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component._start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.skills.use("state.change", "starting");
 	}).then(() => {
 		if (this.settings.get("setting.autoTransform"))
@@ -225,12 +225,12 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
 
-		console.debug(`Component.start(): Started component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component._start(): Started component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.skills.use("state.change", "started");
 	}).then(() => {
 		return this.skills.use("event.trigger", "afterStart");
 	}).then(() => {
-		console.debug(`Component.start(): Component is ready. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component._start(): Component is ready. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.skills.use("state.change", "ready");
 	}).then(() => {
 		return this.skills.use("event.trigger", "afterReady");
@@ -247,20 +247,20 @@ Component.prototype.start = function(settings)
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype.stop = function(options)
+Component.prototype._stop = function(options)
 {
 
 	options = options || {};
 
 	return Promise.resolve().then(() => {
-		console.debug(`Component.stop(): Stopping component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component._stop(): Stopping component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.skills.use("state.change", "stopping");
 	}).then(() => {
 		return this.skills.use("event.trigger", "beforeStop", options);
 	}).then(() => {
 		return this.skills.use("event.trigger", "doStop", options);
 	}).then(() => {
-		console.debug(`Component.stop(): Stopped component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		console.debug(`Component._stop(): Stopped component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		return this.skills.use("state.change", "stopped");
 	}).then(() => {
 		return this.skills.use("event.trigger", "afterStop", options);
@@ -277,15 +277,13 @@ Component.prototype.stop = function(options)
  *
  * @return  {Array}			Array of matched elements.
  */
-Component.prototype.scopedSelectorAll = function(query)
+Component.prototype._scopedSelectorAll = function(query)
 {
 
 	return Util.scopedSelectorAll(this, query);
 
 }
 
-// -----------------------------------------------------------------------------
-//  Protected
 // -----------------------------------------------------------------------------
 
 /**
