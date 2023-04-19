@@ -44,6 +44,10 @@ window.BITSMIST.v1.Component = Component;
 import Perk from "./perk/perk.js";
 window.BITSMIST.v1.Perk = Perk;
 
+import BasicPerk from "./perk/basic-perk.js";
+window.BITSMIST.v1.BasicPerk = BasicPerk;
+PerkPerk.register(BasicPerk);
+
 import PerkPerk from "./perk/perk-perk.js";
 window.BITSMIST.v1.PerkPerk = PerkPerk;
 PerkPerk.register(PerkPerk);

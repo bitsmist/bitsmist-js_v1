@@ -197,6 +197,8 @@ Component.prototype.start = function(settings)
 	settings = Util.deepMerge(defaults, settings);
 
 	return Promise.resolve().then(() => {
+		return BITSMIST.v1.BasicPerk.init(this, PerkPerk);
+	}).then(() => {
 		return PerkPerk.init(this, PerkPerk);
 	//	return PerkPerk.attach(this, PerkPerk);
 	}).then(() => {
@@ -213,14 +215,14 @@ Component.prototype.start = function(settings)
 	}).then(() => {
 		if (this.settings.get("setting.autoTransform"))
 		{
-			return this.transform();
+			return this.skills.use("basic.transform");
 		}
 	}).then(() => {
 		return this.skills.use("event.trigger", "doStart");
 	}).then(() => {
 		if (this.settings.get("setting.autoRefresh"))
 		{
-			return this.refresh();
+			return this.skills.use("basic.refresh");
 		}
 	}).then(() => {
 		window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
@@ -264,192 +266,6 @@ Component.prototype.stop = function(options)
 		return this.skills.use("state.change", "stopped");
 	}).then(() => {
 		return this.skills.use("event.trigger", "afterStop", options);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Transform component (Load HTML and attach to node).
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.transform = function(options)
-{
-
-	options = options || {};
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.transform(): Transforming. name=${this.name}, id=${this.id}, uniqueId=${this.uniqueId}`);
-		return this.skills.use("event.trigger", "beforeTransform", options);
-	}).then(() => {
-		return this.skills.use("event.trigger", "doTransform", options);
-	}).then(() => {
-		// Setup
-		let autoSetup = this.settings.get("setting.autoSetup");
-		if (autoSetup)
-		{
-			return this.setup(options);
-		}
-	}).then(() => {
-		return this.skills.use("component.loadTags", this.rootElement);
-	}).then(() => {
-		console.debug(`Component.transform(): Transformed. name=${this.name}, id=${this.id}, uniqueId=${this.uniqueId}`);
-		return this.skills.use("event.trigger", "afterTransform", options);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Setup component.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.setup = function(options)
-{
-
-	options = options || {};
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.setup(): Setting up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "beforeSetup", options);
-	}).then(() => {
-		return this.skills.use("event.trigger", "doSetup", options);
-	}).then(() => {
-		console.debug(`Component.setup(): Set up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "afterSetup", options);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Refresh component.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.refresh = function(options)
-{
-
-	options = options || {};
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.refresh(): Refreshing component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "beforeRefresh", options);
-	}).then(() => {
-		let autoClear = Util.safeGet(options, "autoClear", this.settings.get("setting.autoClear"));
-		if (autoClear)
-		{
-			return this.clear(options);
-		}
-	}).then(() => {
-		return this.skills.use("event.trigger", "doTarget", options);
-	}).then(() => {
-		// Fetch
-		if (Util.safeGet(options, "autoFetch", this.settings.get("setting.autoFetch")))
-		{
-			return this.fetch(options);
-		}
-	}).then(() => {
-		// Fill
-		if (Util.safeGet(options, "autoFill", this.settings.get("setting.autoFill")))
-		{
-			return this.fill(options);
-		}
-	}).then(() => {
-		return this.skills.use("event.trigger", "doRefresh", options);
-	}).then(() => {
-		console.debug(`Component.refresh(): Refreshed component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "afterRefresh", options);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Fetch data.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.fetch = function(options)
-{
-
-	options = options || {};
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.fetch(): Fetching data. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "beforeFetch", options);
-	}).then(() => {
-		return this.skills.use("event.trigger", "doFetch", options);
-	}).then(() => {
-		return this.skills.use("event.trigger", "afterFetch", options);
-	}).then(() => {
-		console.debug(`Component.fetch(): Fetched data. name=${this._name}, uniqueId=${this._uniqueId}`);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Fill component.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.fill = function(options)
-{
-
-	options = options || {};
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.fill(): Filling with data. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "beforeFill", options);
-	}).then(() => {
-		return this.skills.use("event.trigger", "doFill", options);
-	}).then(() => {
-		console.debug(`Component.fill(): Filled with data. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "afterFill", options);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Clear component.
- *
- * @param	{Object}		options				Options.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype.clear = function(options)
-{
-
-	options = options || {};
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component.clear(): Clearing the component. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "beforeClear", options);
-	}).then(() => {
-		return this.skills.use("event.trigger", "doClear", options);
-	}).then(() => {
-		console.debug(`Component.clear(): Cleared the component. name=${this._name}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("event.trigger", "afterClear", options);
 	});
 
 }
