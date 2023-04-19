@@ -186,8 +186,9 @@ Component.prototype.start = function(settings)
 			"useGlobalSettings":	true,
 		},
 		"perk": {
-//			"PerkPerk":			{"setting":{"attach":true}},	// Attach manually
+//			"BasicPerk":		{"setting":{"attach":true}},	// Attach manually
 //			"SettingPerk":		{"setting":{"attach":true}},	// Attach manually
+			"PerkPerk":			{"setting":{"attach":true}},
 			"StatePerk":		{"setting":{"attach":true}},
 			"EventPerk":		{"setting":{"attach":true}},
 			"SkinPerk":			{"setting":{"attach":true}},
@@ -198,9 +199,6 @@ Component.prototype.start = function(settings)
 
 	return Promise.resolve().then(() => {
 		return BITSMIST.v1.BasicPerk.init(this, PerkPerk);
-	}).then(() => {
-		return PerkPerk.init(this, PerkPerk);
-	//	return PerkPerk.attach(this, PerkPerk);
 	}).then(() => {
 		return this._injectSettings(settings);
 	}).then((newSettings) => {
