@@ -205,7 +205,7 @@ export default class SkinPerk extends Perk
 	{
 
 		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("skin.load", function(...args) { return SkinPerk._loadSkin(...args); });
+		BITSMIST.v1.Component.skills.set("skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
 		BITSMIST.v1.Component.skills.set("skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
 		BITSMIST.v1.Component.skills.set("skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
 
