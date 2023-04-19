@@ -140,9 +140,6 @@ export default class PerkPerk extends Perk
 		});
 
 		// Init Component vars (static)
-		BITSMIST.v1.Component._stats = new ChainableStore();
-		BITSMIST.v1.Component._vault = new ChainableStore();
-		BITSMIST.v1.Component._inventory = new ChainableStore();
 		BITSMIST.v1.Component._skills = new ChainableStore();
 
 		// Add properties to Component
@@ -171,8 +168,9 @@ export default class PerkPerk extends Perk
 	{
 
 		// Init component vars
-		component._stats = new ChainableStore({"chain":BITSMIST.v1.Component._stats});
-		component._inventory= new ChainableStore({"chain":BITSMIST.v1.Component._inventory});
+		component._stats = new ChainableStore();
+		component._vault = new ChainableStore();
+		component._inventory= new ChainableStore();
 		component._skills = new ChainableStore({"chain":BITSMIST.v1.Component._skills});
 		component._skills.use = function(perkName, ...args) {
 			let func = this.skills.get(perkName);
