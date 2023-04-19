@@ -158,7 +158,7 @@ export default class SkinPerk extends Perk
 	static SkinPerk_onDoTransform(sender, e, ex)
 	{
 
-		if (this.settings.get("skin.settings.hasSkin", true))
+		if (this.settings.get("skin.options.hasSkin", true))
 		{
 			let skinName = SkinPerk.__getSkinName(this);
 
@@ -294,7 +294,7 @@ export default class SkinPerk extends Perk
 	static __getSkinName(component)
 	{
 
-		let skinName = component.settings.get("skin.settings.fileName",
+		let skinName = component.settings.get("skin.options.fileName",
 			component.settings.get("setting.fileName",
 				component.tagName.toLowerCase()));
 
@@ -316,7 +316,7 @@ export default class SkinPerk extends Perk
 
 		let ret = false;
 
-		if (component.hasAttribute("bm-skinref") || component.settings.get("skin.settings.skinRef"))
+		if (component.hasAttribute("bm-skinref") || component.settings.get("skin.options.skinRef"))
 		{
 			ret = true;
 		}
@@ -345,7 +345,7 @@ export default class SkinPerk extends Perk
 		let loadOptions;
 		let skinRef = ( component.hasAttribute("bm-skinref") ?
 			component.getAttribute("bm-skinref") || true :
-			component.settings.get("skin.settings.skinRef")
+			component.settings.get("skin.options.skinRef")
 		);
 
 		if (skinRef && skinRef !== true)
