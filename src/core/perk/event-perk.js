@@ -39,7 +39,7 @@ export default class EventPerk extends Perk
 
 		// Get handler
 		let handler = EventPerk._getEventHandler(component, handlerInfo);
-		Util.assert(handler, `EventPerk._addEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
+		Util.assert(handler, `EventPerk._addEventHandler(): handler not found. name=${component.tagName}, eventName=${eventName}`);
 
 		// Init holder object for the element
 		if (!element.__bm_eventinfo)
@@ -86,7 +86,7 @@ export default class EventPerk extends Perk
 
 		// Get handler
 		let handler = EventPerk._getEventHandler(component, handlerInfo);
-		Util.assert(handler, `EventPerk._removeEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
+		Util.assert(handler, `EventPerk._removeEventHandler(): handler not found. name=${component.tagName}, eventName=${eventName}`);
 
 		let listeners = Util.safeGet(element, `__bm_eventinfo.listeners.${eventName}`);
 		if (listeners)
@@ -121,7 +121,7 @@ export default class EventPerk extends Perk
 
 		// Get target elements
 		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
-		//Util.assert(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
+		//Util.assert(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${component.tagName}, elementName=${elementName}`, TypeError);
 
 		// Set event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -513,7 +513,7 @@ export default class EventPerk extends Perk
 				// Get the handler
 				let handler = listeners[i]["handler"];
 				handler = ( typeof handler === "string" ? component[handler] : handler );
-				Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
+				Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${component.tagName}, eventName=${e.type}`, TypeError);
 
 				// Execute the handler
 				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
@@ -558,7 +558,7 @@ export default class EventPerk extends Perk
 			// Get the handler
 			let handler = listeners[i]["handler"];
 			handler = ( typeof handler === "string" ? component[handler] : handler );
-			Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
+			Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${component.tagName}, eventName=${e.type}`, TypeError);
 
 			// Execute handler
 			let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );

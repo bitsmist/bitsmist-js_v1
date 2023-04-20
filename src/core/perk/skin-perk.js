@@ -87,13 +87,13 @@ export default class SkinPerk extends Perk
 
 		if (component.stats.get("skin.activeSkinName") === skinName)
 		{
-			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`);
+			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return Promise.resolve();
 		}
 
 		let skinInfo = component.inventory.get(`skin.skins.${skinName}`);
 
-		Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
+		Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
 
 		if (skinInfo["node"])
 		{
@@ -110,7 +110,7 @@ export default class SkinPerk extends Perk
 		// Change active skin
 		component.stats.set("skin.activeSkinName", skinName);
 
-		console.debug(`SkinPerk._applySkin(): Applied skin. name=${component.name}, skinName=${skinInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
+		console.debug(`SkinPerk._applySkin(): Applied skin. name=${component.tagName}, skinName=${skinInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
 
 	}
 
@@ -130,7 +130,7 @@ export default class SkinPerk extends Perk
 		skinName = skinName || component.settings.get("setting.skinName");
 		let skinInfo = component.inventory.get(`skin.skins.${skinName}`);
 
-		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${component.name}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
+		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
 
 		let clone;
 		if (skinInfo["node"])

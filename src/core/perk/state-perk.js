@@ -34,7 +34,7 @@ export default class StatePerk extends Perk
 	static _changeState(component, state)
 	{
 
-		Util.assert(StatePerk.__isTransitionable(component.stats.get("state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.name}, fromState=${component.stats.get("state.state")}, toState=${state}, id=${component.id}`, Error);
+		Util.assert(StatePerk.__isTransitionable(component.stats.get("state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.tagName}, fromState=${component.stats.get("state.state")}, toState=${state}, id=${component.id}`, Error);
 
 		component.stats.set("state.state", state);
 		BITSMIST.v1.Origin.report.set(`components.${component.uniqueId}`, {"object":component, "state":state});

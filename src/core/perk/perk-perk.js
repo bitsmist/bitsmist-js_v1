@@ -183,7 +183,7 @@ export default class PerkPerk extends Perk
 		if (perks)
 		{
 			Object.keys(perks).forEach((perkName) => {
-				Util.assert(BITSMIST.v1.Origin.report.get(`perks.${perkName}`), `PerkPerk.__listNewPerk(): Perk not found. name=${component.name}, perkName=${perkName}`);
+				Util.assert(BITSMIST.v1.Origin.report.get(`perks.${perkName}`), `PerkPerk.__listNewPerk(): Perk not found. name=${component.tagName}, perkName=${perkName}`);
 				if (Util.safeGet(perks[perkName], "setting.attach") && !component.inventory.get(`perk.perks.${perkName}`))
 				{
 					targets[perkName] = BITSMIST.v1.Origin.report.get(`perks.${perkName}`);

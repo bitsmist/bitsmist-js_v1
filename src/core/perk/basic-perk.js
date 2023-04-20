@@ -39,7 +39,7 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._transform(): Transforming. name=${component.name}, id=${component.id}, uniqueId=${component.uniqueId}`);
+			console.debug(`BasicPerk._transform(): Transforming. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return component.skills.use("event.trigger", "beforeTransform", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "doTransform", options);
@@ -53,7 +53,7 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			return component.skills.use("component.materializeAll", component.rootElement);
 		}).then(() => {
-			console.debug(`BasicPerk._transform(): Transformed. name=${component.name}, id=${component.id}, uniqueId=${component.uniqueId}`);
+			console.debug(`BasicPerk._transform(): Transformed. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return component.skills.use("event.trigger", "afterTransform", options);
 		});
 
@@ -283,7 +283,7 @@ export default class BasicPerk extends Perk
 		component._skills = new ChainableStore({"chain":BITSMIST.v1.Component.skills});
 		component._skills.use = function(perkName, ...args) {
 			let func = this.skills.get(perkName);
-			Util.assert(func, `Skill is not available. name=${this.name}, skillName=${perkName}`);
+			Util.assert(func, `Skill is not available. name=${component.tagName}, skillName=${perkName}`);
 
 			return this.skills.get(perkName)(this, ...args);
 		}.bind(component);
