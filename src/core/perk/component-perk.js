@@ -45,9 +45,8 @@ export default class ComponentPerk extends Perk
 		// Load tags that has bm-autoload/bm-automorph attribute
 		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
 		targets.forEach((element) => {
-			let tagName = element.tagName.toLowerCase();
 			let settings = this._loadAttrSettings(element);
-			if (ComponentPerk.__hasExternalClass(tagName, settings))
+			if (ComponentPerk.__hasExternalClass(element.tagName, settings))
 			{
 				// Load the tag
 				element.setAttribute("bm-autoloading", "");
@@ -55,7 +54,7 @@ export default class ComponentPerk extends Perk
 				element._injectSettings = function(curSettings){
 					return Util.deepMerge(curSettings, settings);
 				};
-				promises.push(ComponentPerk.__loadExternalClass(tagName, settings).then(() => {
+				promises.push(ComponentPerk.__loadExternalClass(element.tagName, settings).then(() => {
 					element.removeAttribute("bm-autoloading");
 				}));
 			}
@@ -77,32 +76,33 @@ export default class ComponentPerk extends Perk
 	 * Load the component and add to parent component.
 	 *
 	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		componentName		Component name.
+	 * @param	{String}		tagName				Component tag name.
 	 * @param	{Object}		settings			Settings for the component.
 	 * @param	{Object}		loadOptions			Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadComponent(component, componentName, settings, loadOptions)
+	static _loadComponent(component, tagName, settings, loadOptions)
 	{
 
-		console.debug(`ComponentPerk._loadComponent(): Adding the component. name=${component.name}, componentName=${componentName}`);
+		console.debug(`ComponentPerk._loadComponent(): Adding the component. name=${component.tagName}, tagName=${tagName}`);
 
-		// Get the tag name
-		let tagName;
+		// Already loaded
+		if (component.inventory.get(`component.components.${tagName}`))
+		{
+			console.debug(`ComponentPerk._loadComponent(): Already loaded. name=${component.tagName}, tagName=${tagName}`);
+			return component.inventory.get(`component.components.${tagName}`); 
+		}
+
+		// Get the tag name from settings if specified
 		let tag = Util.safeGet(settings, "setting.tag");
 		if (tag)
 		{
 			let pattern = /([\w-]+)\s+\w+.*?>/;
 			tagName = tag.match(pattern)[1];
 		}
-		else
-		{
-			tagName = Util.safeGet(settings, "setting.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
-		}
 
 		let addedComponent;
-
 		return Promise.resolve().then(() => {
 			// Load the class
 			if (ComponentPerk.__hasExternalClass(tagName, settings))
@@ -110,12 +110,8 @@ export default class ComponentPerk extends Perk
 				return ComponentPerk.__loadExternalClass(tagName, settings);
 			}
 		}).then(() => {
-			// Insert tag
-			if (!component.inventory.get(`component.components.${componentName}`))
-			{
-				addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
-				component.inventory.set(`component.components.${componentName}`, addedComponent);
-			}
+			addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
+			component.inventory.set(`component.components.${tagName}`, addedComponent);
 		}).then(() => {
 			// Wait for the added component to be ready
 			let sync = Util.safeGet(loadOptions, "syncOnAdd", Util.safeGet(settings, "setting.syncOnAdd"));
@@ -124,7 +120,7 @@ export default class ComponentPerk extends Perk
 				let state = (sync === true ? "ready" : sync);
 
 				return component.skills.use("state.wait", [{
-					"id":		component.inventory.get(`component.components.${componentName}`).uniqueId,
+					"id":		component.inventory.get(`component.components.${tagName}`).uniqueId,
 					"state":	state
 				}]);
 			}
@@ -258,6 +254,7 @@ export default class ComponentPerk extends Perk
 		console.debug(`ComponentPerk._loadClass(): Loading the class. tagName=${tagName}`);
 
 		loadOptions = loadOptions || {};
+		tagName = tagName.toLowerCase();
 
 		// Class name
 		let className = Util.safeGet(settings, "setting.className", Util.getClassNameFromTagName(tagName));
@@ -276,7 +273,7 @@ export default class ComponentPerk extends Perk
 		);
 
 		// Load the class
-		let fileName = Util.safeGet(settings, "setting.fileName", tagName.toLowerCase());
+		let fileName = Util.safeGet(settings, "setting.fileName", tagName);
 		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "setting.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
 		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "setting.query"), "");
 
@@ -509,7 +506,7 @@ export default class ComponentPerk extends Perk
 			root = component;
 		}
 
-		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "setting.parentNode")}`, ReferenceError);
+		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.tagName}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "setting.parentNode")}`, ReferenceError);
 
 		// Build tag
 		let tag = ( Util.safeGet(settings, "setting.tag") ? Util.safeGet(settings, "setting.tag") : `<${tagName}></${tagName}>` );
