@@ -116,7 +116,34 @@ export default class SettingPerk extends Perk
 	static init(component, options)
 	{
 
-		let settings = options["settings"] || {};
+		// Defaults
+		let defaults = {
+			"setting": {
+				"autoClear":			true,
+				"autoFetch":			true,
+				"autoFill":				true,
+				"autoRefresh":			true,
+				"autoRestart":			false,
+				"autoSetup":			true,
+				"autoStop":				true,
+				"autoTransform":		true,
+				"useGlobalSettings":	true,
+			},
+			"perk": {
+	//			"BasicPerk":		{"setting":{"attach":true}},	// Attach manually
+	//			"SettingPerk":		{"setting":{"attach":true}},	// Attach manually
+				"PerkPerk":			{"setting":{"attach":true}},
+				"StatePerk":		{"setting":{"attach":true}},
+				"EventPerk":		{"setting":{"attach":true}},
+				"SkinPerk":			{"setting":{"attach":true}},
+				"ComponentPerk":	{"setting":{"attach":true}},
+			}
+		};
+
+		let settings = (options && options["settings"]) || {};
+		settings = Util.deepMerge(defaults, settings);
+		settings = SettingPerk._injectSettings(component, settings);
+		settings = SettingPerk.__mergeSettings(component, settings);
 
 		// Init component vars
 		component._settings = new ChainableStore({"items":settings});
@@ -291,5 +318,82 @@ export default class SettingPerk extends Perk
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Inject settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Object}		New settings.
+	 */
+	static _injectSettings(component, settings)
+	{
+
+		if (typeof(component._injectSettings) === "function")
+		{
+			settings = component._injectSettings(settings);
+		}
+
+		return settings;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get component settings. Need to override.
+	 *
+	 * @param	{Component}		component			Component.
+	 *
+	 * @return  {Object}		Options.
+	 */
+	static _getSettings(component)
+	{
+
+		return {};
+
+	}
+
+	// -----------------------------------------------------------------------------
+	//  Privates
+	// -----------------------------------------------------------------------------
+
+	/**
+ 	 * Inject settings.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Object}		New settings.
+	 */
+	static __mergeSettings(component, settings)
+	{
+
+		let curComponent = Object.getPrototypeOf(component);
+		let curSettings = {};
+		let parentSettings;
+
+		// Merge superclass settings
+		while (typeof(Object.getPrototypeOf(curComponent)._getSettings) === "function")
+		{
+			parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
+			if (Object.keys(parentSettings).length > 0)
+			{
+				Util.deepMerge(parentSettings, curSettings);
+				curSettings = parentSettings;
+			}
+
+			curComponent= Object.getPrototypeOf(curComponent);
+		}
+		Util.deepMerge(settings, curSettings);
+
+		// Merge component settings
+		Util.deepMerge(settings, component._getSettings());
+
+		return settings;
+
+	}
 
 }

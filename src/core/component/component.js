@@ -9,8 +9,6 @@
 // =============================================================================
 
 import ClassUtil from "../util/class-util.js";
-import PerkPerk from "../perk/perk-perk.js";
-import SettingPerk from "../perk/setting-perk.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -169,42 +167,13 @@ Object.defineProperty(Component.prototype, 'rootElement', {
  *
  * @return  {Promise}		Promise.
  */
-Component.prototype._start = function(settings)
+Component.prototype._start = function(options)
 {
 
-	// Defaults
-	let defaults = {
-		"setting": {
-			"autoClear":			true,
-			"autoFetch":			true,
-			"autoFill":				true,
-			"autoRefresh":			true,
-			"autoRestart":			false,
-			"autoSetup":			true,
-			"autoStop":				true,
-			"autoTransform":		true,
-			"useGlobalSettings":	true,
-		},
-		"perk": {
-//			"BasicPerk":		{"setting":{"attach":true}},	// Attach manually
-//			"SettingPerk":		{"setting":{"attach":true}},	// Attach manually
-			"PerkPerk":			{"setting":{"attach":true}},
-			"StatePerk":		{"setting":{"attach":true}},
-			"EventPerk":		{"setting":{"attach":true}},
-			"SkinPerk":			{"setting":{"attach":true}},
-			"ComponentPerk":	{"setting":{"attach":true}},
-		}
-	};
-	settings = Util.deepMerge(defaults, settings);
-
 	return Promise.resolve().then(() => {
-		return BITSMIST.v1.BasicPerk.init(this, PerkPerk);
+		return BITSMIST.v1.BasicPerk.init(this);
 	}).then(() => {
-		return this._injectSettings(settings);
-	}).then((newSettings) => {
-		return this.__mergeSettings(newSettings);
-	}).then((newSettings) => {
-		return this.skills.use("perk.attach", SettingPerk, {"settings":newSettings});
+		return this.skills.use("perk.attach", BITSMIST.v1.SettingPerk, options);
 	}).then(() => {
 		return this.skills.use("event.trigger", "beforeStart");
 	}).then(() => {
@@ -285,72 +254,5 @@ Component.prototype._scopedSelectorAll = function(query)
 }
 
 // -----------------------------------------------------------------------------
-
-/**
- * Inject settings.
- *
- * @param	{Object}		settings			Settings.
- *
- * @return  {Object}		New settings.
- */
-Component.prototype._injectSettings = function(settings)
-{
-
-	return settings;
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Get component settings. Need to override.
- *
- * @return  {Object}		Options.
- */
-Component.prototype._getSettings = function()
-{
-
-	return {};
-
-}
-
-// -----------------------------------------------------------------------------
-//  Privates
-// -----------------------------------------------------------------------------
-
-/**
- * Inject settings.
- *
- * @param	{Object}		settings			Settings.
- *
- * @return  {Object}		New settings.
- */
-Component.prototype.__mergeSettings = function(settings)
-{
-
-	let curComponent = Object.getPrototypeOf(this);
-	let curSettings = {};
-	let parentSettings;
-
-	// Merge superclass settings
-	while (typeof(Object.getPrototypeOf(curComponent)._getSettings) === "function")
-	{
-		parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
-		if (Object.keys(parentSettings).length > 0)
-		{
-			Util.deepMerge(parentSettings, curSettings);
-			curSettings = parentSettings;
-		}
-
-		curComponent= Object.getPrototypeOf(curComponent);
-	}
-	Util.deepMerge(settings, curSettings);
-
-	// Merge this settings
-	Util.deepMerge(settings, this._getSettings());
-
-	return settings;
-
-}
 
 customElements.define("bm-component", Component);
