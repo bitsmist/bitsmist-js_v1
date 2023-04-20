@@ -60,17 +60,6 @@ export default class SettingPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static SettingPerk_onDoOrganize(sender, e, ex)
-	{
-
-		this._rootElement = Util.safeGet(e.detail.settings, "setting.rootElement", this._rootElement);
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Setter/Getter
 	// -------------------------------------------------------------------------
 
@@ -137,9 +126,6 @@ export default class SettingPerk extends Perk
 
 		// Init component vars
 		component._settings = new ChainableStore({"items":settings});
-
-		// Add event handlers to component
-		this._addPerkHandler(component, "doOrganize", SettingPerk.SettingPerk_onDoOrganize);
 
 		// Chain global settings
 		if (component._settings.get("setting.useGlobalSettings"))

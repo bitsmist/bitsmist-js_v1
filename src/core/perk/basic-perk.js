@@ -51,7 +51,7 @@ export default class BasicPerk extends Perk
 				return component.skills.use("basic.setup", options);
 			}
 		}).then(() => {
-			return component.skills.use("component.materializeAll", component.rootElement);
+			return component.skills.use("component.materializeAll", component);
 		}).then(() => {
 			console.debug(`BasicPerk._transform(): Transformed. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return component.skills.use("event.trigger", "afterTransform", options);

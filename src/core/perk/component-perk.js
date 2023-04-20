@@ -491,7 +491,7 @@ export default class ComponentPerk extends Perk
 		// Check root node
 		if (Util.safeGet(settings, "setting.parentNode"))
 		{
-			root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "setting.parentNode"), {"penetrate":true})[0];
+			root = document.querySelector(Util.safeGet(settings, "setting.parentNode"));
 		}
 		else
 		{
