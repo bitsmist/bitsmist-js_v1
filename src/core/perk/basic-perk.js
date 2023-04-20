@@ -75,12 +75,12 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._setup(): Setting up component. name=${component._name}, state=${component.state}, id=${component.id}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._setup(): Setting up component. name=${component.tagName}, state=${component.state}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "beforeSetup", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "doSetup", options);
 		}).then(() => {
-			console.debug(`BasicPerk._setup(): Set up component. name=${component._name}, state=${component.state}, id=${component.id}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._setup(): Set up component. name=${component.tagName}, state=${component.state}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "afterSetup", options);
 		});
 
@@ -102,7 +102,7 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._refresh(): Refreshing component. name=${component._name}, id=${component.id}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._refresh(): Refreshing component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "beforeRefresh", options);
 		}).then(() => {
 			let autoClear = Util.safeGet(options, "autoClear", component.settings.get("setting.autoClear"));
@@ -127,7 +127,7 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			return component.skills.use("event.trigger", "doRefresh", options);
 		}).then(() => {
-			console.debug(`BasicPerk._refresh(): Refreshed component. name=${component._name}, id=${component.id}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._refresh(): Refreshed component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "afterRefresh", options);
 		});
 
@@ -149,14 +149,14 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._fetch(): Fetching data. name=${component._name}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._fetch(): Fetching data. name=${component.tagName}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "beforeFetch", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "doFetch", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "afterFetch", options);
 		}).then(() => {
-			console.debug(`BasicPerk._fetch(): Fetched data. name=${component._name}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._fetch(): Fetched data. name=${component.tagName}, uniqueId=${component._uniqueId}`);
 		});
 
 	}
@@ -177,12 +177,12 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._fill(): Filling with data. name=${component._name}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._fill(): Filling with data. name=${component.tagName}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "beforeFill", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "doFill", options);
 		}).then(() => {
-			console.debug(`BasicPerk._fill(): Filled with data. name=${component._name}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._fill(): Filled with data. name=${component.tagName}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "afterFill", options);
 		});
 
@@ -204,12 +204,12 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._clear(): Clearing the component. name=${component._name}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._clear(): Clearing the component. name=${component.tagName}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "beforeClear", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "doClear", options);
 		}).then(() => {
-			console.debug(`BasicPerk._clear(): Cleared the component. name=${component._name}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._clear(): Cleared the component. name=${component.tagName}, uniqueId=${component._uniqueId}`);
 			return component.skills.use("event.trigger", "afterClear", options);
 		});
 
