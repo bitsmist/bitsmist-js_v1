@@ -38,7 +38,7 @@ export default class EventPerk extends Perk
 		let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 		// Get handler
-		let handler = EventPerk._getEventHandler(component, handlerInfo);
+		let handler = EventPerk.__getEventHandler(component, handlerInfo);
 		Util.assert(handler, `EventPerk._addEventHandler(): handler not found. name=${component.tagName}, eventName=${eventName}`);
 
 		// Init holder object for the element
@@ -85,7 +85,7 @@ export default class EventPerk extends Perk
 		element = element || component;
 
 		// Get handler
-		let handler = EventPerk._getEventHandler(component, handlerInfo);
+		let handler = EventPerk.__getEventHandler(component, handlerInfo);
 		Util.assert(handler, `EventPerk._removeEventHandler(): handler not found. name=${component.tagName}, eventName=${eventName}`);
 
 		let listeners = Util.safeGet(element, `__bm_eventinfo.listeners.${eventName}`);
@@ -309,7 +309,7 @@ export default class EventPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Protected
+	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
@@ -318,7 +318,7 @@ export default class EventPerk extends Perk
 	 * @param	{Component}		component				Component.
 	 * @param	{Object/Function/String}	handlerInfo	Handler info.
 	 */
-	static _getEventHandler(component, handlerInfo)
+	static __getEventHandler(component, handlerInfo)
 	{
 
 		let handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
@@ -327,8 +327,6 @@ export default class EventPerk extends Perk
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
