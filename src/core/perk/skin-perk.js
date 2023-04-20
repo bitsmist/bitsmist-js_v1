@@ -232,7 +232,7 @@ export default class SkinPerk extends Perk
 	static loadFile(fileName, path, loadOptions)
 	{
 
-		//console.debug(`SkinPerk.loadFile(): Loading the skin file. fileName=${fileName}, path=${path}`);
+		console.debug(`SkinPerk.loadFile(): Loading the skin file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
 		let url = `${Util.concatPath([path, fileName])}.html` + (query ? `?${query}` : "");
