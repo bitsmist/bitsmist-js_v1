@@ -51,7 +51,7 @@ export default class BasicPerk extends Perk
 				return component.skills.use("basic.setup", options);
 			}
 		}).then(() => {
-			return component.skills.use("component.loadTags", component.rootElement);
+			return component.skills.use("component.materializeAll", component.rootElement);
 		}).then(() => {
 			console.debug(`BasicPerk._transform(): Transformed. name=${component.name}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return component.skills.use("event.trigger", "afterTransform", options);
@@ -245,37 +245,29 @@ export default class BasicPerk extends Perk
 	static globalInit()
 	{
 
-		// Add properties to Component (static)
-		Object.defineProperty(BITSMIST.v1.Component, "stats", {
-			get() { return BITSMIST.v1.Component._stats; },
-		});
-		Object.defineProperty(BITSMIST.v1.Component, "valut", {
-			get() { return BITSMIST.v1.Component._vault; },
-		});
-		Object.defineProperty(BITSMIST.v1.Component, "inventory", {
-			get() { return BITSMIST.v1.Component._inventory; },
-		});
-		Object.defineProperty(BITSMIST.v1.Component, "skills", {
-			get() { return BITSMIST.v1.Component._skills; },
-		});
-		Object.defineProperty(BITSMIST.v1.Component, "settings", {
-			get() { return BITSMIST.v1.Component._settings; },
-		});
-
-		// Init Component vars (static)
-		BITSMIST.v1.Component._stats = new ChainableStore();
-		BITSMIST.v1.Component._vault = new ChainableStore();
-		BITSMIST.v1.Component._inventory = new ChainableStore();
-		BITSMIST.v1.Component._skills = new ChainableStore();
-		BITSMIST.v1.Component._settings = new ChainableStore();
-
-		// Add skills to Component
+		// Add skills to Component (static)
 		BITSMIST.v1.Component.skills.set("basic.transform", function(...args) { return BasicPerk._transform(...args); });
 		BITSMIST.v1.Component.skills.set("basic.setup", function(...args) { return BasicPerk._setup(...args); });
 		BITSMIST.v1.Component.skills.set("basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
 		BITSMIST.v1.Component.skills.set("basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
 		BITSMIST.v1.Component.skills.set("basic.fill", function(...args) { return BasicPerk._fill(...args); });
 		BITSMIST.v1.Component.skills.set("basic.clear", function(...args) { return BasicPerk._clear(...args); });
+
+		// Add properties to Component
+		Object.defineProperty(BITSMIST.v1.Component.prototype, "stats", {
+			get() { return this._stats; },
+		});
+		Object.defineProperty(BITSMIST.v1.Component.prototype, "vault", {
+			get() { return this._vault; },
+		});
+		Object.defineProperty(BITSMIST.v1.Component.prototype, "inventory", {
+			get() { return this._inventory; },
+		});
+		Object.defineProperty(BITSMIST.v1.Component.prototype, "skills", {
+			get() { return this._skills; },
+		});
+
+
 
 	}
 

@@ -30,19 +30,22 @@ window.BITSMIST.v1.Store = Store;
 import ChainableStore from "./store/chainable-store.js";
 window.BITSMIST.v1.ChainableStore = ChainableStore;
 
-// Global Settings
-
-window.BITSMIST.v1.settings = new ChainableStore();
-
 // Component
 
 import Component from "./component/component.js";
 window.BITSMIST.v1.Component = Component;
+window.BITSMIST.v1.Origin = Component;
 
 // Perk
 
 import Perk from "./perk/perk.js";
 window.BITSMIST.v1.Perk = Perk;
+
+import OriginPerk from "./perk/origin-perk.js";
+window.BITSMIST.v1.OriginPerk = OriginPerk;
+//PerkPerk.register(OriginPerk);
+OriginPerk.globalInit();
+window.BITSMIST.v1.settings = Component.settings;
 
 import BasicPerk from "./perk/basic-perk.js";
 window.BITSMIST.v1.BasicPerk = BasicPerk;
@@ -71,20 +74,3 @@ PerkPerk.register(EventPerk);
 import ComponentPerk from "./perk/component-perk.js";
 window.BITSMIST.v1.ComponentPerk = ComponentPerk;
 PerkPerk.register(ComponentPerk);
-
-// Global promises
-
-BITSMIST.v1.promises = {};
-BITSMIST.v1.promises.documentReady = new Promise((resolve, reject) => {
-	if ((document.readyState === "interactive" || document.readyState === "complete"))
-	{
-		resolve();
-	}
-	else
-	{
-		document.addEventListener("DOMContentLoaded", () => {
-			resolve();
-		});
-	}
-});
-

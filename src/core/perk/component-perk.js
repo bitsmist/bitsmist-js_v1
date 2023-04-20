@@ -186,20 +186,10 @@ export default class ComponentPerk extends Perk
 	static globalInit()
 	{
 
-		// Init vars
-		ComponentPerk.__classes = new Store();
-
 		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("component.loadTags", function(...args) { return ComponentPerk._loadTags(...args); });
-		BITSMIST.v1.Component.skills.set("component.load", function(...args) { return ComponentPerk._loadComponent(...args); });
-
-		// Load tags on DOMContentLoaded event
-		document.addEventListener("DOMContentLoaded", () => {
-			if (BITSMIST.v1.settings.get("system.autoLoadOnStartup", true))
-			{
-				ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
-			}
-		});
+		BITSMIST.v1.Component.skills.set("component.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
+		BITSMIST.v1.Component.skills.set("component.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
+		BITSMIST.v1.Component.skills.set("component.summon", function(...args) { return ComponentPerk._loadClass(...args); });
 
 	}
 
@@ -470,23 +460,23 @@ export default class ComponentPerk extends Perk
 		{
 			// Already loaded
 			console.debug(`ComponentPerk.__autoLoadClass(): Component Already exists. className=${className}`);
-			ComponentPerk.__classes.set(`${className}.state`, "loaded");
+			BITSMIST.v1.Origin.report.set(`classes.${className}.state`, "loaded");
 			promise = Promise.resolve();
 		}
-		else if (ComponentPerk.__classes.get(className, {})["state"] === "loading")
+		else if (BITSMIST.v1.Origin.report.get(`classes.${className}`, {})["state"] === "loading")
 		{
 			// Already loading
 			console.debug(`ComponentPerk.__autoLoadClass(): Component Already loading. className=${className}`);
-			promise = ComponentPerk.__classes.get(className)["promise"];
+			promise = BITSMIST.v1.Origin.report.get(`classes.${className}.promise`);
 		}
 		else
 		{
 			// Not loaded
-			ComponentPerk.__classes.set(`${className}.state`, "loading");
+			BITSMIST.v1.Origin.report.set(`classes.${className}.state`, "loading");
 			promise = ComponentPerk.loadFile(fileName, path, loadOptions).then(() => {
-				ComponentPerk.__classes.set(className, {"state":"loaded", "promise":null});
+				BITSMIST.v1.Origin.report.set(`classes.${className}`, {"state":"loaded", "promise":null});
 			});
-			ComponentPerk.__classes.set(`${className}.promise`, promise);
+			BITSMIST.v1.Origin.report.set(`classes.${className}.promise`, promise);
 		}
 
 		return promise;
@@ -602,7 +592,7 @@ export default class ComponentPerk extends Perk
 
 		let ret = false;
 
-		if (ComponentPerk.__classes.get(className, {})["state"] === "loaded")
+		if (BITSMIST.v1.Origin.report.get(`classes.${className}`, {})["state"] === "loaded")
 		{
 			ret = true;
 		}
