@@ -45,7 +45,7 @@ export default class ComponentPerk extends Perk
 		// Load tags that has bm-autoload/bm-automorph attribute
 		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
 		targets.forEach((element) => {
-			let settings = this._loadAttrSettings(element);
+			let settings = this.__loadAttrSettings(element);
 			if (ComponentPerk.__hasExternalClass(element.tagName, settings))
 			{
 				// Load the tag
@@ -288,7 +288,7 @@ export default class ComponentPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Protected
+	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
@@ -296,7 +296,7 @@ export default class ComponentPerk extends Perk
 	 *
 	 * @param	{Component}		component			Component.
 	 */
-	static _loadAttrSettings(element)
+	static __loadAttrSettings(element)
 	{
 
 		let settings = {
@@ -351,8 +351,6 @@ export default class ComponentPerk extends Perk
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**

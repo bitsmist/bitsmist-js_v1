@@ -141,7 +141,7 @@ export default class SettingPerk extends Perk
 			}
 		}).then(() => {
 			// Load settings from attributes
-			SettingPerk._loadAttrSettings(component);
+			SettingPerk.__loadAttrSettings(component);
 		}).then(() => {
 			return component.skills.use("perk.attachPerks", {"settings":component._settings.items});
 		}).then(() => {
@@ -208,7 +208,7 @@ export default class SettingPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Protected
+	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
@@ -216,7 +216,7 @@ export default class SettingPerk extends Perk
 	 *
 	 * @param	{Component}		component			Component.
 	 */
-	static _loadAttrSettings(component)
+	static __loadAttrSettings(component)
 	{
 
 		// Get settings from the attribute
@@ -234,8 +234,6 @@ export default class SettingPerk extends Perk
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**

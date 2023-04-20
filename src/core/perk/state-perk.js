@@ -232,7 +232,7 @@ export default class StatePerk extends Perk
 		this._addPerkHandler(component, "doOrganize", StatePerk.StatePerk_onDoOrganize);
 
 		// Load settings from attributes
-		StatePerk._loadAttrSettings(component);
+		StatePerk.__loadAttrSettings(component);
 
 	}
 
@@ -267,7 +267,7 @@ export default class StatePerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Protected
+	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
@@ -275,7 +275,7 @@ export default class StatePerk extends Perk
 	 *
 	 * @param	{Component}		component			Component.
 	 */
-	static _loadAttrSettings(component)
+	static __loadAttrSettings(component)
 	{
 
 		// Get waitFor from attribute
@@ -294,8 +294,6 @@ export default class StatePerk extends Perk
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
