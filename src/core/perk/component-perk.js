@@ -54,6 +54,7 @@ export default class ComponentPerk extends Perk
 				element._injectSettings = function(curSettings){
 					return Util.deepMerge(curSettings, settings);
 				};
+
 				promises.push(ComponentPerk.__loadExternalClass(element.tagName, settings).then(() => {
 					element.removeAttribute("bm-autoloading");
 				}));
@@ -91,7 +92,7 @@ export default class ComponentPerk extends Perk
 		if (component.inventory.get(`component.components.${tagName}`))
 		{
 			console.debug(`ComponentPerk._loadComponent(): Already loaded. name=${component.tagName}, tagName=${tagName}`);
-			return component.inventory.get(`component.components.${tagName}`); 
+			return component.inventory.get(`component.components.${tagName}`);
 		}
 
 		// Get the tag name from settings if specified
@@ -131,6 +132,66 @@ export default class ComponentPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the class.
+	 *
+	 * @param	{String}		tagName				Tag name.
+	 * @param	{Object}		settings			Component settings.
+	 * @param	{Object}		loadOptions			Load options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static _loadClass(tagName, settings, loadOptions)
+	{
+
+		console.debug(`ComponentPerk._loadClass(): Loading the class. tagName=${tagName}`);
+
+		loadOptions = loadOptions || {};
+		tagName = tagName.toLowerCase();
+
+		// Class name
+		let className = Util.safeGet(settings, "setting.className", Util.getClassNameFromTagName(tagName));
+
+		// Base class name (Used when morphing)
+		let baseClassName = Util.safeGet(settings, "setting.autoMorph", className );
+		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
+
+		// Path
+		let path = Util.safeGet(loadOptions, "path",
+			Util.concatPath([
+				Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+				Util.safeGet(settings, "system.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
+				Util.safeGet(settings, "setting.path", ""),
+			])
+		);
+
+		// Load the class
+		let fileName = Util.safeGet(settings, "setting.fileName", tagName);
+		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "setting.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
+		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "setting.query"), "");
+
+		return ComponentPerk.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
+			// Morphing
+			if (baseClassName !== className)
+			{
+				let superClass = ClassUtil.getClass(baseClassName);
+				ClassUtil.newComponent(className, settings, superClass, tagName);
+			}
+
+			// Define the tag
+			if (!customElements.get(tagName))
+			{
+				let classDef = ClassUtil.getClass(className);
+				Util.assert(classDef, `ComponentPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
+
+				customElements.define(tagName, classDef);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
@@ -154,15 +215,6 @@ export default class ComponentPerk extends Perk
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get name()
-	{
-
-		return "ComponentPerk";
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	static get info()
@@ -237,66 +289,6 @@ export default class ComponentPerk extends Perk
 
 	// -------------------------------------------------------------------------
 	//  Protected
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load the class.
-	 *
-	 * @param	{String}		tagName				Tag name.
-	 * @param	{Object}		settings			Component settings.
-	 * @param	{Object}		loadOptions			Load options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static _loadClass(tagName, settings, loadOptions)
-	{
-
-		console.debug(`ComponentPerk._loadClass(): Loading the class. tagName=${tagName}`);
-
-		loadOptions = loadOptions || {};
-		tagName = tagName.toLowerCase();
-
-		// Class name
-		let className = Util.safeGet(settings, "setting.className", Util.getClassNameFromTagName(tagName));
-
-		// Base class name (Used when morphing)
-		let baseClassName = Util.safeGet(settings, "setting.autoMorph", className );
-		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
-
-		// Path
-		let path = Util.safeGet(loadOptions, "path",
-			Util.concatPath([
-				Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
-				Util.safeGet(settings, "system.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
-				Util.safeGet(settings, "setting.path", ""),
-			])
-		);
-
-		// Load the class
-		let fileName = Util.safeGet(settings, "setting.fileName", tagName);
-		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "setting.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
-		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "setting.query"), "");
-
-		return ComponentPerk.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
-			// Morphing
-			if (baseClassName !== className)
-			{
-				let superClass = ClassUtil.getClass(baseClassName);
-				ClassUtil.newComponent(className, settings, superClass, tagName);
-			}
-
-			// Define the tag
-			if (!customElements.get(tagName))
-			{
-				let classDef = ClassUtil.getClass(className);
-				Util.assert(classDef, `ComponentPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
-
-				customElements.define(tagName, classDef);
-			}
-		});
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**

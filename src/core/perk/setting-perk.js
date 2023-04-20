@@ -66,22 +66,12 @@ export default class SettingPerk extends Perk
 	static SettingPerk_onDoOrganize(sender, e, ex)
 	{
 
-		this._name = Util.safeGet(e.detail.settings, "setting.name", this._name);
 		this._rootElement = Util.safeGet(e.detail.settings, "setting.rootElement", this._rootElement);
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get name()
-	{
-
-		return "SettingPerk";
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	static get info()
@@ -142,7 +132,7 @@ export default class SettingPerk extends Perk
 
 		let settings = (options && options["settings"]) || {};
 		settings = Util.deepMerge(defaults, settings);
-		settings = SettingPerk._injectSettings(component, settings);
+		settings = SettingPerk.__injectSettings(component, settings);
 		settings = SettingPerk.__mergeSettings(component, settings);
 
 		// Init component vars
@@ -328,7 +318,7 @@ export default class SettingPerk extends Perk
 	 *
 	 * @return  {Object}		New settings.
 	 */
-	static _injectSettings(component, settings)
+	static __injectSettings(component, settings)
 	{
 
 		if (typeof(component._injectSettings) === "function")
