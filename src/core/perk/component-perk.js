@@ -200,7 +200,7 @@ export default class ComponentPerk extends Perk
 
 		let chain = Promise.resolve();
 
-		Object.entries(this.settings.get("component.components", {})).forEach(([sectionName, sectionValue]) => {
+		Object.entries(Util.safeGet(e.detail, "settings.component.components", {})).forEach(([sectionName, sectionValue]) => {
 			chain = chain.then(() => {
 				if (!this.inventory.get(`component.components.${sectionName}`))
 				{

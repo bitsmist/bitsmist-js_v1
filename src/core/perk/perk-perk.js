@@ -52,7 +52,7 @@ export default class PerkPerk extends Perk
 	 * Attach a perk to the component.
 	 *
 	 * @param	{Component}		component			Component to be attached.
-	 * @param	{Perk}		perk			Perk to attach.
+	 * @param	{Perk}			perk				Perk to attach.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.

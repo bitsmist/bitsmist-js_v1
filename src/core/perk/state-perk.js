@@ -167,7 +167,7 @@ export default class StatePerk extends Perk
 	static StatePerk_onDoOrganize(sender, e, ex)
 	{
 
-		Object.entries(this.settings.get("state.waitFor", {})).forEach(([sectionName, sectionValue]) => {
+		Object.entries(Util.safeGet(e.detail, "settings.state.waitFor", {})).forEach(([sectionName, sectionValue]) => {
 			this.addEventHandler(sectionName, {"handler":StatePerk.StatePerk_onDoProcess, "options":sectionValue});
 		});
 

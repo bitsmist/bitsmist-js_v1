@@ -230,7 +230,7 @@ export default class EventPerk extends Perk
 	static EventPerk_onDoOrganize(sender, e, ex)
 	{
 
-		Object.entries(this.settings.get("event.events", {})).forEach(([sectionName, sectionValue]) => {
+		Object.entries(Util.safeGet(e.detail, "settings.event.events", {})).forEach(([sectionName, sectionValue]) => {
 			EventPerk._initEvents(this, sectionName, sectionValue);
 		});
 
