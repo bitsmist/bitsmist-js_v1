@@ -15,229 +15,199 @@ import Util from "../util/util.js";
 //	Component class
 // =============================================================================
 
-// -----------------------------------------------------------------------------
-//  Constructor
-// -----------------------------------------------------------------------------
-
-/**
- * Constructor.
- */
-export default function Component()
+export default class Component extends HTMLElement
 {
+	// -------------------------------------------------------------------------
+	//  Callbacks
+	// -------------------------------------------------------------------------
 
-	// super()
-	return Reflect.construct(HTMLElement, [], this.constructor);
-
-}
-
-ClassUtil.inherit(Component, HTMLElement);
-
-// -----------------------------------------------------------------------------
-//  Callbacks
-// -----------------------------------------------------------------------------
-
-/**
- * Connected callback.
- */
-Component.prototype.connectedCallback = function()
-{
-
-	// The first time only initialization
-	if (!this._ready)
+	/**
+	 * Connected callback.
+	 */
+	connectedCallback()
 	{
-		// Create a promise to prevent from start/stop while stopping/starting
-		this._ready = Promise.resolve();
 
-		this.setAttribute("bm-powered", "");
-		this._uniqueId = Util.getUUID();
-		this._rootElement = this;
+		// The first time only initialization
+		if (!this.__ready)
+		{
+			// Create a promise to prevent from start/stop while stopping/starting
+			this.__ready = Promise.resolve();
+
+			this.setAttribute("bm-powered", "");
+			this._uniqueId = Util.getUUID();
+		}
+
+		// Start
+		this.__ready = this.__ready.then(() => {
+			console.debug(`Component.connectedCallback(): Component is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			//return this.skills.use("state.change", "connected");
+		}).then(() => {
+			if (!this.__initialized || this.settings.get("setting.autoRestart"))
+			{
+				this.__initialized = true;
+				return this._start();
+			}
+			else
+			{
+				console.debug(`Component.connectedCallback(): Restarted component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+				return this.skills.use("state.change", "ready");
+			}
+		});
+
 	}
 
-	// Start
-	this._ready = this._ready.then(() => {
-		console.debug(`Component.connectedCallback(): Component is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		//return this.skills.use("state.change", "connected");
-	}).then(() => {
-		if (!this._initialized || this.settings.get("setting.autoRestart"))
-		{
-			this._initialized = true;
-			return this._start();
-		}
-		else
-		{
-			console.debug(`Component.connectedCallback(): Restarted component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.skills.use("state.change", "ready");
-		}
-	});
+	// -------------------------------------------------------------------------
 
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Disconnected callback.
- */
-Component.prototype.disconnectedCallback = function()
-{
-
-	// Stop
-	this._ready = this._ready.then(() => {
-		if (this.settings.get("setting.autoStop"))
-		{
-			return this._stop();
-		}
-	}).then(() => {
-		console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.change", "disconnected");
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Adopted callback.
- */
-Component.prototype.adoptedCallback = function()
-{
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Attribute changed callback.
- */
-Component.prototype.attributeChangedCallback = function()
-{
-}
-
-// -----------------------------------------------------------------------------
-//  Setter/Getter
-// -----------------------------------------------------------------------------
-
-/**
- * Instance's unique id.
- *
- * @type	{String}
- */
-Object.defineProperty(Component.prototype, 'uniqueId', {
-	get()
+	/**
+	 * Disconnected callback.
+	 */
+	disconnectedCallback()
 	{
+
+		// Stop
+		this.__ready = this.__ready.then(() => {
+			if (this.settings.get("setting.autoStop"))
+			{
+				return this._stop();
+			}
+		}).then(() => {
+			console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			return this.skills.use("state.change", "disconnected");
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Adopted callback.
+	 */
+	adoptedCallback()
+	{
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Attribute changed callback.
+	 */
+	attributeChangedCallback()
+	{
+	}
+
+	// -------------------------------------------------------------------------
+	//  Setter/Getter
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Instance's unique id.
+	 *
+	 * @type	{String}
+	 */
+	get uniqueId()
+	{
+
 		return this._uniqueId;
+
 	}
-})
 
-// -----------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	//  Protected
+	// -------------------------------------------------------------------------
 
-/**
- * Root element.
- *
- * @type	{HTMLElement}
- */
-Object.defineProperty(Component.prototype, 'rootElement', {
-	get()
+	/**
+	 * Start component.
+	 *
+	 * @param	{Object}		settings			Settings.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	_start(options)
 	{
-		return this._rootElement;
+
+		return Promise.resolve().then(() => {
+			return BITSMIST.v1.BasicPerk.init(this);
+		}).then(() => {
+			return this.skills.use("perk.attach", BITSMIST.v1.SettingPerk, options);
+		}).then(() => {
+			return this.skills.use("event.trigger", "beforeStart");
+		}).then(() => {
+			console.debug(`Component._start(): Starting component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			return this.skills.use("state.change", "starting");
+		}).then(() => {
+			if (this.settings.get("setting.autoTransform"))
+			{
+				return this.skills.use("basic.transform");
+			}
+		}).then(() => {
+			return this.skills.use("event.trigger", "doStart");
+		}).then(() => {
+			if (this.settings.get("setting.autoRefresh"))
+			{
+				return this.skills.use("basic.refresh");
+			}
+		}).then(() => {
+			window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
+
+			console.debug(`Component._start(): Started component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			return this.skills.use("state.change", "started");
+		}).then(() => {
+			return this.skills.use("event.trigger", "afterStart");
+		}).then(() => {
+			console.debug(`Component._start(): Component is ready. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			return this.skills.use("state.change", "ready");
+		}).then(() => {
+			return this.skills.use("event.trigger", "afterReady");
+		});
+
 	}
-})
 
-// -----------------------------------------------------------------------------
-//  Protected
-// -----------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 
-/**
- * Start component.
- *
- * @param	{Object}		settings			Settings.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype._start = function(options)
-{
+	/**
+	 * Stop component.
+	 *
+	 * @param	{Object}		options				Options for the component.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	_stop(options)
+	{
 
-	return Promise.resolve().then(() => {
-		return BITSMIST.v1.BasicPerk.init(this);
-	}).then(() => {
-		return this.skills.use("perk.attach", BITSMIST.v1.SettingPerk, options);
-	}).then(() => {
-		return this.skills.use("event.trigger", "beforeStart");
-	}).then(() => {
-		console.debug(`Component._start(): Starting component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.change", "starting");
-	}).then(() => {
-		if (this.settings.get("setting.autoTransform"))
-		{
-			return this.skills.use("basic.transform");
-		}
-	}).then(() => {
-		return this.skills.use("event.trigger", "doStart");
-	}).then(() => {
-		if (this.settings.get("setting.autoRefresh"))
-		{
-			return this.skills.use("basic.refresh");
-		}
-	}).then(() => {
-		window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
+		options = options || {};
 
-		console.debug(`Component._start(): Started component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.change", "started");
-	}).then(() => {
-		return this.skills.use("event.trigger", "afterStart");
-	}).then(() => {
-		console.debug(`Component._start(): Component is ready. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.change", "ready");
-	}).then(() => {
-		return this.skills.use("event.trigger", "afterReady");
-	});
+		return Promise.resolve().then(() => {
+			console.debug(`Component._stop(): Stopping component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			return this.skills.use("state.change", "stopping");
+		}).then(() => {
+			return this.skills.use("event.trigger", "beforeStop", options);
+		}).then(() => {
+			return this.skills.use("event.trigger", "doStop", options);
+		}).then(() => {
+			console.debug(`Component._stop(): Stopped component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			return this.skills.use("state.change", "stopped");
+		}).then(() => {
+			return this.skills.use("event.trigger", "afterStop", options);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Execute query on this component excluding nested components inside.
+	 *
+	 * @param	{String}		query				Query.
+	 *
+	 * @return  {Array}			Array of matched elements.
+	 */
+	_scopedSelectorAll(query)
+	{
+
+		return Util.scopedSelectorAll(this, query);
+
+	}
 
 }
-
-// -----------------------------------------------------------------------------
-
-/**
- * Stop component.
- *
- * @param	{Object}		options				Options for the component.
- *
- * @return  {Promise}		Promise.
- */
-Component.prototype._stop = function(options)
-{
-
-	options = options || {};
-
-	return Promise.resolve().then(() => {
-		console.debug(`Component._stop(): Stopping component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.change", "stopping");
-	}).then(() => {
-		return this.skills.use("event.trigger", "beforeStop", options);
-	}).then(() => {
-		return this.skills.use("event.trigger", "doStop", options);
-	}).then(() => {
-		console.debug(`Component._stop(): Stopped component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-		return this.skills.use("state.change", "stopped");
-	}).then(() => {
-		return this.skills.use("event.trigger", "afterStop", options);
-	});
-
-}
-
-// -----------------------------------------------------------------------------
-
-/**
- * Execute query on this component excluding nested components inside.
- *
- * @param	{String}		query				Query.
- *
- * @return  {Array}			Array of matched elements.
- */
-Component.prototype._scopedSelectorAll = function(query)
-{
-
-	return Util.scopedSelectorAll(this, query);
-
-}
-
-// -----------------------------------------------------------------------------
 
 customElements.define("bm-component", Component);

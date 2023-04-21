@@ -11,7 +11,13 @@ export default [
 				file: 'dist/bitsmist-js_v1.min.js',
 				format: 'iife',
 				sourcemap: false,
-				plugins: [terser({format:{comments:false},compress:{drop_console:true}})],
+				plugins: [
+					terser({
+						format:				{comments:false},
+						compress:			{drop_console:true},
+						keep_classnames:	true,
+					})
+				],
 			},
 			{
 				file: 'dist/bitsmist-js_v1.js',
@@ -24,6 +30,7 @@ export default [
 			commonjs()
 		]
 	},
+	/*
 	{
 		input: 'src/core/index.js',
 		output: [
@@ -31,7 +38,13 @@ export default [
 				file: 'dist/bitsmist-js_v1.bubled.min.js',
 				format: 'iife',
 				sourcemap: false,
-				plugins: [terser({format:{comments:false},compress:{drop_console:true}})],
+				plugins: [
+					terser({
+						format:				{comments:false},
+						compress:			{drop_console:true},
+						keep_classnames:	true,
+					})
+				],
 			},
 		],
 		plugins: [
@@ -40,4 +53,5 @@ export default [
 			buble()
 		]
 	}
+	*/
 ]
