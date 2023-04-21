@@ -62,7 +62,7 @@ export default class SkinPerk extends Perk
 				])
 			);
 
-			promise = SkinPerk.loadFile(skinInfo["name"], path, loadOptions).then((skin) => {
+			promise = SkinPerk.__loadFile(skinInfo["name"], path, loadOptions).then((skin) => {
 				skinInfo["html"] = skin;
 			});
 			break;
@@ -219,6 +219,8 @@ export default class SkinPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Load the skin html.
@@ -229,23 +231,21 @@ export default class SkinPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadFile(fileName, path, loadOptions)
+	static __loadFile(fileName, path, loadOptions)
 	{
 
-		console.debug(`SkinPerk.loadFile(): Loading the skin file. fileName=${fileName}, path=${path}`);
+		console.debug(`SkinPerk.__loadFile(): Loading the skin file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
 		let url = `${Util.concatPath([path, fileName])}.html` + (query ? `?${query}` : "");
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SkinPerk.loadFile(): Loaded the skin. fileName=${fileName}, path=${path}`);
+			console.debug(`SkinPerk.__loadFile(): Loaded the skin. fileName=${fileName}, path=${path}`);
 
 			return xhr.responseText;
 		});
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**

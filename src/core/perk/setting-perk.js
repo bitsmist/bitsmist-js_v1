@@ -50,7 +50,7 @@ export default class SettingPerk extends Perk
 			])
 		);
 
-		return SettingPerk.loadFile(fileName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions)).then((extraSettings) => {
+		return SettingPerk.__loadFile(fileName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions)).then((extraSettings) => {
 			if (extraSettings)
 			{
 				component.settings.merge(extraSettings);
@@ -153,6 +153,8 @@ export default class SettingPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Load the settings file.
@@ -163,7 +165,7 @@ export default class SettingPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadFile(fileName, path, loadOptions)
+	static __loadFile(fileName, path, loadOptions)
 	{
 
 		let type = Util.safeGet(loadOptions, "type", "js");
@@ -207,8 +209,6 @@ export default class SettingPerk extends Perk
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**

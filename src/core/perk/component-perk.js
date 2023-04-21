@@ -255,6 +255,8 @@ export default class ComponentPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Load the component js files.
@@ -265,10 +267,10 @@ export default class ComponentPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadFile(fileName, path, loadOptions)
+	static __loadFile(fileName, path, loadOptions)
 	{
 
-		console.debug(`ComponentPerk.loadFile(): ComponentPerk.loadFile(): Loading component file. fileName=${fileName}, path=${path}`);
+		console.debug(`ComponentPerk.__loadFile(): Loading component file. fileName=${fileName}, path=${path}`);
 
 		let query = Util.safeGet(loadOptions, "query");
 		let url1 = Util.concatPath([path, `${fileName}.js`]) + (query ? `?${query}` : "");
@@ -282,13 +284,11 @@ export default class ComponentPerk extends Perk
 				return AjaxUtil.loadScript(url2);
 			}
 		}).then(() => {
-			console.debug(`ComponentPerk.loadFile(): Loaded script. fileName=${fileName}`);
+			console.debug(`ComponentPerk.__loadFile(): Loaded script. fileName=${fileName}`);
 		});
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Privates
 	// -------------------------------------------------------------------------
 
 	/**
@@ -460,7 +460,7 @@ export default class ComponentPerk extends Perk
 		{
 			// Not loaded
 			BITSMIST.v1.Origin.report.set(`classes.${className}.state`, "loading");
-			promise = ComponentPerk.loadFile(fileName, path, loadOptions).then(() => {
+			promise = ComponentPerk.__loadFile(fileName, path, loadOptions).then(() => {
 				BITSMIST.v1.Origin.report.set(`classes.${className}`, {"state":"loaded", "promise":null});
 			});
 			BITSMIST.v1.Origin.report.set(`classes.${className}.promise`, promise);
