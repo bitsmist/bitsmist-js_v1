@@ -62,7 +62,7 @@ export default class SkinPerk extends Perk
 				])
 			);
 
-			promise = SkinPerk.__loadFile(skinInfo["name"], path, loadOptions).then((skin) => {
+			promise = AjaxUtil.loadHTML(Util.concatPath([path, skinInfo["name"]]), loadOptions).then((skin) => {
 				skinInfo["html"] = skin;
 			});
 			break;
@@ -223,32 +223,6 @@ export default class SkinPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the skin html.
-	 *
-	 * @param	{String}		fileName			File name.
-	 * @param	{String}		path				Path to the file.
-	 * @param	{Object}		loadOptions			Load Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static __loadFile(fileName, path, loadOptions)
-	{
-
-		console.debug(`SkinPerk.__loadFile(): Loading the skin file. fileName=${fileName}, path=${path}`);
-
-		let query = Util.safeGet(loadOptions, "query");
-		let url = `${Util.concatPath([path, fileName])}.html` + (query ? `?${query}` : "");
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SkinPerk.__loadFile(): Loaded the skin. fileName=${fileName}, path=${path}`);
-
-			return xhr.responseText;
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Returns a new skin info object.
 	 *
 	 * @param	{Component}		component			Parent component.
@@ -311,7 +285,7 @@ export default class SkinPerk extends Perk
 		{
 			ret = true;
 		}
-		else if (!component.inventory.get(`skin.skins.${skinName}`) || !component.inventory.get(`skin.skins.${skinName}.isLoaded`))
+		else if (!component.inventory.get(`skin.skins.${skinName}.isLoaded`))
 		{
 			ret = true;
 		}

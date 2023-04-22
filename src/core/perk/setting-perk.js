@@ -50,7 +50,7 @@ export default class SettingPerk extends Perk
 			])
 		);
 
-		return SettingPerk.__loadFile(fileName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions)).then((extraSettings) => {
+		return AjaxUtil.loadJSON(Util.concatPath([path,fileName]), Object.assign({"type":"js", "bindTo":component}, loadOptions)).then((extraSettings) => {
 			if (extraSettings)
 			{
 				component.settings.merge(extraSettings);
@@ -154,61 +154,6 @@ export default class SettingPerk extends Perk
 
 	// -------------------------------------------------------------------------
 	//  Privates
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load the settings file.
-	 *
-	 * @param	{String}		fileName			File name.
-	 * @param	{String}		path				Path to the file.
-	 * @param	{Object}		loadOptions			Load Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static __loadFile(fileName, path, loadOptions)
-	{
-
-		let type = Util.safeGet(loadOptions, "type", "js");
-		let query = Util.safeGet(loadOptions, "query");
-		let url = Util.concatPath([path, `${fileName}.${type}`]) + (query ? `?${query}` : "");
-		let settings;
-
-		console.debug(`SettingPerk.loadFile(): Loading the settings file. fileName=${fileName}, path=${path}`);
-
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`SettingPerk.loadFile(): Loaded settings. url=${url}`);
-
-			switch (type)
-			{
-			case "json":
-				try
-				{
-					settings = JSON.parse(xhr.responseText);
-				}
-				catch(e)
-				{
-					if (e instanceof SyntaxError)
-					{
-						throw new SyntaxError(`Illegal json string. url=${url}, message=${e.message}`);
-					}
-					else
-					{
-						throw e;
-					}
-				}
-				break;
-			case "js":
-			default:
-				let bindTo = Util.safeGet(loadOptions, "bindTo");
-				settings = Function(`"use strict";return (${xhr.responseText})`).call(bindTo);
-				break;
-			}
-
-			return settings;
-		});
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**

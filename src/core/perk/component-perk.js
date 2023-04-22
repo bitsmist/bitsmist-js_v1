@@ -168,7 +168,7 @@ export default class ComponentPerk extends Perk
 
 		// Load the class
 		let fileName = Util.safeGet(settings, "setting.fileName", tagName);
-		loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "setting.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
+		loadOptions["splitClass"] = Util.safeGet(loadOptions, "splitClass", Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.settings.get("system.splitClass", false)));
 		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "setting.query"), "");
 
 		return ComponentPerk.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
@@ -259,39 +259,6 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the component js files.
-	 *
-	 * @param	{String}		fileName			File name.
-	 * @param	{String}		path				Path to the file.
-	 * @param	{Object}		loadOptions			Load Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static __loadFile(fileName, path, loadOptions)
-	{
-
-		console.debug(`ComponentPerk.__loadFile(): Loading component file. fileName=${fileName}, path=${path}`);
-
-		let query = Util.safeGet(loadOptions, "query");
-		let url1 = Util.concatPath([path, `${fileName}.js`]) + (query ? `?${query}` : "");
-		let url2 = Util.concatPath([path, `${fileName}.settings.js`]) + (query ? `?${query}` : "");
-
-		return Promise.resolve().then(() => {
-			return AjaxUtil.loadScript(url1);
-		}).then(() => {
-			if (loadOptions["splitComponent"])
-			{
-				return AjaxUtil.loadScript(url2);
-			}
-		}).then(() => {
-			console.debug(`ComponentPerk.__loadFile(): Loaded script. fileName=${fileName}`);
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Get settings from element's attribute.
 	 *
 	 * @param	{Component}		component			Component.
@@ -312,7 +279,7 @@ export default class ComponentPerk extends Perk
 		// Split component
 		if (element.hasAttribute("bm-split"))
 		{
-			settings["system"]["splitComponent"] = true;
+			settings["system"]["splitClass"] = true;
 		}
 
 		// Path
@@ -460,7 +427,7 @@ export default class ComponentPerk extends Perk
 		{
 			// Not loaded
 			BITSMIST.v1.Origin.report.set(`classes.${className}.state`, "loading");
-			promise = ComponentPerk.__loadFile(fileName, path, loadOptions).then(() => {
+			promise = AjaxUtil.loadClass(Util.concatPath([path, fileName]), loadOptions).then(() => {
 				BITSMIST.v1.Origin.report.set(`classes.${className}`, {"state":"loaded", "promise":null});
 			});
 			BITSMIST.v1.Origin.report.set(`classes.${className}.promise`, promise);
