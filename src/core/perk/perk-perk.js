@@ -111,10 +111,8 @@ export default class PerkPerk extends Perk
 	{
 
 		// Add inventory items to component
-		component.inventory.set("perk.perks", {
-			"PerkPerk": {
-				"object": this,
-			}
+		component.inventory.set("perk.perks.PerkPerk", {
+			"object": this,
 		});
 
 	}
