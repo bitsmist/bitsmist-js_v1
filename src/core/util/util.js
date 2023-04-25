@@ -192,7 +192,7 @@ export default class Util
 
 		try
 		{
-			ret = Function('"use strict";return (' + code + ')').apply(parameters);
+			ret = Function(`"use strict";return (${code})`).apply(parameters);
 		}
 		catch(e)
 		{
