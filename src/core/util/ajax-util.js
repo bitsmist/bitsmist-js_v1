@@ -114,31 +114,6 @@ export default class AjaxUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load an HTML file.
-	 *
-	 * @param	{String}		url					HTML URL.
-	 * @param	{Object}		loadOptions			Load Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static loadHTML(url, loadOptions)
-	{
-
-		console.debug(`AjaxUtil.loadHTML(): Loading an HTML file. url=${url}`);
-
-		let query = Util.safeGet(loadOptions, "query");
-		url += ".html" + (query ? `?${query}` : "");
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`AjaxUtil.loadHTML(): Loaded the HTML file. url=${url}`);
-
-			return xhr.responseText;
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Load a JSON or Javascript Object file.
 	 *
 	 * @param	{String}		url					JSON URL.
@@ -152,7 +127,7 @@ export default class AjaxUtil
 		let json;
 		let type = Util.safeGet(loadOptions, "type", "js");
 		let query = Util.safeGet(loadOptions, "query");
-		url += `.${type}` + (query ? `?${query}` : "");
+		url += (query ? `?${query}` : "");
 
 		console.debug(`Ajax.loadJSON(): Loading a JSON file. url=${url}`);
 
@@ -193,9 +168,59 @@ export default class AjaxUtil
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Load a Text file.
+	 *
+	 * @param	{String}		url					HTML URL without extension.
+	 * @param	{Object}		loadOptions			Load Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadText(url, loadOptions)
+	{
+
+		console.debug(`AjaxUtil.loadText(): Loading a Text file. url=${url}`);
+
+		let query = Util.safeGet(loadOptions, "query");
+		url += (query ? `?${query}` : "");
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			console.debug(`AjaxUtil.loadText(): Loaded the Text file. url=${url}`);
+
+			return xhr.responseText;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load an HTML file.
+	 *
+	 * @param	{String}		url					HTML URL.
+	 * @param	{Object}		loadOptions			Load Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadHTML(url, loadOptions)
+	{
+
+		console.debug(`AjaxUtil.loadHTML(): Loading an HTML file. url=${url}`);
+
+		let query = Util.safeGet(loadOptions, "query");
+		url += (query ? `?${query}` : "");
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			console.debug(`AjaxUtil.loadHTML(): Loaded the HTML file. url=${url}`);
+
+			return xhr.responseText;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Load class files.
 	 *
-	 * @param	{String}		url					Class URL.
+	 * @param	{String}		url					Class URL without extension.
 	 * @param	{Object}		loadOptions			Load Options.
 	 *
 	 * @return  {Promise}		Promise.
