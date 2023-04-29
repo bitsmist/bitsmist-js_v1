@@ -86,7 +86,7 @@ export default class AjaxUtil
 	 * Load a Javascript file.
 	 *
 	 * @param	{String}		url					Javascript url.
-	 * @param	{Object}		loadOptions			Load Options.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
@@ -117,16 +117,16 @@ export default class AjaxUtil
 	 * Load a JSON or Javascript Object file.
 	 *
 	 * @param	{String}		url					JSON URL.
-	 * @param	{Object}		loadOptions			Load Options.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadJSON(url, loadOptions)
+	static loadJSON(url, options)
 	{
 
 		let json;
-		let type = Util.safeGet(loadOptions, "type", "js");
-		let query = Util.safeGet(loadOptions, "query");
+		let type = Util.safeGet(options, "type", "js");
+		let query = Util.safeGet(options, "query");
 		url += (query ? `?${query}` : "");
 
 		console.debug(`Ajax.loadJSON(): Loading a JSON file. url=${url}`);
@@ -155,7 +155,7 @@ export default class AjaxUtil
 				break;
 			case "js":
 			default:
-				let bindTo = Util.safeGet(loadOptions, "bindTo");
+				let bindTo = Util.safeGet(options, "bindTo");
 				json = Function(`"use strict";return (${xhr.responseText})`).call(bindTo);
 				break;
 			}
@@ -171,17 +171,18 @@ export default class AjaxUtil
 	 * Load a Text file.
 	 *
 	 * @param	{String}		url					HTML URL without extension.
-	 * @param	{Object}		loadOptions			Load Options.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadText(url, loadOptions)
+	static loadText(url, options)
 	{
 
 		console.debug(`AjaxUtil.loadText(): Loading a Text file. url=${url}`);
 
-		let query = Util.safeGet(loadOptions, "query");
+		let query = Util.safeGet(options, "query");
 		url += (query ? `?${query}` : "");
+
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`AjaxUtil.loadText(): Loaded the Text file. url=${url}`);
 
@@ -196,17 +197,18 @@ export default class AjaxUtil
 	 * Load an HTML file.
 	 *
 	 * @param	{String}		url					HTML URL.
-	 * @param	{Object}		loadOptions			Load Options.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadHTML(url, loadOptions)
+	static loadHTML(url, options)
 	{
 
 		console.debug(`AjaxUtil.loadHTML(): Loading an HTML file. url=${url}`);
 
-		let query = Util.safeGet(loadOptions, "query");
+		let query = Util.safeGet(options, "query");
 		url += (query ? `?${query}` : "");
+
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`AjaxUtil.loadHTML(): Loaded the HTML file. url=${url}`);
 
@@ -221,23 +223,23 @@ export default class AjaxUtil
 	 * Load class files.
 	 *
 	 * @param	{String}		url					Class URL without extension.
-	 * @param	{Object}		loadOptions			Load Options.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadClass(url, loadOptions)
+	static loadClass(url, options)
 	{
 
 		console.debug(`AjaxUtil.loadClass(): Loading class files. url=${url}`);
 
-		let query = Util.safeGet(loadOptions, "query");
+		let query = Util.safeGet(options, "query");
 		let url1 = url + ".js" + (query ? `?${query}` : "");
 		console.debug(`AjaxUtil.loadClass(): Loading the first file. url1=${url1}`);
 
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
 		}).then(() => {
-			if (loadOptions["splitClass"])
+			if (options["splitClass"])
 			{
 				let url2 = url + ".settings.js" + (query ? `?${query}` : "");
 				console.debug(`AjaxUtil.loadClass(): Loading the second file. url2=${url2}`);
