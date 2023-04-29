@@ -28,34 +28,22 @@ export default class SettingPerk extends Perk
 	 * Load the settings file and merge to component's settings.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		fileName			File name. Use "" to use default name.
-	 * @param	{Object}		loadOptions			Load options.
+	 * @param	{Object}		options				Load options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadSettings(component, fileName, loadOptions)
+	static _loadSettings(component, options)
 	{
 
-		// Filename
-		fileName = fileName ||
-			component.settings.get("setting.fileName",
-				component.tagName.toLowerCase()) + ".settings";
-
-		// Path
-		let path = Util.safeGet(loadOptions, "path",
-			Util.concatPath([
-				component.settings.get("system.appBaseUrl"),
-				component.settings.get("system.componentPath"),
-				component.settings.get("setting.path", ""),
-			])
-		);
-
-		return AjaxUtil.loadJSON(Util.concatPath([path,fileName]), Object.assign({"type":"js", "bindTo":component}, loadOptions)).then((extraSettings) => {
-			if (extraSettings)
-			{
-				component.settings.merge(extraSettings);
-			}
-		});
+		if (SettingPerk.__hasExternalSettings(component))
+		{
+			return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(component), {"type":"js", "bindTo":component}).then((settings) => {
+				if (settings)
+				{
+					component.settings.merge(settings);
+				}
+			});
+		}
 
 	}
 
@@ -134,13 +122,8 @@ export default class SettingPerk extends Perk
 		}
 
 		return Promise.resolve().then(() => {
-			// Load settings from an external file.
-			if (SettingPerk.__hasExternalSettings(component, "setting"))
-			{
-				return SettingPerk.__loadExternalSettings(component, "setting");
-			}
+			return SettingPerk._loadSettings(component);
 		}).then(() => {
-			// Load settings from attributes
 			SettingPerk.__loadAttrSettings(component);
 		}).then(() => {
 			return component.skills.use("perk.attachPerks", {"settings":component._settings.items});
@@ -185,16 +168,15 @@ export default class SettingPerk extends Perk
 	 * Check if the component has the external settings file.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		settingName			Setting name.
 	 *
 	 * @return  {Boolean}		True if the component has the external settings file.
 	 */
-	static __hasExternalSettings(component, settingName)
+	static __hasExternalSettings(component)
 	{
 
 		let ret = false;
 
-		if (component.hasAttribute(`bm-${settingName}ref`) || component.settings.get("setting.settingRef"))
+		if (component.hasAttribute("bm-settingref") || component.settings.get("setting.settingRef"))
 		{
 			ret = true;
 		}
@@ -206,34 +188,44 @@ export default class SettingPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the external settings file.
+	 * Return URL to setting file.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		settingName			Setting name.
 	 *
-	 * @return  {Promise}		Promise.
+	 * @return  {String}		URL.
 	 */
-	static __loadExternalSettings(component, settingName)
+	static __getSettingsURL(component)
 	{
 
+		let path;
 		let fileName;
-		let loadOptions;
-		let settingRef = ( component.hasAttribute(`bm-${settingName}ref`) ?
-			component.getAttribute(`bm-${settingName}ref`) || true :
+		let query;
+
+		let settingRef = ( component.hasAttribute(`bm-settingref`) ?
+			component.getAttribute(`bm-settingref`) || true :
 			component.settings.get("setting.settingRef")
 		);
-
 		if (settingRef && settingRef !== true)
 		{
+			// If URL is specified in ref, use it
 			let url = Util.parseURL(settingRef);
-			fileName = url.filenameWithoutExtension;
-			loadOptions = {
-				"path":			url.path,
-				"query":		url.query,
-			};
+			path = url.path;
+			fileName = url.filename;
+			query = url.query;
+		}
+		else
+		{
+			// Use default path and filename
+			path = Util.concatPath([
+					component.settings.get("system.appBaseUrl"),
+					component.settings.get("system.componentPath"),
+					component.settings.get("setting.path", ""),
+				]);
+
+			fileName = component.settings.get("setting.fileName", component.tagName.toLowerCase()) + ".settings";
 		}
 
-		return SettingPerk._loadSettings(component, fileName, loadOptions);
+		return Util.concatPath([path, fileName]) + ( query ? `?${query}` : "" );
 
 	}
 
@@ -275,8 +267,6 @@ export default class SettingPerk extends Perk
 
 	}
 
-	// -----------------------------------------------------------------------------
-	//  Privates
 	// -----------------------------------------------------------------------------
 
 	/**
