@@ -299,11 +299,11 @@ export default class SkinPerk extends Perk
 					component.settings.get("system.skinPath", component.settings.get("system.componentPath", "")),
 					component.settings.get("setting.path", ""),
 				]);
-
 			fileName = skinName + ".html";
+			query = component.settings.get("setting.query");
 		}
 
-		return Util.concatPath([path, fileName]) + ( query ? `?${query}` : "" );
+		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
 
 	}
 
