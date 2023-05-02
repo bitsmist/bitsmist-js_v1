@@ -125,21 +125,24 @@ export default class AjaxUtil
 	{
 
 		let json;
-		let type = Util.safeGet(options, "type", "js");
-		let query = Util.safeGet(options, "query");
-		url += (query ? `?${query}` : "");
+		let format = Util.safeGet(options, "format", url.split('?')[0].split('.').pop());
 
-		console.debug(`Ajax.loadJSON(): Loading a JSON file. url=${url}`);
+		console.debug(`Ajax.loadJSON(): Loading a JSON file. url=${url}, format=${format}`);
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`Ajax.loadJSON(): Loaded the JSON file. url=${url}`);
+			console.debug(`Ajax.loadJSON(): Loaded the JSON file. url=${url}, format=${format}`);
 
-			switch (type)
+			switch (format)
 			{
+			case "js":
+				let bindTo = Util.safeGet(options, "bindTo");
+				json = Function(`"use strict";return (${xhr.responseText})`).call(bindTo);
+				break;
 			case "json":
+			default:
 				try
 				{
-					settings = JSON.parse(xhr.responseText);
+					json = JSON.parse(xhr.responseText);
 				}
 				catch(e)
 				{
@@ -152,11 +155,6 @@ export default class AjaxUtil
 						throw e;
 					}
 				}
-				break;
-			case "js":
-			default:
-				let bindTo = Util.safeGet(options, "bindTo");
-				json = Function(`"use strict";return (${xhr.responseText})`).call(bindTo);
 				break;
 			}
 
@@ -179,9 +177,6 @@ export default class AjaxUtil
 	{
 
 		console.debug(`AjaxUtil.loadText(): Loading a Text file. url=${url}`);
-
-		let query = Util.safeGet(options, "query");
-		url += (query ? `?${query}` : "");
 
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`AjaxUtil.loadText(): Loaded the Text file. url=${url}`);
@@ -206,9 +201,6 @@ export default class AjaxUtil
 
 		console.debug(`AjaxUtil.loadHTML(): Loading an HTML file. url=${url}`);
 
-		let query = Util.safeGet(options, "query");
-		url += (query ? `?${query}` : "");
-
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`AjaxUtil.loadHTML(): Loaded the HTML file. url=${url}`);
 
@@ -232,8 +224,7 @@ export default class AjaxUtil
 
 		console.debug(`AjaxUtil.loadClass(): Loading class files. url=${url}`);
 
-		let query = Util.safeGet(options, "query");
-		let url1 = url + ".js" + (query ? `?${query}` : "");
+		let url1 = url + ".js";
 		console.debug(`AjaxUtil.loadClass(): Loading the first file. url1=${url1}`);
 
 		return Promise.resolve().then(() => {
@@ -241,7 +232,7 @@ export default class AjaxUtil
 		}).then(() => {
 			if (options["splitClass"])
 			{
-				let url2 = url + ".settings.js" + (query ? `?${query}` : "");
+				let url2 = url + ".settings.js";
 				console.debug(`AjaxUtil.loadClass(): Loading the second file. url2=${url2}`);
 				return AjaxUtil.loadScript(url2);
 			}
