@@ -37,7 +37,7 @@ export default class SettingPerk extends Perk
 
 		if (SettingPerk.__hasExternalSettings(component))
 		{
-			return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(component), {"type":"js", "bindTo":component}).then((settings) => {
+			return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(component), Object.assign({"bindTo":component}, options)).then((settings) => {
 				if (settings)
 				{
 					component.settings.merge(settings);
@@ -221,7 +221,8 @@ export default class SettingPerk extends Perk
 					component.settings.get("system.componentPath"),
 					component.settings.get("setting.path", ""),
 				]);
-			fileName = component.settings.get("setting.fileName", component.tagName.toLowerCase()) + ".settings";
+			let ext = component.settings.get("setting.settingFormat", component.settings.get("system.settingFormat", "json"));
+			fileName = component.settings.get("setting.fileName", component.tagName.toLowerCase()) + ".settings." + ext;
 			query = component.settings.get("setting.query");
 		}
 
