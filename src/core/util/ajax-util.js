@@ -124,7 +124,6 @@ export default class AjaxUtil
 	static loadJSON(url, options)
 	{
 
-		let json;
 		let format = Util.safeGet(options, "format", url.split('?')[0].split('.').pop());
 
 		console.debug(`Ajax.loadJSON(): Loading a JSON file. url=${url}, format=${format}`);
@@ -132,33 +131,7 @@ export default class AjaxUtil
 		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
 			console.debug(`Ajax.loadJSON(): Loaded the JSON file. url=${url}, format=${format}`);
 
-			switch (format)
-			{
-			case "js":
-				let bindTo = Util.safeGet(options, "bindTo");
-				json = Function(`"use strict";return (${xhr.responseText})`).call(bindTo);
-				break;
-			case "json":
-			default:
-				try
-				{
-					json = JSON.parse(xhr.responseText);
-				}
-				catch(e)
-				{
-					if (e instanceof SyntaxError)
-					{
-						throw new SyntaxError(`Illegal JSON string. url=${url}, message=${e.message}`);
-					}
-					else
-					{
-						throw e;
-					}
-				}
-				break;
-			}
-
-			return json;
+			return Util.getObject(xhr.responseText, {"format":format});
 		});
 
 	}

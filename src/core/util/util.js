@@ -589,6 +589,44 @@ export default class Util
 	}
 
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Convert given target to Javascript object if possible.
+	 *
+	 * @param	{*}				target					Target to convert to an object.
+	 * @param	{Object}		options					Options.
+	 *
+	 * @return  {Object}		Object.
+	 */
+	static getObject(target, options)
+	{
+
+		let ret;
+
+		if (Util.__isObject(target))
+		{
+			ret = target;
+		}
+		else if (typeof(target) === "string")
+		{
+			// String
+			if (options && options["format"] === "js")
+			{
+				// Javascript Object
+				ret = Util.safeEval(target, options && options["bindTo"]);
+			}
+			else
+			{
+				// JSON
+				ret = JSON.parse(target);
+			}
+		}
+
+		return ret;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Privates
 	// -------------------------------------------------------------------------
 
