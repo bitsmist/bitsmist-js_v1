@@ -81,7 +81,6 @@ export default class ComponentPerk extends Perk
 				let options = {
 					"splitClass": Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.settings.get("system.splitClass", false)),
 				};
-				console.log("@@@class", ComponentPerk.__getClassURL(tagName, settings));
 				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
 					BITSMIST.v1.Origin.report.set(`classes.${baseClassName}`, {"state":"loaded", "promise":null});
 				});
@@ -93,7 +92,6 @@ export default class ComponentPerk extends Perk
 			// Morph
 			if (baseClassName !== className)
 			{
-				console.log("@@@morphing", tagName, baseClassName);
 				let superClass = ClassUtil.getClass(baseClassName);
 				ClassUtil.newComponent(className, settings, superClass, tagName);
 			}
