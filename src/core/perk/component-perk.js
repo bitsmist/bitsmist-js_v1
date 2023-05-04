@@ -27,47 +27,92 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
+	 * Load the class.
 	 *
-	 * @param	{Component}		component			Component. Nullable.
-	 * @param	{HTMLElement}	rootNode			Target node.
-	 * @param	{Object}		options				Load Options.
+	 * @param	{String}		tagName				Tag name.
+	 * @param	{Object}		settings			Component settings.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadTags(component, rootNode, options)
+	static _loadClass(tagName, settings)
 	{
 
-		console.debug(`ComponentPerk._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
+		console.debug(`ComponentPerk._loadClass(): Loading class. tagName=${tagName}`);
 
-		let promises = [];
+		tagName = tagName.toLowerCase();
+		let promise = Promise.resolve();
 
-		// Load tags that has bm-autoload/bm-automorph attribute
-		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
-		targets.forEach((element) => {
-			let settings = this.__loadAttrSettings(element);
-			if (ComponentPerk.__hasExternalClass(element.tagName, settings))
+		// Override settings
+		let classRef = Util.safeGet(settings, "setting.autoLoad");
+		if (classRef && classRef !== true)
+		{
+			settings["system"] = settings["system"] || {};
+			settings["system"]["appBaseUrl"] = "";
+			settings["system"]["componentPath"] = "";
+			settings["system"]["templatePath"] = "";
+			settings["setting"] = settings["setting"] || {};
+			let url = Util.parseURL(classRef);
+			settings["setting"]["path"] = url.path;
+			settings["setting"]["fileName"] = url.filenameWithoutExtension;
+			if (url.extension === "html")
 			{
-				// Load the tag
-				element.setAttribute("bm-autoloading", "");
+				settings["setting"]["autoMorph"] = ( settings["setting"]["autoMorph"] ? settings["setting"]["autoMorph"] : true );
+			}
+		}
 
-				element._injectSettings = function(curSettings){
-					return Util.deepMerge(curSettings, settings);
+		// Class name
+		let className = Util.safeGet(settings, "setting.className", Util.getClassNameFromTagName(tagName));
+
+		// Base class name
+		let baseClassName = Util.safeGet(settings, "setting.autoMorph", className );
+		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
+
+		// Load the class if needed
+		if (ComponentPerk.__hasExternalClass(tagName, baseClassName, settings))
+		{
+			if (BITSMIST.v1.Origin.report.get(`classes.${baseClassName}`, {})["state"] === "loading")
+			{
+				// Already loading
+				console.debug(`ComponentPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
+				promise = BITSMIST.v1.Origin.report.get(`classes.${baseClassName}.promise`);
+			}
+			else
+			{
+				// Need loading
+				console.debug(`ClassPerk._loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
+				BITSMIST.v1.Origin.report.set(`classes.${baseClassName}.state`, "loading");
+
+				let options = {
+					"splitClass": Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.settings.get("system.splitClass", false)),
 				};
-
-				promises.push(ComponentPerk.__loadExternalClass(element.tagName, settings).then(() => {
-					element.removeAttribute("bm-autoloading");
-				}));
+				console.log("@@@class", ComponentPerk.__getClassURL(tagName, settings));
+				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
+					BITSMIST.v1.Origin.report.set(`classes.${baseClassName}`, {"state":"loaded", "promise":null});
+				});
+				BITSMIST.v1.Origin.report.set(`classes.${baseClassName}.promise`, promise);
 			}
-		});
+		}
 
-		return Promise.all(promises).then(() => {
-			let waitFor = Util.safeGet(options, "waitForTags");
-			if (waitFor)
+		return promise.then(() => {
+			// Morph
+			if (baseClassName !== className)
 			{
-				return ComponentPerk.__waitForChildren(rootNode);
+				console.log("@@@morphing", tagName, baseClassName);
+				let superClass = ClassUtil.getClass(baseClassName);
+				ClassUtil.newComponent(className, settings, superClass, tagName);
+			}
+
+			// Define the tag
+			if (!customElements.get(tagName))
+			{
+				let classDef = ClassUtil.getClass(className);
+				Util.assert(classDef, `ComponentPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
+
+				customElements.define(tagName, classDef);
 			}
 		});
+
+		return promise;
 
 	}
 
@@ -79,11 +124,11 @@ export default class ComponentPerk extends Perk
 	 * @param	{Component}		component			Parent component.
 	 * @param	{String}		tagName				Component tag name.
 	 * @param	{Object}		settings			Settings for the component.
-	 * @param	{Object}		loadOptions			Load Options.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadComponent(component, tagName, settings, loadOptions)
+	static _loadComponent(component, tagName, settings, options)
 	{
 
 		console.debug(`ComponentPerk._loadComponent(): Adding the component. name=${component.tagName}, tagName=${tagName}`);
@@ -105,17 +150,14 @@ export default class ComponentPerk extends Perk
 
 		let addedComponent;
 		return Promise.resolve().then(() => {
-			// Load the class
-			if (ComponentPerk.__hasExternalClass(tagName, settings))
-			{
-				return ComponentPerk.__loadExternalClass(tagName, settings);
-			}
+			return ComponentPerk._loadClass(tagName, settings);
 		}).then(() => {
+			// Insert tag
 			addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
 			component.inventory.set(`component.components.${tagName}`, addedComponent);
 		}).then(() => {
 			// Wait for the added component to be ready
-			let sync = Util.safeGet(loadOptions, "syncOnAdd", Util.safeGet(settings, "setting.syncOnAdd"));
+			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "setting.syncOnAdd"));
 			if (sync)
 			{
 				let state = (sync === true ? "ready" : sync);
@@ -134,58 +176,43 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the class.
+	 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
 	 *
-	 * @param	{String}		tagName				Tag name.
-	 * @param	{Object}		settings			Component settings.
-	 * @param	{Object}		loadOptions			Load options.
+	 * @param	{Component}		component			Component. Nullable.
+	 * @param	{HTMLElement}	rootNode			Target node.
+	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadClass(tagName, settings, loadOptions)
+	static _loadTags(component, rootNode, options)
 	{
 
-		console.debug(`ComponentPerk._loadClass(): Loading the class. tagName=${tagName}`);
+		console.debug(`ComponentPerk._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
 
-		loadOptions = loadOptions || {};
-		tagName = tagName.toLowerCase();
+		let promises = [];
 
-		// Class name
-		let className = Util.safeGet(settings, "setting.className", Util.getClassNameFromTagName(tagName));
+		// Load tags that has bm-autoload/bm-classref/bm-automorph attribute
+		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
+		targets.forEach((element) => {
+			// Get settings from attributes
+			let settings = this.__loadAttrSettings(element);
 
-		// Base class name (Used when morphing)
-		let baseClassName = Util.safeGet(settings, "setting.autoMorph", className );
-		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
+			element.setAttribute("bm-autoloading", "");
+			element._injectSettings = function(curSettings){
+				return Util.deepMerge(curSettings, settings);
+			};
 
-		// Path
-		let path = Util.safeGet(loadOptions, "path",
-			Util.concatPath([
-				Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
-				Util.safeGet(settings, "system.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
-				Util.safeGet(settings, "setting.path", ""),
-			])
-		);
+			// Load the class
+			promises.push(ComponentPerk._loadClass(element.tagName, settings).then(() => {
+				element.removeAttribute("bm-autoloading");
+			}));
+		});
 
-		// Load the class
-		let fileName = Util.safeGet(settings, "setting.fileName", tagName);
-		loadOptions["splitClass"] = Util.safeGet(loadOptions, "splitClass", Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.settings.get("system.splitClass", false)));
-		loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "setting.query"), "");
-
-		return ComponentPerk.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
-			// Morphing
-			if (baseClassName !== className)
+		return Promise.all(promises).then(() => {
+			let waitFor = Util.safeGet(options, "waitForTags");
+			if (waitFor)
 			{
-				let superClass = ClassUtil.getClass(baseClassName);
-				ClassUtil.newComponent(className, settings, superClass, tagName);
-			}
-
-			// Define the tag
-			if (!customElements.get(tagName))
-			{
-				let classDef = ClassUtil.getClass(className);
-				Util.assert(classDef, `ComponentPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
-
-				customElements.define(tagName, classDef);
+				return ComponentPerk.__waitForChildren(rootNode);
 			}
 		});
 
@@ -324,116 +351,38 @@ export default class ComponentPerk extends Perk
 	 * Check if the component has the external class file.
 	 *
 	 * @param	{String}		tagName				Tag name.
+	 * @param	{String}		className			Class name.
 	 * @param	{Object}		settings			Component settings.
 	 *
 	 * @return  {Boolean}		True if the component has the external class file.
 	 */
-	static __hasExternalClass(tagName, settings)
+	static __hasExternalClass(tagName, className, settings)
 	{
 
 		let ret = false;
 
-		// Check if the tag is already defined
-		if (!customElements.get(tagName))
-		{
-			if ((Util.safeGet(settings, "setting.classRef"))
+		if ((Util.safeGet(settings, "setting.classRef"))
 				|| (Util.safeGet(settings, "setting.htmlRef"))
 				|| (Util.safeGet(settings, "setting.autoLoad"))
 				|| (Util.safeGet(settings, "setting.autoMorph")))
+		{
+			ret = true;
+
+			if (customElements.get(tagName))
 			{
-				ret = true;
+				ret = false;
+			}
+			else if (BITSMIST.v1.Origin.report.get(`classes.${className}`, {})["state"] === "loaded")
+			{
+				ret = false;
+			}
+			else if (ClassUtil.getClass(className))
+			{
+				ret = false;
 			}
 		}
 
 		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load the external class file.
-	 *
-	 * @param	{String}		tagName				Tag name.
-	 * @param	{Object}		settings			Component settings.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static __loadExternalClass(tagName, settings)
-	{
-
-		let loadOptions;
-		let classRef = Util.safeGet(settings, "setting.autoLoad");
-
-		if (classRef && classRef !== true)
-		{
-			let url = Util.parseURL(classRef);
-			loadOptions = {
-				"path":			url.path,
-				"query":		url.query,
-			};
-
-			// Override settings
-			settings["system"] = settings["system"] || {};
-			settings["system"]["appBaseUrl"] = "";
-			settings["system"]["componentPath"] = "";
-			settings["system"]["templatePath"] = "";
-			settings["setting"] = settings["setting"] || {};
-			settings["setting"]["path"] = url.path;
-			settings["setting"]["fileName"] = url.filenameWithoutExtension;
-			if (url.extension === "html")
-			{
-				settings["setting"]["autoMorph"] = ( settings["setting"]["autoMorph"] ? settings["setting"]["autoMorph"] : true );
-			}
-		}
-
-		return ComponentPerk._loadClass(tagName, settings, loadOptions);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load the class if not loaded yet.
-	 *
-	 * @param	{String}		className			Component class name.
-	 * @param	{String}		fileName			Component file name.
-	 * @param	{String}		path				Path to component.
-	 * @param	{Object}		loadOptions			Load Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	static __autoloadClass(className, fileName, path, loadOptions)
-	{
-
-		console.debug(`ComponentPerk.__autoLoadClass(): Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
-
-		let promise;
-
-		if (ComponentPerk.__isLoadedClass(className))
-		{
-			// Already loaded
-			console.debug(`ComponentPerk.__autoLoadClass(): Component Already exists. className=${className}`);
-			BITSMIST.v1.Origin.report.set(`classes.${className}.state`, "loaded");
-			promise = Promise.resolve();
-		}
-		else if (BITSMIST.v1.Origin.report.get(`classes.${className}`, {})["state"] === "loading")
-		{
-			// Already loading
-			console.debug(`ComponentPerk.__autoLoadClass(): Component Already loading. className=${className}`);
-			promise = BITSMIST.v1.Origin.report.get(`classes.${className}.promise`);
-		}
-		else
-		{
-			// Not loaded
-			BITSMIST.v1.Origin.report.set(`classes.${className}.state`, "loading");
-			promise = AjaxUtil.loadClass(Util.concatPath([path, fileName]), loadOptions).then(() => {
-				BITSMIST.v1.Origin.report.set(`classes.${className}`, {"state":"loaded", "promise":null});
-			});
-			BITSMIST.v1.Origin.report.set(`classes.${className}.promise`, promise);
-		}
-
-		return promise;
 
 	}
 
@@ -509,7 +458,7 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for components under the specified root node.
+	 * Wait for components under the specified root node to be ready.
 	 *
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 *
@@ -535,27 +484,25 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the class exists.
+	 * Return URL to Class file.
 	 *
-	 * @param	{String}		className			Class name.
+	 * @param	{String}		tagName				Tag name.
+	 * @param	{Object}		settings			Component settings.
 	 *
-	 * @return  {Bool}			True if exists.
+	 * @return  {String}		URL.
 	 */
-	static __isLoadedClass(className)
+	static __getClassURL(tagName, settings)
 	{
 
-		let ret = false;
+		let path = Util.concatPath([
+			Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
+			Util.safeGet(settings, "system.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
+			Util.safeGet(settings, "setting.path", ""),
+		]);
+		let fileName = Util.safeGet(settings, "setting.fileName", tagName);
+		let query = Util.safeGet(settings, "setting.query");
 
-		if (BITSMIST.v1.Origin.report.get(`classes.${className}`, {})["state"] === "loaded")
-		{
-			ret = true;
-		}
-		else if (ClassUtil.getClass(className))
-		{
-			ret = true;
-		}
-
-		return ret;
+		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
 
 	}
 
