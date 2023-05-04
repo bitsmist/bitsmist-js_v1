@@ -41,14 +41,10 @@ export default class ClassUtil
 
 		// Class settings
 		settings = settings || {};
-		settings.settings = ( settings.settings ? settings.settings : {} );
-		settings["settings"]["name"] = className;
+		settings.setting = ( settings.setting ? settings.setting : {} );
 		classDef.prototype._getSettings = function() {
 			return settings;
 		}
-
-		// Export class
-		window[className] = classDef;
 
 		// Define tag
 		if (tagName)
