@@ -39,10 +39,7 @@ export default class ComponentPerk extends Perk
 
 		console.debug(`ComponentPerk._loadClass(): Loading class. tagName=${tagName}`);
 
-		tagName = tagName.toLowerCase();
-		let promise = Promise.resolve();
-
-		// Override settings
+		// Override settings if URL is specified
 		let classRef = Util.safeGet(settings, "setting.autoLoad");
 		if (classRef && classRef !== true)
 		{
@@ -60,14 +57,13 @@ export default class ComponentPerk extends Perk
 			}
 		}
 
-		// Class name
+		tagName = tagName.toLowerCase();
 		let className = Util.safeGet(settings, "setting.className", Util.getClassNameFromTagName(tagName));
-
-		// Base class name
 		let baseClassName = Util.safeGet(settings, "setting.autoMorph", className );
 		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
 
 		// Load the class if needed
+		let promise = Promise.resolve();
 		if (ComponentPerk.__hasExternalClass(tagName, baseClassName, settings))
 		{
 			if (BITSMIST.v1.Origin.report.get(`classes.${baseClassName}`, {})["state"] === "loading")
