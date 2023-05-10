@@ -25,6 +25,30 @@ export default class SettingPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Apply settings.
+	 *
+     * @param	{Component}		component			Component.
+	 * @param	{Object}		options				Options.
+	 */
+	static _applySettings(component, options)
+	{
+
+		return Promise.resolve().then(() => {
+			return component.skills.use("perk.attachPerks", options);
+		}).then(() => {
+			return component.skills.use("event.trigger", "beforeApplySettings", options);
+		}).then(() => {
+			//return component.skills.use("event.trigger", "doApplySettings", options);
+			return component.skills.use("event.trigger", "doOrganize", options);
+		}).then(() => {
+			return component.skills.use("event.trigger", "afterApplySettings", options);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Load the settings file and merge to component's settings.
 	 *
 	 * @param	{Component}		component			Component.
@@ -75,6 +99,7 @@ export default class SettingPerk extends Perk
 
 		// Add skills to Component
 		BITSMIST.v1.Component.skills.set("setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
+		BITSMIST.v1.Component.skills.set("setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
 
 	}
 
@@ -126,11 +151,7 @@ export default class SettingPerk extends Perk
 		}).then(() => {
 			SettingPerk.__loadAttrSettings(component);
 		}).then(() => {
-			return component.skills.use("perk.attachPerks", {"settings":component._settings.items});
-		}).then(() => {
-			return component.skills.use("event.trigger", "doOrganize", {"settings":component._settings.items});
-		}).then(() => {
-			return component.skills.use("event.trigger", "afterLoadSettings", {"settings":component._settings.items});
+			return SettingPerk._applySettings(component, {"settings":component._settings.items});
 		});
 
 	}
