@@ -164,7 +164,7 @@ export default class StatePerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static StatePerk_onDoOrganize(sender, e, ex)
+	static StatePerk_onDoApplySettings(sender, e, ex)
 	{
 
 		Object.entries(Util.safeGet(e.detail, "settings.state.waitFor", {})).forEach(([sectionName, sectionValue]) => {
@@ -229,7 +229,7 @@ export default class StatePerk extends Perk
 		component.inventory.set("state.suspends", {});
 
 		// Add event handlers to component
-		this._addPerkHandler(component, "doOrganize", StatePerk.StatePerk_onDoOrganize);
+		this._addPerkHandler(component, "doApplySettings", StatePerk.StatePerk_onDoApplySettings);
 
 		// Load settings from attributes
 		StatePerk.__loadAttrSettings(component);

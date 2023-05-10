@@ -38,8 +38,7 @@ export default class SettingPerk extends Perk
 		}).then(() => {
 			return component.skills.use("event.trigger", "beforeApplySettings", options);
 		}).then(() => {
-			//return component.skills.use("event.trigger", "doApplySettings", options);
-			return component.skills.use("event.trigger", "doOrganize", options);
+			return component.skills.use("event.trigger", "doApplySettings", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "afterApplySettings", options);
 		});

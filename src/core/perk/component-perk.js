@@ -216,7 +216,7 @@ export default class ComponentPerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static ComponentPerk_onDoOrganize(sender, e, ex)
+	static ComponentPerk_onDoApplySettings(sender, e, ex)
 	{
 
 		let chain = Promise.resolve();
@@ -271,7 +271,7 @@ export default class ComponentPerk extends Perk
 		component.inventory.set("component.components", {});
 
 		// Add event handlers to component
-		this._addPerkHandler(component, "doOrganize", ComponentPerk.ComponentPerk_onDoOrganize);
+		this._addPerkHandler(component, "doApplySettings", ComponentPerk.ComponentPerk_onDoApplySettings);
 
 	}
 

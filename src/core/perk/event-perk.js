@@ -227,7 +227,7 @@ export default class EventPerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static EventPerk_onDoOrganize(sender, e, ex)
+	static EventPerk_onDoApplySettings(sender, e, ex)
 	{
 
 		Object.entries(Util.safeGet(e.detail, "settings.event.events", {})).forEach(([sectionName, sectionValue]) => {
@@ -288,7 +288,7 @@ export default class EventPerk extends Perk
 	{
 
 		// Add event handlers to component
-		this._addPerkHandler(component, "doOrganize", EventPerk.EventPerk_onDoOrganize);
+		this._addPerkHandler(component, "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
 		this._addPerkHandler(component, "afterTransform", EventPerk.EventPerk_onAfterTransform);
 
 	}
