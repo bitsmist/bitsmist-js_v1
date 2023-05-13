@@ -34,9 +34,9 @@ export default class SettingPerk extends Perk
 	{
 
 		return Promise.resolve().then(() => {
-			return component.skills.use("perk.attachPerks", options);
-		}).then(() => {
 			return component.skills.use("event.trigger", "beforeApplySettings", options);
+		}).then(() => {
+			return component.skills.use("perk.attachPerks", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "doApplySettings", options);
 		}).then(() => {
@@ -118,7 +118,6 @@ export default class SettingPerk extends Perk
 				"autoSetup":			true,
 				"autoStop":				true,
 				"autoTransform":		true,
-				"useGlobalSettings":	true,
 			},
 			"perk": {
 	//			"BasicPerk":		{"setting":{"attach":true}},	// Attach manually
@@ -137,13 +136,10 @@ export default class SettingPerk extends Perk
 		settings = SettingPerk.__mergeSettings(component, settings);
 
 		// Init component vars
-		component._settings = new ChainableStore({"items":settings});
-
-		// Chain global settings
-		if (component._settings.get("setting.useGlobalSettings"))
-		{
-			component._settings.chain(BITSMIST.v1.settings);
-		}
+		component._settings = new ChainableStore({
+			"items":	settings,
+			"chain":	BITSMIST.v1.settings,
+		});
 
 		return Promise.resolve().then(() => {
 			return SettingPerk._loadSettings(component);
