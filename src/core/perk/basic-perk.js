@@ -12,6 +12,7 @@ import ChainableStore from "../store/chainable-store.js";
 import ComponentPerk from "./component-perk.js";
 import Perk from "./perk.js";
 import Store from "../store/store.js";
+import URLUtil from "../util/url-util.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -43,13 +44,6 @@ export default class BasicPerk extends Perk
 			return component.skills.use("event.trigger", "beforeTransform", options);
 		}).then(() => {
 			return component.skills.use("event.trigger", "doTransform", options);
-		}).then(() => {
-			// Setup
-			let autoSetup = component.settings.get("setting.autoSetup");
-			if (autoSetup)
-			{
-				return component.skills.use("basic.setup", options);
-			}
 		}).then(() => {
 			return component.skills.use("component.materializeAll", component);
 		}).then(() => {
@@ -223,7 +217,7 @@ export default class BasicPerk extends Perk
 	{
 
 		return {
-			"section":		"origin",
+			"section":		"",
 			"order":		0,
 		};
 
@@ -258,7 +252,7 @@ export default class BasicPerk extends Perk
 			get() { return this._skills; },
 		});
 
-
+		BITSMIST.v1.Component.stats.set("basic.routeInfo", URLUtil.loadRouteInfo(window.location.href));
 
 	}
 
@@ -268,7 +262,7 @@ export default class BasicPerk extends Perk
 	{
 
 		// Init component vars
-		component._stats = new ChainableStore();
+		component._stats = new ChainableStore({"chain":BITSMIST.v1.Component.stats});
 		component._vault = new ChainableStore();
 		component._inventory= new ChainableStore();
 		component._skills = new ChainableStore({"chain":BITSMIST.v1.Component.skills});

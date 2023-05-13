@@ -140,6 +140,11 @@ export default class Component extends HTMLElement
 				return this.skills.use("basic.transform");
 			}
 		}).then(() => {
+			if (this.settings.get("setting.autoSetup"))
+			{
+				return this.skills.use("basic.setup", options);
+			}
+		}).then(() => {
 			return this.skills.use("event.trigger", "doStart");
 		}).then(() => {
 			if (this.settings.get("setting.autoRefresh"))
