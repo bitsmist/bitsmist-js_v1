@@ -22,6 +22,9 @@ window.BITSMIST.v1.ClassUtil = ClassUtil;
 import AjaxUtil from "./util/ajax-util.js";
 window.BITSMIST.v1.AjaxUtil = AjaxUtil;
 
+import URLUtil from "./util/url-util.js";
+window.BITSMIST.v1.URLUtil = URLUtil;
+
 // Store
 
 import Store from "./store/store.js";
