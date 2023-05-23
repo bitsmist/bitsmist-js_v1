@@ -261,7 +261,7 @@ export default class SettingPerk extends Perk
 
 		if (typeof(component._injectSettings) === "function")
 		{
-			settings = component._injectSettings(settings);
+			settings = component._injectSettings.call(component, settings);
 		}
 
 		return settings;
@@ -304,7 +304,7 @@ export default class SettingPerk extends Perk
 		// Merge superclass settings
 		while (typeof(Object.getPrototypeOf(curComponent)._getSettings) === "function")
 		{
-			parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
+			parentSettings = Object.getPrototypeOf(curComponent)._getSettings.call(component);
 			if (Object.keys(parentSettings).length > 0)
 			{
 				Util.deepMerge(parentSettings, curSettings);
@@ -316,7 +316,7 @@ export default class SettingPerk extends Perk
 		Util.deepMerge(settings, curSettings);
 
 		// Merge component settings
-		Util.deepMerge(settings, component._getSettings());
+		Util.deepMerge(settings, component._getSettings.call(component));
 
 		return settings;
 
