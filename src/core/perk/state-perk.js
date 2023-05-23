@@ -76,7 +76,7 @@ export default class StatePerk extends Perk
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
 				waitInfo["timer"] = setTimeout(() => {
-					let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
+					let name = ( component && component.tagName ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
 					let uniqueId = (component && component.uniqueId) || "";
 					reject(`StatePerk._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StatePerk.__dumpWaitlist(waitlist)}, name=${name}, uniqueId=${uniqueId}.`);
 				}, timeout);
