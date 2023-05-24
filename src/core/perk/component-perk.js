@@ -404,7 +404,7 @@ export default class ComponentPerk extends Perk
 			root = component;
 		}
 
-		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.tagName}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "setting.parentNode")}`, ReferenceError);
+		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "setting.parentNode")}`, ReferenceError);
 
 		// Build tag
 		let tag = ( Util.safeGet(settings, "setting.tag") ? Util.safeGet(settings, "setting.tag") : `<${tagName}></${tagName}>` );
