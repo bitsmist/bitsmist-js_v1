@@ -272,13 +272,13 @@ export default class EventPerk extends Perk
 	static globalInit()
 	{
 
-		// Add skills to Component
-		BITSMIST.v1.Component._skills.set("event.add", function(...args) { return EventPerk._addEventHandler(...args); });
-		BITSMIST.v1.Component._skills.set("event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
-		BITSMIST.v1.Component._skills.set("event.init", function(...args) { return EventPerk._initEvents(...args); });
-		BITSMIST.v1.Component._skills.set("event.reset", function(...args) { return EventPerk._removeEvents(...args); });
-		BITSMIST.v1.Component._skills.set("event.trigger", function(...args) { return EventPerk._trigger(...args); });
-		BITSMIST.v1.Component._skills.set("event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
 
 	}
 
@@ -287,9 +287,9 @@ export default class EventPerk extends Perk
 	static init(component, options)
 	{
 
-		// Add event handlers to component
-		this._addPerkHandler(component, "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
-		this._addPerkHandler(component, "afterTransform", EventPerk.EventPerk_onAfterTransform);
+		// Upgrade component
+		this.upgrade(component, "event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
+		this.upgrade(component, "event", "afterTransform", EventPerk.EventPerk_onAfterTransform);
 
 	}
 

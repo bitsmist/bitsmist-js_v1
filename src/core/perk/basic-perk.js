@@ -230,29 +230,13 @@ export default class BasicPerk extends Perk
 	static globalInit()
 	{
 
-		// Add skills to Component (static)
-		BITSMIST.v1.Component.skills.set("basic.transform", function(...args) { return BasicPerk._transform(...args); });
-		BITSMIST.v1.Component.skills.set("basic.setup", function(...args) { return BasicPerk._setup(...args); });
-		BITSMIST.v1.Component.skills.set("basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
-		BITSMIST.v1.Component.skills.set("basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
-		BITSMIST.v1.Component.skills.set("basic.fill", function(...args) { return BasicPerk._fill(...args); });
-		BITSMIST.v1.Component.skills.set("basic.clear", function(...args) { return BasicPerk._clear(...args); });
-
-		// Add properties to Component
-		Object.defineProperty(BITSMIST.v1.Component.prototype, "stats", {
-			get() { return this._stats; },
-		});
-		Object.defineProperty(BITSMIST.v1.Component.prototype, "vault", {
-			get() { return this._vault; },
-		});
-		Object.defineProperty(BITSMIST.v1.Component.prototype, "inventory", {
-			get() { return this._inventory; },
-		});
-		Object.defineProperty(BITSMIST.v1.Component.prototype, "skills", {
-			get() { return this._skills; },
-		});
-
-		BITSMIST.v1.Component.stats.set("basic.routeInfo", URLUtil.loadRouteInfo(window.location.href));
+		// Upgrade Component (static)
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
 
 	}
 
@@ -262,11 +246,17 @@ export default class BasicPerk extends Perk
 	{
 
 		// Init component vars
-		component._stats = new ChainableStore({"chain":BITSMIST.v1.Component.stats});
-		component._vault = new ChainableStore();
-		component._inventory= new ChainableStore();
-		component._skills = new ChainableStore({"chain":BITSMIST.v1.Component.skills});
-		component._skills.use = function(perkName, ...args) {
+		component._assets = {
+			"stat":			new ChainableStore({"chain":BITSMIST.v1.Component._assets["stat"]}),
+			"vault":		new ChainableStore(),
+			"inventory":	new ChainableStore(),
+			"skill":	 	new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}),
+		};
+		component.stats = component._assets["stat"];
+		component.vault = component._assets["vault"];
+		component.inventory = component._assets["inventory"];
+		component.skills = component._assets["skill"];
+		component.skills.use = function(perkName, ...args) {
 			let func = this.skills.get(perkName);
 			Util.assert(func, `Skill is not available. name=${component.tagName}, skillName=${perkName}`);
 

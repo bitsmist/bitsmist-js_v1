@@ -96,9 +96,9 @@ export default class SettingPerk extends Perk
 			get() { return this._settings; },
 		});
 
-		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
-		BITSMIST.v1.Component.skills.set("setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
 
 	}
 

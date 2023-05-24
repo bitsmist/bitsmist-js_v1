@@ -37,7 +37,7 @@ export default class StatePerk extends Perk
 		Util.assert(StatePerk.__isTransitionable(component.stats.get("state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.tagName}, fromState=${component.stats.get("state.state")}, toState=${state}, id=${component.id}`, Error);
 
 		component.stats.set("state.state", state);
-		BITSMIST.v1.Origin.report.set(`components.${component.uniqueId}`, {"object":component, "state":state});
+		BITSMIST.v1.Component.report.set(`components.${component.uniqueId}`, {"object":component, "state":state});
 
 		StatePerk.__processWaitingList();
 
@@ -208,12 +208,12 @@ export default class StatePerk extends Perk
 		StatePerk.__suspends = {};
 		StatePerk.waitFor = function(waitlist, timeout) { return StatePerk._waitFor(null, waitlist, timeout); }
 
-		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("state.change", function(...args) { return StatePerk._changeState(...args); });
-		BITSMIST.v1.Component.skills.set("state.wait", function(...args) { return StatePerk._waitFor(...args); });
-		BITSMIST.v1.Component.skills.set("state.suspend", function(...args) { return StatePerk._suspend(...args); });
-		BITSMIST.v1.Component.skills.set("state.resume", function(...args) { return StatePerk._resume(...args); });
-		BITSMIST.v1.Component.skills.set("state.pause", function(...args) { return StatePerk._pause(...args); });
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.change", function(...args) { return StatePerk._changeState(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.wait", function(...args) { return StatePerk._waitFor(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.suspend", function(...args) { return StatePerk._suspend(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.resume", function(...args) { return StatePerk._resume(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.pause", function(...args) { return StatePerk._pause(...args); });
 
 	}
 
@@ -222,14 +222,10 @@ export default class StatePerk extends Perk
 	static init(component, options)
 	{
 
-		// Add stats to component;
-		component.stats.set("state.state", "connected");
-
-		// Add inventory items to component;
-		component.inventory.set("state.suspends", {});
-
-		// Add event handlers to component
-		this._addPerkHandler(component, "doApplySettings", StatePerk.StatePerk_onDoApplySettings);
+		// Upgrade component;
+		this.upgrade(component, "stat", "state.state", "connected");
+		this.upgrade(component, "inventory", "state.suspends", {});
+		this.upgrade(component, "event", "doApplySettings", StatePerk.StatePerk_onDoApplySettings);
 
 		// Load settings from attributes
 		StatePerk.__loadAttrSettings(component);
@@ -395,14 +391,14 @@ export default class StatePerk extends Perk
 
 		if (waitlistItem["id"])
 		{
-			componentInfo = BITSMIST.v1.Origin.report.get(`components.${waitlistItem["id"]}`);
+			componentInfo = BITSMIST.v1.Component.report.get(`components.${waitlistItem["id"]}`);
 		}
 		else if (waitlistItem["name"])
 		{
-			Object.keys(BITSMIST.v1.Origin.report.get("component").items).forEach((key) => {
-				if (waitlistItem["name"] === BITSMIST.v1.Origin.report.get(`components.${key}`).object.name)
+			Object.keys(BITSMIST.v1.Component.report.get("component").items).forEach((key) => {
+				if (waitlistItem["name"] === BITSMIST.v1.Component.report.get(`components.${key}`).object.name)
 				{
-					componentInfo = BITSMIST.v1.Origin.report.get(`components.${key}`);
+					componentInfo = BITSMIST.v1.Component.report.get(`components.${key}`);
 				}
 			});
 		}
@@ -411,7 +407,7 @@ export default class StatePerk extends Perk
 			let element = document.querySelector(waitlistItem["rootNode"]);
 			if (element && element.uniqueId)
 			{
-				componentInfo = BITSMIST.v1.Origin.report.get(`components.${element.uniqueId}`);
+				componentInfo = BITSMIST.v1.Component.report.get(`components.${element.uniqueId}`);
 			}
 		}
 		else if (waitlistItem["object"])
@@ -419,7 +415,7 @@ export default class StatePerk extends Perk
 			let element = waitlistItem["object"];
 			if (element.uniqueId)
 			{
-				componentInfo = BITSMIST.v1.Origin.report.get(`components.${element.uniqueId}`);
+				componentInfo = BITSMIST.v1.Component.report.get(`components.${element.uniqueId}`);
 			}
 		}
 

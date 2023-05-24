@@ -66,25 +66,25 @@ export default class ComponentPerk extends Perk
 		let promise = Promise.resolve();
 		if (ComponentPerk.__hasExternalClass(tagName, baseClassName, settings))
 		{
-			if (BITSMIST.v1.Origin.report.get(`classes.${baseClassName}`, {})["state"] === "loading")
+			if (BITSMIST.v1.Component.report.get(`classes.${baseClassName}`, {})["state"] === "loading")
 			{
 				// Already loading
 				console.debug(`ComponentPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
-				promise = BITSMIST.v1.Origin.report.get(`classes.${baseClassName}.promise`);
+				promise = BITSMIST.v1.Component.report.get(`classes.${baseClassName}.promise`);
 			}
 			else
 			{
 				// Need loading
 				console.debug(`ClassPerk._loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
-				BITSMIST.v1.Origin.report.set(`classes.${baseClassName}.state`, "loading");
+				BITSMIST.v1.Component.report.set(`classes.${baseClassName}.state`, "loading");
 
 				let options = {
 					"splitClass": Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.settings.get("system.splitClass", false)),
 				};
 				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
-					BITSMIST.v1.Origin.report.set(`classes.${baseClassName}`, {"state":"loaded", "promise":null});
+					BITSMIST.v1.Component.report.set(`classes.${baseClassName}`, {"state":"loaded", "promise":null});
 				});
-				BITSMIST.v1.Origin.report.set(`classes.${baseClassName}.promise`, promise);
+				BITSMIST.v1.Component.report.set(`classes.${baseClassName}.promise`, promise);
 			}
 		}
 
@@ -255,10 +255,10 @@ export default class ComponentPerk extends Perk
 	static globalInit()
 	{
 
-		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("component.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
-		BITSMIST.v1.Component.skills.set("component.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
-		BITSMIST.v1.Component.skills.set("component.summon", function(...args) { return ComponentPerk._loadClass(...args); });
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "component.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "component.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "component.summon", function(...args) { return ComponentPerk._loadClass(...args); });
 
 	}
 
@@ -267,11 +267,9 @@ export default class ComponentPerk extends Perk
 	static init(component, options)
 	{
 
-		// Add inventory items to component;
-		component.inventory.set("component.components", {});
-
-		// Add event handlers to component
-		this._addPerkHandler(component, "doApplySettings", ComponentPerk.ComponentPerk_onDoApplySettings);
+		// Upgrade component
+		this.upgrade(component, "inventory", "component.components", {});
+		this.upgrade(component, "event", "doApplySettings", ComponentPerk.ComponentPerk_onDoApplySettings);
 
 	}
 
@@ -366,7 +364,7 @@ export default class ComponentPerk extends Perk
 			{
 				ret = false;
 			}
-			else if (BITSMIST.v1.Origin.report.get(`classes.${className}`, {})["state"] === "loaded")
+			else if (BITSMIST.v1.Component.report.get(`classes.${className}`, {})["state"] === "loaded")
 			{
 				ret = false;
 			}

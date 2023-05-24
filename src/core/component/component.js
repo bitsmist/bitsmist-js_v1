@@ -8,8 +8,10 @@
  */
 // =============================================================================
 
-import ClassUtil from "../util/class-util.js";
+import ChainableStore from "../store/chainable-store.js";
+import ComponentPerk from "../perk/component-perk.js";
 import Util from "../util/util.js";
+import Store from "../store/store.js";
 
 // =============================================================================
 //	Component class
@@ -17,6 +19,52 @@ import Util from "../util/util.js";
 
 export default class Component extends HTMLElement
 {
+
+	// -------------------------------------------------------------------------
+	//  Static
+	// -------------------------------------------------------------------------
+
+	static
+	{
+
+		this._assets = {
+			"report":		new Store(),
+			"stat":			new ChainableStore(),
+			"vault":		new ChainableStore(),
+			"inventory":	new ChainableStore(),
+			"skill": 		new ChainableStore(),
+			"setting": 		new ChainableStore(),
+			"promise": 		new ChainableStore(),
+		};
+		this.report = this._assets["report"];
+		this.settings = this._assets["setting"];
+		this.skills = this._assets["skill"];
+		this.promises = this._assets["promise"];
+
+		// Create a promise that resolves when document is ready
+		Component.promises["documentReady"] = new Promise((resolve, reject) => {
+			if ((document.readyState === "interactive" || document.readyState === "complete"))
+			{
+				resolve();
+			}
+			else
+			{
+				document.addEventListener("DOMContentLoaded", () => {
+					resolve();
+				});
+			}
+		});
+
+		// Load tags
+		Component.promises["documentReady"].then(() => {
+			if (Component.settings.get("system.autoLoadOnStartup", true))
+			{
+				ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
+			}
+		});
+
+	}
+
 	// -------------------------------------------------------------------------
 	//  Callbacks
 	// -------------------------------------------------------------------------
@@ -50,7 +98,7 @@ export default class Component extends HTMLElement
 			else
 			{
 				console.debug(`Component.connectedCallback(): Restarted component. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-				return this.skills.use("state.change", "ready");
+				//return this.skills.use("state.change", "ready");
 			}
 		});
 

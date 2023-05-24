@@ -186,10 +186,10 @@ export default class SkinPerk extends Perk
 	static globalInit()
 	{
 
-		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
-		BITSMIST.v1.Component.skills.set("skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
-		BITSMIST.v1.Component.skills.set("skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
 
 	}
 
@@ -198,14 +198,10 @@ export default class SkinPerk extends Perk
 	static init(component, options)
 	{
 
-		// Add inventory items to Component
-		component.inventory.set("skin.skins", {});
-
-		// Add stats to Component
-		component.stats.set("skin.activeSkinName", "");
-
-		// Add event handlers to component
-		this._addPerkHandler(component, "doTransform", SkinPerk.SkinPerk_onDoTransform);
+		// Upgrade component
+		this.upgrade(component, "inventory", "skin.skins", {});
+		this.upgrade(component, "stat", "skin.activeSkinName", "");
+		this.upgrade(component, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
 
 	}
 

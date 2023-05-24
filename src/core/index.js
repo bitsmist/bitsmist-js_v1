@@ -37,18 +37,12 @@ window.BITSMIST.v1.ChainableStore = ChainableStore;
 
 import Component from "./component/component.js";
 window.BITSMIST.v1.Component = Component;
-window.BITSMIST.v1.Origin = Component;
+window.BITSMIST.v1.settings = Component.settings;
 
 // Perk
 
 import Perk from "./perk/perk.js";
 window.BITSMIST.v1.Perk = Perk;
-
-import OriginPerk from "./perk/origin-perk.js";
-window.BITSMIST.v1.OriginPerk = OriginPerk;
-//PerkPerk.register(OriginPerk);
-OriginPerk.globalInit();
-window.BITSMIST.v1.settings = Component.settings;
 
 import BasicPerk from "./perk/basic-perk.js";
 window.BITSMIST.v1.BasicPerk = BasicPerk;

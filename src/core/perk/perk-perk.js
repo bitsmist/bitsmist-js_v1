@@ -38,7 +38,7 @@ export default class PerkPerk extends Perk
 
 		PerkPerk.__sortItems(targets).forEach((perkName) => {
 			chain = chain.then(() => {
-				return PerkPerk._attach(component, BITSMIST.v1.Origin.report.get(`perks.${perkName}.object`), options);
+				return PerkPerk._attach(component, BITSMIST.v1.Component.report.get(`perks.${perkName}.object`), options);
 			});
 		});
 
@@ -63,10 +63,10 @@ export default class PerkPerk extends Perk
 		if (!component.inventory.get(`perk.perks.${perk.name}`))
 		{
 			// Attach dependencies first
-			let deps = BITSMIST.v1.Origin.report.get(`perks.${perk.name}.depends`);
+			let deps = BITSMIST.v1.Component.report.get(`perks.${perk.name}.depends`);
 			for (let i = 0; i < deps.length; i++)
 			{
-				PerkPerk._attach(component, BITSMIST.v1.Origin.report.get(`perks.${[deps[i]]}.object`), options);
+				PerkPerk._attach(component, BITSMIST.v1.Component.report.get(`perks.${[deps[i]]}.object`), options);
 			}
 
 			component.inventory.set(`perk.perks.${perk.name}`, {
@@ -99,9 +99,9 @@ export default class PerkPerk extends Perk
 	static globalInit()
 	{
 
-		// Add skills to Component
-		BITSMIST.v1.Component.skills.set("perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
-		BITSMIST.v1.Component.skills.set("perk.attach", function(...args) { return PerkPerk._attach(...args); });
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "perk.attach", function(...args) { return PerkPerk._attach(...args); });
 
 	}
 
@@ -110,10 +110,8 @@ export default class PerkPerk extends Perk
 	static init(component, options)
 	{
 
-		// Add inventory items to component
-		component.inventory.set("perk.perks.PerkPerk", {
-			"object": this,
-		});
+		// Upgrade component
+		this.upgrade(component, "inventory", "perk.perks.PerkPerk", {"object": this});
 
 	}
 
@@ -133,7 +131,7 @@ export default class PerkPerk extends Perk
 		info["depends"] = info["depends"] || [];
 		info["depends"] = ( Array.isArray(info["depends"]) ? info["depends"] : [info["depends"]] );
 
-		BITSMIST.v1.Origin.report.set(`perks.${perk.name}`, {
+		BITSMIST.v1.Component.report.set(`perks.${perk.name}`, {
 			"name":			perk.name,
 			"object":		perk,
 			"section":		info["section"],
@@ -145,7 +143,7 @@ export default class PerkPerk extends Perk
 		perk.globalInit();
 
 		// Create target word index
-		PerkPerk._sections[info["section"]] = BITSMIST.v1.Origin.report.get(`perks.${perk.name}`);
+		PerkPerk._sections[info["section"]] = BITSMIST.v1.Component.report.get(`perks.${perk.name}`);
 
 	}
 
@@ -170,10 +168,10 @@ export default class PerkPerk extends Perk
 		if (perks)
 		{
 			Object.keys(perks).forEach((perkName) => {
-				Util.assert(BITSMIST.v1.Origin.report.get(`perks.${perkName}`), `PerkPerk.__listNewPerk(): Perk not found. name=${component.tagName}, perkName=${perkName}`);
+				Util.assert(BITSMIST.v1.Component.report.get(`perks.${perkName}`), `PerkPerk.__listNewPerk(): Perk not found. name=${component.tagName}, perkName=${perkName}`);
 				if (Util.safeGet(perks[perkName], "setting.attach") && !component.inventory.get(`perk.perks.${perkName}`))
 				{
-					targets[perkName] = BITSMIST.v1.Origin.report.get(`perks.${perkName}`);
+					targets[perkName] = BITSMIST.v1.Component.report.get(`perks.${perkName}`);
 				}
 			});
 		}

@@ -97,16 +97,25 @@ export default class Perk
 	 * Set event handler for perk.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{String}		eventName			Event name.
-	 * @param	{Function}		handler				Event handler.
+	 * @param	{String}		type				Upgrade type.
+	 * @param	{String}		name				Section name.
+	 * @param	{Function}		content				Upgrade content.
 	 */
-	static _addPerkHandler(component, eventName, handler)
+	static upgrade(component, type, name, content)
 	{
 
-		component.skills.use("event.add", eventName, {
-			"handler":	handler,
-			"order":	this.info["order"],
-		});
+		switch (type)
+		{
+			case "event":
+				component.skills.use("event.add", name, {
+					"handler":	content,
+					"order":	this.info["order"],
+				});
+				break;
+			default:
+				component._assets[type].set(name, content);
+				break;
+		}
 
 	}
 
