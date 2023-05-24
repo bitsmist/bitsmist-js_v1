@@ -504,6 +504,25 @@ export default class Util
     static scopedSelectorAll(rootNode, query, options)
     {
 
+        let newQuery = ":scope " + query.replace(",", ",:scope ");
+        let allElements = rootNode.querySelectorAll(newQuery);
+		let allSet = new Set(allElements);
+
+		if (!options || !options["penetrate"])
+		{
+			// Remove elements descendant of other components unless penetrate option is set
+			let removeQuery = ":scope [bm-powered] " + query.replace(",", ", :scope [bm-powered] ");
+			let removeElements = rootNode.querySelectorAll(removeQuery);
+
+			let removeSet = new Set(removeElements);
+			removeSet.forEach((item) => {
+				allSet.delete(item);
+			});
+		}
+
+        return Array.from(allSet);
+
+		/*
         // Set temp id
         let guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
         rootNode.setAttribute("__bm_tempid", guid);
@@ -531,6 +550,7 @@ export default class Util
         rootNode.removeAttribute("__bm_tempid");
 
         return Array.from(setAll);
+		*/
 
     }
 
