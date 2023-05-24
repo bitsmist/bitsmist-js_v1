@@ -230,7 +230,14 @@ export default class BasicPerk extends Perk
 	static globalInit()
 	{
 
-		// Upgrade Component (static)
+		// Init Component vars
+		BITSMIST.v1.Component._assets["stat"] = new ChainableStore();
+		BITSMIST.v1.Component._assets["vault"] = new ChainableStore();
+		BITSMIST.v1.Component._assets["inventory"] = new ChainableStore();
+		BITSMIST.v1.Component._assets["skill"] = new ChainableStore();
+		BITSMIST.v1.Component.skills = BITSMIST.v1.Component._assets["skill"];
+
+		// Upgrade Component
 		this.upgrade(BITSMIST.v1.Component, "skill", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });

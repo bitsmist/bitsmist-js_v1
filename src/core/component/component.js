@@ -27,18 +27,12 @@ export default class Component extends HTMLElement
 	static
 	{
 
+		// Init Component vars
 		this._assets = {
 			"report":		new Store(),
-			"stat":			new ChainableStore(),
-			"vault":		new ChainableStore(),
-			"inventory":	new ChainableStore(),
-			"skill": 		new ChainableStore(),
-			"setting": 		new ChainableStore(),
 			"promise": 		new ChainableStore(),
 		};
 		this.report = this._assets["report"];
-		this.settings = this._assets["setting"];
-		this.skills = this._assets["skill"];
 		this.promises = this._assets["promise"];
 
 		// Create a promise that resolves when document is ready

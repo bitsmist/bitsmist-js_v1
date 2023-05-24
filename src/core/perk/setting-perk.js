@@ -91,6 +91,10 @@ export default class SettingPerk extends Perk
 	static globalInit()
 	{
 
+		// Init Component vars
+		BITSMIST.v1.Component._assets["setting"] = new ChainableStore();
+		BITSMIST.v1.Component.settings = BITSMIST.v1.Component._assets["setting"];
+
 		// Add properties to Component
 		Object.defineProperty(BITSMIST.v1.Component.prototype, "settings", {
 			get() { return this._settings; },
@@ -163,16 +167,9 @@ export default class SettingPerk extends Perk
 	static __loadAttrSettings(component)
 	{
 
-		// Get settings from the attribute
-
-		let dataSettings = ( document.querySelector(component._settings.get("setting.rootNode")) ?
-			document.querySelector(component._settings.get("setting.rootNode")).getAttribute("bm-setting") :
-			component.getAttribute("bm-setting")
-		);
-
-		if (dataSettings)
+		if (component.hasAttribute("bm-setting"))
 		{
-			let settings = {"setting": JSON.parse(dataSettings)};
+			let settings = {"setting": JSON.parse(component.getAttribute("bm-setting"))};
 			component._settings.merge(settings);
 		}
 

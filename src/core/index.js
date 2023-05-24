@@ -37,7 +37,6 @@ window.BITSMIST.v1.ChainableStore = ChainableStore;
 
 import Component from "./component/component.js";
 window.BITSMIST.v1.Component = Component;
-window.BITSMIST.v1.settings = Component.settings;
 
 // Perk
 
@@ -55,6 +54,7 @@ PerkPerk.register(PerkPerk);
 import SettingPerk from "./perk/setting-perk.js";
 window.BITSMIST.v1.SettingPerk = SettingPerk;
 PerkPerk.register(SettingPerk);
+window.BITSMIST.v1.settings = Component.settings;
 
 import StatePerk from "./perk/state-perk.js";
 window.BITSMIST.v1.StatePerk = StatePerk;
