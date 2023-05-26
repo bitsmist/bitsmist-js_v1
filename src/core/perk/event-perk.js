@@ -184,19 +184,8 @@ export default class EventPerk extends Perk
 
 		options = options || {};
 		element = ( element ? element : component );
-		let e = null;
 
-		if (typeof window.CustomEvent === "function")
-		{
-			e = new CustomEvent(eventName, { detail: options });
-		}
-		else
-		{
-			e  = document.createEvent("CustomEvent");
-			e.initCustomEvent(eventName, false, false, options);
-		}
-
-		element.dispatchEvent(e);
+		element.dispatchEvent(new CustomEvent(eventName, { detail: options }));
 
 		// return the promise if exists
 		return Util.safeGet(element, `__bm_eventinfo.promises.${eventName}`) || Promise.resolve();
