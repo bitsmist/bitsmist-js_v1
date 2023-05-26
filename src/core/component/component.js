@@ -77,6 +77,7 @@ export default class Component extends HTMLElement
 
 			this.setAttribute("bm-powered", "");
 			this._uniqueId = Util.getUUID();
+			this._root = this;
 		}
 
 		// Start

@@ -48,7 +48,7 @@ export default class SkinPerk extends Perk
 			break;
 		case "node":
 			let rootNode = component.settings.get(`skin.skins.${skinName}.rootNode`);
-			skinInfo["html"] = component.querySelector(rootNode).innerHTML;
+			skinInfo["html"] = Util.scopedSelectorAll(component, rootNode)[0].innerHTML;
 			promise = Promise.resolve();
 			break;
 		case "url":
@@ -98,7 +98,7 @@ export default class SkinPerk extends Perk
 		else
 		{
 			// HTML
-			component.innerHTML = skinInfo["html"];
+			component._root.innerHTML = skinInfo["html"];
 		}
 
 		// Change active skin
@@ -202,6 +202,21 @@ export default class SkinPerk extends Perk
 		this.upgrade(component, "inventory", "skin.skins", {});
 		this.upgrade(component, "stat", "skin.activeSkinName", "");
 		this.upgrade(component, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
+
+		// Shadow DOM
+		switch (component.settings.get("setting.shadowDOM"))
+		{
+		case "open":
+			component._root = component.attachShadow({mode:"open"});
+			break;
+		case "closed":
+			component._root = component.attachShadow({mode:"closed"});
+			break;
+		default:
+			component._root = component;
+			break;
+		}
+
 
 	}
 

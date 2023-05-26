@@ -116,7 +116,7 @@ export default class EventPerk extends Perk
 	static _initEvents(component, elementName, eventInfo, rootNode)
 	{
 
-		rootNode = ( rootNode ? rootNode : component );
+		rootNode = ( rootNode ? rootNode : component._root );
 		eventInfo = ( eventInfo ? eventInfo : component.settings.get(`event.events.${elementName}`) );
 
 		// Get target elements
