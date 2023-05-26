@@ -114,7 +114,7 @@ export default class Component extends HTMLElement
 			}
 		}).then(() => {
 			console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.skills.use("state.change", "disconnected");
+			//return this.skills.use("state.change", "disconnected");
 		});
 
 	}
@@ -236,22 +236,6 @@ export default class Component extends HTMLElement
 		}).then(() => {
 			return this.skills.use("event.trigger", "afterStop", options);
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Execute query on this component excluding nested components inside.
-	 *
-	 * @param	{String}		query				Query.
-	 *
-	 * @return  {Array}			Array of matched elements.
-	 */
-	_scopedSelectorAll(query)
-	{
-
-		return Util.scopedSelectorAll(this, query);
 
 	}
 
