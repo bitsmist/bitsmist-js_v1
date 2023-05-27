@@ -359,7 +359,7 @@ export default class EventPerk extends Perk
 
 		if (EventPerk.__isTargetSelf(elementName, eventInfo))
 		{
-			elements = [rootNode];
+			elements = [component];
 		}
 		else if (eventInfo && eventInfo["rootNode"])
 		{
