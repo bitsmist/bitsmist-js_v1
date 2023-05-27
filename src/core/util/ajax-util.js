@@ -185,6 +185,29 @@ export default class AjaxUtil
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Load a CSS file.
+	 *
+	 * @param	{String}		url					CSS URL.
+	 * @param	{Object}		options				Load Options.
+	 *
+	 * @return  {Promise}		Promise.
+	 */
+	static loadCSS(url, options)
+	{
+
+		console.debug(`AjaxUtil.loadCSS(): Loading an CSS file. url=${url}`);
+
+		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
+			console.debug(`AjaxUtil.loadCSS(): Loaded the CSS file. url=${url}`);
+
+			return xhr.responseText;
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Load class files.
 	 *
 	 * @param	{String}		url					Class URL without extension.
