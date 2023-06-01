@@ -23,6 +23,77 @@ export default class ComponentPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Properties
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"section":		"component",
+			"order":		400,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static
+	{
+
+		// Init vars
+		this._classes = {}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "component.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "component.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "component.summon", function(...args) { return ComponentPerk._loadClass(...args); });
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Upgrade component
+		this.upgrade(component, "inventory", "component.components", {});
+		this.upgrade(component, "event", "doApplySettings", ComponentPerk.ComponentPerk_onDoApplySettings);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static ComponentPerk_onDoApplySettings(sender, e, ex)
+	{
+
+		let chain = Promise.resolve();
+
+		Object.entries(Util.safeGet(e.detail, "settings.component.components", {})).forEach(([sectionName, sectionValue]) => {
+			chain = chain.then(() => {
+				if (!this.get("inventory", `component.components.${sectionName}`))
+				{
+					return ComponentPerk._loadComponent(this, sectionName, sectionValue);
+				}
+			});
+		});
+
+		return chain;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Skills
 	// -------------------------------------------------------------------------
 
@@ -209,75 +280,6 @@ export default class ComponentPerk extends Perk
 				return ComponentPerk.__waitForChildren(rootNode);
 			}
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static ComponentPerk_onDoApplySettings(sender, e, ex)
-	{
-
-		let chain = Promise.resolve();
-
-		Object.entries(Util.safeGet(e.detail, "settings.component.components", {})).forEach(([sectionName, sectionValue]) => {
-			chain = chain.then(() => {
-				if (!this.get("inventory", `component.components.${sectionName}`))
-				{
-					return ComponentPerk._loadComponent(this, sectionName, sectionValue);
-				}
-			});
-		});
-
-		return chain;
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get info()
-	{
-
-		return {
-			"section":		"component",
-			"order":		400,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static
-	{
-
-		// Init vars
-		this._classes = {}
-
-	}
-
-	static globalInit()
-	{
-
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "component.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "component.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "component.summon", function(...args) { return ComponentPerk._loadClass(...args); });
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Upgrade component
-		this.upgrade(component, "inventory", "component.components", {});
-		this.upgrade(component, "event", "doApplySettings", ComponentPerk.ComponentPerk_onDoApplySettings);
 
 	}
 
