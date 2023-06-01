@@ -66,25 +66,25 @@ export default class ComponentPerk extends Perk
 		let promise = Promise.resolve();
 		if (ComponentPerk.__hasExternalClass(tagName, baseClassName, settings))
 		{
-			if (BITSMIST.v1.Component.report.get(`classes.${baseClassName}`, {})["state"] === "loading")
+			if (this._classes[baseClassName] && this._classes[baseClassName]["state"] === "loading")
 			{
 				// Already loading
 				console.debug(`ComponentPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
-				promise = BITSMIST.v1.Component.report.get(`classes.${baseClassName}.promise`);
+				promise = this._classes[baseClassName].promise;
 			}
 			else
 			{
 				// Need loading
 				console.debug(`ClassPerk._loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
-				BITSMIST.v1.Component.report.set(`classes.${baseClassName}.state`, "loading");
+				this._classes[baseClassName] = {"state":"loading"};
 
 				let options = {
-					"splitClass": Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.settings.get("system.splitClass", false)),
+					"splitClass": Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.Component.get("setting", "system.splitClass", false)),
 				};
 				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
-					BITSMIST.v1.Component.report.set(`classes.${baseClassName}`, {"state":"loaded", "promise":null});
+					this._classes[baseClassName] = {"state":"loaded", "promise":null};
 				});
-				BITSMIST.v1.Component.report.set(`classes.${baseClassName}.promise`, promise);
+				this._classes[baseClassName].promise = promise;
 			}
 		}
 
@@ -128,10 +128,10 @@ export default class ComponentPerk extends Perk
 		console.debug(`ComponentPerk._loadComponent(): Adding the component. name=${component.tagName}, tagName=${tagName}`);
 
 		// Already loaded
-		if (component.inventory.get(`component.components.${tagName}`))
+		if (component.get("inventory", `component.components.${tagName}`))
 		{
 			console.debug(`ComponentPerk._loadComponent(): Already loaded. name=${component.tagName}, tagName=${tagName}`);
-			return component.inventory.get(`component.components.${tagName}`);
+			return component.get("inventory", `component.components.${tagName}`);
 		}
 
 		// Get the tag name from settings if specified
@@ -148,7 +148,7 @@ export default class ComponentPerk extends Perk
 		}).then(() => {
 			// Insert tag
 			addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
-			component.inventory.set(`component.components.${tagName}`, addedComponent);
+			component.set("inventory", `component.components.${tagName}`, addedComponent);
 		}).then(() => {
 			// Wait for the added component to be ready
 			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "setting.syncOnAdd"));
@@ -156,8 +156,8 @@ export default class ComponentPerk extends Perk
 			{
 				let state = (sync === true ? "ready" : sync);
 
-				return component.skills.use("state.wait", [{
-					"id":		component.inventory.get(`component.components.${tagName}`).uniqueId,
+				return component.use("skill", "state.wait", [{
+					"id":		component.get("inventory", `component.components.${tagName}`).uniqueId,
 					"state":	state
 				}]);
 			}
@@ -223,7 +223,7 @@ export default class ComponentPerk extends Perk
 
 		Object.entries(Util.safeGet(e.detail, "settings.component.components", {})).forEach(([sectionName, sectionValue]) => {
 			chain = chain.then(() => {
-				if (!this.inventory.get(`component.components.${sectionName}`))
+				if (!this.get("inventory", `component.components.${sectionName}`))
 				{
 					return ComponentPerk._loadComponent(this, sectionName, sectionValue);
 				}
@@ -251,6 +251,14 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
+
+	static
+	{
+
+		// Init vars
+		this._classes = {}
+
+	}
 
 	static globalInit()
 	{
@@ -364,7 +372,7 @@ export default class ComponentPerk extends Perk
 			{
 				ret = false;
 			}
-			else if (BITSMIST.v1.Component.report.get(`classes.${className}`, {})["state"] === "loaded")
+			else if (this._classes[className] && this._classes[className]["state"] === "loaded")
 			{
 				ret = false;
 			}
@@ -487,8 +495,8 @@ export default class ComponentPerk extends Perk
 	{
 
 		let path = Util.concatPath([
-			Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
-			Util.safeGet(settings, "system.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
+			Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.Component.get("setting", "system.appBaseUrl", "")),
+			Util.safeGet(settings, "system.componentPath", BITSMIST.v1.Component.get("setting", "system.componentPath", "")),
 			Util.safeGet(settings, "setting.path", ""),
 		]);
 		let fileName = Util.safeGet(settings, "setting.fileName", tagName);

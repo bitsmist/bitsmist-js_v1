@@ -9,6 +9,7 @@
 // =============================================================================
 
 import AjaxUtil from "../util/ajax-util";
+import ChainableStore from "../store/chainable-store.js";
 import Perk from "./perk";
 import Util from "../util/util";
 
@@ -38,18 +39,16 @@ export default class SkinPerk extends Perk
 		// Skin(File) Name
 		skinName = skinName || SkinPerk.__getDefaultFilename(component);
 
-		let promise;
-		let skinInfo = component.inventory.get(`skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(component, skinName);
+		let promise = Promise.resolve();
+		let skinInfo = component.get("inventory", `skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(component, skinName);
 
-		switch (component.settings.get(`skin.skins.${skinName}.type`)) {
+		switch (component.get("setting", `skin.skins.${skinName}.type`)) {
 		case "html":
-			skinInfo["html"] = component.settings.get(`skin.skins.${skinName}.html`);
-			promise = Promise.resolve();
+			skinInfo["html"] = component.get("setting", `skin.skins.${skinName}.html`);
 			break;
 		case "node":
-			let rootNode = component.settings.get(`skin.skins.${skinName}.rootNode`);
+			let rootNode = component.get("setting", `skin.skins.${skinName}.rootNode`);
 			skinInfo["html"] = Util.scopedSelectorAll(component, rootNode)[0].innerHTML;
-			promise = Promise.resolve();
 			break;
 		case "url":
 		default:
@@ -79,13 +78,13 @@ export default class SkinPerk extends Perk
 	static _applySkin(component, skinName)
 	{
 
-		if (component.stats.get("skin.activeSkinName") === skinName)
+		if (component.get("stat", "skin.activeSkinName") === skinName)
 		{
 			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return Promise.resolve();
 		}
 
-		let skinInfo = component.inventory.get(`skin.skins.${skinName}`);
+		let skinInfo = component.get("inventory", `skin.skins.${skinName}`);
 
 		Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
 
@@ -102,7 +101,7 @@ export default class SkinPerk extends Perk
 		}
 
 		// Change active skin
-		component.stats.set("skin.activeSkinName", skinName);
+		component.set("stat", "skin.activeSkinName", skinName);
 
 		console.debug(`SkinPerk._applySkin(): Applied skin. name=${component.tagName}, skinName=${skinInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
 
@@ -121,8 +120,8 @@ export default class SkinPerk extends Perk
 	static _clone(component, skinName)
 	{
 
-		skinName = skinName || component.settings.get("setting.skinName");
-		let skinInfo = component.inventory.get(`skin.skins.${skinName}`);
+		skinName = skinName || component.get("setting", "setting.skinName");
+		let skinInfo = component.get("inventory", `skin.skins.${skinName}`);
 
 		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
 
@@ -152,7 +151,7 @@ export default class SkinPerk extends Perk
 	static SkinPerk_onDoTransform(sender, e, ex)
 	{
 
-		if (this.settings.get("skin.options.hasSkin", true))
+		if (this.get("setting", "skin.options.hasSkin", true))
 		{
 			let skinName = SkinPerk.__getDefaultFilename(this);
 
@@ -204,7 +203,7 @@ export default class SkinPerk extends Perk
 		this.upgrade(component, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
 
 		// Shadow DOM
-		switch (component.settings.get("setting.shadowDOM"))
+		switch (component.get("setting", "setting.shadowDOM"))
 		{
 		case "open":
 			component._root = component.attachShadow({mode:"open"});
@@ -235,17 +234,17 @@ export default class SkinPerk extends Perk
 	static __createSkinInfo(component, skinName)
 	{
 
-		if (!component.inventory.get(`skin.skins.${skinName}`))
+		if (!component.get("inventory", `skin.skins.${skinName}`))
 		{
 
 			let skinInfo = {};
 			skinInfo["name"] = skinName;
 			skinInfo["html"] = "";
 			skinInfo["isLoaded"] = false;
-			component.inventory.set(`skin.skins.${skinName}`, skinInfo);
+			component.set("inventory", `skin.skins.${skinName}`, skinInfo);
 		}
 
-		return component.inventory.get(`skin.skins.${skinName}`);
+		return component.get("inventory", `skin.skins.${skinName}`);
 
 	}
 
@@ -263,11 +262,11 @@ export default class SkinPerk extends Perk
 
 		let ret = false;
 
-		if (component.hasAttribute("bm-skinref") || component.settings.get("skin.options.skinRef"))
+		if (component.hasAttribute("bm-skinref") || component.get("setting", "skin.options.skinRef"))
 		{
 			ret = true;
 		}
-		else if (!component.inventory.get(`skin.skins.${skinName}.isLoaded`))
+		else if (!component.get("inventory", `skin.skins.${skinName}.isLoaded`))
 		{
 			ret = true;
 		}
@@ -293,7 +292,7 @@ export default class SkinPerk extends Perk
 		let fileName;
 		let query;
 
-		let skinRef = (component.hasAttribute("bm-skinref") ?  component.getAttribute("bm-skinref") || true : component.settings.get("skin.options.skinRef"));
+		let skinRef = (component.hasAttribute("bm-skinref") ?  component.getAttribute("bm-skinref") || true : component.get("setting", "skin.options.skinRef"));
 		if (skinRef && skinRef !== true)
 		{
 			// If URL is specified in ref, use it
@@ -306,12 +305,12 @@ export default class SkinPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					component.settings.get("system.appBaseUrl", ""),
-					component.settings.get("system.skinPath", component.settings.get("system.componentPath", "")),
-					component.settings.get("setting.path", ""),
+					component.get("setting", "system.appBaseUrl", ""),
+					component.get("setting", "system.skinPath", component.get("setting", "system.componentPath", "")),
+					component.get("setting", "setting.path", ""),
 				]);
 			fileName = skinName + ".html";
-			query = component.settings.get("setting.query");
+			query = component.get("setting", "setting.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
@@ -330,8 +329,8 @@ export default class SkinPerk extends Perk
 	static __getDefaultFilename(component)
 	{
 
-		return component.settings.get("skin.options.fileName",
-			component.settings.get("setting.fileName",
+		return component.get("setting", "skin.options.fileName",
+			component.get("setting", "setting.fileName",
 				component.tagName.toLowerCase()));
 
 	}

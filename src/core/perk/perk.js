@@ -106,8 +106,17 @@ export default class Perk
 
 		switch (type)
 		{
+			case "asset":
+				component._assets[name] = content;
+				break;
+			case "method":
+				component[name] = content;
+				break;
+			case "property":
+				Object.defineProperty(component, name, content);
+				break;
 			case "event":
-				component.skills.use("event.add", name, {
+				component.use("skill", "event.add", name, {
 					"handler":	content,
 					"order":	this.info["order"],
 				});

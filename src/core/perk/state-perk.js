@@ -34,10 +34,10 @@ export default class StatePerk extends Perk
 	static _changeState(component, state)
 	{
 
-		Util.assert(StatePerk.__isTransitionable(component.stats.get("state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.tagName}, fromState=${component.stats.get("state.state")}, toState=${state}, id=${component.id}`, Error);
+		Util.assert(StatePerk.__isTransitionable(component.get("stat", "state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.tagName}, fromState=${component.get("stat", "state.state")}, toState=${state}, id=${component.id}`, Error);
 
-		component.stats.set("state.state", state);
-		BITSMIST.v1.Component.report.set(`components.${component.uniqueId}`, {"object":component, "state":state});
+		component.set("stat", "state.state", state);
+		this._states[component.uniqueId] = {"object":component, "state":state};
 
 		StatePerk.__processWaitingList();
 
@@ -60,8 +60,8 @@ export default class StatePerk extends Perk
 		let promise;
 		let timeout =
 				(options && options["timeout"]) ||
-				(component && component.settings.get("system.waitForTimeout")) || // component could be null
-				BITSMIST.v1.settings.get("system.waitForTimeout", 10000);
+				(component && component.get("setting", "system.waitForTimeout")) || // component could be null
+				BITSMIST.v1.Component.get("setting", "system.waitForTimeout", 10000);
 		let waiter = ( options && options["waiter"] ? options["waiter"] : component );
 		let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 
@@ -144,7 +144,7 @@ export default class StatePerk extends Perk
 		let ret = [];
 
 		// Globally suspended?
-		if (StatePerk.__suspends[state] && StatePerk.__suspends[state].state === "pending" && !component.settings.get("setting.ignoreGlobalSuspend"))
+		if (StatePerk.__suspends[state] && StatePerk.__suspends[state].state === "pending" && !component.get("setting", "setting.ignoreGlobalSuspend"))
 		{
 			ret.push(StatePerk.__suspends[state].promise);
 		}
@@ -200,6 +200,15 @@ export default class StatePerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	static
+	{
+
+		// Init vars
+		this._states = {}
+
+	}
+
+
 	static globalInit()
 	{
 
@@ -226,9 +235,6 @@ export default class StatePerk extends Perk
 		this.upgrade(component, "stat", "state.state", "connected");
 		this.upgrade(component, "inventory", "state.suspends", {});
 		this.upgrade(component, "event", "doApplySettings", StatePerk.StatePerk_onDoApplySettings);
-
-		// Load settings from attributes
-		StatePerk.__loadAttrSettings(component);
 
 	}
 
@@ -264,32 +270,6 @@ export default class StatePerk extends Perk
 
 	// -------------------------------------------------------------------------
 	//  Privates
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get settings from element's attribute.
-	 *
-	 * @param	{Component}		component			Component.
-	 */
-	static __loadAttrSettings(component)
-	{
-
-		// Get waitFor from attribute
-
-		if (component.hasAttribute("bm-waitfor"))
-		{
-			let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"ready"};
-			component.settings.merge({"waitFor": [waitInfo]});
-		}
-
-		if (component.hasAttribute("bm-waitfornode"))
-		{
-			let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"ready"};
-			component.settings.merge({"waitFor": [waitInfo]});
-		}
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -391,14 +371,14 @@ export default class StatePerk extends Perk
 
 		if (waitlistItem["id"])
 		{
-			componentInfo = BITSMIST.v1.Component.report.get(`components.${waitlistItem["id"]}`);
+			componentInfo = this._states[waitlistItem["id"]];
 		}
 		else if (waitlistItem["name"])
 		{
-			Object.keys(BITSMIST.v1.Component.report.get("component").items).forEach((key) => {
-				if (waitlistItem["name"] === BITSMIST.v1.Component.report.get(`components.${key}`).object.name)
+			Object.keys(this._states).forEach((key) => {
+				if (waitlistItem["name"] === this._states[key].object.name)
 				{
-					componentInfo = BITSMIST.v1.Component.report.get(`components.${key}`);
+					componentInfo = this._states[key];
 				}
 			});
 		}
@@ -407,7 +387,7 @@ export default class StatePerk extends Perk
 			let element = document.querySelector(waitlistItem["rootNode"]);
 			if (element && element.uniqueId)
 			{
-				componentInfo = BITSMIST.v1.Component.report.get(`components.${element.uniqueId}`);
+				componentInfo = this._states[element.uniqueId];
 			}
 		}
 		else if (waitlistItem["object"])
@@ -415,7 +395,7 @@ export default class StatePerk extends Perk
 			let element = waitlistItem["object"];
 			if (element.uniqueId)
 			{
-				componentInfo = BITSMIST.v1.Component.report.get(`components.${element.uniqueId}`);
+				componentInfo = this._states[element.uniqueId];
 			}
 		}
 

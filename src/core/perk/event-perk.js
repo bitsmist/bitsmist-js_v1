@@ -117,7 +117,7 @@ export default class EventPerk extends Perk
 	{
 
 		rootNode = ( rootNode ? rootNode : component._root );
-		eventInfo = ( eventInfo ? eventInfo : component.settings.get(`event.events.${elementName}`) );
+		eventInfo = ( eventInfo ? eventInfo : component.get("setting", `event.events.${elementName}`) );
 
 		// Get target elements
 		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
@@ -220,7 +220,10 @@ export default class EventPerk extends Perk
 	{
 
 		Object.entries(Util.safeGet(e.detail, "settings.event.events", {})).forEach(([sectionName, sectionValue]) => {
-			EventPerk._initEvents(this, sectionName, sectionValue);
+			if (EventPerk.__isTargetSelf(sectionName, sectionValue))
+			{
+				EventPerk._initEvents(this, sectionName, sectionValue);
+			}
 		});
 
 	}
@@ -230,7 +233,7 @@ export default class EventPerk extends Perk
 	static EventPerk_onAfterTransform(sender, e, ex)
 	{
 
-		Object.entries(this.settings.get("event.events", {})).forEach(([sectionName, sectionValue]) => {
+		Object.entries(this.get("setting", "event.events", {})).forEach(([sectionName, sectionValue]) => {
 			// Initialize only elements inside component
 			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
 			{
@@ -287,7 +290,7 @@ export default class EventPerk extends Perk
 	static deinit(component, options)
 	{
 
-		let events = this.settings.get("event");
+		let events = this.get("setting", "event");
 		if (events)
 		{
 			Object.keys(events).forEach((elementName) => {
@@ -359,7 +362,7 @@ export default class EventPerk extends Perk
 
 		if (EventPerk.__isTargetSelf(elementName, eventInfo))
 		{
-			elements = [component];
+			elements = [rootNode];
 		}
 		else if (eventInfo && eventInfo["rootNode"])
 		{
