@@ -21,6 +21,87 @@ export default class SettingPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Properties
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"section":		"setting",
+			"order":		10,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "asset", "setting", new ChainableStore());
+		BITSMIST.v1.Component.settings = BITSMIST.v1.Component._assets["setting"];
+
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Defaults
+		let defaults = {
+			"setting": {
+				"autoClear":			true,
+				"autoFetch":			true,
+				"autoFill":				true,
+				"autoRefresh":			true,
+				"autoRestart":			false,
+				"autoSetup":			true,
+				"autoStop":				true,
+				"autoTransform":		true,
+			},
+			"perk": {
+	//			"BasicPerk":		{"setting":{"attach":true}},	// Attach manually
+	//			"SettingPerk":		{"setting":{"attach":true}},	// Attach manually
+				"PerkPerk":			{"setting":{"attach":true}},
+				"StatePerk":		{"setting":{"attach":true}},
+				"EventPerk":		{"setting":{"attach":true}},
+				"SkinPerk":			{"setting":{"attach":true}},
+				"ComponentPerk":	{"setting":{"attach":true}},
+			}
+		};
+
+		// Get settings
+		let settings = (options && options["settings"]) || {};
+		settings = Util.deepMerge(defaults, settings);
+		settings = SettingPerk.__injectSettings(component, settings);
+		settings = SettingPerk.__mergeSettings(component, settings);
+
+		// Upgrade component
+		this.upgrade(component, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Component._assets["setting"]}));
+
+		return Promise.resolve().then(() => {
+			return SettingPerk._loadSettings(component);
+		}).then(() => {
+			SettingPerk.__loadAttrSettings(component);
+		}).then(() => {
+			return SettingPerk._applySettings(component, {"settings":component._assets["setting"].items});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Skills
 	// -------------------------------------------------------------------------
 
@@ -115,87 +196,6 @@ export default class SettingPerk extends Perk
 	{
 
 		return component._assets["setting"].merge(key, value);
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get info()
-	{
-
-		return {
-			"section":		"setting",
-			"order":		10,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static globalInit()
-	{
-
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "asset", "setting", new ChainableStore());
-		BITSMIST.v1.Component.settings = BITSMIST.v1.Component._assets["setting"];
-
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Defaults
-		let defaults = {
-			"setting": {
-				"autoClear":			true,
-				"autoFetch":			true,
-				"autoFill":				true,
-				"autoRefresh":			true,
-				"autoRestart":			false,
-				"autoSetup":			true,
-				"autoStop":				true,
-				"autoTransform":		true,
-			},
-			"perk": {
-	//			"BasicPerk":		{"setting":{"attach":true}},	// Attach manually
-	//			"SettingPerk":		{"setting":{"attach":true}},	// Attach manually
-				"PerkPerk":			{"setting":{"attach":true}},
-				"StatePerk":		{"setting":{"attach":true}},
-				"EventPerk":		{"setting":{"attach":true}},
-				"SkinPerk":			{"setting":{"attach":true}},
-				"ComponentPerk":	{"setting":{"attach":true}},
-			}
-		};
-
-		// Get settings
-		let settings = (options && options["settings"]) || {};
-		settings = Util.deepMerge(defaults, settings);
-		settings = SettingPerk.__injectSettings(component, settings);
-		settings = SettingPerk.__mergeSettings(component, settings);
-
-		// Upgrade component
-		this.upgrade(component, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Component._assets["setting"]}));
-
-		return Promise.resolve().then(() => {
-			return SettingPerk._loadSettings(component);
-		}).then(() => {
-			SettingPerk.__loadAttrSettings(component);
-		}).then(() => {
-			return SettingPerk._applySettings(component, {"settings":component._assets["setting"].items});
-		});
 
 	}
 

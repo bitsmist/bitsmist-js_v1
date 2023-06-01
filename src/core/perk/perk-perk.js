@@ -20,6 +20,84 @@ export default class PerkPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Properties
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"section":		"perk",
+			"order":		0,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static
+	{
+
+		// Init vars
+		this._perks = {}
+		this._sections = {};
+
+	}
+
+	static globalInit()
+	{
+
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "perk.attach", function(...args) { return PerkPerk._attach(...args); });
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Upgrade component
+		this.upgrade(component, "inventory", "perk.perks.PerkPerk", {"object": this});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Register an perk.
+	 *
+	 * @param	{Perk}		perk			Perk to register.
+	 */
+	static register(perk)
+	{
+
+		let info = perk.info;
+		info["section"] = info["section"];
+		info["order"] = ("order" in info ? info["order"] : 500);
+		info["depends"] = info["depends"] || [];
+		info["depends"] = ( Array.isArray(info["depends"]) ? info["depends"] : [info["depends"]] );
+
+		this._perks[perk.name] = {
+			"name":			perk.name,
+			"object":		perk,
+			"section":		info["section"],
+			"order":		info["order"],
+			"depends":		info["depends"],
+		};
+
+		// Global init
+		perk.globalInit();
+
+		// Create target word index
+		PerkPerk._sections[info["section"]] = this._perks[perk.name];
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Skills
 	// -------------------------------------------------------------------------
 
@@ -75,83 +153,6 @@ export default class PerkPerk extends Perk
 
 			return perk.init(component, options);
 		}
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get info()
-	{
-
-		return {
-			"section":		"perk",
-			"order":		0,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static
-	{
-
-		// Init vars
-		this._perks = {}
-
-	}
-
-	static globalInit()
-	{
-
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "perk.attach", function(...args) { return PerkPerk._attach(...args); });
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Upgrade component
-		this.upgrade(component, "inventory", "perk.perks.PerkPerk", {"object": this});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Register an perk.
-	 *
-	 * @param	{Perk}		perk			Perk to register.
-	 */
-	static register(perk)
-	{
-
-		let info = perk.info;
-		info["section"] = info["section"];
-		info["order"] = ("order" in info ? info["order"] : 500);
-		info["depends"] = info["depends"] || [];
-		info["depends"] = ( Array.isArray(info["depends"]) ? info["depends"] : [info["depends"]] );
-
-		this._perks[perk.name] = {
-			"name":			perk.name,
-			"object":		perk,
-			"section":		info["section"],
-			"order":		info["order"],
-			"depends":		info["depends"],
-		};
-
-		// Global init
-		perk.globalInit();
-
-		// Create target word index
-		PerkPerk._sections[info["section"]] = this._perks[perk.name];
 
 	}
 
@@ -217,6 +218,3 @@ export default class PerkPerk extends Perk
 	}
 
 }
-
-// Init vars
-PerkPerk._sections = {};

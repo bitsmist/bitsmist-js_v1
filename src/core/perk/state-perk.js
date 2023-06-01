@@ -20,6 +20,115 @@ export default class StatePerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Properties
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"section":		"state",
+			"order":		100,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static
+	{
+
+		// Init vars
+		this._states = {}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		// Init vars
+		StatePerk._waitingList = new Store();
+		StatePerk.__suspends = {};
+		StatePerk.waitFor = function(waitlist, timeout) { return StatePerk._waitFor(null, waitlist, timeout); }
+
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.change", function(...args) { return StatePerk._changeState(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.wait", function(...args) { return StatePerk._waitFor(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.suspend", function(...args) { return StatePerk._suspend(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.resume", function(...args) { return StatePerk._resume(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "state.pause", function(...args) { return StatePerk._pause(...args); });
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Upgrade component;
+		this.upgrade(component, "stat", "state.state", "connected");
+		this.upgrade(component, "inventory", "state.suspends", {});
+		this.upgrade(component, "event", "doApplySettings", StatePerk.StatePerk_onDoApplySettings);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Suspend all components at the specified state.
+	 *
+	 * @param	{String}		state				Component state.
+	 */
+	static globalSuspend(state)
+	{
+
+		StatePerk.__suspends[state] = StatePerk.__createSuspendInfo(state);
+		StatePerk.__suspends[state].state = "pending";
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Resume all components at the specified state.
+	 *
+	 * @param	{String}		state				Component state.
+	 */
+	static globalResume(state)
+	{
+
+		StatePerk.__suspends[state].resolve();
+		StatePerk.__suspends[state].state = "resolved";
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static StatePerk_onDoApplySettings(sender, e, ex)
+	{
+
+		Object.entries(Util.safeGet(e.detail, "settings.state.waitFor", {})).forEach(([sectionName, sectionValue]) => {
+			this.addEventHandler(sectionName, {"handler":StatePerk.StatePerk_onDoProcess, "options":sectionValue});
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static StatePerk_onDoProcess(sender, e, ex)
+	{
+
+		return StatePerk._waitFor(this, ex.options);
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Skills
 	// -------------------------------------------------------------------------
 
@@ -157,114 +266,6 @@ export default class StatePerk extends Perk
 
 		return Promise.all(ret);
 		*/
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static StatePerk_onDoApplySettings(sender, e, ex)
-	{
-
-		Object.entries(Util.safeGet(e.detail, "settings.state.waitFor", {})).forEach(([sectionName, sectionValue]) => {
-			this.addEventHandler(sectionName, {"handler":StatePerk.StatePerk_onDoProcess, "options":sectionValue});
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static StatePerk_onDoProcess(sender, e, ex)
-	{
-
-		return StatePerk._waitFor(this, ex.options);
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get info()
-	{
-
-		return {
-			"section":		"state",
-			"order":		100,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static
-	{
-
-		// Init vars
-		this._states = {}
-
-	}
-
-
-	static globalInit()
-	{
-
-		// Init vars
-		StatePerk._waitingList = new Store();
-		StatePerk.__suspends = {};
-		StatePerk.waitFor = function(waitlist, timeout) { return StatePerk._waitFor(null, waitlist, timeout); }
-
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.change", function(...args) { return StatePerk._changeState(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.wait", function(...args) { return StatePerk._waitFor(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.suspend", function(...args) { return StatePerk._suspend(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.resume", function(...args) { return StatePerk._resume(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.pause", function(...args) { return StatePerk._pause(...args); });
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Upgrade component;
-		this.upgrade(component, "stat", "state.state", "connected");
-		this.upgrade(component, "inventory", "state.suspends", {});
-		this.upgrade(component, "event", "doApplySettings", StatePerk.StatePerk_onDoApplySettings);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Suspend all components at the specified state.
-	 *
-	 * @param	{String}		state				Component state.
-	 */
-	static globalSuspend(state)
-	{
-
-		StatePerk.__suspends[state] = StatePerk.__createSuspendInfo(state);
-		StatePerk.__suspends[state].state = "pending";
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Resume all components at the specified state.
-	 *
-	 * @param	{String}		state				Component state.
-	 */
-	static globalResume(state)
-	{
-
-		StatePerk.__suspends[state].resolve();
-		StatePerk.__suspends[state].state = "resolved";
 
 	}
 

@@ -19,6 +19,94 @@ export default class EventPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Properties
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"section":		"event",
+			"order":		210,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Upgrade component
+		this.upgrade(component, "event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
+		this.upgrade(component, "event", "afterTransform", EventPerk.EventPerk_onAfterTransform);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static deinit(component, options)
+	{
+
+		let events = this.get("setting", "event");
+		if (events)
+		{
+			Object.keys(events).forEach((elementName) => {
+				EventPerk._removeEvents(component, elementName, events[eventName]);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static EventPerk_onDoApplySettings(sender, e, ex)
+	{
+
+		Object.entries(Util.safeGet(e.detail, "settings.event.events", {})).forEach(([sectionName, sectionValue]) => {
+			if (EventPerk.__isTargetSelf(sectionName, sectionValue))
+			{
+				EventPerk._initEvents(this, sectionName, sectionValue);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static EventPerk_onAfterTransform(sender, e, ex)
+	{
+
+		Object.entries(this.get("setting", "event.events", {})).forEach(([sectionName, sectionValue]) => {
+			// Initialize only elements inside component
+			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
+			{
+				EventPerk._initEvents(this, sectionName, sectionValue);
+			}
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Skills
 	// -------------------------------------------------------------------------
 
@@ -209,94 +297,6 @@ export default class EventPerk extends Perk
 		options["async"] = true;
 
 		return EventPerk._trigger.call(component, component, eventName, options, element);
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static EventPerk_onDoApplySettings(sender, e, ex)
-	{
-
-		Object.entries(Util.safeGet(e.detail, "settings.event.events", {})).forEach(([sectionName, sectionValue]) => {
-			if (EventPerk.__isTargetSelf(sectionName, sectionValue))
-			{
-				EventPerk._initEvents(this, sectionName, sectionValue);
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static EventPerk_onAfterTransform(sender, e, ex)
-	{
-
-		Object.entries(this.get("setting", "event.events", {})).forEach(([sectionName, sectionValue]) => {
-			// Initialize only elements inside component
-			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
-			{
-				EventPerk._initEvents(this, sectionName, sectionValue);
-			}
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get info()
-	{
-
-		return {
-			"section":		"event",
-			"order":		210,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static globalInit()
-	{
-
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Upgrade component
-		this.upgrade(component, "event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
-		this.upgrade(component, "event", "afterTransform", EventPerk.EventPerk_onAfterTransform);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static deinit(component, options)
-	{
-
-		let events = this.get("setting", "event");
-		if (events)
-		{
-			Object.keys(events).forEach((elementName) => {
-				EventPerk._removeEvents(component, elementName, events[eventName]);
-			});
-		}
 
 	}
 

@@ -23,6 +23,94 @@ export default class BasicPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Properties
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"section":		"",
+			"order":		0,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		// Upgrade Component
+		BITSMIST.v1.Component._assets = {};
+		this.upgrade(BITSMIST.v1.Component, "asset", "stat", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Component, "asset", "vault", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Component, "asset", "inventory", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Component, "asset", "skill", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Component, "method", "get", this._get);
+		this.upgrade(BITSMIST.v1.Component, "method", "set", this._set);
+		this.upgrade(BITSMIST.v1.Component, "method", "use", this._use);
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.start", function(...args) { return BasicPerk._start(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
+		BITSMIST.v1.Component.promises = new ChainableStore();
+
+		// Create a promise that resolves when document is ready
+		BITSMIST.v1.Component.promises["documentReady"] = new Promise((resolve, reject) => {
+			if ((document.readyState === "interactive" || document.readyState === "complete"))
+			{
+				resolve();
+			}
+			else
+			{
+				document.addEventListener("DOMContentLoaded", () => {
+					resolve();
+				});
+			}
+		});
+
+		// Load tags
+		BITSMIST.v1.Component.promises["documentReady"].then(() => {
+			//if (BITSMIST.v1.Component.get("setting", "system.autoLoadOnStartup", true))
+			{
+				BITSMIST.v1.ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
+			}
+		});
+
+		// Upgrade component
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_connectedHandler", this._connectedHandler);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_disconnectedHandler", this._disconnectedHandler);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "get", this._get);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "set", this._set);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "use", this._use);
+		this.upgrade(BITSMIST.v1.Component.prototype, "property", "uniqueId", {
+			get() { return this._uniqueId; },
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Upgrade component
+		component._assets = {};
+		this.upgrade(component, "asset", "stat", new ChainableStore({"chain":BITSMIST.v1.Component._assets["stat"]}));
+		this.upgrade(component, "asset", "vault", new ChainableStore());
+		this.upgrade(component, "asset", "inventory", new ChainableStore());
+		this.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));
+
+	}
+
+	// -------------------------------------------------------------------------
 	// 	Methods (component)
 	// -------------------------------------------------------------------------
 
@@ -393,94 +481,6 @@ export default class BasicPerk extends Perk
 			console.debug(`BasicPerk._clear(): Cleared the component. name=${component.tagName}, uniqueId=${component.uniqueId}`);
 			return component.use("skill", "event.trigger", "afterClear", options);
 		});
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get info()
-	{
-
-		return {
-			"section":		"",
-			"order":		0,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static globalInit()
-	{
-
-		// Upgrade Component
-		BITSMIST.v1.Component._assets = {};
-		this.upgrade(BITSMIST.v1.Component, "asset", "stat", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Component, "asset", "vault", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Component, "asset", "inventory", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Component, "asset", "skill", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Component, "method", "get", this._get);
-		this.upgrade(BITSMIST.v1.Component, "method", "set", this._set);
-		this.upgrade(BITSMIST.v1.Component, "method", "use", this._use);
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.start", function(...args) { return BasicPerk._start(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
-		BITSMIST.v1.Component.promises = new ChainableStore();
-
-		// Create a promise that resolves when document is ready
-		BITSMIST.v1.Component.promises["documentReady"] = new Promise((resolve, reject) => {
-			if ((document.readyState === "interactive" || document.readyState === "complete"))
-			{
-				resolve();
-			}
-			else
-			{
-				document.addEventListener("DOMContentLoaded", () => {
-					resolve();
-				});
-			}
-		});
-
-		// Load tags
-		BITSMIST.v1.Component.promises["documentReady"].then(() => {
-			//if (BITSMIST.v1.Component.get("setting", "system.autoLoadOnStartup", true))
-			{
-				BITSMIST.v1.ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
-			}
-		});
-
-		// Upgrade component
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_connectedHandler", this._connectedHandler);
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_disconnectedHandler", this._disconnectedHandler);
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "get", this._get);
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "set", this._set);
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "use", this._use);
-		this.upgrade(BITSMIST.v1.Component.prototype, "property", "uniqueId", {
-			get() { return this._uniqueId; },
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Upgrade component
-		component._assets = {};
-		this.upgrade(component, "asset", "stat", new ChainableStore({"chain":BITSMIST.v1.Component._assets["stat"]}));
-		this.upgrade(component, "asset", "vault", new ChainableStore());
-		this.upgrade(component, "asset", "inventory", new ChainableStore());
-		this.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));
 
 	}
 
