@@ -229,7 +229,7 @@ export default class BasicPerk extends Perk
 	{
 
 		return Promise.resolve().then(() => {
-			console.debug(`Component._start(): Starting component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._start(): Starting component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			//return BITSMIST.v1.BasicPerk.init(component);
 		}).then(() => {
 			return component.use("skill", "perk.attach", BITSMIST.v1.SettingPerk, options);
@@ -262,7 +262,7 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			return component.use("skill", "event.trigger", "afterStart");
 		}).then(() => {
-			console.debug(`Component._start(): Component is ready. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._start(): Component is ready. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.use("skill", "state.change", "ready");
 		}).then(() => {
 			return component.use("skill", "event.trigger", "afterReady");
@@ -286,14 +286,14 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`Component._stop(): Stopping component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._stop(): Stopping component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.use("skill", "state.change", "stopping");
 		}).then(() => {
 			return component.use("skill", "event.trigger", "beforeStop", options);
 		}).then(() => {
 			return component.use("skill", "event.trigger", "doStop", options);
 		}).then(() => {
-			console.debug(`Component._stop(): Stopped component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
+			console.debug(`BasicPerk._stop(): Stopped component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.use("skill", "state.change", "stopped");
 		}).then(() => {
 			return component.use("skill", "event.trigger", "afterStop", options);
