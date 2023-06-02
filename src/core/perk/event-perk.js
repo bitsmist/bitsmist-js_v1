@@ -204,12 +204,11 @@ export default class EventPerk extends Perk
 	static _initEvents(component, elementName, eventInfo, rootNode)
 	{
 
-		rootNode = ( rootNode ? rootNode : component._root );
 		eventInfo = ( eventInfo ? eventInfo : component.get("setting", `event.events.${elementName}`) );
 
 		// Get target elements
 		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
-		//Util.assert(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${component.tagName}, elementName=${elementName}`, TypeError);
+		Util.warn(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${component.tagName}, elementName=${elementName}`, TypeError);
 
 		// Set event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -362,15 +361,24 @@ export default class EventPerk extends Perk
 
 		if (EventPerk.__isTargetSelf(elementName, eventInfo))
 		{
+			// target is "this"
+			rootNode = rootNode || component;
+
 			elements = [rootNode];
-		}
-		else if (eventInfo && eventInfo["rootNode"])
-		{
-			elements = Util.scopedSelectorAll(rootNode, eventInfo["rootNode"]);
 		}
 		else
 		{
-			elements = Util.scopedSelectorAll(rootNode, `#${elementName}`);
+			// target is inside "this"
+			rootNode = rootNode || component._root;
+
+			if (eventInfo && eventInfo["rootNode"])
+			{
+				elements = Util.scopedSelectorAll(rootNode, eventInfo["rootNode"]);
+			}
+			else
+			{
+				elements = Util.scopedSelectorAll(rootNode, `#${elementName}`);
+			}
 		}
 
 		return elements;
