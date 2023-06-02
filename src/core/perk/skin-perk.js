@@ -21,6 +21,85 @@ export default class SkinPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Properties
+	// -------------------------------------------------------------------------
+
+	static get info()
+	{
+
+		return {
+			"section":		"skin",
+			"order":		200,
+		};
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		// Init Component vars
+		//BITSMIST.v1.Component._assets["css"] = new ChainableStore();
+
+		// Upgrade Component
+		this.upgrade(BITSMIST.v1.Component, "inventory", "skin.css", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Component, "skill", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static init(component, options)
+	{
+
+		// Upgrade component
+		this.upgrade(component, "inventory", "skin.skins", {});
+		this.upgrade(component, "stat", "skin.activeSkinName", "");
+		this.upgrade(component, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
+		this.upgrade(component, "event", "doApplySettings", SkinPerk.SkinPerk_onDoApplySettings);
+
+		// Shadow DOM
+		switch (component.get("setting", "setting.shadowDOM"))
+		{
+		case "open":
+			component._root = component.attachShadow({mode:"open"});
+			break;
+		case "closed":
+			component._root = component.attachShadow({mode:"closed"});
+			break;
+		default:
+			component._root = component;
+			break;
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Event Handlers
+	// -------------------------------------------------------------------------
+
+	static SkinPerk_onDoTransform(sender, e, ex)
+	{
+
+		if (this.get("setting", "skin.options.hasSkin", true))
+		{
+			let skinName = SkinPerk.__getDefaultFilename(this);
+
+			return Promise.resolve().then(() => {
+				return SkinPerk._loadSkin(this, skinName)
+			}).then(() => {
+				return SkinPerk._applySkin(this, skinName);
+			});
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Skills
 	// -------------------------------------------------------------------------
 
@@ -141,81 +220,6 @@ export default class SkinPerk extends Perk
 		}
 
 		return clone;
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Event Handlers
-	// -------------------------------------------------------------------------
-
-	static SkinPerk_onDoTransform(sender, e, ex)
-	{
-
-		if (this.get("setting", "skin.options.hasSkin", true))
-		{
-			let skinName = SkinPerk.__getDefaultFilename(this);
-
-			return Promise.resolve().then(() => {
-				return SkinPerk._loadSkin(this, skinName)
-			}).then(() => {
-				return SkinPerk._applySkin(this, skinName);
-			});
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Setter/Getter
-	// -------------------------------------------------------------------------
-
-	static get info()
-	{
-
-		return {
-			"section":		"skin",
-			"order":		200,
-		};
-
-	}
-
-	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
-
-	static globalInit()
-	{
-
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Upgrade component
-		this.upgrade(component, "inventory", "skin.skins", {});
-		this.upgrade(component, "stat", "skin.activeSkinName", "");
-		this.upgrade(component, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
-
-		// Shadow DOM
-		switch (component.get("setting", "setting.shadowDOM"))
-		{
-		case "open":
-			component._root = component.attachShadow({mode:"open"});
-			break;
-		case "closed":
-			component._root = component.attachShadow({mode:"closed"});
-			break;
-		default:
-			component._root = component;
-			break;
-		}
-
 
 	}
 
