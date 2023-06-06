@@ -505,8 +505,15 @@ export default class Util
     {
 
         let newQuery = ":scope " + query.replace(",", ",:scope ");
-        let allElements = rootNode.querySelectorAll(newQuery);
+		let targetNode = ( rootNode.shadowRoot ? rootNode.shadowRoot : rootNode );
+        let allElements = targetNode.querySelectorAll(newQuery);
 		let allSet = new Set(allElements);
+		/*
+		if (rootNode.matches(query))
+		{
+			allSet.add(rootNode);
+		}
+		*/
 
 		if (!options || !options["penetrate"])
 		{
