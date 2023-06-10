@@ -32,7 +32,7 @@ export default class AjaxUtil
 	{
 
 		return new Promise((resolve, reject) => {
-			let url = Util.safeGet(options, "url");
+			let url = Util.safeGet(options, "URL");
 			let method = Util.safeGet(options, "method");
 			let data = Util.safeGet(options, "data", "");
 			let headers = Util.safeGet(options, "headers");
@@ -126,10 +126,10 @@ export default class AjaxUtil
 
 		let format = Util.safeGet(options, "format", url.split('?')[0].split('.').pop());
 
-		console.debug(`Ajax.loadJSON(): Loading a JSON file. url=${url}, format=${format}`);
+		console.debug(`Ajax.loadJSON(): Loading a JSON file. URL=${url}, format=${format}`);
 
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`Ajax.loadJSON(): Loaded the JSON file. url=${url}, format=${format}`);
+		return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
+			console.debug(`Ajax.loadJSON(): Loaded the JSON file. URL=${url}, format=${format}`);
 
 			return Util.getObject(xhr.responseText, {"format":format});
 		});
@@ -149,10 +149,10 @@ export default class AjaxUtil
 	static loadText(url, options)
 	{
 
-		console.debug(`AjaxUtil.loadText(): Loading a Text file. url=${url}`);
+		console.debug(`AjaxUtil.loadText(): Loading a Text file. URL=${url}`);
 
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`AjaxUtil.loadText(): Loaded the Text file. url=${url}`);
+		return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
+			console.debug(`AjaxUtil.loadText(): Loaded the Text file. URL=${url}`);
 
 			return xhr.responseText;
 		});
@@ -172,10 +172,10 @@ export default class AjaxUtil
 	static loadHTML(url, options)
 	{
 
-		console.debug(`AjaxUtil.loadHTML(): Loading an HTML file. url=${url}`);
+		console.debug(`AjaxUtil.loadHTML(): Loading an HTML file. URL=${url}`);
 
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`AjaxUtil.loadHTML(): Loaded the HTML file. url=${url}`);
+		return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
+			console.debug(`AjaxUtil.loadHTML(): Loaded the HTML file. URL=${url}`);
 
 			return xhr.responseText;
 		});
@@ -195,10 +195,10 @@ export default class AjaxUtil
 	static loadCSS(url, options)
 	{
 
-		console.debug(`AjaxUtil.loadCSS(): Loading an CSS file. url=${url}`);
+		console.debug(`AjaxUtil.loadCSS(): Loading an CSS file. URL=${url}`);
 
-		return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-			console.debug(`AjaxUtil.loadCSS(): Loaded the CSS file. url=${url}`);
+		return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
+			console.debug(`AjaxUtil.loadCSS(): Loaded the CSS file. URL=${url}`);
 
 			return xhr.responseText;
 		});
@@ -218,10 +218,10 @@ export default class AjaxUtil
 	static loadClass(url, options)
 	{
 
-		console.debug(`AjaxUtil.loadClass(): Loading class files. url=${url}`);
+		console.debug(`AjaxUtil.loadClass(): Loading class files. URL=${url}`);
 
 		let url1 = url + ".js";
-		console.debug(`AjaxUtil.loadClass(): Loading the first file. url1=${url1}`);
+		console.debug(`AjaxUtil.loadClass(): Loading the first file. URL1=${url1}`);
 
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
@@ -229,11 +229,11 @@ export default class AjaxUtil
 			if (options["splitClass"])
 			{
 				let url2 = url + ".settings.js";
-				console.debug(`AjaxUtil.loadClass(): Loading the second file. url2=${url2}`);
+				console.debug(`AjaxUtil.loadClass(): Loading the second file. URL2=${url2}`);
 				return AjaxUtil.loadScript(url2);
 			}
 		}).then(() => {
-			console.debug(`AjaxUtil.loadClass(): Loaded the class files. url=${url}`);
+			console.debug(`AjaxUtil.loadClass(): Loaded the class files. URL=${url}`);
 		});
 
 	}
