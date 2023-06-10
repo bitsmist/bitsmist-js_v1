@@ -274,7 +274,7 @@ export default class SettingPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					component.get("setting", "system.appBaseUrl"),
+					component.get("setting", "system.appBaseURL"),
 					component.get("setting", "system.componentPath"),
 					component.get("setting", "setting.path", ""),
 				]);
