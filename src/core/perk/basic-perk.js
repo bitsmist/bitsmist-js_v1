@@ -60,10 +60,21 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
-		BITSMIST.v1.Component.promises = new ChainableStore();
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.scan", function(...args) { return BasicPerk._scan(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "basic.scanAll", function(...args) { return BasicPerk._scanAll(...args); });
+
+		// Upgrade component
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_connectedHandler", this._connectedHandler);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_disconnectedHandler", this._disconnectedHandler);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "get", this._get);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "set", this._set);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "use", this._use);
+		this.upgrade(BITSMIST.v1.Component.prototype, "property", "uniqueId", {
+			get() { return this._uniqueId; },
+		});
 
 		// Create a promise that resolves when document is ready
-		BITSMIST.v1.Component.promises["documentReady"] = new Promise((resolve, reject) => {
+		BITSMIST.v1.Component.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
 			if ((document.readyState === "interactive" || document.readyState === "complete"))
 			{
 				resolve();
@@ -74,24 +85,14 @@ export default class BasicPerk extends Perk
 					resolve();
 				});
 			}
-		});
+		}));
 
 		// Load tags
-		BITSMIST.v1.Component.promises["documentReady"].then(() => {
+		BITSMIST.v1.Component.get("inventory", "promise.documentReady").then(() => {
 			//if (BITSMIST.v1.Component.get("setting", "system.autoLoadOnStartup", true))
 			{
 				BITSMIST.v1.ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
 			}
-		});
-
-		// Upgrade component
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_connectedHandler", this._connectedHandler);
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_disconnectedHandler", this._disconnectedHandler);
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "get", this._get);
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "set", this._set);
-		this.upgrade(BITSMIST.v1.Component.prototype, "method", "use", this._use);
-		this.upgrade(BITSMIST.v1.Component.prototype, "property", "uniqueId", {
-			get() { return this._uniqueId; },
 		});
 
 	}
@@ -105,7 +106,7 @@ export default class BasicPerk extends Perk
 		component._assets = {};
 		this.upgrade(component, "asset", "stat", new ChainableStore({"chain":BITSMIST.v1.Component._assets["stat"]}));
 		this.upgrade(component, "asset", "vault", new ChainableStore());
-		this.upgrade(component, "asset", "inventory", new ChainableStore());
+		this.upgrade(component, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Component._assets["inventory"]}));
 		this.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));
 
 	}
@@ -230,7 +231,6 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._start(): Starting component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
-			//return BITSMIST.v1.BasicPerk.init(component);
 		}).then(() => {
 			return component.use("skill", "perk.attach", BITSMIST.v1.SettingPerk, options);
 		}).then(() => {
@@ -481,6 +481,44 @@ export default class BasicPerk extends Perk
 			console.debug(`BasicPerk._clear(): Cleared the component. name=${component.tagName}, uniqueId=${component.uniqueId}`);
 			return component.use("skill", "event.trigger", "afterClear", options);
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get elements inside the component speicified by the query.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		query				Query.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {NodeList}		Elements.
+	 */
+	static _scanAll(component, query, options)
+	{
+
+		return Util.scopedSelectorAll(component._root, query, options);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get the first element inside the component speicified by the query.
+	 *
+	 * @param	{Component}		component			Component.
+	 * @param	{String}		query				Query.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {HTMLElement}	Element.
+	 */
+	static _scan(component, query, options)
+	{
+
+		let nodes = Util.scopedSelectorAll(component._root, query, options);
+
+		return ( nodes ? nodes[0] : null );
 
 	}
 
