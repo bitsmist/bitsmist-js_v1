@@ -168,7 +168,7 @@ export default class Store
 	get(key, defaultValue)
 	{
 
-		return Util.safeGet(this._items, key, defaultValue);
+		return Util.deepClone(Util.safeGet(this._items, key, defaultValue));
 
 	}
 

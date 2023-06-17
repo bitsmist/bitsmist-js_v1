@@ -101,8 +101,10 @@ export default class ChainableStore extends Store
 	// -----------------------------------------------------------------------------
 
 	/**
-	 * Get the value from store. Return default value when specified key is not available.
-	 * If chained, chained store is also considiered (Override).
+	 * Get the value from store. If chained, return from chained store when not available.
+	 * Return default value when not available in both stores.
+	 * When both has keys, then they are deep merged. Note that they are merged only when
+	 * chain has mergeable value, an object or an array.
 	 *
 	 * @param	{String}		key					Key to get.
 	 * @param	{Object}		defaultValue		Value returned when key is not found.
@@ -114,12 +116,19 @@ export default class ChainableStore extends Store
 
 		let result = defaultValue;
 
-		if (Store.prototype.has.call(this, key))
+		if (Store.prototype.has.call(this, key) && this._chain && Store.prototype.has.call(this._chain, key))
 		{
+			// Both has key then deep merge
+			result = Util.deepMerge(Store.prototype.get.call(this._chain, key), Store.prototype.get.call(this, key));
+		}
+		else if (Store.prototype.has.call(this, key))
+		{
+			// Only this has key
 			result = Store.prototype.get.call(this, key, defaultValue);
 		}
 		else if (this._chain)
 		{
+			// Only chain has key
 			result = this._chain.get(key, defaultValue);
 		}
 
