@@ -126,10 +126,10 @@ export default class AjaxUtil
 
 		let format = Util.safeGet(options, "format", url.split('?')[0].split('.').pop());
 
-		console.debug(`Ajax.loadJSON(): Loading a JSON file. URL=${url}, format=${format}`);
+		console.debug(`AjaxUtil.loadJSON(): Loading a JSON file. URL=${url}, format=${format}`);
 
 		return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
-			console.debug(`Ajax.loadJSON(): Loaded the JSON file. URL=${url}, format=${format}`);
+			console.debug(`AjaxUtil.loadJSON(): Loaded the JSON file. URL=${url}, format=${format}`);
 
 			return Util.getObject(xhr.responseText, {"format":format});
 		});
