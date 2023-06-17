@@ -115,9 +115,9 @@ export default class ComponentPerk extends Perk
 		if (classRef && classRef !== true)
 		{
 			settings["system"] = settings["system"] || {};
-			settings["system"]["appBaseUrl"] = "";
+			settings["system"]["appBaseURL"] = "";
 			settings["system"]["componentPath"] = "";
-			settings["system"]["templatePath"] = "";
+			settings["system"]["skinPath"] = "";
 			settings["setting"] = settings["setting"] || {};
 			let url = Util.parseURL(classRef);
 			settings["setting"]["path"] = url.path;
@@ -497,7 +497,7 @@ export default class ComponentPerk extends Perk
 	{
 
 		let path = Util.concatPath([
-			Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.Component.get("setting", "system.appBaseUrl", "")),
+			Util.safeGet(settings, "system.appBaseURL", BITSMIST.v1.Component.get("setting", "system.appBaseURL", "")),
 			Util.safeGet(settings, "system.componentPath", BITSMIST.v1.Component.get("setting", "system.componentPath", "")),
 			Util.safeGet(settings, "setting.path", ""),
 		]);

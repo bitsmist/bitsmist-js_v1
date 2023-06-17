@@ -132,7 +132,7 @@ export default class URLUtil
 
 		let parsedURL = new URL(url, window.location.href);
 		let routeInfo = {
-			"url":				url,
+			"URL":				url,
 			"path":				parsedURL.pathname,
 			"query":			parsedURL.search,
 			"parsedURL":		parsedURL,
