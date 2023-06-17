@@ -68,6 +68,7 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Component.prototype, "method", "_disconnectedHandler", this._disconnectedHandler);
 		this.upgrade(BITSMIST.v1.Component.prototype, "method", "get", this._get);
 		this.upgrade(BITSMIST.v1.Component.prototype, "method", "set", this._set);
+		this.upgrade(BITSMIST.v1.Component.prototype, "method", "has", this._has);
 		this.upgrade(BITSMIST.v1.Component.prototype, "method", "use", this._use);
 		this.upgrade(BITSMIST.v1.Component.prototype, "property", "uniqueId", {
 			get() { return this._uniqueId; },
@@ -198,6 +199,21 @@ export default class BasicPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Return if the component has the asset.
+	 *
+	 * @param	{String}		assetName			Asset name.
+	 * @param	{String}		key					Key.
+	 */
+	static _has(assetName, key)
+	{
+
+		this._assets[assetName].has(key);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Call the function in the asset.
 	 *
 	 * @param	{String}		assetName			Asset name.
@@ -208,7 +224,7 @@ export default class BasicPerk extends Perk
 	{
 
 		let func = this._assets[assetName].get(key);
-		Util.assert(func, `Skill is not available. skillName=${key}`);
+		Util.assert(typeof(func) === "function", `Skill is not available. skillName=${key}`);
 
 		return func.call(this, this, ...args);
 
