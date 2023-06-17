@@ -83,10 +83,7 @@ export default class EventPerk extends Perk
 	{
 
 		Object.entries(Util.safeGet(e.detail, "settings.event.events", {})).forEach(([sectionName, sectionValue]) => {
-			if (EventPerk.__isTargetSelf(sectionName, sectionValue))
-			{
-				EventPerk._initEvents(this, sectionName, sectionValue);
-			}
+			EventPerk._initEvents(this, sectionName, sectionValue);
 		});
 
 	}
@@ -163,11 +160,11 @@ export default class EventPerk extends Perk
 	 * Remove an event handler.
 	 *
 	 * @param	{Component}		component			Component.
-	 * @param	{HTMLElement}	element					HTML element.
-	 * @param	{String}		eventName				Event name.
+	 * @param	{String}		eventName			Event name.
+	 * @param	{HTMLElement}	element				HTML element.
 	 * @param	{Object/Function/String}	handlerInfo	Event handler info.
 	 */
-	static _removeEventHandler(component, element, eventName, handlerInfo)
+	static _removeEventHandler(component, eventName, handlerInfo, element)
 	{
 
 		element = element || component;
@@ -208,7 +205,7 @@ export default class EventPerk extends Perk
 
 		// Get target elements
 		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
-		Util.warn(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${component.tagName}, elementName=${elementName}`, TypeError);
+		//Util.warn(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${component.tagName}, elementName=${elementName}`);
 
 		// Set event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -237,10 +234,11 @@ export default class EventPerk extends Perk
 	static _removeEvents(component, elementName, eventInfo, rootNode)
 	{
 
-		rootNode = ( rootNode ? rootNode : component );
+		eventInfo = ( eventInfo ? eventInfo : component.get("setting", `event.events.${elementName}`) );
 
 		// Get target elements
 		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
+		//Util.warn(elements.length > 0, `EventPerk._removeEvents: No elements for the event found. name=${component.tagName}, elementName=${elementName}`);
 
 		// Remove event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -357,28 +355,23 @@ export default class EventPerk extends Perk
 	static __getTargetElements(component, rootNode, elementName, eventInfo)
 	{
 
+		rootNode = rootNode || component;
 		let elements;
 
 		if (EventPerk.__isTargetSelf(elementName, eventInfo))
 		{
-			// target is "this"
-			rootNode = rootNode || component;
-
+			// Target is "this"
 			elements = [rootNode];
+		}
+		else if (eventInfo && eventInfo["rootNode"])
+		{
+			// If eventInfo["rootNode"] is specified, target is eventInfo["rootNode"]
+			elements = Util.scopedSelectorAll(rootNode, eventInfo["rootNode"]);
 		}
 		else
 		{
-			// target is inside "this"
-			rootNode = rootNode || component._root;
-
-			if (eventInfo && eventInfo["rootNode"])
-			{
-				elements = Util.scopedSelectorAll(rootNode, eventInfo["rootNode"]);
-			}
-			else
-			{
-				elements = Util.scopedSelectorAll(rootNode, `#${elementName}`);
-			}
+			// Target is #elementName
+			elements = Util.scopedSelectorAll(rootNode, `#${elementName}`);
 		}
 
 		return elements;
@@ -438,8 +431,7 @@ export default class EventPerk extends Perk
 		let templatePromises = `__bm_eventinfo.promises.${e.type}`;
 
 		// Check if handler is already running
-		//Util.assert(Util.safeGet(this, templateStatuses) !== "handling", `EventPerk.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
-		Util.warn(Util.safeGet(this, templateStatuses) !== "handling", `EventPerk.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
+		//Util.warn(Util.safeGet(this, templateStatuses) !== "handling", `EventPerk.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
 
 		Util.safeSet(this, templateStatuses, "handling");
 
