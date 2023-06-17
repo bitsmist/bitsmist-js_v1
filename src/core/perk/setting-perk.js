@@ -92,7 +92,10 @@ export default class SettingPerk extends Perk
 		this.upgrade(component, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Component._assets["setting"]}));
 
 		return Promise.resolve().then(() => {
-			return SettingPerk._loadSettings(component);
+			if (SettingPerk.__hasExternalSettings(component))
+			{
+				return SettingPerk._loadSettings(component);
+			}
 		}).then(() => {
 			SettingPerk.__loadAttrSettings(component);
 		}).then(() => {
@@ -139,15 +142,12 @@ export default class SettingPerk extends Perk
 	static _loadSettings(component, options)
 	{
 
-		if (SettingPerk.__hasExternalSettings(component))
-		{
-			return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(component), Object.assign({"bindTo":component}, options)).then((settings) => {
-				if (settings)
-				{
-					component.use("skill", "setting.merge", settings);
-				}
-			});
-		}
+		return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(component), Object.assign({"bindTo":component}, options)).then((settings) => {
+			if (settings)
+			{
+				component.use("skill", "setting.merge", settings);
+			}
+		});
 
 	}
 
