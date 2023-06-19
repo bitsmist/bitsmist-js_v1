@@ -211,6 +211,11 @@ export default class SettingPerk extends Perk
 	static __loadAttrSettings(component)
 	{
 
+		if (component.hasAttribute("bm-settingref"))
+		{
+			component.set("setting", "setting.options.settingRef", component.getAttribute("bm-settingref") || true);
+		}
+
 		if (component.hasAttribute("bm-setting"))
 		{
 			let settings = {"setting": JSON.parse(component.getAttribute("bm-setting"))};
@@ -233,7 +238,7 @@ export default class SettingPerk extends Perk
 
 		let ret = false;
 
-		if (component.hasAttribute("bm-settingref") || component.get("setting", "setting.settingRef"))
+		if (component.get("setting", "setting.settingRef"))
 		{
 			ret = true;
 		}
