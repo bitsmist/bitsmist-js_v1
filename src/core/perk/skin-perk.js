@@ -90,7 +90,7 @@ export default class SkinPerk extends Perk
 		SkinPerk.__loadAttrSettings(component);
 
 		// Shadow DOM
-		switch (component.get("setting", "setting.shadowDOM"))
+		switch (component.get("setting", "skin.options.shadowDOM"))
 		{
 		case "open":
 			component._root = component.attachShadow({mode:"open"});
@@ -203,6 +203,7 @@ export default class SkinPerk extends Perk
 			break;
 		case "URL":
 		default:
+		console.log("@@@url", component.tagName, skinName);
 			let url = component.get("setting", `skin.skins.${skinName}.URL`) || SkinPerk.__getSkinURL(component, skinName);
 			promise = AjaxUtil.loadHTML(url).then((skin) => {
 				skinInfo["HTML"] = skin;
