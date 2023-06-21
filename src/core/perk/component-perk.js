@@ -154,7 +154,7 @@ export default class ComponentPerk extends Perk
 					"splitClass": Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.Component.get("setting", "system.splitClass", false)),
 				};
 				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
-					this._classes[baseClassName] = {"state":"loaded", "promise":null};
+					this._classes[baseClassName] = {"state":"loaded"};
 				});
 				this._classes[baseClassName].promise = promise;
 			}
