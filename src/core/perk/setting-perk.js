@@ -11,6 +11,7 @@
 import AjaxUtil from "../util/ajax-util.js";
 import ChainableStore from "../store/chainable-store.js";
 import Perk from "./perk.js";
+import URLUtil from "../util/url-util.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -270,7 +271,7 @@ export default class SettingPerk extends Perk
 		if (settingRef && settingRef !== true)
 		{
 			// If URL is specified in ref, use it
-			let url = Util.parseURL(settingRef);
+			let url = URLUtil.parseURL(settingRef);
 			path = url.path;
 			fileName = url.filename;
 			query = url.query;

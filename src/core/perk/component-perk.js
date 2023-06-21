@@ -13,6 +13,7 @@ import ClassUtil from "../util/class-util.js";
 import Perk from "./perk.js";
 import StatePerk from "./state-perk.js";
 import Store from "../store/store.js";
+import URLUtil from "../util/url-util.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -119,7 +120,7 @@ export default class ComponentPerk extends Perk
 			settings["system"]["componentPath"] = "";
 			settings["system"]["skinPath"] = "";
 			settings["setting"] = settings["setting"] || {};
-			let url = Util.parseURL(classRef);
+			let url = URLUtil.parseURL(classRef);
 			settings["setting"]["path"] = url.path;
 			settings["setting"]["fileName"] = url.filenameWithoutExtension;
 			if (url.extension === "html")

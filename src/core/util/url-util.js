@@ -143,4 +143,33 @@ export default class URLUtil
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Parse URL.
+	 *
+	 * @param	{String}		url					URL to parse.
+	 *
+	 * @return 	{Object}		Object contains each URL part.
+	 */
+	static parseURL(url)
+	{
+
+		let parsed = new URL(url, window.location.href);
+		let ret = {
+			"protocol": parsed.protocol,
+			"hostname": parsed.hostname,
+			"pathname": parsed.pathname,
+			"query": 	parsed.search,
+			"hash": 	parsed.hash,
+			"path":		parsed.pathname.substring(0, parsed.pathname.lastIndexOf("/")),
+			"filename":	parsed.pathname.split("/").pop(),
+		};
+		ret["filenameWithoutExtension"] = ret["filename"].split(".")[0];
+		ret["extension"] = ret["filename"].split(".").pop();
+
+		return ret;
+
+	}
+
 }

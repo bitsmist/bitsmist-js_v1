@@ -11,6 +11,7 @@
 import AjaxUtil from "../util/ajax-util";
 import ChainableStore from "../store/chainable-store.js";
 import Perk from "./perk";
+import URLUtil from "../util/url-util.js";
 import Util from "../util/util";
 
 // =============================================================================
@@ -203,7 +204,6 @@ export default class SkinPerk extends Perk
 			break;
 		case "URL":
 		default:
-		console.log("@@@url", component.tagName, skinName);
 			let url = component.get("setting", `skin.skins.${skinName}.URL`) || SkinPerk.__getSkinURL(component, skinName);
 			promise = AjaxUtil.loadHTML(url).then((skin) => {
 				skinInfo["HTML"] = skin;
@@ -508,7 +508,7 @@ export default class SkinPerk extends Perk
 		if (skinRef && skinRef !== true)
 		{
 			// If URL is specified in ref, use it
-			let url = Util.parseURL(skinRef);
+			let url = URLUtil.parseURL(skinRef);
 			path = url.path;
 			fileName = url.filename;
 			query = url.query;
@@ -550,7 +550,7 @@ export default class SkinPerk extends Perk
 		if (cssRef && cssRef !== true)
 		{
 			// If URL is specified in ref, use it
-			let url = Util.parseURL(cssRef);
+			let url = URLUtil.parseURL(cssRef);
 			path = url.path;
 			fileName = url.filename;
 			query = url.query;
