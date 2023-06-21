@@ -83,7 +83,7 @@ export default class ComponentPerk extends Perk
 
 		Object.entries(Util.safeGet(e.detail, "settings.component.components", {})).forEach(([sectionName, sectionValue]) => {
 			chain = chain.then(() => {
-				if (!this.get("inventory", `component.components.${sectionName}`))
+				if (!this.get("inventory", `component.components.${sectionName}.object`))
 				{
 					return ComponentPerk._loadComponent(this, sectionName, sectionValue);
 				}
@@ -200,10 +200,10 @@ export default class ComponentPerk extends Perk
 		console.debug(`ComponentPerk._loadComponent(): Adding the component. name=${component.tagName}, tagName=${tagName}`);
 
 		// Already loaded
-		if (component.get("inventory", `component.components.${tagName}`))
+		if (component.get("inventory", `component.components.${tagName}.object`))
 		{
 			console.debug(`ComponentPerk._loadComponent(): Already loaded. name=${component.tagName}, tagName=${tagName}`);
-			return component.get("inventory", `component.components.${tagName}`);
+			return component.get("inventory", `component.components.${tagName}.object`);
 		}
 
 		// Get the tag name from settings if specified
@@ -220,7 +220,7 @@ export default class ComponentPerk extends Perk
 		}).then(() => {
 			// Insert tag
 			addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
-			component.set("inventory", `component.components.${tagName}`, addedComponent);
+			component.set("inventory", `component.components.${tagName}.object`, addedComponent);
 		}).then(() => {
 			// Wait for the added component to be ready
 			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "setting.syncOnAdd"));
@@ -229,7 +229,7 @@ export default class ComponentPerk extends Perk
 				let state = (sync === true ? "ready" : sync);
 
 				return component.use("skill", "state.wait", [{
-					"id":		component.get("inventory", `component.components.${tagName}`).uniqueId,
+					"id":		addedComponent.uniqueId,
 					"state":	state
 				}]);
 			}
