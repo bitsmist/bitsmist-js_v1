@@ -185,7 +185,7 @@ export default class Store
 
 		if (options && options["merge"])
 		{
-			return Util.safeMerge(this._items, key, defaultValue);
+			Util.safeMerge(this._items, key, defaultValue);
 		}
 		else
 		{
