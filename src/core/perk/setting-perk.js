@@ -62,16 +62,6 @@ export default class SettingPerk extends Perk
 
 		// Defaults
 		let defaults = {
-			"setting": {
-				"autoClear":			true,
-				"autoFetch":			true,
-				"autoFill":				true,
-				"autoRefresh":			true,
-				"autoRestart":			false,
-				"autoSetup":			true,
-				"autoStop":				true,
-				"autoTransform":		true,
-			},
 			"perk": {
 	//			"BasicPerk":		{"setting":{"attach":true}},	// Attach manually
 	//			"SettingPerk":		{"setting":{"attach":true}},	// Attach manually
