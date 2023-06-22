@@ -203,7 +203,7 @@ export default class ComponentPerk extends Perk
 		if (component.get("inventory", `component.components.${tagName}.object`))
 		{
 			console.debug(`ComponentPerk._loadComponent(): Already loaded. name=${component.tagName}, tagName=${tagName}`);
-			return component.get("inventory", `component.components.${tagName}.object`);
+			return Promise.resolve(component.get("inventory", `component.components.${tagName}.object`));
 		}
 
 		// Get the tag name from settings if specified
