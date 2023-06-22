@@ -274,11 +274,11 @@ export default class SettingPerk extends Perk
 			path = Util.concatPath([
 					component.get("setting", "system.appBaseURL"),
 					component.get("setting", "system.componentPath"),
-					component.get("setting", "setting.path", ""),
+					component.get("setting", "unit.options.path", ""),
 				]);
 			let ext = component.get("setting", "setting.settingFormat", component.get("setting", "system.settingFormat", "json"));
-			fileName = component.get("setting", "setting.fileName", component.tagName.toLowerCase()) + ".settings." + ext;
-			query = component.get("setting", "setting.query");
+			fileName = component.get("setting", "unit.options.fileName", component.tagName.toLowerCase()) + ".settings." + ext;
+			query = component.get("setting", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");

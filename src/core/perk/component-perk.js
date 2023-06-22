@@ -31,7 +31,7 @@ export default class ComponentPerk extends Perk
 	{
 
 		return {
-			"section":		"component",
+			"section":		"unit",
 			"order":		400,
 		};
 
@@ -55,9 +55,9 @@ export default class ComponentPerk extends Perk
 	{
 
 		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "component.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "component.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "component.summon", function(...args) { return ComponentPerk._loadClass(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "unit.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "unit.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
+		this.upgrade(BITSMIST.v1.Component, "skill", "unit.summon", function(...args) { return ComponentPerk._loadClass(...args); });
 
 	}
 
@@ -67,7 +67,7 @@ export default class ComponentPerk extends Perk
 	{
 
 		// Upgrade component
-		this.upgrade(component, "inventory", "component.components", {});
+		this.upgrade(component, "inventory", "unit.units", {});
 		this.upgrade(component, "event", "doApplySettings", ComponentPerk.ComponentPerk_onDoApplySettings);
 
 	}
@@ -81,9 +81,9 @@ export default class ComponentPerk extends Perk
 
 		let chain = Promise.resolve();
 
-		Object.entries(Util.safeGet(e.detail, "settings.component.components", {})).forEach(([sectionName, sectionValue]) => {
+		Object.entries(Util.safeGet(e.detail, "settings.unit.units", {})).forEach(([sectionName, sectionValue]) => {
 			chain = chain.then(() => {
-				if (!this.get("inventory", `component.components.${sectionName}.object`))
+				if (!this.get("inventory", `unit.units.${sectionName}.object`))
 				{
 					return ComponentPerk._loadComponent(this, sectionName, sectionValue);
 				}
@@ -112,26 +112,27 @@ export default class ComponentPerk extends Perk
 		console.debug(`ComponentPerk._loadClass(): Loading class. tagName=${tagName}`);
 
 		// Override settings if URL is specified
-		let classRef = Util.safeGet(settings, "setting.autoLoad");
+		let classRef = Util.safeGet(settings, "unit.options.autoLoad");
 		if (classRef && classRef !== true)
 		{
 			settings["system"] = settings["system"] || {};
 			settings["system"]["appBaseURL"] = "";
 			settings["system"]["componentPath"] = "";
 			settings["system"]["skinPath"] = "";
-			settings["setting"] = settings["setting"] || {};
+			settings["unit"] = settings["unit"] || {};
+			settings["unit"]["options"] = settings["unit"]["options"] || {};
 			let url = URLUtil.parseURL(classRef);
-			settings["setting"]["path"] = url.path;
-			settings["setting"]["fileName"] = url.filenameWithoutExtension;
+			settings["unit"]["options"]["path"] = url.path;
+			settings["unit"]["options"]["fileName"] = url.filenameWithoutExtension;
 			if (url.extension === "html")
 			{
-				settings["setting"]["autoMorph"] = ( settings["setting"]["autoMorph"] ? settings["setting"]["autoMorph"] : true );
+				settings["unit"]["options"]["autoMorph"] = ( settings["unit"]["options"]["autoMorph"] ? settings["unit"]["options"]["autoMorph"] : true );
 			}
 		}
 
 		tagName = tagName.toLowerCase();
-		let className = Util.safeGet(settings, "setting.className", Util.getClassNameFromTagName(tagName));
-		let baseClassName = Util.safeGet(settings, "setting.autoMorph", className );
+		let className = Util.safeGet(settings, "unit.options.className", Util.getClassNameFromTagName(tagName));
+		let baseClassName = Util.safeGet(settings, "unit.options.autoMorph", className );
 		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
 
 		// Load the class if needed
@@ -151,7 +152,7 @@ export default class ComponentPerk extends Perk
 				this._classes[baseClassName] = {"state":"loading"};
 
 				let options = {
-					"splitClass": Util.safeGet(settings, "setting.splitClass", BITSMIST.v1.Component.get("setting", "system.splitClass", false)),
+					"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Component.get("setting", "system.splitClass", false)),
 				};
 				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
 					this._classes[baseClassName] = {"state":"loaded"};
@@ -200,14 +201,14 @@ export default class ComponentPerk extends Perk
 		console.debug(`ComponentPerk._loadComponent(): Adding the component. name=${component.tagName}, tagName=${tagName}`);
 
 		// Already loaded
-		if (component.get("inventory", `component.components.${tagName}.object`))
+		if (component.get("inventory", `unit.units.${tagName}.object`))
 		{
 			console.debug(`ComponentPerk._loadComponent(): Already loaded. name=${component.tagName}, tagName=${tagName}`);
-			return Promise.resolve(component.get("inventory", `component.components.${tagName}.object`));
+			return Promise.resolve(component.get("inventory", `unit.units.${tagName}.object`));
 		}
 
 		// Get the tag name from settings if specified
-		let tag = Util.safeGet(settings, "setting.tag");
+		let tag = Util.safeGet(settings, "unit.options.tag");
 		if (tag)
 		{
 			let pattern = /([\w-]+)\s+\w+.*?>/;
@@ -220,10 +221,10 @@ export default class ComponentPerk extends Perk
 		}).then(() => {
 			// Insert tag
 			addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
-			component.set("inventory", `component.components.${tagName}.object`, addedComponent);
+			component.set("inventory", `unit.units.${tagName}.object`, addedComponent);
 		}).then(() => {
 			// Wait for the added component to be ready
-			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "setting.syncOnAdd"));
+			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "unit.options.syncOnAdd"));
 			if (sync)
 			{
 				let state = (sync === true ? "ready" : sync);
@@ -297,51 +298,53 @@ export default class ComponentPerk extends Perk
 	{
 
 		let settings = {
-			"setting": {}
+			"unit": {
+				"options": {}
+			}
 		};
 
 		// Class name
 		if (element.hasAttribute("bm-classname"))
 		{
-			settings["setting"]["className"] = element.getAttribute("bm-classname");
+			settings["unit"]["options"]["className"] = element.getAttribute("bm-classname");
 		}
 
 		// Split component
 		if (element.hasAttribute("bm-split"))
 		{
-			settings["system"]["splitClass"] = true;
+			settings["unit"]["options"]["splitClass"] = true;
 		}
 
 		// Path
 		if (element.hasAttribute("bm-path"))
 		{
-			settings["setting"]["path"] = element.getAttribute("bm-path");
+			settings["unit"]["options"]["path"] = element.getAttribute("bm-path");
 		}
 
 		// File name
 		if (element.hasAttribute("bm-filename"))
 		{
-			settings["setting"]["fileName"] = element.getAttribute("bm-filename");
+			settings["unit"]["options"]["fileName"] = element.getAttribute("bm-filename");
 		}
 
 		// Morphing
 		if (element.hasAttribute("bm-automorph"))
 		{
-			settings["setting"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
+			settings["unit"]["options"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
 		}
 		if (element.hasAttribute("bm-htmlref"))
 		{
-			settings["setting"]["autoMorph"] = ( element.getAttribute("bm-htmlref") ? element.getAttribute("bm-htmlref") : true );
+			settings["unit"]["options"]["autoMorph"] = ( element.getAttribute("bm-htmlref") ? element.getAttribute("bm-htmlref") : true );
 		}
 
 		// Auto loading
 		if (element.hasAttribute("bm-autoload"))
 		{
-			settings["setting"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
+			settings["unit"]["options"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
 		}
 		if (element.hasAttribute("bm-classref"))
 		{
-			settings["setting"]["autoLoad"] = ( element.getAttribute("bm-classref") ? element.getAttribute("bm-classref") : true );
+			settings["unit"]["options"]["autoLoad"] = ( element.getAttribute("bm-classref") ? element.getAttribute("bm-classref") : true );
 		}
 
 		return settings;
@@ -364,10 +367,10 @@ export default class ComponentPerk extends Perk
 
 		let ret = false;
 
-		if ((Util.safeGet(settings, "setting.classRef"))
-				|| (Util.safeGet(settings, "setting.htmlRef"))
-				|| (Util.safeGet(settings, "setting.autoLoad"))
-				|| (Util.safeGet(settings, "setting.autoMorph")))
+		if ((Util.safeGet(settings, "unit.options.classRef"))
+				|| (Util.safeGet(settings, "unit.options.htmlRef"))
+				|| (Util.safeGet(settings, "unit.options.autoLoad"))
+				|| (Util.safeGet(settings, "unit.options.autoMorph")))
 		{
 			ret = true;
 
@@ -406,29 +409,29 @@ export default class ComponentPerk extends Perk
 		let root;
 
 		// Check root node
-		if (Util.safeGet(settings, "setting.parentNode"))
+		if (Util.safeGet(settings, "unit.options.parentNode"))
 		{
-			root = document.querySelector(Util.safeGet(settings, "setting.parentNode"));
+			root = document.querySelector(Util.safeGet(settings, "unit.options.parentNode"));
 		}
 		else
 		{
 			root = component;
 		}
 
-		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "setting.parentNode")}`, ReferenceError);
+		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
 
 		// Build tag
-		let tag = ( Util.safeGet(settings, "setting.tag") ? Util.safeGet(settings, "setting.tag") : `<${tagName}></${tagName}>` );
+		let tag = ( Util.safeGet(settings, "unit.options.tag") ? Util.safeGet(settings, "unit.options.tag") : `<${tagName}></${tagName}>` );
 
 		// Insert tag
-		if (Util.safeGet(settings, "setting.replaceParent"))
+		if (Util.safeGet(settings, "unit.options.replaceParent"))
 		{
 			root.outerHTML = tag;
 			addedComponent = root;
 		}
 		else
 		{
-			let position = Util.safeGet(settings, "setting.adjacentPosition", "afterbegin");
+			let position = Util.safeGet(settings, "unit.options.adjacentPosition", "afterbegin");
 			root.insertAdjacentHTML(position, tag);
 
 			// Get new instance
@@ -500,10 +503,10 @@ export default class ComponentPerk extends Perk
 		let path = Util.concatPath([
 			Util.safeGet(settings, "system.appBaseURL", BITSMIST.v1.Component.get("setting", "system.appBaseURL", "")),
 			Util.safeGet(settings, "system.componentPath", BITSMIST.v1.Component.get("setting", "system.componentPath", "")),
-			Util.safeGet(settings, "setting.path", ""),
+			Util.safeGet(settings, "unit.options.path", ""),
 		]);
-		let fileName = Util.safeGet(settings, "setting.fileName", tagName);
-		let query = Util.safeGet(settings, "setting.query");
+		let fileName = Util.safeGet(settings, "unit.options.fileName", tagName);
+		let query = Util.safeGet(settings, "unit.options.query");
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
 

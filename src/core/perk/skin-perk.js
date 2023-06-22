@@ -519,10 +519,10 @@ export default class SkinPerk extends Perk
 			path = Util.concatPath([
 					component.get("setting", "system.appBaseURL", ""),
 					component.get("setting", "system.skinPath", component.get("setting", "system.componentPath", "")),
-					component.get("setting", "setting.path", ""),
+					component.get("setting", "unit.options.path", ""),
 				]);
 			fileName = skinName + ".html";
-			query = component.get("setting", "setting.query");
+			query = component.get("setting", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
@@ -561,10 +561,10 @@ export default class SkinPerk extends Perk
 			path = Util.concatPath([
 					component.get("setting", "system.appBaseURL", ""),
 					component.get("setting", "system.skinPath", component.get("setting", "system.componentPath", "")),
-					component.get("setting", "setting.path", ""),
+					component.get("setting", "unit.options.path", ""),
 				]);
 			fileName = styleName + ".css";
-			query = component.get("setting", "setting.query");
+			query = component.get("setting", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
@@ -584,7 +584,7 @@ export default class SkinPerk extends Perk
 	{
 
 		return component.get("setting", "skin.options.fileName",
-			component.get("setting", "setting.fileName",
+			component.get("setting", "unit.options.fileName",
 				component.tagName.toLowerCase()));
 
 	}
