@@ -204,9 +204,9 @@ export default class SettingPerk extends Perk
 	static __loadAttrSettings(component)
 	{
 
-		if (component.hasAttribute("bm-settingref"))
+		if (component.hasAttribute("bm-settingsref"))
 		{
-			component.set("settings", "setting.options.settingRef", component.getAttribute("bm-settingref") || true);
+			component.set("settings", "setting.options.settingsRef", component.getAttribute("bm-settingsref") || true);
 		}
 
 		if (component.hasAttribute("bm-setting"))
@@ -231,7 +231,7 @@ export default class SettingPerk extends Perk
 
 		let ret = false;
 
-		if (component.get("settings", "setting.options.settingRef"))
+		if (component.get("settings", "setting.options.settingsRef"))
 		{
 			ret = true;
 		}
@@ -256,14 +256,14 @@ export default class SettingPerk extends Perk
 		let fileName;
 		let query;
 
-		let settingRef = ( component.hasAttribute(`bm-settingref`) ?
-			component.getAttribute(`bm-settingref`) || true :
-			component.get("settings", "setting.settingRef")
+		let settingsRef = ( component.hasAttribute(`bm-settingsref`) ?
+			component.getAttribute(`bm-settingsref`) || true :
+			component.get("settings", "setting.settingsRef")
 		);
-		if (settingRef && settingRef !== true)
+		if (settingsRef && settingsRef !== true)
 		{
 			// If URL is specified in ref, use it
-			let url = URLUtil.parseURL(settingRef);
+			let url = URLUtil.parseURL(settingsRef);
 			path = url.path;
 			fileName = url.filename;
 			query = url.query;
