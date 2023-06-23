@@ -64,6 +64,10 @@ import SkinPerk from "./perk/skin-perk.js";
 window.BITSMIST.v1.SkinPerk = SkinPerk;
 PerkPerk.register(SkinPerk);
 
+import StylePerk from "./perk/style-perk.js";
+window.BITSMIST.v1.StylePerk = StylePerk;
+PerkPerk.register(StylePerk);
+
 import EventPerk from "./perk/event-perk.js";
 window.BITSMIST.v1.EventPerk = EventPerk;
 PerkPerk.register(EventPerk);

@@ -69,6 +69,7 @@ export default class SettingPerk extends Perk
 				"StatePerk":		{"setting":{"attach":true}},
 				"EventPerk":		{"setting":{"attach":true}},
 				"SkinPerk":			{"setting":{"attach":true}},
+				"StylePerk":		{"setting":{"attach":true}},
 				"ComponentPerk":	{"setting":{"attach":true}},
 			}
 		};

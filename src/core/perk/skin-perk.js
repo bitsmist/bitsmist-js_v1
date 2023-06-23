@@ -30,7 +30,7 @@ export default class SkinPerk extends Perk
 
 		return {
 			"section":		"skin",
-			"order":		200,
+			"order":		210,
 		};
 
 	}
@@ -43,34 +43,9 @@ export default class SkinPerk extends Perk
 	{
 
 		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "inventory", "skin.styles", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "skill", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "style.summon", function(...args) { return SkinPerk._loadCSS(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "style.apply", function(...args) { return SkinPerk._applyCSS(...args); });
-
-		this._cssReady = {};
-		this._cssReady["promise"] = new Promise((resolve, reject) => {
-			this._cssReady["resolve"] = resolve;
-			this._cssReady["reject"] = reject;
-		});
-
-		let promises = [];
-		BITSMIST.v1.Component.get("inventory", "promise.documentReady").then(() => {
-			Object.entries(BITSMIST.v1.Component.get("settings", "skin.styles", {})).forEach(([sectionName, sectionValue]) => {
-				promises.push(SkinPerk._loadCSS(BITSMIST.v1.Component, sectionName).then(() => {
-					if (sectionValue["global"])
-					{
-						return SkinPerk._applyCSS(BITSMIST.v1.Component, sectionName);
-					}
-				}));
-			});
-
-			return Promise.all(promises).then(() => {
-				this._cssReady["resolve"]();
-			});
-		});
 
 	}
 
@@ -81,9 +56,6 @@ export default class SkinPerk extends Perk
 
 		// Upgrade component
 		this.upgrade(component, "inventory", "skin.skins", {});
-		this.upgrade(component, "inventory", "skin.styles", new ChainableStore({
-			"chain":	BITSMIST.v1.Component.get("inventory", "skin.styles"),
-		}));
 		this.upgrade(component, "stats", "skin.activeSkinName", "");
 		this.upgrade(component, "event", "doApplySettings", SkinPerk.SkinPerk_onDoApplySettings);
 		this.upgrade(component, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
@@ -113,22 +85,13 @@ export default class SkinPerk extends Perk
 	static SkinPerk_onDoApplySettings(sender, e, ex)
 	{
 
-		let promises = [];
 		let skinName = SkinPerk.__getDefaultFilename(this);
-
-		// Load component's default CSS
-		if (SkinPerk.__hasExternalCSS(this, skinName))
-		{
-			promises.push(SkinPerk._loadCSS(this, skinName));
-		}
 
 		// Load component's default skin
 		if (SkinPerk.__hasExternalSkin(this, skinName))
 		{
-			promises.push(SkinPerk._loadSkin(this, skinName));
+			return SkinPerk._loadSkin(this, skinName);
 		}
-
-		return Promise.all(promises);
 
 	}
 
@@ -139,35 +102,11 @@ export default class SkinPerk extends Perk
 
 		let skinName = SkinPerk.__getDefaultFilename(this);
 
-		return SkinPerk._cssReady.promise.then(() => {
-			let promises = [];
-			let chain = Promise.resolve();
-
-			// Apply common CSS
-			let css1 = this.get("settings", "skin.options.styleNames", []);
-			for (let i = 0; i < css1.length; i++)
-			{
-				chain = chain.then(() => {
-					return SkinPerk._applyCSS(this, css1[i]);
-				});
-			}
-
-			// Apply component's default CSS
-			if (SkinPerk.__hasExternalCSS(this, skinName))
-			{
-				chain = chain.then(() => {
-					return SkinPerk._applyCSS(this, skinName);
-				});
-			}
-
-			return chain;
-		}).then(() => {
-			// Apply component's default skin
-			if (SkinPerk.__hasExternalSkin(this, skinName))
-			{
-				return SkinPerk._applySkin(this, skinName);
-			}
-		});
+		// Apply component's default skin
+		if (SkinPerk.__hasExternalSkin(this, skinName))
+		{
+			return SkinPerk._applySkin(this, skinName);
+		}
 
 	}
 
@@ -220,55 +159,6 @@ export default class SkinPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the CSS.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		styleName			Style name.
-	 * @param	{Object}		options				Load options.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static _loadCSS(component, styleName, options)
-	{
-
-		let promise = Promise.resolve();
-		let styleInfo = component.get("inventory", `skin.styles.${styleName}`) || SkinPerk.__createStyleInfo(component, styleName);
-
-		switch (component.get("settings", `skin.styles.${styleName}.type`)) {
-		case "CSS":
-			styleInfo["CSS"] = component.get("settings", `skin.styles.${styleName}.CSS`);
-			styleInfo["state"] = "loaded";
-			component.get("inventory", `skin.styles`).set(styleName, styleInfo);
-			break;
-		case "URL":
-		default:
-			if (styleInfo["state"] === "loading")
-			{
-				promise = styleInfo["promise"];
-			}
-			else
-			{
-				let url = component.get("settings", `skin.styles.${styleName}.URL`) || SkinPerk.__getCSSURL(component, styleName);
-				promise = AjaxUtil.loadCSS(url).then((css) => {
-					let styleInfo = component.get("inventory", "skin.styles").get(styleName);
-					styleInfo["CSS"] = css;
-					styleInfo["state"] = "loaded";
-					component.get("inventory", "skin.styles").set(styleName, styleInfo);
-				});
-				styleInfo["promise"] = promise;
-				styleInfo["state"] = "loading";
-				component.get("inventory", `skin.styles`).set(styleName, styleInfo);
-			}
-			break;
-		}
-
-		return promise;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Apply skin.
 	 *
 	 * @param	{Component}		component			Parent component.
@@ -303,38 +193,6 @@ export default class SkinPerk extends Perk
 		component.set("stats", "skin.activeSkinName", skinName);
 
 		console.debug(`SkinPerk._applySkin(): Applied skin. name=${component.tagName}, skinName=${skinInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Apply skin.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		styleName			Style name.
-	 */
-	static _applyCSS(component, styleName)
-	{
-
-		let cssInfo = component.get("inventory", "skin.styles").get(styleName);
-		let ss = new CSSStyleSheet();
-
-		Util.assert(cssInfo,`SkinPerk._applyCSS(): CSS not loaded. name=${component.tagName || "Global"}, styleName=${styleName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
-
-		return Promise.resolve().then(() => {
-			return ss.replace(`${cssInfo["CSS"]}`);
-		}).then(() => {
-			if (component.shadowRoot)
-			{
-				component._root.adoptedStyleSheets = [...component._root.adoptedStyleSheets, ss];
-			}
-			else
-			{
-				document.adoptedStyleSheets = [...document.adoptedStyleSheets, ss];
-			}
-			console.debug(`SkinPerk._applyCSS(): Applied CSS. name=${component.tagName}, styleName=${cssInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
-		});
 
 	}
 
@@ -392,11 +250,6 @@ export default class SkinPerk extends Perk
 			component.set("settings", "skin.options.skinRef", component.getAttribute("bm-skinref") || true);
 		}
 
-		if (component.hasAttribute("bm-styleref"))
-		{
-			component.set("settings", "skin.options.styleRef", component.getAttribute("bm-styleref") || true);
-		}
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -413,31 +266,10 @@ export default class SkinPerk extends Perk
 	{
 
 		return {
-			"name":	skinName,
-			"HTML": "",
+			"name":		skinName,
+			"HTML":		"",
 			"state":	"",
 		};
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Returns a new Style info object.
-	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		styleName			Style name.
-	 *
-	 * @return  {Object}		Style info.
-	 */
-	static __createStyleInfo(component, styleName)
-	{
-
-		return {
-			"name": 	styleName,
-			"CSS":		"",
-			"state":	"",
-		}
 
 	}
 
@@ -456,29 +288,6 @@ export default class SkinPerk extends Perk
 		let ret = false;
 
 		if (component.get("settings", "skin.options.skinRef", true))
-		{
-			ret = true;
-		}
-
-		return ret;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if the component has the external CSS file.
-	 *
-	 * @param	{Component}		component			Component.
-	 *
-	 * @return  {Boolean}		True if the component has the external CSS file.
-	 */
-	static __hasExternalCSS(component, styleName)
-	{
-
-		let ret = false;
-
-		if (component.get("settings", "skin.options.styleRef"))
 		{
 			ret = true;
 		}
@@ -522,48 +331,6 @@ export default class SkinPerk extends Perk
 					component.get("settings", "unit.options.path", ""),
 				]);
 			fileName = skinName + ".html";
-			query = component.get("settings", "unit.options.query");
-		}
-
-		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Return URL to CSS file.
-	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String	}		skinName			Skin name.
-	 *
-	 * @return  {String}		URL.
-	 */
-	static __getCSSURL(component, styleName)
-	{
-
-		let path;
-		let fileName;
-		let query;
-
-		let cssRef = component.get("settings", "skin.options.styleRef");
-		if (cssRef && cssRef !== true)
-		{
-			// If URL is specified in ref, use it
-			let url = URLUtil.parseURL(cssRef);
-			path = url.path;
-			fileName = url.filename;
-			query = url.query;
-		}
-		else
-		{
-			// Use default path and filename
-			path = Util.concatPath([
-					component.get("settings", "system.appBaseURL", ""),
-					component.get("settings", "system.skinPath", component.get("settings", "system.componentPath", "")),
-					component.get("settings", "unit.options.path", ""),
-				]);
-			fileName = styleName + ".css";
 			query = component.get("settings", "unit.options.query");
 		}
 
