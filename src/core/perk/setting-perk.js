@@ -43,8 +43,8 @@ export default class SettingPerk extends Perk
 	{
 
 		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "asset", "setting", new ChainableStore());
-		BITSMIST.v1.Component.settings = BITSMIST.v1.Component._assets["setting"];
+		this.upgrade(BITSMIST.v1.Component, "asset", "settings", new ChainableStore());
+		BITSMIST.v1.Component.settings = BITSMIST.v1.Component._assets["settings"];
 
 		// Upgrade Component
 		this.upgrade(BITSMIST.v1.Component, "skill", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
@@ -80,7 +80,7 @@ export default class SettingPerk extends Perk
 		settings = SettingPerk.__mergeSettings(component, settings);
 
 		// Upgrade component
-		this.upgrade(component, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Component._assets["setting"]}));
+		this.upgrade(component, "asset", "settings", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Component._assets["settings"]}));
 
 		return Promise.resolve().then(() => {
 			SettingPerk.__loadAttrSettings(component);
@@ -92,7 +92,7 @@ export default class SettingPerk extends Perk
 		}).then(() => {
 			SettingPerk.__loadAttrSettings(component); // Do it again to overwrite since attribute settings have higher priority
 		}).then(() => {
-			return SettingPerk._applySettings(component, {"settings":component._assets["setting"].items});
+			return SettingPerk._applySettings(component, {"settings":component._assets["settings"].items});
 		});
 
 	}
@@ -156,7 +156,7 @@ export default class SettingPerk extends Perk
 	static _getSettings(component, key, defaultValue)
 	{
 
-		return component.get("setting", key, defaultValue);
+		return component.get("settings", key, defaultValue);
 
 	}
 
@@ -172,7 +172,7 @@ export default class SettingPerk extends Perk
 	static _setSettings(component, key, value)
 	{
 
-		return component.set("setting", key, value);
+		return component.set("settings", key, value);
 
 	}
 
@@ -188,7 +188,7 @@ export default class SettingPerk extends Perk
 	static _mergeSettings(component, key, value)
 	{
 
-		return component._assets["setting"].merge(key, value);
+		return component._assets["settings"].merge(key, value);
 
 	}
 
@@ -206,7 +206,7 @@ export default class SettingPerk extends Perk
 
 		if (component.hasAttribute("bm-settingref"))
 		{
-			component.set("setting", "setting.options.settingRef", component.getAttribute("bm-settingref") || true);
+			component.set("settings", "setting.options.settingRef", component.getAttribute("bm-settingref") || true);
 		}
 
 		if (component.hasAttribute("bm-setting"))
@@ -231,7 +231,7 @@ export default class SettingPerk extends Perk
 
 		let ret = false;
 
-		if (component.get("setting", "setting.options.settingRef"))
+		if (component.get("settings", "setting.options.settingRef"))
 		{
 			ret = true;
 		}
@@ -258,7 +258,7 @@ export default class SettingPerk extends Perk
 
 		let settingRef = ( component.hasAttribute(`bm-settingref`) ?
 			component.getAttribute(`bm-settingref`) || true :
-			component.get("setting", "setting.settingRef")
+			component.get("settings", "setting.settingRef")
 		);
 		if (settingRef && settingRef !== true)
 		{
@@ -272,13 +272,13 @@ export default class SettingPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					component.get("setting", "system.appBaseURL"),
-					component.get("setting", "system.componentPath"),
-					component.get("setting", "unit.options.path", ""),
+					component.get("settings", "system.appBaseURL"),
+					component.get("settings", "system.componentPath"),
+					component.get("settings", "unit.options.path", ""),
 				]);
-			let ext = component.get("setting", "setting.settingFormat", component.get("setting", "system.settingFormat", "json"));
-			fileName = component.get("setting", "unit.options.fileName", component.tagName.toLowerCase()) + ".settings." + ext;
-			query = component.get("setting", "unit.options.query");
+			let ext = component.get("settings", "setting.settingFormat", component.get("settings", "system.settingFormat", "json"));
+			fileName = component.get("settings", "unit.options.fileName", component.tagName.toLowerCase()) + ".settings." + ext;
+			query = component.get("settings", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");

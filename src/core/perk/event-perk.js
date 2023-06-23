@@ -65,7 +65,7 @@ export default class EventPerk extends Perk
 	static deinit(component, options)
 	{
 
-		let events = this.get("setting", "event");
+		let events = this.get("settings", "event");
 		if (events)
 		{
 			Object.keys(events).forEach((elementName) => {
@@ -93,7 +93,7 @@ export default class EventPerk extends Perk
 	static EventPerk_onAfterTransform(sender, e, ex)
 	{
 
-		Object.entries(this.get("setting", "event.events", {})).forEach(([sectionName, sectionValue]) => {
+		Object.entries(this.get("settings", "event.events", {})).forEach(([sectionName, sectionValue]) => {
 			// Initialize only elements inside component
 			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
 			{
@@ -201,7 +201,7 @@ export default class EventPerk extends Perk
 	static _initEvents(component, elementName, eventInfo, rootNode)
 	{
 
-		eventInfo = ( eventInfo ? eventInfo : component.get("setting", `event.events.${elementName}`) );
+		eventInfo = ( eventInfo ? eventInfo : component.get("settings", `event.events.${elementName}`) );
 
 		// Get target elements
 		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
@@ -234,7 +234,7 @@ export default class EventPerk extends Perk
 	static _removeEvents(component, elementName, eventInfo, rootNode)
 	{
 
-		eventInfo = ( eventInfo ? eventInfo : component.get("setting", `event.events.${elementName}`) );
+		eventInfo = ( eventInfo ? eventInfo : component.get("settings", `event.events.${elementName}`) );
 
 		// Get target elements
 		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);

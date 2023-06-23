@@ -152,7 +152,7 @@ export default class ComponentPerk extends Perk
 				this._classes[baseClassName] = {"state":"loading"};
 
 				let options = {
-					"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Component.get("setting", "system.splitClass", false)),
+					"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Component.get("settings", "system.splitClass", false)),
 				};
 				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
 					this._classes[baseClassName] = {"state":"loaded"};
@@ -501,8 +501,8 @@ export default class ComponentPerk extends Perk
 	{
 
 		let path = Util.concatPath([
-			Util.safeGet(settings, "system.appBaseURL", BITSMIST.v1.Component.get("setting", "system.appBaseURL", "")),
-			Util.safeGet(settings, "system.componentPath", BITSMIST.v1.Component.get("setting", "system.componentPath", "")),
+			Util.safeGet(settings, "system.appBaseURL", BITSMIST.v1.Component.get("settings", "system.appBaseURL", "")),
+			Util.safeGet(settings, "system.componentPath", BITSMIST.v1.Component.get("settings", "system.componentPath", "")),
 			Util.safeGet(settings, "unit.options.path", ""),
 		]);
 		let fileName = Util.safeGet(settings, "unit.options.fileName", tagName);

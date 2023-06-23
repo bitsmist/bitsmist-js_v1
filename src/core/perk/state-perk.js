@@ -70,7 +70,7 @@ export default class StatePerk extends Perk
 	{
 
 		// Upgrade component;
-		this.upgrade(component, "stat", "state.state", "connected");
+		this.upgrade(component, "stats", "state.state", "connected");
 		this.upgrade(component, "inventory", "state.suspends", {});
 		this.upgrade(component, "event", "doApplySettings", StatePerk.StatePerk_onDoApplySettings);
 
@@ -143,9 +143,9 @@ export default class StatePerk extends Perk
 	static _changeState(component, state)
 	{
 
-		Util.assert(StatePerk.__isTransitionable(component.get("stat", "state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.tagName}, fromState=${component.get("stat", "state.state")}, toState=${state}, id=${component.id}`, Error);
+		Util.assert(StatePerk.__isTransitionable(component.get("stats", "state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.tagName}, fromState=${component.get("stats", "state.state")}, toState=${state}, id=${component.id}`, Error);
 
-		component.set("stat", "state.state", state);
+		component.set("stats", "state.state", state);
 		this._states[component.uniqueId] = {"object":component, "state":state};
 
 		StatePerk.__processWaitingList();
@@ -169,8 +169,8 @@ export default class StatePerk extends Perk
 		let promise;
 		let timeout =
 				(options && options["timeout"]) ||
-				(component && component.get("setting", "system.waitForTimeout")) || // component could be null
-				BITSMIST.v1.Component.get("setting", "system.waitForTimeout", 10000);
+				(component && component.get("settings", "system.waitForTimeout")) || // component could be null
+				BITSMIST.v1.Component.get("settings", "system.waitForTimeout", 10000);
 		let waiter = ( options && options["waiter"] ? options["waiter"] : component );
 		let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 
@@ -253,7 +253,7 @@ export default class StatePerk extends Perk
 		let ret = [];
 
 		// Globally suspended?
-		if (StatePerk.__suspends[state] && StatePerk.__suspends[state].state === "pending" && !component.get("setting", "setting.ignoreGlobalSuspend"))
+		if (StatePerk.__suspends[state] && StatePerk.__suspends[state].state === "pending" && !component.get("settings", "setting.ignoreGlobalSuspend"))
 		{
 			ret.push(StatePerk.__suspends[state].promise);
 		}

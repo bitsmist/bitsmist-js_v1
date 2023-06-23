@@ -45,7 +45,7 @@ export default class BasicPerk extends Perk
 
 		// Upgrade Component
 		BITSMIST.v1.Component._assets = {};
-		this.upgrade(BITSMIST.v1.Component, "asset", "stat", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Component, "asset", "stats", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "asset", "vault", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "asset", "inventory", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "asset", "skill", new ChainableStore());
@@ -90,7 +90,7 @@ export default class BasicPerk extends Perk
 
 		// Load tags
 		BITSMIST.v1.Component.get("inventory", "promise.documentReady").then(() => {
-			//if (BITSMIST.v1.Component.get("setting", "system.autoLoadOnStartup", true))
+			//if (BITSMIST.v1.Component.get("settings", "system.autoLoadOnStartup", true))
 			{
 				BITSMIST.v1.ComponentPerk._loadTags(null, document.body, {"waitForTags":false});
 			}
@@ -105,7 +105,7 @@ export default class BasicPerk extends Perk
 
 		// Upgrade component
 		component._assets = {};
-		this.upgrade(component, "asset", "stat", new ChainableStore({"chain":BITSMIST.v1.Component._assets["stat"]}));
+		this.upgrade(component, "asset", "stats", new ChainableStore({"chain":BITSMIST.v1.Component._assets["stats"]}));
 		this.upgrade(component, "asset", "vault", new ChainableStore());
 		this.upgrade(component, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Component._assets["inventory"]}));
 		this.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));
@@ -135,7 +135,7 @@ export default class BasicPerk extends Perk
 		this.__ready = this.__ready.then(() => {
 			console.debug(`Component._connectedHandler(): Component is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
 
-			if (!this.__initialized || this.get("setting", "basic.options.autoRestart", false))
+			if (!this.__initialized || this.get("settings", "basic.options.autoRestart", false))
 			{
 				this.__initialized = true;
 				BasicPerk.init(component);
@@ -254,19 +254,19 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			return component.use("skill", "state.change", "starting");
 		}).then(() => {
-			if (component.get("setting", "basic.options.autoTransform", true))
+			if (component.get("settings", "basic.options.autoTransform", true))
 			{
 				return component.use("skill", "basic.transform");
 			}
 		}).then(() => {
-			if (component.get("setting", "basic.options.autoSetup", true))
+			if (component.get("settings", "basic.options.autoSetup", true))
 			{
 				return component.use("skill", "basic.setup", options);
 			}
 		}).then(() => {
 			return component.use("skill", "event.trigger", "doStart");
 		}).then(() => {
-			if (component.get("setting", "basic.options.autoRefresh", true))
+			if (component.get("settings", "basic.options.autoRefresh", true))
 			{
 				return component.use("skill", "basic.refresh");
 			}
@@ -392,7 +392,7 @@ export default class BasicPerk extends Perk
 			console.debug(`BasicPerk._refresh(): Refreshing component. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return component.use("skill", "event.trigger", "beforeRefresh", options);
 		}).then(() => {
-			let autoClear = Util.safeGet(options, "autoClear", component.get("setting", "basic.options.autoClear", true));
+			let autoClear = Util.safeGet(options, "autoClear", component.get("settings", "basic.options.autoClear", true));
 			if (autoClear)
 			{
 				return component.use("skill", "basic.clear", options);
@@ -400,12 +400,12 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			return component.use("skill", "event.trigger", "doTarget", options);
 		}).then(() => {
-			if (Util.safeGet(options, "autoFetch", component.get("setting", "basic.options.autoFetch", true)))
+			if (Util.safeGet(options, "autoFetch", component.get("settings", "basic.options.autoFetch", true)))
 			{
 				return component.use("skill", "basic.fetch", options);
 			}
 		}).then(() => {
-			if (Util.safeGet(options, "autoFill", component.get("setting", "basic.options.autoFill", true)))
+			if (Util.safeGet(options, "autoFill", component.get("settings", "basic.options.autoFill", true)))
 			{
 				return component.use("skill", "basic.fill", options);
 			}
