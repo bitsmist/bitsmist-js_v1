@@ -77,6 +77,7 @@ export default class StylePerk extends Perk
 	{
 
 		// Upgrade component
+		this.upgrade(component, "vault", "style.promise", Promise.resolve());
 		this.upgrade(component, "inventory", "style.styles", new ChainableStore({
 			"chain":	BITSMIST.v1.Component.get("inventory", "style.styles"),
 		}));
@@ -99,7 +100,7 @@ export default class StylePerk extends Perk
 		// Load component's default CSS
 		if (StylePerk.__hasExternalCSS(this, styleName))
 		{
-			return StylePerk._loadCSS(this, styleName);
+			this.set("vault", "style.promise", StylePerk._loadCSS(this, styleName));
 		}
 
 	}
@@ -111,7 +112,7 @@ export default class StylePerk extends Perk
 
 		let styleName = StylePerk.__getDefaultFilename(this);
 
-		return StylePerk._cssReady.promise.then(() => {
+		return Promise.all([StylePerk._cssReady.promise, this.get("vault", "style.promise")]).then(() => {
 			let promises = [];
 			let chain = Promise.resolve();
 

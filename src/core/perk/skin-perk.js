@@ -55,6 +55,7 @@ export default class SkinPerk extends Perk
 	{
 
 		// Upgrade component
+		this.upgrade(component, "vault", "skin.promise", Promise.resolve());
 		this.upgrade(component, "inventory", "skin.skins", {});
 		this.upgrade(component, "stats", "skin.activeSkinName", "");
 		this.upgrade(component, "event", "doApplySettings", SkinPerk.SkinPerk_onDoApplySettings);
@@ -90,7 +91,7 @@ export default class SkinPerk extends Perk
 		// Load component's default skin
 		if (SkinPerk.__hasExternalSkin(this, skinName))
 		{
-			return SkinPerk._loadSkin(this, skinName);
+			this.set("vault", "skin.promise", SkinPerk._loadSkin(this, skinName));
 		}
 
 	}
@@ -105,7 +106,9 @@ export default class SkinPerk extends Perk
 		// Apply component's default skin
 		if (SkinPerk.__hasExternalSkin(this, skinName))
 		{
-			return SkinPerk._applySkin(this, skinName);
+			return this.get("vault", "skin.promise").then(() => {
+				return SkinPerk._applySkin(this, skinName);
+			});
 		}
 
 	}
