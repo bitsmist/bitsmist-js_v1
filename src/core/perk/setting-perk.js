@@ -210,10 +210,10 @@ export default class SettingPerk extends Perk
 			component.set("settings", "setting.options.settingsRef", component.getAttribute("bm-settingsref") || true);
 		}
 
-		if (component.hasAttribute("bm-setting"))
+		if (component.hasAttribute("bm-options"))
 		{
-			let settings = {"setting": JSON.parse(component.getAttribute("bm-setting"))};
-			component.use("skill", "setting.merge", settings);
+			let options = {"options": JSON.parse(component.getAttribute("bm-options"))};
+			component.use("skill", "setting.merge", options);
 		}
 
 	}
