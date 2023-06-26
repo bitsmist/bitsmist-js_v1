@@ -44,8 +44,8 @@ export default class EventPerk extends Perk
 		this.upgrade(BITSMIST.v1.Component, "skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
 
 	}
 

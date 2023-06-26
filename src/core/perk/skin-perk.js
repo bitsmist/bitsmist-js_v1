@@ -43,9 +43,9 @@ export default class SkinPerk extends Perk
 	{
 
 		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
 
 	}
 

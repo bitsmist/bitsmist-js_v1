@@ -57,10 +57,10 @@ export default class StatePerk extends Perk
 
 		// Upgrade Component
 		this.upgrade(BITSMIST.v1.Component, "skill", "state.change", function(...args) { return StatePerk._changeState(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.wait", function(...args) { return StatePerk._waitFor(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.suspend", function(...args) { return StatePerk._suspend(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.resume", function(...args) { return StatePerk._resume(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "state.pause", function(...args) { return StatePerk._pause(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "state.wait", function(...args) { return StatePerk._waitFor(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "state.suspend", function(...args) { return StatePerk._suspend(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "state.resume", function(...args) { return StatePerk._resume(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "state.pause", function(...args) { return StatePerk._pause(...args); });
 
 	}
 

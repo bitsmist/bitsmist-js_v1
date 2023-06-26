@@ -50,8 +50,8 @@ export default class PerkPerk extends Perk
 	{
 
 		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "perk.attach", function(...args) { return PerkPerk._attach(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "perk.attach", function(...args) { return PerkPerk._attach(...args); });
 
 	}
 

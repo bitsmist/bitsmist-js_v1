@@ -44,8 +44,8 @@ export default class StylePerk extends Perk
 
 		// Upgrade Component
 		this.upgrade(BITSMIST.v1.Component, "inventory", "style.styles", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Component, "skill", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
 
 		this._cssReady = {};
 		this._cssReady["promise"] = new Promise((resolve, reject) => {

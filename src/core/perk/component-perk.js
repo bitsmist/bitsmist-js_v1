@@ -55,9 +55,9 @@ export default class ComponentPerk extends Perk
 	{
 
 		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "unit.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "unit.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "unit.summon", function(...args) { return ComponentPerk._loadClass(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "unit.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "unit.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "unit.summon", function(...args) { return ComponentPerk._loadClass(...args); });
 
 	}
 
@@ -229,7 +229,7 @@ export default class ComponentPerk extends Perk
 			{
 				let state = (sync === true ? "ready" : sync);
 
-				return component.use("skill", "state.wait", [{
+				return component.use("spell", "state.wait", [{
 					"id":		addedComponent.uniqueId,
 					"state":	state
 				}]);

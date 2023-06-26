@@ -47,11 +47,11 @@ export default class SettingPerk extends Perk
 		BITSMIST.v1.Component.settings = BITSMIST.v1.Component._assets["settings"];
 
 		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
 
 	}
 
@@ -112,13 +112,13 @@ export default class SettingPerk extends Perk
 	{
 
 		return Promise.resolve().then(() => {
-			return component.use("skill", "event.trigger", "beforeApplySettings", options);
+			return component.use("spell", "event.trigger", "beforeApplySettings", options);
 		}).then(() => {
-			return component.use("skill", "perk.attachPerks", options);
+			return component.use("spell", "perk.attachPerks", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doApplySettings", options);
+			return component.use("spell", "event.trigger", "doApplySettings", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "afterApplySettings", options);
+			return component.use("spell", "event.trigger", "afterApplySettings", options);
 		});
 
 	}

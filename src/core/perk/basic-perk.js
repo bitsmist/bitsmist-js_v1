@@ -49,17 +49,18 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Component, "asset", "vault", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "asset", "inventory", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "asset", "skill", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Component, "asset", "spell", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "method", "get", this._get);
 		this.upgrade(BITSMIST.v1.Component, "method", "set", this._set);
 		this.upgrade(BITSMIST.v1.Component, "method", "use", this._use);
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.start", function(...args) { return BasicPerk._start(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "basic.start", function(...args) { return BasicPerk._start(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
+		this.upgrade(BITSMIST.v1.Component, "spell", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "basic.scan", function(...args) { return BasicPerk._scan(...args); });
 		this.upgrade(BITSMIST.v1.Component, "skill", "basic.scanAll", function(...args) { return BasicPerk._scanAll(...args); });
 
@@ -109,6 +110,7 @@ export default class BasicPerk extends Perk
 		this.upgrade(component, "asset", "vault", new ChainableStore());
 		this.upgrade(component, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Component._assets["inventory"]}));
 		this.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));
+		this.upgrade(component, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Component._assets["spell"]}));
 
 	}
 
@@ -139,7 +141,7 @@ export default class BasicPerk extends Perk
 			{
 				this.__initialized = true;
 				BasicPerk.init(component);
-				return this.use("skill", "basic.start");
+				return this.use("spell", "basic.start");
 			}
 		});
 
@@ -155,7 +157,7 @@ export default class BasicPerk extends Perk
 
 		// Stop
 		this.__ready = this.__ready.then(() => {
-			return this.use("skill", "basic.stop");
+			return this.use("spell", "basic.stop");
 		}).then(() => {
 			console.debug(`Component.disconnectedHandler(): Component is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
 		});
@@ -224,7 +226,7 @@ export default class BasicPerk extends Perk
 	{
 
 		let func = this._assets[assetName].get(key);
-		Util.assert(typeof(func) === "function", `Skill is not available. skillName=${key}`);
+		Util.assert(typeof(func) === "function", `${assetName} is not available. ${assetName}Name=${key}`);
 
 		return func.call(this, this, ...args);
 
@@ -248,27 +250,27 @@ export default class BasicPerk extends Perk
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._start(): Starting component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 		}).then(() => {
-			return component.use("skill", "perk.attach", BITSMIST.v1.SettingPerk, options);
+			return component.use("spell", "perk.attach", BITSMIST.v1.SettingPerk, options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "beforeStart");
+			return component.use("spell", "event.trigger", "beforeStart");
 		}).then(() => {
 			return component.use("skill", "state.change", "starting");
 		}).then(() => {
 			if (component.get("settings", "basic.options.autoTransform", true))
 			{
-				return component.use("skill", "basic.transform");
+				return component.use("spell", "basic.transform");
 			}
 		}).then(() => {
 			if (component.get("settings", "basic.options.autoSetup", true))
 			{
-				return component.use("skill", "basic.setup", options);
+				return component.use("spell", "basic.setup", options);
 			}
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doStart");
+			return component.use("spell", "event.trigger", "doStart");
 		}).then(() => {
 			if (component.get("settings", "basic.options.autoRefresh", true))
 			{
-				return component.use("skill", "basic.refresh");
+				return component.use("spell", "basic.refresh");
 			}
 		}).then(() => {
 			window.getComputedStyle(component).getPropertyValue("visibility"); // Recalc styles
@@ -276,12 +278,12 @@ export default class BasicPerk extends Perk
 			console.debug(`Component._start(): Started component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.use("skill", "state.change", "started");
 		}).then(() => {
-			return component.use("skill", "event.trigger", "afterStart");
+			return component.use("spell", "event.trigger", "afterStart");
 		}).then(() => {
 			console.debug(`BasicPerk._start(): Component is ready. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.use("skill", "state.change", "ready");
 		}).then(() => {
-			return component.use("skill", "event.trigger", "afterReady");
+			return component.use("spell", "event.trigger", "afterReady");
 		});
 
 	}
@@ -305,14 +307,14 @@ export default class BasicPerk extends Perk
 			console.debug(`BasicPerk._stop(): Stopping component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.use("skill", "state.change", "stopping");
 		}).then(() => {
-			return component.use("skill", "event.trigger", "beforeStop", options);
+			return component.use("spell", "event.trigger", "beforeStop", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doStop", options);
+			return component.use("spell", "event.trigger", "doStop", options);
 		}).then(() => {
 			console.debug(`BasicPerk._stop(): Stopped component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
 			return component.use("skill", "state.change", "stopped");
 		}).then(() => {
-			return component.use("skill", "event.trigger", "afterStop", options);
+			return component.use("spell", "event.trigger", "afterStop", options);
 		});
 
 	}
@@ -334,14 +336,14 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._transform(): Transforming. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "beforeTransform", options);
+			return component.use("spell", "event.trigger", "beforeTransform", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doTransform", options);
+			return component.use("spell", "event.trigger", "doTransform", options);
 		}).then(() => {
-			return component.use("skill", "unit.materializeAll", component._root);
+			return component.use("spell", "unit.materializeAll", component._root);
 		}).then(() => {
 			console.debug(`BasicPerk._transform(): Transformed. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "afterTransform", options);
+			return component.use("spell", "event.trigger", "afterTransform", options);
 		});
 
 	}
@@ -363,12 +365,12 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._setup(): Setting up component. name=${component.tagName}, state=${component.state}, id=${component.id}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "beforeSetup", options);
+			return component.use("spell", "event.trigger", "beforeSetup", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doSetup", options);
+			return component.use("spell", "event.trigger", "doSetup", options);
 		}).then(() => {
 			console.debug(`BasicPerk._setup(): Set up component. name=${component.tagName}, state=${component.state}, id=${component.id}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "afterSetup", options);
+			return component.use("spell", "event.trigger", "afterSetup", options);
 		});
 
 	}
@@ -390,30 +392,30 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._refresh(): Refreshing component. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "beforeRefresh", options);
+			return component.use("spell", "event.trigger", "beforeRefresh", options);
 		}).then(() => {
 			let autoClear = Util.safeGet(options, "autoClear", component.get("settings", "basic.options.autoClear", true));
 			if (autoClear)
 			{
-				return component.use("skill", "basic.clear", options);
+				return component.use("spell", "basic.clear", options);
 			}
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doTarget", options);
+			return component.use("spell", "event.trigger", "doTarget", options);
 		}).then(() => {
 			if (Util.safeGet(options, "autoFetch", component.get("settings", "basic.options.autoFetch", true)))
 			{
-				return component.use("skill", "basic.fetch", options);
+				return component.use("spell", "basic.fetch", options);
 			}
 		}).then(() => {
 			if (Util.safeGet(options, "autoFill", component.get("settings", "basic.options.autoFill", true)))
 			{
-				return component.use("skill", "basic.fill", options);
+				return component.use("spell", "basic.fill", options);
 			}
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doRefresh", options);
+			return component.use("spell", "event.trigger", "doRefresh", options);
 		}).then(() => {
 			console.debug(`BasicPerk._refresh(): Refreshed component. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "afterRefresh", options);
+			return component.use("spell", "event.trigger", "afterRefresh", options);
 		});
 
 	}
@@ -435,11 +437,11 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._fetch(): Fetching data. name=${component.tagName}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "beforeFetch", options);
+			return component.use("spell", "event.trigger", "beforeFetch", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doFetch", options);
+			return component.use("spell", "event.trigger", "doFetch", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "afterFetch", options);
+			return component.use("spell", "event.trigger", "afterFetch", options);
 		}).then(() => {
 			console.debug(`BasicPerk._fetch(): Fetched data. name=${component.tagName}, uniqueId=${component.uniqueId}`);
 		});
@@ -463,12 +465,12 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._fill(): Filling with data. name=${component.tagName}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "beforeFill", options);
+			return component.use("spell", "event.trigger", "beforeFill", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doFill", options);
+			return component.use("spell", "event.trigger", "doFill", options);
 		}).then(() => {
 			console.debug(`BasicPerk._fill(): Filled with data. name=${component.tagName}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "afterFill", options);
+			return component.use("spell", "event.trigger", "afterFill", options);
 		});
 
 	}
@@ -490,12 +492,12 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._clear(): Clearing the component. name=${component.tagName}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "beforeClear", options);
+			return component.use("spell", "event.trigger", "beforeClear", options);
 		}).then(() => {
-			return component.use("skill", "event.trigger", "doClear", options);
+			return component.use("spell", "event.trigger", "doClear", options);
 		}).then(() => {
 			console.debug(`BasicPerk._clear(): Cleared the component. name=${component.tagName}, uniqueId=${component.uniqueId}`);
-			return component.use("skill", "event.trigger", "afterClear", options);
+			return component.use("spell", "event.trigger", "afterClear", options);
 		});
 
 	}
