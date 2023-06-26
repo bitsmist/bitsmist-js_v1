@@ -45,7 +45,7 @@ export default class BasicPerk extends Perk
 
 		// Upgrade Component
 		BITSMIST.v1.Component._assets = {};
-		this.upgrade(BITSMIST.v1.Component, "asset", "stats", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Component, "asset", "state", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "asset", "vault", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "asset", "inventory", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Component, "asset", "skill", new ChainableStore());
@@ -106,7 +106,7 @@ export default class BasicPerk extends Perk
 
 		// Upgrade component
 		component._assets = {};
-		this.upgrade(component, "asset", "stats", new ChainableStore({"chain":BITSMIST.v1.Component._assets["stats"]}));
+		this.upgrade(component, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Component._assets["state"]}));
 		this.upgrade(component, "asset", "vault", new ChainableStore());
 		this.upgrade(component, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Component._assets["inventory"]}));
 		this.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));

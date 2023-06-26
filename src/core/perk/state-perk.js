@@ -70,7 +70,7 @@ export default class StatePerk extends Perk
 	{
 
 		// Upgrade component;
-		this.upgrade(component, "stats", "state.state", "connected");
+		this.upgrade(component, "state", "state.state", "connected");
 		this.upgrade(component, "inventory", "state.suspends", {});
 		this.upgrade(component, "event", "doApplySettings", StatePerk.StatePerk_onDoApplySettings);
 
@@ -143,9 +143,9 @@ export default class StatePerk extends Perk
 	static _changeState(component, state)
 	{
 
-		Util.assert(StatePerk.__isTransitionable(component.get("stats", "state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.tagName}, fromState=${component.get("stats", "state.state")}, toState=${state}, id=${component.id}`, Error);
+		Util.assert(StatePerk.__isTransitionable(component.get("state", "state.state"), state), `StatePerk._changeState(): Illegal transition. name=${component.tagName}, fromState=${component.get("state", "state.state")}, toState=${state}, id=${component.id}`, Error);
 
-		component.set("stats", "state.state", state);
+		component.set("state", "state.state", state);
 		this._states[component.uniqueId] = {"object":component, "state":state};
 
 		StatePerk.__processWaitingList();

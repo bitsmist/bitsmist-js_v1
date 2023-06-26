@@ -57,7 +57,7 @@ export default class SkinPerk extends Perk
 		// Upgrade component
 		this.upgrade(component, "vault", "skin.promise", Promise.resolve());
 		this.upgrade(component, "inventory", "skin.skins", {});
-		this.upgrade(component, "stats", "skin.activeSkinName", "");
+		this.upgrade(component, "state", "skin.activeSkinName", "");
 		this.upgrade(component, "event", "doApplySettings", SkinPerk.SkinPerk_onDoApplySettings);
 		this.upgrade(component, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
 
@@ -170,7 +170,7 @@ export default class SkinPerk extends Perk
 	static _applySkin(component, skinName)
 	{
 
-		if (component.get("stats", "skin.activeSkinName") === skinName)
+		if (component.get("state", "skin.activeSkinName") === skinName)
 		{
 			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return Promise.resolve();
@@ -193,7 +193,7 @@ export default class SkinPerk extends Perk
 		}
 
 		// Change active skin
-		component.set("stats", "skin.activeSkinName", skinName);
+		component.set("state", "skin.activeSkinName", skinName);
 
 		console.debug(`SkinPerk._applySkin(): Applied skin. name=${component.tagName}, skinName=${skinInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
 
