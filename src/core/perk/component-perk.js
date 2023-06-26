@@ -11,7 +11,7 @@
 import AjaxUtil from "../util/ajax-util.js";
 import ClassUtil from "../util/class-util.js";
 import Perk from "./perk.js";
-import StatePerk from "./state-perk.js";
+import StatusPerk from "./status-perk.js";
 import Store from "../store/store.js";
 import URLUtil from "../util/url-util.js";
 import Util from "../util/util.js";
@@ -229,7 +229,7 @@ export default class ComponentPerk extends Perk
 			{
 				let state = (sync === true ? "ready" : sync);
 
-				return component.use("spell", "state.wait", [{
+				return component.use("spell", "status.wait", [{
 					"id":		addedComponent.uniqueId,
 					"state":	state
 				}]);
@@ -483,7 +483,7 @@ export default class ComponentPerk extends Perk
 			}
 		});
 
-		return StatePerk.waitFor(waitList, {"waiter":rootNode});
+		return StatusPerk.waitFor(waitList, {"waiter":rootNode});
 
 	}
 

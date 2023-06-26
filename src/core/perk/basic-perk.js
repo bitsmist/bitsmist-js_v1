@@ -254,7 +254,7 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			return component.use("spell", "event.trigger", "beforeStart");
 		}).then(() => {
-			return component.use("skill", "state.change", "starting");
+			return component.use("skill", "status.change", "starting");
 		}).then(() => {
 			if (component.get("settings", "basic.options.autoTransform", true))
 			{
@@ -276,12 +276,12 @@ export default class BasicPerk extends Perk
 			window.getComputedStyle(component).getPropertyValue("visibility"); // Recalc styles
 
 			console.debug(`Component._start(): Started component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
-			return component.use("skill", "state.change", "started");
+			return component.use("skill", "status.change", "started");
 		}).then(() => {
 			return component.use("spell", "event.trigger", "afterStart");
 		}).then(() => {
 			console.debug(`BasicPerk._start(): Component is ready. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
-			return component.use("skill", "state.change", "ready");
+			return component.use("skill", "status.change", "ready");
 		}).then(() => {
 			return component.use("spell", "event.trigger", "afterReady");
 		});
@@ -305,14 +305,14 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._stop(): Stopping component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
-			return component.use("skill", "state.change", "stopping");
+			return component.use("skill", "status.change", "stopping");
 		}).then(() => {
 			return component.use("spell", "event.trigger", "beforeStop", options);
 		}).then(() => {
 			return component.use("spell", "event.trigger", "doStop", options);
 		}).then(() => {
 			console.debug(`BasicPerk._stop(): Stopped component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
-			return component.use("skill", "state.change", "stopped");
+			return component.use("skill", "status.change", "stopped");
 		}).then(() => {
 			return component.use("spell", "event.trigger", "afterStop", options);
 		});
@@ -364,12 +364,12 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._setup(): Setting up component. name=${component.tagName}, state=${component.state}, id=${component.id}, uniqueId=${component.uniqueId}`);
+			console.debug(`BasicPerk._setup(): Setting up component. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return component.use("spell", "event.trigger", "beforeSetup", options);
 		}).then(() => {
 			return component.use("spell", "event.trigger", "doSetup", options);
 		}).then(() => {
-			console.debug(`BasicPerk._setup(): Set up component. name=${component.tagName}, state=${component.state}, id=${component.id}, uniqueId=${component.uniqueId}`);
+			console.debug(`BasicPerk._setup(): Set up component. name=${component.tagName}, id=${component.id}, uniqueId=${component.uniqueId}`);
 			return component.use("spell", "event.trigger", "afterSetup", options);
 		});
 

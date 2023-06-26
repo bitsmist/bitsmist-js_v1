@@ -56,9 +56,9 @@ window.BITSMIST.v1.SettingPerk = SettingPerk;
 PerkPerk.register(SettingPerk);
 window.BITSMIST.v1.settings = Component.settings;
 
-import StatePerk from "./perk/state-perk.js";
-window.BITSMIST.v1.StatePerk = StatePerk;
-PerkPerk.register(StatePerk);
+import StatusPerk from "./perk/status-perk.js";
+window.BITSMIST.v1.StatusPerk = StatusPerk;
+PerkPerk.register(StatusPerk);
 
 import SkinPerk from "./perk/skin-perk.js";
 window.BITSMIST.v1.SkinPerk = SkinPerk;
