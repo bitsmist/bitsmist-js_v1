@@ -160,12 +160,12 @@ export default class StylePerk extends Perk
 		switch (component.get("settings", `style.styles.${styleName}.type`)) {
 		case "CSS":
 			styleInfo["CSS"] = component.get("settings", `style.styles.${styleName}.CSS`);
-			styleInfo["state"] = "loaded";
+			styleInfo["status"] = "loaded";
 			component.get("inventory", `style.styles`).set(styleName, styleInfo);
 			break;
 		case "URL":
 		default:
-			if (styleInfo["state"] === "loading")
+			if (styleInfo["status"] === "loading")
 			{
 				promise = styleInfo["promise"];
 			}
@@ -175,11 +175,11 @@ export default class StylePerk extends Perk
 				promise = AjaxUtil.loadCSS(url).then((css) => {
 					let styleInfo = component.get("inventory", "style.styles").get(styleName);
 					styleInfo["CSS"] = css;
-					styleInfo["state"] = "loaded";
+					styleInfo["status"] = "loaded";
 					component.get("inventory", "style.styles").set(styleName, styleInfo);
 				});
 				styleInfo["promise"] = promise;
-				styleInfo["state"] = "loading";
+				styleInfo["status"] = "loading";
 				component.get("inventory", `style.styles`).set(styleName, styleInfo);
 			}
 			break;
@@ -256,7 +256,7 @@ export default class StylePerk extends Perk
 		return {
 			"name": 	styleName,
 			"CSS":		"",
-			"state":	"",
+			"status":	"",
 		}
 
 	}

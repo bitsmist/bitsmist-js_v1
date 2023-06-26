@@ -135,13 +135,13 @@ export default class SkinPerk extends Perk
 		switch (component.get("settings", `skin.skins.${skinName}.type`)) {
 		case "HTML":
 			skinInfo["HTML"] = component.get("settings", `skin.skins.${skinName}.HTML`);
-			skinInfo["state"] = "loaded";
+			skinInfo["status"] = "loaded";
 			component.set("inventory", `skin.skins.${skinName}`, skinInfo);
 			break;
 		case "node":
 			let rootNode = component.get("settings", `skin.skins.${skinName}.rootNode`);
 			skinInfo["HTML"] = component.use("skill", "basic.scan", rootNode).innerHTML;
-			skinInfo["state"] = "loaded";
+			skinInfo["status"] = "loaded";
 			component.set("inventory", `skin.skins.${skinName}`, skinInfo);
 			break;
 		case "URL":
@@ -149,7 +149,7 @@ export default class SkinPerk extends Perk
 			let url = component.get("settings", `skin.skins.${skinName}.URL`) || SkinPerk.__getSkinURL(component, skinName);
 			promise = AjaxUtil.loadHTML(url).then((skin) => {
 				skinInfo["HTML"] = skin;
-				skinInfo["state"] = "loaded";
+				skinInfo["status"] = "loaded";
 				component.set("inventory", `skin.skins.${skinName}`, skinInfo);
 			});
 			break;
@@ -271,7 +271,7 @@ export default class SkinPerk extends Perk
 		return {
 			"name":		skinName,
 			"HTML":		"",
-			"state":	"",
+			"status":	"",
 		};
 
 	}

@@ -139,7 +139,7 @@ export default class ComponentPerk extends Perk
 		let promise = Promise.resolve();
 		if (ComponentPerk.__hasExternalClass(tagName, baseClassName, settings))
 		{
-			if (this._classes[baseClassName] && this._classes[baseClassName]["state"] === "loading")
+			if (this._classes[baseClassName] && this._classes[baseClassName]["status"] === "loading")
 			{
 				// Already loading
 				console.debug(`ComponentPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
@@ -149,13 +149,13 @@ export default class ComponentPerk extends Perk
 			{
 				// Need loading
 				console.debug(`ClassPerk._loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
-				this._classes[baseClassName] = {"state":"loading"};
+				this._classes[baseClassName] = {"status":"loading"};
 
 				let options = {
 					"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Component.get("settings", "system.splitClass", false)),
 				};
 				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
-					this._classes[baseClassName] = {"state":"loaded"};
+					this._classes[baseClassName] = {"status":"loaded"};
 				});
 				this._classes[baseClassName].promise = promise;
 			}
@@ -227,11 +227,11 @@ export default class ComponentPerk extends Perk
 			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "unit.options.syncOnAdd"));
 			if (sync)
 			{
-				let state = (sync === true ? "ready" : sync);
+				let status = (sync === true ? "ready" : sync);
 
 				return component.use("spell", "status.wait", [{
 					"id":		addedComponent.uniqueId,
-					"state":	state
+					"status":	status
 				}]);
 			}
 		}).then(() => {
@@ -378,7 +378,7 @@ export default class ComponentPerk extends Perk
 			{
 				ret = false;
 			}
-			else if (this._classes[className] && this._classes[className]["state"] === "loaded")
+			else if (this._classes[className] && this._classes[className]["status"] === "loaded")
 			{
 				ret = false;
 			}
@@ -478,7 +478,7 @@ export default class ComponentPerk extends Perk
 		targets.forEach((element) => {
 			if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
 			{
-				let waitItem = {"object":element, "state":"ready"};
+				let waitItem = {"object":element, "status":"ready"};
 				waitList.push(waitItem);
 			}
 		});
