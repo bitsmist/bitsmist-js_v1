@@ -30,7 +30,7 @@ export default class BasicPerk extends Perk
 	{
 
 		return {
-			"section":		"",
+			"section":		"basic",
 			"order":		0,
 		};
 
@@ -100,38 +100,6 @@ export default class BasicPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	static init(component, options)
-	{
-
-		// Upgrade component
-		component._assets = {};
-		this.upgrade(component, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Component._assets["state"]}));
-		this.upgrade(component, "asset", "vault", new ChainableStore());
-		this.upgrade(component, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Component._assets["inventory"]}));
-		this.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));
-		this.upgrade(component, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Component._assets["spell"]}));
-
-		// Attach default perks
-		return Promise.resolve().then(() => {
-			return component.use("spell", "perk.attach", BITSMIST.v1.SettingPerk, options);
-		}).then(() => {
-			return component.use("spell", "perk.attach", BITSMIST.v1.PerkPerk, options);
-		}).then(() => {
-			return component.use("spell", "perk.attach", BITSMIST.v1.StatusPerk, options);
-		}).then(() => {
-			return component.use("spell", "perk.attach", BITSMIST.v1.EventPerk, options);
-		}).then(() => {
-			return component.use("spell", "perk.attach", BITSMIST.v1.SkinPerk, options);
-		}).then(() => {
-			return component.use("spell", "perk.attach", BITSMIST.v1.StylePerk, options);
-		}).then(() => {
-			return component.use("spell", "perk.attach", BITSMIST.v1.ComponentPerk, options);
-		});
-
-	}
-
-	// -------------------------------------------------------------------------
 	// 	Methods (component)
 	// -------------------------------------------------------------------------
 
@@ -158,7 +126,32 @@ export default class BasicPerk extends Perk
 			{
 				this.__initialized = true;
 
-				return BasicPerk.init(component).then(() => {
+				// Upgrade component
+				component._assets = {};
+				Perk.upgrade(component, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Component._assets["state"]}));
+				Perk.upgrade(component, "asset", "vault", new ChainableStore());
+				Perk.upgrade(component, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Component._assets["inventory"]}));
+				Perk.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));
+				Perk.upgrade(component, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Component._assets["spell"]}));
+
+				// Attach default perks
+				return Promise.resolve().then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.BasicPerk);
+				}).then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.SettingPerk);
+				}).then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.PerkPerk);
+				}).then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.StatusPerk);
+				}).then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.EventPerk);
+				}).then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.SkinPerk);
+				}).then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.StylePerk);
+				}).then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.ComponentPerk);
+				}).then(() => {
 					return this.use("spell", "basic.start");
 				});
 			}
