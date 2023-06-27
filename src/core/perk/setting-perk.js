@@ -60,21 +60,8 @@ export default class SettingPerk extends Perk
 	static init(component, options)
 	{
 
-		// Defaults
-		let defaults = {
-			"perk": {
-				"options": {
-					"apply": [
-						//"BasicPerk", "SettingPerk", // Attach manually
-						"PerkPerk", "StatusPerk", "EventPerk", "SkinPerk", "ComponentPerk"
-					],
-				},
-			}
-		};
-
 		// Get settings
 		let settings = (options && options["settings"]) || {};
-		settings = Util.deepMerge(defaults, settings);
 		settings = SettingPerk.__injectSettings(component, settings);
 		settings = SettingPerk.__mergeSettings(component, settings);
 
@@ -90,8 +77,6 @@ export default class SettingPerk extends Perk
 			}
 		}).then(() => {
 			SettingPerk.__loadAttrSettings(component); // Do it again to overwrite since attribute settings have higher priority
-		}).then(() => {
-			return SettingPerk._applySettings(component, {"settings":component._assets["settings"].items});
 		});
 
 	}

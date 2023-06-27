@@ -112,6 +112,23 @@ export default class BasicPerk extends Perk
 		this.upgrade(component, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Component._assets["skill"]}));
 		this.upgrade(component, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Component._assets["spell"]}));
 
+		// Attach default perks
+		return Promise.resolve().then(() => {
+			return component.use("spell", "perk.attach", BITSMIST.v1.SettingPerk, options);
+		}).then(() => {
+			return component.use("spell", "perk.attach", BITSMIST.v1.PerkPerk, options);
+		}).then(() => {
+			return component.use("spell", "perk.attach", BITSMIST.v1.StatusPerk, options);
+		}).then(() => {
+			return component.use("spell", "perk.attach", BITSMIST.v1.EventPerk, options);
+		}).then(() => {
+			return component.use("spell", "perk.attach", BITSMIST.v1.SkinPerk, options);
+		}).then(() => {
+			return component.use("spell", "perk.attach", BITSMIST.v1.StylePerk, options);
+		}).then(() => {
+			return component.use("spell", "perk.attach", BITSMIST.v1.ComponentPerk, options);
+		});
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -140,8 +157,10 @@ export default class BasicPerk extends Perk
 			if (!this.__initialized || this.get("settings", "basic.options.autoRestart", false))
 			{
 				this.__initialized = true;
-				BasicPerk.init(component);
-				return this.use("spell", "basic.start");
+
+				return BasicPerk.init(component).then(() => {
+					return this.use("spell", "basic.start");
+				});
 			}
 		});
 
@@ -249,8 +268,8 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._start(): Starting component. name=${component.tagName}, id=${component.id}, uniqueId=${component._uniqueId}`);
-		}).then(() => {
-			return component.use("spell", "perk.attach", BITSMIST.v1.SettingPerk, options);
+
+			return component.use("spell", "setting.apply", {"settings":component._assets["settings"].items});
 		}).then(() => {
 			return component.use("spell", "event.trigger", "beforeStart");
 		}).then(() => {
