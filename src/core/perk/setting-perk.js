@@ -63,14 +63,12 @@ export default class SettingPerk extends Perk
 		// Defaults
 		let defaults = {
 			"perk": {
-	//			"BasicPerk":		{"setting":{"attach":true}},	// Attach manually
-	//			"SettingPerk":		{"setting":{"attach":true}},	// Attach manually
-				"PerkPerk":			{"setting":{"attach":true}},
-				"StatusPerk":		{"setting":{"attach":true}},
-				"EventPerk":		{"setting":{"attach":true}},
-				"SkinPerk":			{"setting":{"attach":true}},
-				"StylePerk":		{"setting":{"attach":true}},
-				"ComponentPerk":	{"setting":{"attach":true}},
+				"options": {
+					"perkNames": [
+						//"BasicPerk", "SettingPerk", // Attach manually
+						"PerkPerk", "StatusPerk", "EventPerk", "SkinPerk", "ComponentPerk"
+					],
+				},
 			}
 		};
 

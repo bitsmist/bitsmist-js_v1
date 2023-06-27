@@ -172,17 +172,19 @@ export default class PerkPerk extends Perk
 		let targets = {};
 		let chain = Promise.resolve();
 
-		// List new perks
-		let perks = settings["perk"];
+		// List new perks from "perk" section
+		let perks = Util.safeGet(settings, "perk.options.perkNames");
 		if (perks)
 		{
-			Object.keys(perks).forEach((perkName) => {
+			for (let i = 0; i < perks.length; i++)
+			{
+				let perkName = perks[i];
 				Util.assert(this._perks[perkName], `PerkPerk.__listNewPerk(): Perk not found. name=${component.tagName}, perkName=${perkName}`);
-				if (Util.safeGet(perks[perkName], "setting.attach") && !component.get("inventory", `perk.perks.${perkName}`))
+				if (!component.get("inventory", `perk.perks.${perkName}`))
 				{
 					targets[perkName] = this._perks[perkName];
 				}
-			});
+			}
 		}
 
 		// List new perks from settings keyword
