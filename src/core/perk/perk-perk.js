@@ -46,6 +46,8 @@ export default class PerkPerk extends Perk
 
 	}
 
+	// -------------------------------------------------------------------------
+
 	static globalInit()
 	{
 
