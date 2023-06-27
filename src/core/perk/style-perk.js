@@ -117,7 +117,7 @@ export default class StylePerk extends Perk
 			let chain = Promise.resolve();
 
 			// Apply common CSS
-			let css = this.get("settings", "style.options.styleNames", []);
+			let css = this.get("settings", "style.options.apply", []);
 			for (let i = 0; i < css.length; i++)
 			{
 				chain = chain.then(() => {
