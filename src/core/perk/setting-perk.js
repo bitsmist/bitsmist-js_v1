@@ -42,41 +42,41 @@ export default class SettingPerk extends Perk
 	static globalInit()
 	{
 
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "asset", "settings", new ChainableStore());
-		BITSMIST.v1.Component.settings = BITSMIST.v1.Component._assets["settings"];
+		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "asset", "settings", new ChainableStore());
+		BITSMIST.v1.Unit.settings = BITSMIST.v1.Unit._assets["settings"];
 
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
+		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static init(component, options)
+	static init(unit, options)
 	{
 
 		// Get settings
 		let settings = (options && options["settings"]) || {};
-		settings = SettingPerk.__injectSettings(component, settings);
-		settings = SettingPerk.__mergeSettings(component, settings);
+		settings = SettingPerk.__injectSettings(unit, settings);
+		settings = SettingPerk.__mergeSettings(unit, settings);
 
-		// Upgrade component
-		this.upgrade(component, "asset", "settings", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Component._assets["settings"]}));
+		// Upgrade unit
+		this.upgrade(unit, "asset", "settings", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit._assets["settings"]}));
 
 		return Promise.resolve().then(() => {
-			SettingPerk.__loadAttrSettings(component);
+			SettingPerk.__loadAttrSettings(unit);
 		}).then(() => {
-			if (SettingPerk.__hasExternalSettings(component))
+			if (SettingPerk.__hasExternalSettings(unit))
 			{
-				return SettingPerk._loadSettings(component);
+				return SettingPerk._loadSettings(unit);
 			}
 		}).then(() => {
-			SettingPerk.__loadAttrSettings(component); // Do it again to overwrite since attribute settings have higher priority
+			SettingPerk.__loadAttrSettings(unit); // Do it again to overwrite since attribute settings have higher priority
 		});
 
 	}
@@ -88,20 +88,20 @@ export default class SettingPerk extends Perk
 	/**
 	 * Apply settings.
 	 *
-     * @param	{Component}		component			Component.
+     * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Options.
 	 */
-	static _applySettings(component, options)
+	static _applySettings(unit, options)
 	{
 
 		return Promise.resolve().then(() => {
-			return component.use("spell", "event.trigger", "beforeApplySettings", options);
+			return unit.use("spell", "event.trigger", "beforeApplySettings", options);
 		}).then(() => {
-			return component.use("spell", "perk.attachPerks", options);
+			return unit.use("spell", "perk.attachPerks", options);
 		}).then(() => {
-			return component.use("spell", "event.trigger", "doApplySettings", options);
+			return unit.use("spell", "event.trigger", "doApplySettings", options);
 		}).then(() => {
-			return component.use("spell", "event.trigger", "afterApplySettings", options);
+			return unit.use("spell", "event.trigger", "afterApplySettings", options);
 		});
 
 	}
@@ -109,20 +109,20 @@ export default class SettingPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the settings file and merge to component's settings.
+	 * Load the settings file and merge to unit's settings.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Load options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadSettings(component, options)
+	static _loadSettings(unit, options)
 	{
 
-		return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(component), Object.assign({"bindTo":component}, options)).then((settings) => {
+		return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(unit), Object.assign({"bindTo":unit}, options)).then((settings) => {
 			if (settings)
 			{
-				component.use("skill", "setting.merge", settings);
+				unit.use("skill", "setting.merge", settings);
 			}
 		});
 
@@ -133,14 +133,14 @@ export default class SettingPerk extends Perk
 	/**
 	 * Get settings.
 	 *
-     * @param	{Component}		component			Component.
+     * @param	{Unit}			unit				Unit.
 	 * @param	{String}		key					Key.
 	 * @param	{*}				defaultValue		Value returned when key is not found.
 	 */
-	static _getSettings(component, key, defaultValue)
+	static _getSettings(unit, key, defaultValue)
 	{
 
-		return component.get("settings", key, defaultValue);
+		return unit.get("settings", key, defaultValue);
 
 	}
 
@@ -149,14 +149,14 @@ export default class SettingPerk extends Perk
 	/**
 	 * Set settings.
 	 *
-     * @param	{Component}		component			Component.
+     * @param	{Unit}			unit				Unit.
 	 * @param	{String}		key					Key.
 	 * @param	{*}				value				Value.
 	 */
-	static _setSettings(component, key, value)
+	static _setSettings(unit, key, value)
 	{
 
-		return component.set("settings", key, value);
+		return unit.set("settings", key, value);
 
 	}
 
@@ -165,14 +165,14 @@ export default class SettingPerk extends Perk
 	/**
 	 * Set settings.
 	 *
-     * @param	{Component}		component			Component.
+     * @param	{Unit}			unit				Unit.
 	 * @param	{String}		key					Key.
 	 * @param	{*}				value				Value.
 	 */
-	static _mergeSettings(component, key, value)
+	static _mergeSettings(unit, key, value)
 	{
 
-		return component._assets["settings"].merge(key, value);
+		return unit._assets["settings"].merge(key, value);
 
 	}
 
@@ -183,20 +183,20 @@ export default class SettingPerk extends Perk
 	/**
 	 * Get settings from element's attribute.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 */
-	static __loadAttrSettings(component)
+	static __loadAttrSettings(unit)
 	{
 
-		if (component.hasAttribute("bm-settingsref"))
+		if (unit.hasAttribute("bm-settingsref"))
 		{
-			component.set("settings", "setting.options.settingsRef", component.getAttribute("bm-settingsref") || true);
+			unit.set("settings", "setting.options.settingsRef", unit.getAttribute("bm-settingsref") || true);
 		}
 
-		if (component.hasAttribute("bm-options"))
+		if (unit.hasAttribute("bm-options"))
 		{
-			let options = {"options": JSON.parse(component.getAttribute("bm-options"))};
-			component.use("skill", "setting.merge", options);
+			let options = {"options": JSON.parse(unit.getAttribute("bm-options"))};
+			unit.use("skill", "setting.merge", options);
 		}
 
 	}
@@ -204,18 +204,18 @@ export default class SettingPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component has the external settings file.
+	 * Check if the unit has the external settings file.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 *
-	 * @return  {Boolean}		True if the component has the external settings file.
+	 * @return  {Boolean}		True if the unit has the external settings file.
 	 */
-	static __hasExternalSettings(component)
+	static __hasExternalSettings(unit)
 	{
 
 		let ret = false;
 
-		if (component.get("settings", "setting.options.settingsRef"))
+		if (unit.get("settings", "setting.options.settingsRef"))
 		{
 			ret = true;
 		}
@@ -229,20 +229,20 @@ export default class SettingPerk extends Perk
 	/**
 	 * Return URL to setting file.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getSettingsURL(component)
+	static __getSettingsURL(unit)
 	{
 
 		let path;
 		let fileName;
 		let query;
 
-		let settingsRef = ( component.hasAttribute(`bm-settingsref`) ?
-			component.getAttribute(`bm-settingsref`) || true :
-			component.get("settings", "setting.settingsRef")
+		let settingsRef = ( unit.hasAttribute(`bm-settingsref`) ?
+			unit.getAttribute(`bm-settingsref`) || true :
+			unit.get("settings", "setting.settingsRef")
 		);
 		if (settingsRef && settingsRef !== true)
 		{
@@ -256,13 +256,13 @@ export default class SettingPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					component.get("settings", "system.appBaseURL"),
-					component.get("settings", "system.componentPath"),
-					component.get("settings", "unit.options.path", ""),
+					unit.get("settings", "system.appBaseURL"),
+					unit.get("settings", "system.unitPath"),
+					unit.get("settings", "unit.options.path", ""),
 				]);
-			let ext = component.get("settings", "setting.settingFormat", component.get("settings", "system.settingFormat", "json"));
-			fileName = component.get("settings", "unit.options.fileName", component.tagName.toLowerCase()) + ".settings." + ext;
-			query = component.get("settings", "unit.options.query");
+			let ext = unit.get("settings", "setting.settingFormat", unit.get("settings", "system.settingFormat", "json"));
+			fileName = unit.get("settings", "unit.options.fileName", unit.tagName.toLowerCase()) + ".settings." + ext;
+			query = unit.get("settings", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
@@ -274,17 +274,17 @@ export default class SettingPerk extends Perk
 	/**
 	 * Inject settings.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return  {Object}		New settings.
 	 */
-	static __injectSettings(component, settings)
+	static __injectSettings(unit, settings)
 	{
 
-		if (typeof(component._injectSettings) === "function")
+		if (typeof(unit._injectSettings) === "function")
 		{
-			settings = component._injectSettings.call(component, settings);
+			settings = unit._injectSettings.call(unit, settings);
 		}
 
 		return settings;
@@ -294,13 +294,13 @@ export default class SettingPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get component settings. Need to override.
+	 * Get unit settings. Need to override.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 *
 	 * @return  {Object}		Options.
 	 */
-	static _getSettings(component)
+	static _getSettings(unit)
 	{
 
 		return {};
@@ -312,34 +312,34 @@ export default class SettingPerk extends Perk
 	/**
  	 * Inject settings.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		settings			Settings.
 	 *
 	 * @return  {Object}		New settings.
 	 */
-	static __mergeSettings(component, settings)
+	static __mergeSettings(unit, settings)
 	{
 
-		let curComponent = Object.getPrototypeOf(component);
+		let curUnit = Object.getPrototypeOf(unit);
 		let curSettings = {};
 		let parentSettings;
 
 		// Merge superclass settings
-		while (typeof(Object.getPrototypeOf(curComponent)._getSettings) === "function")
+		while (typeof(Object.getPrototypeOf(curUnit)._getSettings) === "function")
 		{
-			parentSettings = Object.getPrototypeOf(curComponent)._getSettings.call(component);
+			parentSettings = Object.getPrototypeOf(curUnit)._getSettings.call(unit);
 			if (Object.keys(parentSettings).length > 0)
 			{
 				Util.deepMerge(parentSettings, curSettings);
 				curSettings = parentSettings;
 			}
 
-			curComponent= Object.getPrototypeOf(curComponent);
+			curUnit= Object.getPrototypeOf(curUnit);
 		}
 		Util.deepMerge(settings, curSettings);
 
-		// Merge component settings
-		Util.deepMerge(settings, component._getSettings.call(component));
+		// Merge unit settings
+		Util.deepMerge(settings, unit._getSettings.call(unit));
 
 		return settings;
 

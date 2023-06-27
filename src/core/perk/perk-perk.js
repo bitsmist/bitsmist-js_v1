@@ -51,19 +51,19 @@ export default class PerkPerk extends Perk
 	static globalInit()
 	{
 
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "spell", "perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "perk.attach", function(...args) { return PerkPerk._attach(...args); });
+		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "spell", "perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "perk.attach", function(...args) { return PerkPerk._attach(...args); });
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static init(component, options)
+	static init(unit, options)
 	{
 
-		// Upgrade component
-		this.upgrade(component, "inventory", "perk.perks.PerkPerk", {"object": this});
+		// Upgrade unit
+		this.upgrade(unit, "inventory", "perk.perks.PerkPerk", {"object": this});
 
 	}
 
@@ -104,21 +104,21 @@ export default class PerkPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Attach new perks to component according to settings.
+	 * Attach new perks to unit according to settings.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Options.
 	 */
-	static _attachPerks(component, options)
+	static _attachPerks(unit, options)
 	{
 
 		let settings = options["settings"];
 		let chain = Promise.resolve();
-		let targets = PerkPerk.__listNewPerks(component, settings);
+		let targets = PerkPerk.__listNewPerks(unit, settings);
 
 		PerkPerk.__sortItems(targets).forEach((perkName) => {
 			chain = chain.then(() => {
-				return PerkPerk._attach(component, this._perks[perkName].object, options);
+				return PerkPerk._attach(unit, this._perks[perkName].object, options);
 			});
 		});
 
@@ -129,31 +129,31 @@ export default class PerkPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Attach a perk to the component.
+	 * Attach a perk to the unit.
 	 *
-	 * @param	{Component}		component			Component to be attached.
+	 * @param	{Unit}			unit				Unit to be attached.
 	 * @param	{Perk}			perk				Perk to attach.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _attach(component, perk, options)
+	static _attach(unit, perk, options)
 	{
 
-		if (!component.get("inventory", `perk.perks.${perk.name}`))
+		if (!unit.get("inventory", `perk.perks.${perk.name}`))
 		{
 			// Attach dependencies first
 			let deps = this._perks[perk.name]["depends"];
 			for (let i = 0; i < deps.length; i++)
 			{
-				PerkPerk._attach(component, this._perks[deps[i]].object, options);
+				PerkPerk._attach(unit, this._perks[deps[i]].object, options);
 			}
 
-			component.set("inventory", `perk.perks.${perk.name}`, {
+			unit.set("inventory", `perk.perks.${perk.name}`, {
 				"object":perk
 			});
 
-			return perk.init(component, options);
+			return perk.init(unit, options);
 		}
 
 	}
@@ -165,10 +165,10 @@ export default class PerkPerk extends Perk
 	/**
 	 * List not-attached perks according to settings.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static __listNewPerks(component, settings)
+	static __listNewPerks(unit, settings)
 	{
 
 		let targets = {};
@@ -181,8 +181,8 @@ export default class PerkPerk extends Perk
 			for (let i = 0; i < perks.length; i++)
 			{
 				let perkName = perks[i];
-				Util.assert(this._perks[perkName], `PerkPerk.__listNewPerk(): Perk not found. name=${component.tagName}, perkName=${perkName}`);
-				if (!component.get("inventory", `perk.perks.${perkName}`))
+				Util.assert(this._perks[perkName], `PerkPerk.__listNewPerk(): Perk not found. name=${unit.tagName}, perkName=${perkName}`);
+				if (!unit.get("inventory", `perk.perks.${perkName}`))
 				{
 					targets[perkName] = this._perks[perkName];
 				}
@@ -193,7 +193,7 @@ export default class PerkPerk extends Perk
 		Object.keys(settings).forEach((key) => {
 			let perkInfo = PerkPerk._sections[key];
 
-			if (perkInfo && !component.get("inventory", `perk.perks.${perkInfo.name}`))
+			if (perkInfo && !unit.get("inventory", `perk.perks.${perkInfo.name}`))
 			{
 				targets[perkInfo.name] = perkInfo
 			}

@@ -42,10 +42,10 @@ export default class StylePerk extends Perk
 	static globalInit()
 	{
 
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "inventory", "style.styles", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Component, "spell", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
+		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "inventory", "style.styles", new ChainableStore());
+		this.upgrade(BITSMIST.v1.Unit, "spell", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
 
 		this._cssReady = {};
 		this._cssReady["promise"] = new Promise((resolve, reject) => {
@@ -54,12 +54,12 @@ export default class StylePerk extends Perk
 		});
 
 		let promises = [];
-		BITSMIST.v1.Component.get("inventory", "promise.documentReady").then(() => {
-			Object.entries(BITSMIST.v1.Component.get("settings", "style.styles", {})).forEach(([sectionName, sectionValue]) => {
-				promises.push(StylePerk._loadCSS(BITSMIST.v1.Component, sectionName).then(() => {
+		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
+			Object.entries(BITSMIST.v1.Unit.get("settings", "style.styles", {})).forEach(([sectionName, sectionValue]) => {
+				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName).then(() => {
 					if (sectionValue["global"])
 					{
-						return StylePerk._applyCSS(BITSMIST.v1.Component, sectionName);
+						return StylePerk._applyCSS(BITSMIST.v1.Unit, sectionName);
 					}
 				}));
 			});
@@ -73,18 +73,18 @@ export default class StylePerk extends Perk
 
 	// -------------------------------------------------------------------------
 
-	static init(component, options)
+	static init(unit, options)
 	{
 
-		// Upgrade component
-		this.upgrade(component, "vault", "style.promise", Promise.resolve());
-		this.upgrade(component, "inventory", "style.styles", new ChainableStore({
-			"chain":	BITSMIST.v1.Component.get("inventory", "style.styles"),
+		// Upgrade unit
+		this.upgrade(unit, "vault", "style.promise", Promise.resolve());
+		this.upgrade(unit, "inventory", "style.styles", new ChainableStore({
+			"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
 		}));
-		this.upgrade(component, "event", "doApplySettings", StylePerk.StylePerk_onDoApplySettings);
-		this.upgrade(component, "event", "doTransform", StylePerk.StylePerk_onDoTransform);
+		this.upgrade(unit, "event", "doApplySettings", StylePerk.StylePerk_onDoApplySettings);
+		this.upgrade(unit, "event", "doTransform", StylePerk.StylePerk_onDoTransform);
 
-		StylePerk.__loadAttrSettings(component);
+		StylePerk.__loadAttrSettings(unit);
 
 	}
 
@@ -97,7 +97,7 @@ export default class StylePerk extends Perk
 
 		let styleName = StylePerk.__getDefaultFilename(this);
 
-		// Load component's default CSS
+		// Load unit's default CSS
 		if (StylePerk.__hasExternalCSS(this, styleName))
 		{
 			this.set("vault", "style.promise", StylePerk._loadCSS(this, styleName));
@@ -125,7 +125,7 @@ export default class StylePerk extends Perk
 				});
 			}
 
-			// Apply component's default CSS
+			// Apply unit's default CSS
 			if (StylePerk.__hasExternalCSS(this, styleName))
 			{
 				chain = chain.then(() => {
@@ -145,23 +145,23 @@ export default class StylePerk extends Perk
 	/**
 	 * Load the CSS.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String}		styleName			Style name.
 	 * @param	{Object}		options				Load options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadCSS(component, styleName, options)
+	static _loadCSS(unit, styleName, options)
 	{
 
 		let promise = Promise.resolve();
-		let styleInfo = component.get("inventory", `style.styles.${styleName}`) || StylePerk.__createStyleInfo(component, styleName);
+		let styleInfo = unit.get("inventory", `style.styles.${styleName}`) || StylePerk.__createStyleInfo(unit, styleName);
 
-		switch (component.get("settings", `style.styles.${styleName}.type`)) {
+		switch (unit.get("settings", `style.styles.${styleName}.type`)) {
 		case "CSS":
-			styleInfo["CSS"] = component.get("settings", `style.styles.${styleName}.CSS`);
+			styleInfo["CSS"] = unit.get("settings", `style.styles.${styleName}.CSS`);
 			styleInfo["status"] = "loaded";
-			component.get("inventory", `style.styles`).set(styleName, styleInfo);
+			unit.get("inventory", `style.styles`).set(styleName, styleInfo);
 			break;
 		case "URL":
 		default:
@@ -171,16 +171,16 @@ export default class StylePerk extends Perk
 			}
 			else
 			{
-				let url = component.get("settings", `style.styles.${styleName}.URL`) || StylePerk.__getCSSURL(component, styleName);
+				let url = unit.get("settings", `style.styles.${styleName}.URL`) || StylePerk.__getCSSURL(unit, styleName);
 				promise = AjaxUtil.loadCSS(url).then((css) => {
-					let styleInfo = component.get("inventory", "style.styles").get(styleName);
+					let styleInfo = unit.get("inventory", "style.styles").get(styleName);
 					styleInfo["CSS"] = css;
 					styleInfo["status"] = "loaded";
-					component.get("inventory", "style.styles").set(styleName, styleInfo);
+					unit.get("inventory", "style.styles").set(styleName, styleInfo);
 				});
 				styleInfo["promise"] = promise;
 				styleInfo["status"] = "loading";
-				component.get("inventory", `style.styles`).set(styleName, styleInfo);
+				unit.get("inventory", `style.styles`).set(styleName, styleInfo);
 			}
 			break;
 		}
@@ -194,29 +194,29 @@ export default class StylePerk extends Perk
 	/**
 	 * Apply style.
 	 *
-	 * @param	{Component}		component			Parent component.
+	 * @param	{Unit}			unit				Parent unit.
 	 * @param	{String}		styleName			Style name.
 	 */
-	static _applyCSS(component, styleName)
+	static _applyCSS(unit, styleName)
 	{
 
-		let cssInfo = component.get("inventory", "style.styles").get(styleName);
+		let cssInfo = unit.get("inventory", "style.styles").get(styleName);
 		let ss = new CSSStyleSheet();
 
-		Util.assert(cssInfo,`StylePerk._applyCSS(): CSS not loaded. name=${component.tagName || "Global"}, styleName=${styleName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
+		Util.assert(cssInfo,`StylePerk._applyCSS(): CSS not loaded. name=${unit.tagName || "Global"}, styleName=${styleName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
 
 		return Promise.resolve().then(() => {
 			return ss.replace(`${cssInfo["CSS"]}`);
 		}).then(() => {
-			if (component.shadowRoot)
+			if (unit.shadowRoot)
 			{
-				component._root.adoptedStyleSheets = [...component._root.adoptedStyleSheets, ss];
+				unit._root.adoptedStyleSheets = [...unit._root.adoptedStyleSheets, ss];
 			}
 			else
 			{
 				document.adoptedStyleSheets = [...document.adoptedStyleSheets, ss];
 			}
-			console.debug(`StylePerk._applyCSS(): Applied CSS. name=${component.tagName}, styleName=${cssInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
+			console.debug(`StylePerk._applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 		});
 
 	}
@@ -228,14 +228,14 @@ export default class StylePerk extends Perk
 	/**
 	 * Get settings from element's attribute.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 */
-	static __loadAttrSettings(component)
+	static __loadAttrSettings(unit)
 	{
 
-		if (component.hasAttribute("bm-styleref"))
+		if (unit.hasAttribute("bm-styleref"))
 		{
-			component.set("settings", "style.options.styleRef", component.getAttribute("bm-styleref") || true);
+			unit.set("settings", "style.options.styleRef", unit.getAttribute("bm-styleref") || true);
 		}
 
 	}
@@ -245,12 +245,12 @@ export default class StylePerk extends Perk
 	/**
 	 * Returns a new Style info object.
 	 *
-	 * @param	{Component}		component			Parent component.
+	 * @param	{Unit}			unit				Parent unit.
 	 * @param	{String}		styleName			Style name.
 	 *
 	 * @return  {Object}		Style info.
 	 */
-	static __createStyleInfo(component, styleName)
+	static __createStyleInfo(unit, styleName)
 	{
 
 		return {
@@ -264,18 +264,18 @@ export default class StylePerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component has the external CSS file.
+	 * Check if the unit has the external CSS file.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 *
-	 * @return  {Boolean}		True if the component has the external CSS file.
+	 * @return  {Boolean}		True if the unit has the external CSS file.
 	 */
-	static __hasExternalCSS(component, styleName)
+	static __hasExternalCSS(unit, styleName)
 	{
 
 		let ret = false;
 
-		if (component.get("settings", "style.options.styleRef"))
+		if (unit.get("settings", "style.options.styleRef"))
 		{
 			ret = true;
 		}
@@ -289,19 +289,19 @@ export default class StylePerk extends Perk
 	/**
 	 * Return URL to CSS file.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String	}		styleName			Style name.
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getCSSURL(component, styleName)
+	static __getCSSURL(unit, styleName)
 	{
 
 		let path;
 		let fileName;
 		let query;
 
-		let cssRef = component.get("settings", "style.options.styleRef");
+		let cssRef = unit.get("settings", "style.options.styleRef");
 		if (cssRef && cssRef !== true)
 		{
 			// If URL is specified in ref, use it
@@ -314,12 +314,12 @@ export default class StylePerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					component.get("settings", "system.appBaseURL", ""),
-					component.get("settings", "system.stylePath", component.get("settings", "system.componentPath", "")),
-					component.get("settings", "unit.options.path", ""),
+					unit.get("settings", "system.appBaseURL", ""),
+					unit.get("settings", "system.stylePath", unit.get("settings", "system.unitPath", "")),
+					unit.get("settings", "unit.options.path", ""),
 				]);
 			fileName = styleName + ".css";
-			query = component.get("settings", "unit.options.query");
+			query = unit.get("settings", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
@@ -331,16 +331,16 @@ export default class StylePerk extends Perk
 	/**
 	 * Get the default style name.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 *
 	 * @return 	{String}		Style name.
 	 */
-	static __getDefaultFilename(component)
+	static __getDefaultFilename(unit)
 	{
 
-		return component.get("settings", "style.options.fileName",
-			component.get("settings", "unit.options.fileName",
-				component.tagName.toLowerCase()));
+		return unit.get("settings", "style.options.fileName",
+			unit.get("settings", "unit.options.fileName",
+				unit.tagName.toLowerCase()));
 
 	}
 

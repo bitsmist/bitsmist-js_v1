@@ -9,10 +9,10 @@
 // =============================================================================
 
 // =============================================================================
-//	Component class
+//	Unit Class
 // =============================================================================
 
-export default class Component extends HTMLElement
+export default class Unit extends HTMLElement
 {
 
 	// -------------------------------------------------------------------------
@@ -67,4 +67,4 @@ export default class Component extends HTMLElement
 
 }
 
-customElements.define("bm-component", Component);
+customElements.define("bm-unit", Unit);

@@ -39,37 +39,37 @@ export default class EventPerk extends Perk
 	static globalInit()
 	{
 
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
+		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static init(component, options)
+	static init(unit, options)
 	{
 
-		// Upgrade component
-		this.upgrade(component, "event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
-		this.upgrade(component, "event", "afterTransform", EventPerk.EventPerk_onAfterTransform);
+		// Upgrade unit
+		this.upgrade(unit, "event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
+		this.upgrade(unit, "event", "afterTransform", EventPerk.EventPerk_onAfterTransform);
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static deinit(component, options)
+	static deinit(unit, options)
 	{
 
 		let events = this.get("settings", "event");
 		if (events)
 		{
 			Object.keys(events).forEach((elementName) => {
-				EventPerk._removeEvents(component, elementName, events[eventName]);
+				EventPerk._removeEvents(unit, elementName, events[eventName]);
 			});
 		}
 
@@ -94,7 +94,7 @@ export default class EventPerk extends Perk
 	{
 
 		Object.entries(this.get("settings", "event.events", {})).forEach(([sectionName, sectionValue]) => {
-			// Initialize only elements inside component
+			// Initialize only elements inside unit
 			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
 			{
 				EventPerk._initEvents(this, sectionName, sectionValue);
@@ -110,26 +110,26 @@ export default class EventPerk extends Perk
 	/**
 	 * Add an event handler.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String}		eventName			Event name.
 	 * @param	{Object/Function/String}	handlerInfo	Event handler info.
 	 * @param	{HTMLElement}	element				HTML element.
 	 * @param	{Object}		bindTo				Object that binds to the handler.
 	 */
-	static _addEventHandler(component, eventName, handlerInfo, element, bindTo)
+	static _addEventHandler(unit, eventName, handlerInfo, element, bindTo)
 	{
 
-		element = element || component;
+		element = element || unit;
 		let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 		// Get handler
-		let handler = EventPerk.__getEventHandler(component, handlerInfo);
-		Util.assert(handler, `EventPerk._addEventHandler(): handler not found. name=${component.tagName}, eventName=${eventName}`);
+		let handler = EventPerk.__getEventHandler(unit, handlerInfo);
+		Util.assert(handler, `EventPerk._addEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
 
 		// Init holder object for the element
 		if (!element.__bm_eventinfo)
 		{
-			element.__bm_eventinfo = { "component":component, "listeners":{}, "promises":{}, "statuses":{} };
+			element.__bm_eventinfo = { "unit":unit, "listeners":{}, "promises":{}, "statuses":{} };
 		}
 
 		// Add hook event handler
@@ -159,19 +159,19 @@ export default class EventPerk extends Perk
 	/**
 	 * Remove an event handler.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String}		eventName			Event name.
 	 * @param	{HTMLElement}	element				HTML element.
 	 * @param	{Object/Function/String}	handlerInfo	Event handler info.
 	 */
-	static _removeEventHandler(component, eventName, handlerInfo, element)
+	static _removeEventHandler(unit, eventName, handlerInfo, element)
 	{
 
-		element = element || component;
+		element = element || unit;
 
 		// Get handler
-		let handler = EventPerk.__getEventHandler(component, handlerInfo);
-		Util.assert(handler, `EventPerk._removeEventHandler(): handler not found. name=${component.tagName}, eventName=${eventName}`);
+		let handler = EventPerk.__getEventHandler(unit, handlerInfo);
+		Util.assert(handler, `EventPerk._removeEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
 
 		let listeners = Util.safeGet(element, `__bm_eventinfo.listeners.${eventName}`);
 		if (listeners)
@@ -193,19 +193,19 @@ export default class EventPerk extends Perk
 	/**
 	 * Set event handlers to the element.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Object}		eventInfo			Event info.
 	 * @param	{HTMLElement}	rootNode			Root node of elements.
 	 */
-	static _initEvents(component, elementName, eventInfo, rootNode)
+	static _initEvents(unit, elementName, eventInfo, rootNode)
 	{
 
-		eventInfo = ( eventInfo ? eventInfo : component.get("settings", `event.events.${elementName}`) );
+		eventInfo = ( eventInfo ? eventInfo : unit.get("settings", `event.events.${elementName}`) );
 
 		// Get target elements
-		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
-		//Util.warn(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${component.tagName}, elementName=${elementName}`);
+		let elements = EventPerk.__getTargetElements(unit, rootNode, elementName, eventInfo);
+		//Util.warn(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${unit.tagName}, elementName=${elementName}`);
 
 		// Set event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -214,7 +214,7 @@ export default class EventPerk extends Perk
 			{
 				for (let j = 0; j < elements.length; j++)
 				{
-					EventPerk._addEventHandler(component, eventName, handlers[i], elements[j]);
+					EventPerk._addEventHandler(unit, eventName, handlers[i], elements[j]);
 				}
 			}
 		});
@@ -226,19 +226,19 @@ export default class EventPerk extends Perk
 	/**
 	 * Remove event handlers from the element.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Object}		eventInfo			Event info.
 	 * @param	{HTMLElement}	rootNode			Root node of elements.
 	 */
-	static _removeEvents(component, elementName, eventInfo, rootNode)
+	static _removeEvents(unit, elementName, eventInfo, rootNode)
 	{
 
-		eventInfo = ( eventInfo ? eventInfo : component.get("settings", `event.events.${elementName}`) );
+		eventInfo = ( eventInfo ? eventInfo : unit.get("settings", `event.events.${elementName}`) );
 
 		// Get target elements
-		let elements = EventPerk.__getTargetElements(component, rootNode, elementName, eventInfo);
-		//Util.warn(elements.length > 0, `EventPerk._removeEvents: No elements for the event found. name=${component.tagName}, elementName=${elementName}`);
+		let elements = EventPerk.__getTargetElements(unit, rootNode, elementName, eventInfo);
+		//Util.warn(elements.length > 0, `EventPerk._removeEvents: No elements for the event found. name=${unit.tagName}, elementName=${elementName}`);
 
 		// Remove event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -247,7 +247,7 @@ export default class EventPerk extends Perk
 			{
 				for (let j = 0; j < elements.length; j++)
 				{
-					component.removeEventHandler(eventName, handlers[i], elements[j]);
+					unit.removeEventHandler(eventName, handlers[i], elements[j]);
 				}
 			}
 		});
@@ -259,16 +259,16 @@ export default class EventPerk extends Perk
 	/**
 	 * Trigger the event synchronously.
 	 *
-	 * @param	{Component}		component				Component.
+	 * @param	{Unit}			unit					Unit.
 	 * @param	{String}		eventName				Event name to trigger.
 	 * @param	{Object}		options					Event parameter options.
 	 * @param	{HTMLElement}	element					HTML element.
 	 */
-	static _trigger(component, eventName, options, element)
+	static _trigger(unit, eventName, options, element)
 	{
 
 		options = options || {};
-		element = ( element ? element : component );
+		element = ( element ? element : unit );
 
 		element.dispatchEvent(new CustomEvent(eventName, { detail: options }));
 
@@ -282,18 +282,18 @@ export default class EventPerk extends Perk
 	/**
 	 * Trigger the event asynchronously.
 	 *
-	 * @param	{Component}		component				Component.
+	 * @param	{Unit}			unit					Unit.
 	 * @param	{String}		eventName				Event name to trigger.
 	 * @param	{Object}		options					Event parameter options.
 	 * @param	{HTMLElement}	element					HTML element.
 	 */
-	static _triggerAsync(component, eventName, options, element)
+	static _triggerAsync(unit, eventName, options, element)
 	{
 
 		options = options || {};
 		options["async"] = true;
 
-		return EventPerk._trigger.call(component, component, eventName, options, element);
+		return EventPerk._trigger.call(unit, unit, eventName, options, element);
 
 	}
 
@@ -304,10 +304,10 @@ export default class EventPerk extends Perk
 	/**
 	 * Get the event handler from the handler info object.
 	 *
-	 * @param	{Component}		component				Component.
+	 * @param	{Unit}			unit					Unit.
 	 * @param	{Object/Function/String}	handlerInfo	Handler info.
 	 */
-	static __getEventHandler(component, handlerInfo)
+	static __getEventHandler(unit, handlerInfo)
 	{
 
 		let handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
@@ -319,12 +319,12 @@ export default class EventPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the target element is component itself.
+	 * Check if the target element is unit itself.
 	 *
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Object}		elementInfo			Element info.
 	 *
-	 * @return 	{Boolean}			Target node list.
+	 * @return 	{Boolean}		Target node list.
 	 */
 		static __isTargetSelf(elementName, eventInfo)
 	{
@@ -345,17 +345,17 @@ export default class EventPerk extends Perk
 	/**
 	 * Get target elements for the eventInfo.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{HTMLElement}	rootNode			Root node to search elements.
 	 * @param	{String}		elementName			Element name.
 	 * @param	{Object}		elementInfo			Element info.
 	 *
 	 * @return 	{Array}			Target node list.
 	 */
-	static __getTargetElements(component, rootNode, elementName, eventInfo)
+	static __getTargetElements(unit, rootNode, elementName, eventInfo)
 	{
 
-		rootNode = rootNode || component;
+		rootNode = rootNode || unit;
 		let elements;
 
 		if (EventPerk.__isTargetSelf(elementName, eventInfo))
@@ -426,7 +426,7 @@ export default class EventPerk extends Perk
 
 		let listeners = Util.safeGet(this, `__bm_eventinfo.listeners.${e.type}`);
 		let sender = Util.safeGet(e, "detail.sender", this);
-		let component = Util.safeGet(this, "__bm_eventinfo.component");
+		let unit = Util.safeGet(this, "__bm_eventinfo.unit");
 		let templateStatuses = `__bm_eventinfo.statuses.${e.type}`;
 		let templatePromises = `__bm_eventinfo.promises.${e.type}`;
 
@@ -438,7 +438,7 @@ export default class EventPerk extends Perk
 		if (Util.safeGet(e, "detail.async", false) === false)
 		{
 			// Wait previous handler
-			this.__bm_eventinfo["promises"][e.type] = EventPerk.__handle(e, sender, component, listeners).then(() => {
+			this.__bm_eventinfo["promises"][e.type] = EventPerk.__handle(e, sender, unit, listeners).then(() => {
 				Util.safeSet(this, templatePromises, null);
 				Util.safeSet(this, templateStatuses, "");
 			}).catch((err) => {
@@ -452,7 +452,7 @@ export default class EventPerk extends Perk
 			// Does not wait previous handler
 			try
 			{
-				this.__bm_eventinfo["promises"][e.type] = EventPerk.__handleAsync(e, sender, component, listeners);
+				this.__bm_eventinfo["promises"][e.type] = EventPerk.__handleAsync(e, sender, unit, listeners);
 				Util.safeSet(this, templatePromises, null);
 				Util.safeSet(this, templateStatuses, "");
 			}
@@ -473,10 +473,10 @@ export default class EventPerk extends Perk
 	 *
 	 * @param	{Object}		e						Event parameter.
 	 * @param	{Object}		sender					Sender object.
-	 * @param	{Object}		component				Target component.
+	 * @param	{Object}		unit					Target unit.
 	 * @param	{Object}		listener				Listers info.
 	 */
-	static __handle(e, sender, component, listeners)
+	static __handle(e, sender, unit, listeners)
 	{
 
 		let chain = Promise.resolve();
@@ -486,18 +486,18 @@ export default class EventPerk extends Perk
 		{
 			// Options set in addEventHandler()
 			let ex = {
-				"component": component,
+				"unit": unit,
 				"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 			}
 
 			chain = chain.then(() => {
 				// Get the handler
 				let handler = listeners[i]["handler"];
-				handler = ( typeof handler === "string" ? component[handler] : handler );
-				Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${component.tagName}, eventName=${e.type}`, TypeError);
+				handler = ( typeof handler === "string" ? unit[handler] : handler );
+				Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
 
 				// Execute the handler
-				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : unit );
 				return handler.call(bindTo, sender, e, ex);
 			});
 
@@ -520,10 +520,10 @@ export default class EventPerk extends Perk
 	 *
 	 * @param	{Object}		e						Event parameter.
 	 * @param	{Object}		sender					Sender object.
-	 * @param	{Object}		component				Target component.
+	 * @param	{Object}		unit					Target unit.
 	 * @param	{Object}		listener				Listers info.
 	 */
-	static __handleAsync(e, sender, component, listeners)
+	static __handleAsync(e, sender, unit, listeners)
 	{
 
 		let stopPropagation = false;
@@ -532,17 +532,17 @@ export default class EventPerk extends Perk
 		{
 			// Options set on addEventHandler()
 			let ex = {
-				"component": component,
+				"unit": unit,
 				"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 			}
 
 			// Get the handler
 			let handler = listeners[i]["handler"];
-			handler = ( typeof handler === "string" ? component[handler] : handler );
-			Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${component.tagName}, eventName=${e.type}`, TypeError);
+			handler = ( typeof handler === "string" ? unit[handler] : handler );
+			Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
 
 			// Execute handler
-			let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+			let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : unit );
 			handler.call(bindTo, sender, e, ex);
 
 			stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation)

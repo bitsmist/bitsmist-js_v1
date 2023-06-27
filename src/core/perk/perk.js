@@ -36,9 +36,9 @@ export default class Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 *  Initialize an perk and Component class when the perk is registered.
+	 *  Initialize an perk and Unit class when the perk is registered.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.
@@ -50,28 +50,28 @@ export default class Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 *  Initialize an attached component when perk is attached.
+	 *  Initialize an attached unit when perk is attached.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static init(component, options)
+	static init(unit, options)
 	{
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Deinitialize the component when perk is detached.
+	 * Deinitialize the unit when perk is detached.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static deinit(component, options)
+	static deinit(unit, options)
 	{
 	}
 
@@ -94,33 +94,33 @@ export default class Perk
 	/**
 	 * Set event handler for perk.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String}		type				Upgrade type.
 	 * @param	{String}		name				Section name.
 	 * @param	{Function}		content				Upgrade content.
 	 */
-	static upgrade(component, type, name, content)
+	static upgrade(unit, type, name, content)
 	{
 
 		switch (type)
 		{
 			case "asset":
-				component._assets[name] = content;
+				unit._assets[name] = content;
 				break;
 			case "method":
-				component[name] = content;
+				unit[name] = content;
 				break;
 			case "property":
-				Object.defineProperty(component, name, content);
+				Object.defineProperty(unit, name, content);
 				break;
 			case "event":
-				component.use("skill", "event.add", name, {
+				unit.use("skill", "event.add", name, {
 					"handler":	content,
 					"order":	this.info["order"],
 				});
 				break;
 			default:
-				component._assets[type].set(name, content);
+				unit._assets[type].set(name, content);
 				break;
 		}
 

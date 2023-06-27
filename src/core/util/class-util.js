@@ -22,17 +22,17 @@ export default class ClassUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Define new component in ES5 way.
+	 * Define new unit in ES5 way.
 	 *
 	 * @param	{String}		className			Class name.
-	 * @param	{Object}		settings			Component Settings.
+	 * @param	{Object}		settings			Unit Settings.
 	 * @param	{Object}		superClass			Super class.
 	 * @param	{String}		tagName				Tag name.
 	 */
-	static newComponent(className, settings, superClass, tagName)
+	static newUnit(className, settings, superClass, tagName)
 	{
 
-		superClass = ( superClass ? superClass : BITSMIST.v1.Component );
+		superClass = ( superClass ? superClass : BITSMIST.v1.Unit );
 
 		// Define class
 		let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
@@ -59,7 +59,7 @@ export default class ClassUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Inherit the component in ES5 way.
+	 * Inherit the unit in ES5 way.
 	 *
 	 * @param	{Object}		subClass			Sub class.
 	 * @param	{Object}		superClass			Super class.
@@ -76,10 +76,10 @@ export default class ClassUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Instantiate the component.
+	 * Instantiate the class.
 	 *
 	 * @param	{String}		className			Class name.
-	 * @param	{Object}		options				Options for the component.
+	 * @param	{Object}		options				Options for the unit.
 	 *
 	 * @return  {Object}		Initaiated object.
 	 */

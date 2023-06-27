@@ -55,33 +55,33 @@ export default class StatusPerk extends Perk
 		StatusPerk.__suspends = {};
 		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk._waitFor(null, waitlist, timeout); }
 
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "status.change", function(...args) { return StatusPerk._changeStatus(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "status.wait", function(...args) { return StatusPerk._waitFor(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "status.suspend", function(...args) { return StatusPerk._suspend(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "status.resume", function(...args) { return StatusPerk._resume(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "status.pause", function(...args) { return StatusPerk._pause(...args); });
+		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "skill", "status.change", function(...args) { return StatusPerk._changeStatus(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "status.wait", function(...args) { return StatusPerk._waitFor(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "status.suspend", function(...args) { return StatusPerk._suspend(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "status.resume", function(...args) { return StatusPerk._resume(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "status.pause", function(...args) { return StatusPerk._pause(...args); });
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static init(component, options)
+	static init(unit, options)
 	{
 
-		// Upgrade component;
-		this.upgrade(component, "state", "status.status", "connected");
-		this.upgrade(component, "inventory", "status.suspends", {});
-		this.upgrade(component, "event", "doApplySettings", StatusPerk.StatusPerk_onDoApplySettings);
+		// Upgrade unit;
+		this.upgrade(unit, "state", "status.status", "connected");
+		this.upgrade(unit, "inventory", "status.suspends", {});
+		this.upgrade(unit, "event", "doApplySettings", StatusPerk.StatusPerk_onDoApplySettings);
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Suspend all components at the specified status.
+	 * Suspend all units at the specified status.
 	 *
-	 * @param	{String}		status				Component status.
+	 * @param	{String}		status				Unit status.
 	 */
 	static globalSuspend(status)
 	{
@@ -94,9 +94,9 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Resume all components at the specified status.
+	 * Resume all units at the specified status.
 	 *
-	 * @param	{String}		status				Component status.
+	 * @param	{String}		status				Unit status.
 	 */
 	static globalResume(status)
 	{
@@ -133,20 +133,20 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Change component status and check waiting list.
+	 * Change unit status and check waiting list.
 	 *
-	 * @param	{Component}		component			Component to register.
-	 * @param	{String}		status				Component status.
+	 * @param	{Unit}			unit				Unit to register.
+	 * @param	{String}		status				Unit status.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _changeStatus(component, status)
+	static _changeStatus(unit, status)
 	{
 
-		Util.assert(StatusPerk.__isTransitionable(component.get("state", "status.status"), status), `StatusPerk._changeStatus(): Illegal transition. name=${component.tagName}, fromStatus=${component.get("state", "status.status")}, toStatus=${status}, id=${component.id}`, Error);
+		Util.assert(StatusPerk.__isTransitionable(unit.get("state", "status.status"), status), `StatusPerk._changeStatus(): Illegal transition. name=${unit.tagName}, fromStatus=${unit.get("state", "status.status")}, toStatus=${status}, id=${unit.id}`, Error);
 
-		component.set("state", "status.status", status);
-		this._statuses[component.uniqueId] = {"object":component, "status":status};
+		unit.set("state", "status.status", status);
+		this._statuses[unit.uniqueId] = {"object":unit, "status":status};
 
 		StatusPerk.__processWaitingList();
 
@@ -155,23 +155,23 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for components to become specific statuses.
+	 * Wait for units to become specific statuses.
 	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{Array}			waitlist			Components to wait.
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Array}			waitlist			Units to wait.
 	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _waitFor(component, waitlist, options)
+	static _waitFor(unit, waitlist, options)
 	{
 
 		let promise;
 		let timeout =
 				(options && options["timeout"]) ||
-				(component && component.get("settings", "system.waitForTimeout")) || // component could be null
-				BITSMIST.v1.Component.get("settings", "system.waitForTimeout", 10000);
-		let waiter = ( options && options["waiter"] ? options["waiter"] : component );
+				(unit && unit.get("settings", "system.waitForTimeout")) || // unit could be null
+				BITSMIST.v1.Unit.get("settings", "system.waitForTimeout", 10000);
+		let waiter = ( options && options["waiter"] ? options["waiter"] : unit );
 		let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 
 		if (StatusPerk.__isAllReady(waitInfo))
@@ -185,8 +185,8 @@ export default class StatusPerk extends Perk
 				waitInfo["resolve"] = resolve;
 				waitInfo["reject"] = reject;
 				waitInfo["timer"] = setTimeout(() => {
-					let name = ( component && component.tagName ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
-					let uniqueId = (component && component.uniqueId) || "";
+					let name = ( unit && unit.tagName ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
+					let uniqueId = (unit && unit.uniqueId) || "";
 					reject(`StatusPerk._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StatusPerk.__dumpWaitlist(waitlist)}, name=${name}, uniqueId=${uniqueId}.`);
 				}, timeout);
 			});
@@ -203,17 +203,17 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Suspend the component at the specified status.
+	 * Suspend the unit at the specified status.
 	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		status				Component status.
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{String}		status				Unit status.
 	 */
-	static _suspend(component, status)
+	static _suspend(unit, status)
 	{
 
 		/*
-		component._suspends[status] = StatusPerk.__createSuspendInfo();
-	 	component._suspends[status].status = "pending";
+		unit._suspends[status] = StatusPerk.__createSuspendInfo();
+	 	unit._suspends[status].status = "pending";
 		*/
 
 	}
@@ -221,17 +221,17 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Resume the component at the specified status.
+	 * Resume the unit at the specified status.
 	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		status				Component status.
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{String}		status				Unit status.
 	 */
-	static _resume(component, status)
+	static _resume(unit, status)
 	{
 
 		/*
-	 	component._suspends[status].resolve();
-	 	component._suspends[status].status = "resolved";
+	 	unit._suspends[status].resolve();
+	 	unit._suspends[status].status = "resolved";
 		*/
 
 	}
@@ -239,29 +239,29 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Pause the component if it is suspended.
+	 * Pause the unit if it is suspended.
 	 *
-	 * @param	{Component}		component			Component.
-	 * @param	{String}		status				Component status.
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{String}		status				Unit status.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _pause(component, status)
+	static _pause(unit, status)
 	{
 
 		/*
 		let ret = [];
 
 		// Globally suspended?
-		if (StatusPerk.__suspends[status] && StatusPerk.__suspends[status].status === "pending" && !component.get("settings", "setting.ignoreGlobalSuspend"))
+		if (StatusPerk.__suspends[status] && StatusPerk.__suspends[status].status === "pending" && !unit.get("settings", "setting.ignoreGlobalSuspend"))
 		{
 			ret.push(StatusPerk.__suspends[status].promise);
 		}
 
-		// Component suspended?
-		if (component._suspends[status] && component._suspends[status].status === "pending")
+		// Unit suspended?
+		if (unit._suspends[status] && unit._suspends[status].status === "pending")
 		{
-			ret.push(component._suspends[status].promise);
+			ret.push(unit._suspends[status].promise);
 		}
 
 		return Promise.all(ret);
@@ -359,27 +359,27 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get component info from wait list item.
+	 * Get unit info from wait list item.
 	 *
 	 * @param	{Object}		waitlistItem		Wait list item.
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
-	static __getComponentInfo(waitlistItem)
+	static __getUnitInfo(waitlistItem)
 	{
 
-		let componentInfo;
+		let unitInfo;
 
 		if (waitlistItem["id"])
 		{
-			componentInfo = this._statuses[waitlistItem["id"]];
+			unitInfo = this._statuses[waitlistItem["id"]];
 		}
 		else if (waitlistItem["name"])
 		{
 			Object.keys(this._statuses).forEach((key) => {
 				if (waitlistItem["name"] === this._statuses[key].object.name)
 				{
-					componentInfo = this._statuses[key];
+					unitInfo = this._statuses[key];
 				}
 			});
 		}
@@ -388,7 +388,7 @@ export default class StatusPerk extends Perk
 			let element = document.querySelector(waitlistItem["rootNode"]);
 			if (element && element.uniqueId)
 			{
-				componentInfo = this._statuses[element.uniqueId];
+				unitInfo = this._statuses[element.uniqueId];
 			}
 		}
 		else if (waitlistItem["object"])
@@ -396,18 +396,18 @@ export default class StatusPerk extends Perk
 			let element = waitlistItem["object"];
 			if (element.uniqueId)
 			{
-				componentInfo = this._statuses[element.uniqueId];
+				unitInfo = this._statuses[element.uniqueId];
 			}
 		}
 
-		return componentInfo;
+		return unitInfo;
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if all components are ready.
+	 * Check if all units are ready.
 	 *
 	 * @param	{Object}		waitInfo			Wait info.
 	 *
@@ -422,10 +422,10 @@ export default class StatusPerk extends Perk
 		for (let i = 0; i < waitlist.length; i++)
 		{
 			let match = false;
-			let componentInfo = this.__getComponentInfo(waitlist[i]);
-			if (componentInfo)
+			let unitInfo = this.__getUnitInfo(waitlist[i]);
+			if (unitInfo)
 			{
-				if (StatusPerk.__isReady(waitlist[i], componentInfo))
+				if (StatusPerk.__isReady(waitlist[i], unitInfo))
 				{
 					match = true;
 				}
@@ -446,23 +446,23 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component is ready.
+	 * Check if the unit is ready.
 	 *
 	 * @param	{Object}		waitlistItem		Wait list item.
-	 * @param	{Object}		componentInfo		Registered component info.
+	 * @param	{Object}		unitInfo		Registered unit info.
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
-	static __isReady(waitlistItem, componentInfo)
+	static __isReady(waitlistItem, unitInfo)
 	{
 
-		// Check component
-		let isMatch = StatusPerk.__isComponentMatch(componentInfo, waitlistItem);
+		// Check unit
+		let isMatch = StatusPerk.__isUnitMatch(unitInfo, waitlistItem);
 
 		// Check status
 		if (isMatch)
 		{
-			isMatch = StatusPerk.__isStatusMatch(componentInfo["status"], waitlistItem["status"]);
+			isMatch = StatusPerk.__isStatusMatch(unitInfo["status"], waitlistItem["status"]);
 		}
 
 		return isMatch;
@@ -472,30 +472,30 @@ export default class StatusPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if component match.
+	 * Check if unit match.
 	 *
-	 * @param	{Object}		componentInfo		Registered component info.
+	 * @param	{Object}		unitInfo		Registered unit info.
 	 * @param	{Object}		waitlistItem		Wait list item.
 	 *
 	 * @return  {Boolean}		True if match.
 	 */
-	static __isComponentMatch(componentInfo, waitlistItem)
+	static __isUnitMatch(unitInfo, waitlistItem)
 	{
 
 		let isMatch = true;
 
 		// check instance
-		if (waitlistItem["object"] && componentInfo["object"] !== waitlistItem["object"])
+		if (waitlistItem["object"] && unitInfo["object"] !== waitlistItem["object"])
 		{
 			isMatch = false;
 		}
 		// check name
-		else if (waitlistItem["name"] && componentInfo["object"].name !== waitlistItem["name"])
+		else if (waitlistItem["name"] && unitInfo["object"].name !== waitlistItem["name"])
 		{
 			isMatch = false;
 		}
 		// check id
-		else if (waitlistItem["id"] && componentInfo["object"].uniqueId !== waitlistItem["id"])
+		else if (waitlistItem["id"] && unitInfo["object"].uniqueId !== waitlistItem["id"])
 		{
 			isMatch = false;
 		}

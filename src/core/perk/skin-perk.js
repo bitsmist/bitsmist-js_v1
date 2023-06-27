@@ -42,38 +42,38 @@ export default class SkinPerk extends Perk
 	static globalInit()
 	{
 
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
-		this.upgrade(BITSMIST.v1.Component, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
+		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static init(component, options)
+	static init(unit, options)
 	{
 
-		// Upgrade component
-		this.upgrade(component, "vault", "skin.promise", Promise.resolve());
-		this.upgrade(component, "inventory", "skin.skins", {});
-		this.upgrade(component, "state", "skin.activeSkinName", "");
-		this.upgrade(component, "event", "doApplySettings", SkinPerk.SkinPerk_onDoApplySettings);
-		this.upgrade(component, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
+		// Upgrade unit
+		this.upgrade(unit, "vault", "skin.promise", Promise.resolve());
+		this.upgrade(unit, "inventory", "skin.skins", {});
+		this.upgrade(unit, "state", "skin.activeSkinName", "");
+		this.upgrade(unit, "event", "doApplySettings", SkinPerk.SkinPerk_onDoApplySettings);
+		this.upgrade(unit, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
 
-		SkinPerk.__loadAttrSettings(component);
+		SkinPerk.__loadAttrSettings(unit);
 
 		// Shadow DOM
-		switch (component.get("settings", "skin.options.shadowDOM"))
+		switch (unit.get("settings", "skin.options.shadowDOM"))
 		{
 		case "open":
-			component._root = component.attachShadow({mode:"open"});
+			unit._root = unit.attachShadow({mode:"open"});
 			break;
 		case "closed":
-			component._root = component.attachShadow({mode:"closed"});
+			unit._root = unit.attachShadow({mode:"closed"});
 			break;
 		default:
-			component._root = component;
+			unit._root = unit;
 			break;
 		}
 
@@ -88,7 +88,7 @@ export default class SkinPerk extends Perk
 
 		let skinName = SkinPerk.__getDefaultFilename(this);
 
-		// Load component's default skin
+		// Load unit's default skin
 		if (SkinPerk.__hasExternalSkin(this, skinName))
 		{
 			this.set("vault", "skin.promise", SkinPerk._loadSkin(this, skinName));
@@ -103,7 +103,7 @@ export default class SkinPerk extends Perk
 
 		let skinName = SkinPerk.__getDefaultFilename(this);
 
-		// Apply component's default skin
+		// Apply unit's default skin
 		if (SkinPerk.__hasExternalSkin(this, skinName))
 		{
 			return this.get("vault", "skin.promise").then(() => {
@@ -120,37 +120,37 @@ export default class SkinPerk extends Perk
 	/**
 	 * Load the skin HTML.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String}		skinName			Skin name.
 	 * @param	{Object}		options				Load options.
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadSkin(component, skinName, options)
+	static _loadSkin(unit, skinName, options)
 	{
 
 		let promise = Promise.resolve();
-		let skinInfo = component.get("inventory", `skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(component, skinName);
+		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(unit, skinName);
 
-		switch (component.get("settings", `skin.skins.${skinName}.type`)) {
+		switch (unit.get("settings", `skin.skins.${skinName}.type`)) {
 		case "HTML":
-			skinInfo["HTML"] = component.get("settings", `skin.skins.${skinName}.HTML`);
+			skinInfo["HTML"] = unit.get("settings", `skin.skins.${skinName}.HTML`);
 			skinInfo["status"] = "loaded";
-			component.set("inventory", `skin.skins.${skinName}`, skinInfo);
+			unit.set("inventory", `skin.skins.${skinName}`, skinInfo);
 			break;
 		case "node":
-			let rootNode = component.get("settings", `skin.skins.${skinName}.rootNode`);
-			skinInfo["HTML"] = component.use("skill", "basic.scan", rootNode).innerHTML;
+			let rootNode = unit.get("settings", `skin.skins.${skinName}.rootNode`);
+			skinInfo["HTML"] = unit.use("skill", "basic.scan", rootNode).innerHTML;
 			skinInfo["status"] = "loaded";
-			component.set("inventory", `skin.skins.${skinName}`, skinInfo);
+			unit.set("inventory", `skin.skins.${skinName}`, skinInfo);
 			break;
 		case "URL":
 		default:
-			let url = component.get("settings", `skin.skins.${skinName}.URL`) || SkinPerk.__getSkinURL(component, skinName);
+			let url = unit.get("settings", `skin.skins.${skinName}.URL`) || SkinPerk.__getSkinURL(unit, skinName);
 			promise = AjaxUtil.loadHTML(url).then((skin) => {
 				skinInfo["HTML"] = skin;
 				skinInfo["status"] = "loaded";
-				component.set("inventory", `skin.skins.${skinName}`, skinInfo);
+				unit.set("inventory", `skin.skins.${skinName}`, skinInfo);
 			});
 			break;
 		}
@@ -164,58 +164,58 @@ export default class SkinPerk extends Perk
 	/**
 	 * Apply skin.
 	 *
-	 * @param	{Component}		component			Parent component.
+	 * @param	{Unit}			unit				Parent unit.
 	 * @param	{String}		skinName			Skin name.
 	 */
-	static _applySkin(component, skinName)
+	static _applySkin(unit, skinName)
 	{
 
-		if (component.get("state", "skin.activeSkinName") === skinName)
+		if (unit.get("state", "skin.activeSkinName") === skinName)
 		{
-			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`);
+			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return Promise.resolve();
 		}
 
-		let skinInfo = component.get("inventory", `skin.skins.${skinName}`);
+		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
 
-		Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
+		Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
 
 		if (skinInfo["node"])
 		{
 			// Template node
-			let clone = SkinPerk.clone(component, component.get("inventory", `skin.skins`));
-			component.insertBefore(clone, component.firstChild);
+			let clone = SkinPerk.clone(unit, unit.get("inventory", `skin.skins`));
+			unit.insertBefore(clone, unit.firstChild);
 		}
 		else
 		{
 			// HTML
-			component._root.innerHTML = skinInfo["HTML"];
+			unit._root.innerHTML = skinInfo["HTML"];
 		}
 
 		// Change active skin
-		component.set("state", "skin.activeSkinName", skinName);
+		unit.set("state", "skin.activeSkinName", skinName);
 
-		console.debug(`SkinPerk._applySkin(): Applied skin. name=${component.tagName}, skinName=${skinInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
+		console.debug(`SkinPerk._applySkin(): Applied skin. name=${unit.tagName}, skinName=${skinInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Clone the component.
+	 * Clone the unit.
 	 *
-	 * @param	{Component}		component			Parent component.
+	 * @param	{Unit}			unit				Parent unit.
 	 * @param	{String}		skinName			Skin name.
 	 *
-	 * @return  {Object}		Cloned component.
+	 * @return  {Object}		Cloned unit.
 	 */
-	static _clone(component, skinName)
+	static _clone(unit, skinName)
 	{
 
-		skinName = skinName || component.get("settings", "setting.skinName");
-		let skinInfo = component.get("inventory", `skin.skins.${skinName}`);
+		skinName = skinName || unit.get("settings", "setting.skinName");
+		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
 
-		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${component.tagName}, skinName=${skinName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
+		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
 
 		let clone;
 		if (skinInfo["node"])
@@ -243,14 +243,14 @@ export default class SkinPerk extends Perk
 	/**
 	 * Get settings from element's attribute.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 */
-	static __loadAttrSettings(component)
+	static __loadAttrSettings(unit)
 	{
 
-		if (component.hasAttribute("bm-skinref"))
+		if (unit.hasAttribute("bm-skinref"))
 		{
-			component.set("settings", "skin.options.skinRef", component.getAttribute("bm-skinref") || true);
+			unit.set("settings", "skin.options.skinRef", unit.getAttribute("bm-skinref") || true);
 		}
 
 	}
@@ -260,12 +260,12 @@ export default class SkinPerk extends Perk
 	/**
 	 * Returns a new skin info object.
 	 *
-	 * @param	{Component}		component			Parent component.
+	 * @param	{Unit}			unit				Parent unit.
 	 * @param	{String}		skinName			Skin name.
 	 *
 	 * @return  {Object}		Skin info.
 	 */
-	static __createSkinInfo(component, skinName)
+	static __createSkinInfo(unit, skinName)
 	{
 
 		return {
@@ -279,18 +279,18 @@ export default class SkinPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component has the external skin file.
+	 * Check if the unit has the external skin file.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 *
-	 * @return  {Boolean}		True if the component has the external skin file.
+	 * @return  {Boolean}		True if the unit has the external skin file.
 	 */
-	static __hasExternalSkin(component, skinName)
+	static __hasExternalSkin(unit, skinName)
 	{
 
 		let ret = false;
 
-		if (component.get("settings", "skin.options.skinRef", true))
+		if (unit.get("settings", "skin.options.skinRef", true))
 		{
 			ret = true;
 		}
@@ -304,19 +304,19 @@ export default class SkinPerk extends Perk
 	/**
 	 * Return URL to skin file.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 * @param	{String	}		skinName			Skin name.
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getSkinURL(component, skinName)
+	static __getSkinURL(unit, skinName)
 	{
 
 		let path;
 		let fileName;
 		let query;
 
-		let skinRef = component.get("settings", "skin.options.skinRef");
+		let skinRef = unit.get("settings", "skin.options.skinRef");
 		if (skinRef && skinRef !== true)
 		{
 			// If URL is specified in ref, use it
@@ -329,12 +329,12 @@ export default class SkinPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					component.get("settings", "system.appBaseURL", ""),
-					component.get("settings", "system.skinPath", component.get("settings", "system.componentPath", "")),
-					component.get("settings", "unit.options.path", ""),
+					unit.get("settings", "system.appBaseURL", ""),
+					unit.get("settings", "system.skinPath", unit.get("settings", "system.unitPath", "")),
+					unit.get("settings", "unit.options.path", ""),
 				]);
 			fileName = skinName + ".html";
-			query = component.get("settings", "unit.options.query");
+			query = unit.get("settings", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
@@ -346,16 +346,16 @@ export default class SkinPerk extends Perk
 	/**
 	 * Get the default skin name.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 *
 	 * @return 	{String}		Skin name.
 	 */
-	static __getDefaultFilename(component)
+	static __getDefaultFilename(unit)
 	{
 
-		return component.get("settings", "skin.options.fileName",
-			component.get("settings", "unit.options.fileName",
-				component.tagName.toLowerCase()));
+		return unit.get("settings", "skin.options.fileName",
+			unit.get("settings", "unit.options.fileName",
+				unit.tagName.toLowerCase()));
 
 	}
 

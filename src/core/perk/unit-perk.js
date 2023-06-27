@@ -17,10 +17,10 @@ import URLUtil from "../util/url-util.js";
 import Util from "../util/util.js";
 
 // =============================================================================
-//	Component Perk Class
+//	Unit Perk Class
 // =============================================================================
 
-export default class ComponentPerk extends Perk
+export default class UnitPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
@@ -54,21 +54,21 @@ export default class ComponentPerk extends Perk
 	static globalInit()
 	{
 
-		// Upgrade Component
-		this.upgrade(BITSMIST.v1.Component, "spell", "unit.materializeAll", function(...args) { return ComponentPerk._loadTags(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "unit.materialize", function(...args) { return ComponentPerk._loadComponent(...args); });
-		this.upgrade(BITSMIST.v1.Component, "spell", "unit.summon", function(...args) { return ComponentPerk._loadClass(...args); });
+		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materializeAll", function(...args) { return UnitPerk._loadTags(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materialize", function(...args) { return UnitPerk._loadUnit(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.summon", function(...args) { return UnitPerk._loadClass(...args); });
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static init(component, options)
+	static init(unit, options)
 	{
 
-		// Upgrade component
-		this.upgrade(component, "inventory", "unit.units", {});
-		this.upgrade(component, "event", "doApplySettings", ComponentPerk.ComponentPerk_onDoApplySettings);
+		// Upgrade unit
+		this.upgrade(unit, "inventory", "unit.units", {});
+		this.upgrade(unit, "event", "doApplySettings", UnitPerk.UnitPerk_onDoApplySettings);
 
 	}
 
@@ -76,7 +76,7 @@ export default class ComponentPerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static ComponentPerk_onDoApplySettings(sender, e, ex)
+	static UnitPerk_onDoApplySettings(sender, e, ex)
 	{
 
 		let chain = Promise.resolve();
@@ -85,7 +85,7 @@ export default class ComponentPerk extends Perk
 			chain = chain.then(() => {
 				if (!this.get("inventory", `unit.units.${sectionName}.object`))
 				{
-					return ComponentPerk._loadComponent(this, sectionName, sectionValue);
+					return UnitPerk._loadUnit(this, sectionName, sectionValue);
 				}
 			});
 		});
@@ -102,14 +102,14 @@ export default class ComponentPerk extends Perk
 	 * Load the class.
 	 *
 	 * @param	{String}		tagName				Tag name.
-	 * @param	{Object}		settings			Component settings.
+	 * @param	{Object}		settings			Unit settings.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
 	static _loadClass(tagName, settings)
 	{
 
-		console.debug(`ComponentPerk._loadClass(): Loading class. tagName=${tagName}`);
+		console.debug(`UnitPerk._loadClass(): Loading class. tagName=${tagName}`);
 
 		// Override settings if URL is specified
 		let classRef = Util.safeGet(settings, "unit.options.autoLoad");
@@ -117,7 +117,7 @@ export default class ComponentPerk extends Perk
 		{
 			settings["system"] = settings["system"] || {};
 			settings["system"]["appBaseURL"] = "";
-			settings["system"]["componentPath"] = "";
+			settings["system"]["unitPath"] = "";
 			settings["system"]["skinPath"] = "";
 			settings["unit"] = settings["unit"] || {};
 			settings["unit"]["options"] = settings["unit"]["options"] || {};
@@ -133,16 +133,16 @@ export default class ComponentPerk extends Perk
 		tagName = tagName.toLowerCase();
 		let className = Util.safeGet(settings, "unit.options.className", Util.getClassNameFromTagName(tagName));
 		let baseClassName = Util.safeGet(settings, "unit.options.autoMorph", className );
-		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
+		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Unit" : baseClassName );
 
 		// Load the class if needed
 		let promise = Promise.resolve();
-		if (ComponentPerk.__hasExternalClass(tagName, baseClassName, settings))
+		if (UnitPerk.__hasExternalClass(tagName, baseClassName, settings))
 		{
 			if (this._classes[baseClassName] && this._classes[baseClassName]["status"] === "loading")
 			{
 				// Already loading
-				console.debug(`ComponentPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
+				console.debug(`UnitPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
 				promise = this._classes[baseClassName].promise;
 			}
 			else
@@ -152,9 +152,9 @@ export default class ComponentPerk extends Perk
 				this._classes[baseClassName] = {"status":"loading"};
 
 				let options = {
-					"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Component.get("settings", "system.splitClass", false)),
+					"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Unit.get("settings", "system.splitClass", false)),
 				};
-				promise = AjaxUtil.loadClass(ComponentPerk.__getClassURL(tagName, settings), options).then(() => {
+				promise = AjaxUtil.loadClass(UnitPerk.__getClassURL(tagName, settings), options).then(() => {
 					this._classes[baseClassName] = {"status":"loaded"};
 				});
 				this._classes[baseClassName].promise = promise;
@@ -166,14 +166,14 @@ export default class ComponentPerk extends Perk
 			if (baseClassName !== className)
 			{
 				let superClass = ClassUtil.getClass(baseClassName);
-				ClassUtil.newComponent(className, settings, superClass, tagName);
+				ClassUtil.newUnit(className, settings, superClass, tagName);
 			}
 
 			// Define the tag
 			if (!customElements.get(tagName))
 			{
 				let classDef = ClassUtil.getClass(className);
-				Util.assert(classDef, `ComponentPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
+				Util.assert(classDef, `UnitPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
 
 				customElements.define(tagName, classDef);
 			}
@@ -186,25 +186,25 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Load the component and add to parent component.
+	 * Load the unit and add to parent unit.
 	 *
-	 * @param	{Component}		component			Parent component.
-	 * @param	{String}		tagName				Component tag name.
-	 * @param	{Object}		settings			Settings for the component.
+	 * @param	{Unit}			unit				Parent unit.
+	 * @param	{String}		tagName				Unit tag name.
+	 * @param	{Object}		settings			Settings for the unit.
 	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadComponent(component, tagName, settings, options)
+	static _loadUnit(unit, tagName, settings, options)
 	{
 
-		console.debug(`ComponentPerk._loadComponent(): Adding the component. name=${component.tagName}, tagName=${tagName}`);
+		console.debug(`UnitPerk._loadUnit(): Adding the unit. name=${unit.tagName}, tagName=${tagName}`);
 
 		// Already loaded
-		if (component.get("inventory", `unit.units.${tagName}.object`))
+		if (unit.get("inventory", `unit.units.${tagName}.object`))
 		{
-			console.debug(`ComponentPerk._loadComponent(): Already loaded. name=${component.tagName}, tagName=${tagName}`);
-			return Promise.resolve(component.get("inventory", `unit.units.${tagName}.object`));
+			console.debug(`UnitPerk._loadUnit(): Already loaded. name=${unit.tagName}, tagName=${tagName}`);
+			return Promise.resolve(unit.get("inventory", `unit.units.${tagName}.object`));
 		}
 
 		// Get the tag name from settings if specified
@@ -215,27 +215,27 @@ export default class ComponentPerk extends Perk
 			tagName = tag.match(pattern)[1];
 		}
 
-		let addedComponent;
+		let addedUnit;
 		return Promise.resolve().then(() => {
-			return ComponentPerk._loadClass(tagName, settings);
+			return UnitPerk._loadClass(tagName, settings);
 		}).then(() => {
 			// Insert tag
-			addedComponent = ComponentPerk.__insertTag(component, tagName, settings);
-			component.set("inventory", `unit.units.${tagName}.object`, addedComponent);
+			addedUnit = UnitPerk.__insertTag(unit, tagName, settings);
+			unit.set("inventory", `unit.units.${tagName}.object`, addedUnit);
 		}).then(() => {
-			// Wait for the added component to be ready
+			// Wait for the added unit to be ready
 			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "unit.options.syncOnAdd"));
 			if (sync)
 			{
 				let status = (sync === true ? "ready" : sync);
 
-				return component.use("spell", "status.wait", [{
-					"id":		addedComponent.uniqueId,
+				return unit.use("spell", "status.wait", [{
+					"id":		addedUnit.uniqueId,
 					"status":	status
 				}]);
 			}
 		}).then(() => {
-			return addedComponent;
+			return addedUnit;
 		});
 
 	}
@@ -245,16 +245,16 @@ export default class ComponentPerk extends Perk
 	/**
 	 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
 	 *
-	 * @param	{Component}		component			Component. Nullable.
+	 * @param	{Unit}			unit				Unit. Nullable.
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 * @param	{Object}		options				Load Options.
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadTags(component, rootNode, options)
+	static _loadTags(unit, rootNode, options)
 	{
 
-		console.debug(`ComponentPerk._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
+		console.debug(`UnitPerk._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
 
 		let promises = [];
 
@@ -270,7 +270,7 @@ export default class ComponentPerk extends Perk
 			};
 
 			// Load the class
-			promises.push(ComponentPerk._loadClass(element.tagName, settings).then(() => {
+			promises.push(UnitPerk._loadClass(element.tagName, settings).then(() => {
 				element.removeAttribute("bm-autoloading");
 			}));
 		});
@@ -279,7 +279,7 @@ export default class ComponentPerk extends Perk
 			let waitFor = Util.safeGet(options, "waitForTags");
 			if (waitFor)
 			{
-				return ComponentPerk.__waitForChildren(rootNode);
+				return UnitPerk.__waitForChildren(rootNode);
 			}
 		});
 
@@ -292,7 +292,7 @@ export default class ComponentPerk extends Perk
 	/**
 	 * Get settings from element's attribute.
 	 *
-	 * @param	{Component}		component			Component.
+	 * @param	{Unit}			unit				Unit.
 	 */
 	static __loadAttrSettings(element)
 	{
@@ -309,7 +309,7 @@ export default class ComponentPerk extends Perk
 			settings["unit"]["options"]["className"] = element.getAttribute("bm-classname");
 		}
 
-		// Split component
+		// Split  class
 		if (element.hasAttribute("bm-split"))
 		{
 			settings["unit"]["options"]["splitClass"] = true;
@@ -354,13 +354,13 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the component has the external class file.
+	 * Check if the unit has the external class file.
 	 *
 	 * @param	{String}		tagName				Tag name.
 	 * @param	{String}		className			Class name.
-	 * @param	{Object}		settings			Component settings.
+	 * @param	{Object}		settings			Unit settings.
 	 *
-	 * @return  {Boolean}		True if the component has the external class file.
+	 * @return  {Boolean}		True if the unit has the external class file.
 	 */
 	static __hasExternalClass(tagName, className, settings)
 	{
@@ -395,17 +395,17 @@ export default class ComponentPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Insert the tag and return the inserted component.
+	 * Insert the tag and return the inserted unit.
 	 *
 	 * @param	{String}		tagName				Tagname.
-	 * @param	{Object}		settings			Component settings.
+	 * @param	{Object}		settings			Unit settings.
 	 *
-	 * @return  {Component}		Component.
+	 * @return  {Unit}		Unit.
 	 */
-	static __insertTag(component, tagName, settings)
+	static __insertTag(unit, tagName, settings)
 	{
 
-		let addedComponent;
+		let addedUnit;
 		let root;
 
 		// Check root node
@@ -415,10 +415,10 @@ export default class ComponentPerk extends Perk
 		}
 		else
 		{
-			root = component;
+			root = unit;
 		}
 
-		Util.assert(root, `ComponentPerk.__insertTag(): Root node does not exist. name=${component.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
+		Util.assert(root, `UnitPerk.__insertTag(): Root node does not exist. name=${unit.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
 
 		// Build tag
 		let tag = ( Util.safeGet(settings, "unit.options.tag") ? Util.safeGet(settings, "unit.options.tag") : `<${tagName}></${tagName}>` );
@@ -427,7 +427,7 @@ export default class ComponentPerk extends Perk
 		if (Util.safeGet(settings, "unit.options.replaceParent"))
 		{
 			root.outerHTML = tag;
-			addedComponent = root;
+			addedUnit = root;
 		}
 		else
 		{
@@ -438,33 +438,33 @@ export default class ComponentPerk extends Perk
 			switch (position)
 			{
 			case "beforebegin":
-				addedComponent = root.previousSibling;
+				addedUnit = root.previousSibling;
 				break;
 			case "afterbegin":
-				addedComponent = root.children[0];
+				addedUnit = root.children[0];
 				break;
 			case "beforeend":
-				addedComponent = root.lastChild;
+				addedUnit = root.lastChild;
 				break;
 			case "afterend":
-				addedComponent = root.nextSibling;
+				addedUnit = root.nextSibling;
 				break;
 			}
 		}
 
-		// Inject settings to added component
-		addedComponent._injectSettings = function(curSettings){
+		// Inject settings to added unit
+		addedUnit._injectSettings = function(curSettings){
 			return Util.deepMerge(curSettings, settings);
 		};
 
-		return addedComponent;
+		return addedUnit;
 
 	}
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Wait for components under the specified root node to be ready.
+	 * Wait for units under the specified root node to be ready.
 	 *
 	 * @param	{HTMLElement}	rootNode			Target node.
 	 *
@@ -493,7 +493,7 @@ export default class ComponentPerk extends Perk
 	 * Return URL to Class file.
 	 *
 	 * @param	{String}		tagName				Tag name.
-	 * @param	{Object}		settings			Component settings.
+	 * @param	{Object}		settings			Unit settings.
 	 *
 	 * @return  {String}		URL.
 	 */
@@ -501,8 +501,8 @@ export default class ComponentPerk extends Perk
 	{
 
 		let path = Util.concatPath([
-			Util.safeGet(settings, "system.appBaseURL", BITSMIST.v1.Component.get("settings", "system.appBaseURL", "")),
-			Util.safeGet(settings, "system.componentPath", BITSMIST.v1.Component.get("settings", "system.componentPath", "")),
+			Util.safeGet(settings, "system.appBaseURL", BITSMIST.v1.Unit.get("settings", "system.appBaseURL", "")),
+			Util.safeGet(settings, "system.unitPath", BITSMIST.v1.Unit.get("settings", "system.unitPath", "")),
 			Util.safeGet(settings, "unit.options.path", ""),
 		]);
 		let fileName = Util.safeGet(settings, "unit.options.fileName", tagName);
