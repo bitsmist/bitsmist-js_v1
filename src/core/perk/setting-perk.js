@@ -64,7 +64,7 @@ export default class SettingPerk extends Perk
 		let defaults = {
 			"perk": {
 				"options": {
-					"perkNames": [
+					"apply": [
 						//"BasicPerk", "SettingPerk", // Attach manually
 						"PerkPerk", "StatusPerk", "EventPerk", "SkinPerk", "ComponentPerk"
 					],

@@ -173,7 +173,7 @@ export default class PerkPerk extends Perk
 		let chain = Promise.resolve();
 
 		// List new perks from "perk" section
-		let perks = Util.safeGet(settings, "perk.options.perkNames");
+		let perks = Util.safeGet(settings, "perk.options.apply");
 		if (perks)
 		{
 			for (let i = 0; i < perks.length; i++)
