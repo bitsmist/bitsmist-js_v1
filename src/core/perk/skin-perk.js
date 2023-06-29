@@ -250,7 +250,13 @@ export default class SkinPerk extends Perk
 
 		if (unit.hasAttribute("bm-skinref"))
 		{
-			unit.set("settings", "skin.options.skinRef", unit.getAttribute("bm-skinref") || true);
+			let skinRef = unit.getAttribute("bm-styleref") || true;
+			if (skinRef === "false")
+			{
+				skinRef = false;
+			}
+
+			unit.set("settings", "skin.options.skinRef", skinRef);
 		}
 
 	}

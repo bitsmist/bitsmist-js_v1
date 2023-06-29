@@ -235,7 +235,13 @@ export default class StylePerk extends Perk
 
 		if (unit.hasAttribute("bm-styleref"))
 		{
-			unit.set("settings", "style.options.styleRef", unit.getAttribute("bm-styleref") || true);
+			let styleRef = unit.getAttribute("bm-styleref") || true;
+			if (styleRef === "false")
+			{
+				styleRef = false;
+			}
+
+			unit.set("settings", "style.options.styleRef", styleRef);
 		}
 
 	}

@@ -190,7 +190,12 @@ export default class SettingPerk extends Perk
 
 		if (unit.hasAttribute("bm-settingsref"))
 		{
-			unit.set("settings", "setting.options.settingsRef", unit.getAttribute("bm-settingsref") || true);
+			let settingsRef = unit.getAttribute("bm-settingsref") || true;
+			if (settingsRef === "false")
+			{
+				settingsRef = false;
+			}
+			unit.set("settings", "setting.options.settingsRef", settingsRef);
 		}
 
 		if (unit.hasAttribute("bm-options"))
@@ -240,10 +245,7 @@ export default class SettingPerk extends Perk
 		let fileName;
 		let query;
 
-		let settingsRef = ( unit.hasAttribute(`bm-settingsref`) ?
-			unit.getAttribute(`bm-settingsref`) || true :
-			unit.get("settings", "setting.settingsRef")
-		);
+		let settingsRef = unit.get("settings", "setting.options.settingsRef");
 		if (settingsRef && settingsRef !== true)
 		{
 			// If URL is specified in ref, use it
