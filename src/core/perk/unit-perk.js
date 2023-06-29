@@ -310,7 +310,7 @@ export default class UnitPerk extends Perk
 		}
 
 		// Split  class
-		if (element.hasAttribute("bm-split"))
+		if (element.hasAttribute("bm-splitclass"))
 		{
 			settings["unit"]["options"]["splitClass"] = true;
 		}
