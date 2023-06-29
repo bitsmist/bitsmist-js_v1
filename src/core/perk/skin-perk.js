@@ -64,7 +64,7 @@ export default class SkinPerk extends Perk
 		SkinPerk.__loadAttrSettings(unit);
 
 		// Shadow DOM
-		switch (unit.get("settings", "skin.options.shadowDOM"))
+		switch (unit.get("settings" ,"system.shadowDOM", unit.get("settings", "skin.options.shadowDOM")))
 		{
 		case "open":
 			unit._root = unit.attachShadow({mode:"open"});
