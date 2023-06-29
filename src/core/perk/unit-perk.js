@@ -312,7 +312,12 @@ export default class UnitPerk extends Perk
 		// Split  class
 		if (element.hasAttribute("bm-splitclass"))
 		{
-			settings["unit"]["options"]["splitClass"] = true;
+			let splitClass = unit.getAttribute("bm-splitclass") || true;
+			if (splitClass === "false")
+			{
+				splitClass = false;
+			}
+			settings["unit"]["options"]["splitClass"] = splitClass;
 		}
 
 		// Path
