@@ -77,11 +77,9 @@ export default class StylePerk extends Perk
 	{
 
 		// Upgrade unit
-		this.upgrade(unit, "vault", "style.promise", Promise.resolve());
 		this.upgrade(unit, "inventory", "style.styles", new ChainableStore({
 			"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
 		}));
-		this.upgrade(unit, "event", "doApplySettings", StylePerk.StylePerk_onDoApplySettings);
 		this.upgrade(unit, "event", "doTransform", StylePerk.StylePerk_onDoTransform);
 
 		StylePerk.__loadAttrSettings(unit);
@@ -92,44 +90,35 @@ export default class StylePerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static StylePerk_onDoApplySettings(sender, e, ex)
-	{
-
-		let styleName = StylePerk.__getDefaultFilename(this);
-
-		// Load unit's default CSS
-		if (StylePerk.__hasExternalCSS(this, styleName))
-		{
-			this.set("vault", "style.promise", StylePerk._loadCSS(this, styleName));
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	static StylePerk_onDoTransform(sender, e, ex)
 	{
 
-		let styleName = StylePerk.__getDefaultFilename(this);
-
-		return Promise.all([StylePerk._cssReady.promise, this.get("vault", "style.promise")]).then(() => {
-			let promises = [];
+		return StylePerk._cssReady.promise.then(() => {
 			let chain = Promise.resolve();
 
-			// Apply common CSS
+			// Clear CSS
+			StylePerk._clearCSS(this);
+
+			// List common CSS
 			let css = this.get("settings", "style.options.apply", []);
+
+			if (e.detail.styleName || StylePerk.__hasExternalCSS(this))
+			{
+				let styleName = e.detail.styleName || "default";
+
+				// Add style specific common CSS
+				css = css.concat(this.get("settings", `style.styles.${styleName}.apply`, []));
+
+				// Add unit specific CSS
+				css.push(styleName);
+			}
+
 			for (let i = 0; i < css.length; i++)
 			{
 				chain = chain.then(() => {
+					return StylePerk._loadCSS(this, css[i]);
+				}).then(() => {
 					return StylePerk._applyCSS(this, css[i]);
-				});
-			}
-
-			// Apply unit's default CSS
-			if (StylePerk.__hasExternalCSS(this, styleName))
-			{
-				chain = chain.then(() => {
-					return StylePerk._applyCSS(this, styleName);
 				});
 			}
 
@@ -155,11 +144,18 @@ export default class StylePerk extends Perk
 	{
 
 		let promise = Promise.resolve();
-		let styleInfo = unit.get("inventory", `style.styles.${styleName}`) || StylePerk.__createStyleInfo(unit, styleName);
+		let styleInfo = unit.get("inventory", "style.styles").get(styleName) || StylePerk.__createStyleInfo(unit, styleName);
+		let styleSettings = unit.get("settings", `style.styles.${styleName}`, {});
 
-		switch (unit.get("settings", `style.styles.${styleName}.type`)) {
+		if (styleInfo["status"] === "loaded")
+		{
+			console.debug(`StylePerk._loadCSS(): Style already loaded. name=${unit.tagName}, styleName=${styleName}`);
+			return promise;
+		}
+
+		switch (styleSettings["type"]) {
 		case "CSS":
-			styleInfo["CSS"] = unit.get("settings", `style.styles.${styleName}.CSS`);
+			styleInfo["CSS"] = styleSettings["CSS"];
 			styleInfo["status"] = "loaded";
 			unit.get("inventory", `style.styles`).set(styleName, styleInfo);
 			break;
@@ -171,7 +167,8 @@ export default class StylePerk extends Perk
 			}
 			else
 			{
-				let url = unit.get("settings", `style.styles.${styleName}.URL`) || StylePerk.__getCSSURL(unit, styleName);
+				let url = styleSettings["URL"] || (styleName === "default" && StylePerk.__getCSSURL(unit));
+				Util.assert(url, `StylePerk._loadCSS(): CSS URL is not speicified. name=${unit.tagName}, styleName=${styleName}`);
 				promise = AjaxUtil.loadCSS(url).then((css) => {
 					let styleInfo = unit.get("inventory", "style.styles").get(styleName);
 					styleInfo["CSS"] = css;
@@ -218,6 +215,23 @@ export default class StylePerk extends Perk
 			}
 			console.debug(`StylePerk._applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Clear styles. Works only in ShadowDOM.
+	 *
+	 * @param	{Unit}			unit				Parent unit.
+	 */
+	static _clearCSS(unit)
+	{
+
+//		if (unit.shadowRoot)
+		{
+			unit._root.adoptedStyleSheets = [];
+		}
 
 	}
 
@@ -276,7 +290,7 @@ export default class StylePerk extends Perk
 	 *
 	 * @return  {Boolean}		True if the unit has the external CSS file.
 	 */
-	static __hasExternalCSS(unit, styleName)
+	static __hasExternalCSS(unit)
 	{
 
 		let ret = false;
@@ -296,11 +310,10 @@ export default class StylePerk extends Perk
 	 * Return URL to CSS file.
 	 *
 	 * @param	{Unit}			unit				Unit.
-	 * @param	{String	}		styleName			Style name.
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getCSSURL(unit, styleName)
+	static __getCSSURL(unit)
 	{
 
 		let path;
@@ -324,7 +337,7 @@ export default class StylePerk extends Perk
 					unit.get("settings", "system.stylePath", unit.get("settings", "system.unitPath", "")),
 					unit.get("settings", "unit.options.path", ""),
 				]);
-			fileName = styleName + ".css";
+			fileName =  StylePerk.__getDefaultFilename(unit) + ".css";
 			query = unit.get("settings", "unit.options.query");
 		}
 

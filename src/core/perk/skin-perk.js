@@ -55,10 +55,8 @@ export default class SkinPerk extends Perk
 	{
 
 		// Upgrade unit
-		this.upgrade(unit, "vault", "skin.promise", Promise.resolve());
 		this.upgrade(unit, "inventory", "skin.skins", {});
 		this.upgrade(unit, "state", "skin.activeSkinName", "");
-		this.upgrade(unit, "event", "doApplySettings", SkinPerk.SkinPerk_onDoApplySettings);
 		this.upgrade(unit, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
 
 		SkinPerk.__loadAttrSettings(unit);
@@ -83,30 +81,16 @@ export default class SkinPerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static SkinPerk_onDoApplySettings(sender, e, ex)
-	{
-
-		let skinName = SkinPerk.__getDefaultFilename(this);
-
-		// Load unit's default skin
-		if (SkinPerk.__hasExternalSkin(this, skinName))
-		{
-			this.set("vault", "skin.promise", SkinPerk._loadSkin(this, skinName));
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	static SkinPerk_onDoTransform(sender, e, ex)
 	{
 
-		let skinName = SkinPerk.__getDefaultFilename(this);
-
-		// Apply unit's default skin
-		if (SkinPerk.__hasExternalSkin(this, skinName))
+		if (e.detail.skinName || SkinPerk.__hasExternalSkin(this))
 		{
-			return this.get("vault", "skin.promise").then(() => {
+			let skinName = e.detail.skinName || "default";
+
+			return Promise.resolve().then(() => {
+				return SkinPerk._loadSkin(this, skinName);
+			}).then(() => {
 				return SkinPerk._applySkin(this, skinName);
 			});
 		}
@@ -131,22 +115,31 @@ export default class SkinPerk extends Perk
 
 		let promise = Promise.resolve();
 		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(unit, skinName);
+		let skinSettings = unit.get("settings", `skin.skins.${skinName}`, {});
 
-		switch (unit.get("settings", `skin.skins.${skinName}.type`)) {
+		if (skinInfo["status"] === "loaded")
+		{
+			console.debug(`SkinPerk._loadSkin(): Skin already loaded. name=${unit.tagName}, skinName=${skinName}`);
+			return promise;
+		}
+
+		switch (skinSettings["type"]) {
 		case "HTML":
-			skinInfo["HTML"] = unit.get("settings", `skin.skins.${skinName}.HTML`);
+			skinInfo["HTML"] = skinSettings["HTML"];
 			skinInfo["status"] = "loaded";
 			unit.set("inventory", `skin.skins.${skinName}`, skinInfo);
 			break;
 		case "node":
-			let rootNode = unit.get("settings", `skin.skins.${skinName}.rootNode`);
-			skinInfo["HTML"] = unit.use("skill", "basic.scan", rootNode).innerHTML;
+			let rootNode = unit.use("skill", "basic.scan", skinSettings["rootNode"] || "");
+			Util.assert(rootNode, `SkinPerk._loadSkin(): Root node does not exist. name=${unit.tagName}, skinName=${skinName}, rootNode=${skinSettings["rootNode"]}`);
+			skinInfo["HTML"] = rootNode.innerHTML;
 			skinInfo["status"] = "loaded";
 			unit.set("inventory", `skin.skins.${skinName}`, skinInfo);
 			break;
 		case "URL":
 		default:
-			let url = unit.get("settings", `skin.skins.${skinName}.URL`) || SkinPerk.__getSkinURL(unit, skinName);
+			let url = skinSettings["URL"] || (skinName === "default" && SkinPerk.__getSkinURL(unit));
+			Util.assert(url, `SkinPerk._loadSkin(): Skin URL is not speicified. name=${unit.tagName}, skinName=${skinName}`);
 			promise = AjaxUtil.loadHTML(url).then((skin) => {
 				skinInfo["HTML"] = skin;
 				skinInfo["status"] = "loaded";
@@ -169,12 +162,6 @@ export default class SkinPerk extends Perk
 	 */
 	static _applySkin(unit, skinName)
 	{
-
-		if (unit.get("state", "skin.activeSkinName") === skinName)
-		{
-			console.debug(`SkinPerk._applySkin(): Skin already applied. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return Promise.resolve();
-		}
 
 		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
 
@@ -291,7 +278,7 @@ export default class SkinPerk extends Perk
 	 *
 	 * @return  {Boolean}		True if the unit has the external skin file.
 	 */
-	static __hasExternalSkin(unit, skinName)
+	static __hasExternalSkin(unit)
 	{
 
 		let ret = false;
@@ -315,7 +302,7 @@ export default class SkinPerk extends Perk
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getSkinURL(unit, skinName)
+	static __getSkinURL(unit)
 	{
 
 		let path;
@@ -339,7 +326,7 @@ export default class SkinPerk extends Perk
 					unit.get("settings", "system.skinPath", unit.get("settings", "system.unitPath", "")),
 					unit.get("settings", "unit.options.path", ""),
 				]);
-			fileName = skinName + ".html";
+			fileName = SkinPerk.__getDefaultFilename(unit) + ".html";
 			query = unit.get("settings", "unit.options.query");
 		}
 
