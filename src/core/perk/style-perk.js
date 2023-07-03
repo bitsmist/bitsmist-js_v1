@@ -53,19 +53,27 @@ export default class StylePerk extends Perk
 			this._cssReady["reject"] = reject;
 		});
 
-		let promises = [];
+		let chain = Promise.resolve();
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
+			let promises = [];
 			Object.entries(BITSMIST.v1.Unit.get("settings", "style.styles", {})).forEach(([sectionName, sectionValue]) => {
-				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName).then(() => {
-					if (sectionValue["global"])
-					{
-						return StylePerk._applyCSS(BITSMIST.v1.Unit, sectionName);
-					}
-				}));
+				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName));
 			});
 
-			return Promise.all(promises).then(() => {
-				this._cssReady["resolve"]();
+			Promise.all(promises).then(() => {
+				let chain = Promise.resolve();
+				Object.entries(BITSMIST.v1.Unit.get("settings", "style.styles", {})).forEach(([sectionName, sectionValue]) => {
+					chain = chain.then(() => {
+						if (sectionValue["global"])
+						{
+							return StylePerk._applyCSS(BITSMIST.v1.Unit, sectionName);
+						}
+					});
+				});
+
+				return chain.then(() => {
+					this._cssReady["resolve"]();
+				});
 			});
 		});
 
@@ -94,8 +102,6 @@ export default class StylePerk extends Perk
 	{
 
 		return StylePerk._cssReady.promise.then(() => {
-			let chain = Promise.resolve();
-
 			// Clear CSS
 			StylePerk._clearCSS(this);
 
@@ -113,16 +119,26 @@ export default class StylePerk extends Perk
 				css.push(styleName);
 			}
 
+			// Load CSS
+			let promises = [];
 			for (let i = 0; i < css.length; i++)
 			{
-				chain = chain.then(() => {
-					return StylePerk._loadCSS(this, css[i]);
-				}).then(() => {
-					return StylePerk._applyCSS(this, css[i]);
-				});
+				promises.push(StylePerk._loadCSS(this, css[i]));
 			}
 
-			return chain;
+			// Apply CSS
+			return Promise.all(promises).then(() => {
+				let chain = Promise.resolve();
+
+				for (let i = 0; i < css.length; i++)
+				{
+					chain = chain.then(() => {
+						return StylePerk._applyCSS(this, css[i]);
+					});
+				}
+
+				return chain;
+			});
 		});
 
 	}
