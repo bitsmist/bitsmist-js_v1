@@ -379,8 +379,6 @@ export default class BasicPerk extends Perk
 				return unit.use("spell", "basic.clear", options);
 			}
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doTarget", options);
-		}).then(() => {
 			if (Util.safeGet(options, "autoFetch", unit.get("settings", "basic.options.autoFetch", true)))
 			{
 				return unit.use("spell", "basic.fetch", options);
