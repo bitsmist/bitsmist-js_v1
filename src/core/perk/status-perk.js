@@ -53,7 +53,7 @@ export default class StatusPerk extends Perk
 		// Init vars
 		StatusPerk._waitingList = new Store();
 		StatusPerk.__suspends = {};
-		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk._waitFor(null, waitlist, timeout); }
+		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk._waitFor(BITSMIST.v1.Unit, waitlist, timeout); }
 
 		// Upgrade Unit
 		this.upgrade(BITSMIST.v1.Unit, "skill", "status.change", function(...args) { return StatusPerk._changeStatus(...args); });
@@ -169,8 +169,7 @@ export default class StatusPerk extends Perk
 		let promise;
 		let timeout =
 				(options && options["timeout"]) ||
-				(unit && unit.get("settings", "system.waitForTimeout")) || // unit could be null
-				BITSMIST.v1.Unit.get("settings", "system.waitForTimeout", 10000);
+				unit.get("settings", "status.options.waitForTimeout", unit.get("settings", "system.status.options.waitForTimeout", 10000));
 		let waiter = ( options && options["waiter"] ? options["waiter"] : unit );
 		let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 

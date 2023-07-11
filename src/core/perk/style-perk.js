@@ -53,23 +53,23 @@ export default class StylePerk extends Perk
 			this._cssReady["reject"] = reject;
 		});
 
+		// Load and apply common CSS
 		let chain = Promise.resolve();
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
 			let promises = [];
-			Object.entries(BITSMIST.v1.Unit.get("settings", "style.styles", {})).forEach(([sectionName, sectionValue]) => {
-				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName));
+			Object.entries(BITSMIST.v1.Unit.get("settings", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
+				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName, sectionValue));
 			});
 
 			Promise.all(promises).then(() => {
 				let chain = Promise.resolve();
-				Object.entries(BITSMIST.v1.Unit.get("settings", "style.styles", {})).forEach(([sectionName, sectionValue]) => {
+				let styles = BITSMIST.v1.Unit.get("settings", "system.style.options.apply", []);
+				for (let i = 0; i < styles.length; i++)
+				{
 					chain = chain.then(() => {
-						if (sectionValue["global"])
-						{
-							return StylePerk._applyCSS(BITSMIST.v1.Unit, sectionName);
-						}
+						return StylePerk._applyCSS(BITSMIST.v1.Unit, styles[i]);
 					});
-				});
+				}
 
 				return chain.then(() => {
 					this._cssReady["resolve"]();
@@ -161,7 +161,7 @@ export default class StylePerk extends Perk
 
 		let promise = Promise.resolve();
 		let styleInfo = unit.get("inventory", "style.styles").get(styleName) || StylePerk.__createStyleInfo(unit, styleName);
-		let styleSettings = unit.get("settings", `style.styles.${styleName}`, {});
+		let styleSettings = options || unit.get("settings", `style.styles.${styleName}`, {});
 
 		if (styleInfo["status"] === "loaded")
 		{
@@ -349,9 +349,8 @@ export default class StylePerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					unit.get("settings", "system.appBaseURL", ""),
-					unit.get("settings", "system.stylePath", unit.get("settings", "system.unitPath", "")),
-					unit.get("settings", "unit.options.path", ""),
+					unit.get("settings", "system.style.options.path", unit.get("settings", "system.unit.options.path", "")),
+					unit.get("settings", "skin.options.path", unit.get("settings", "unit.options.path", "")),
 				]);
 			fileName =  StylePerk.__getDefaultFilename(unit) + ".css";
 			query = unit.get("settings", "unit.options.query");

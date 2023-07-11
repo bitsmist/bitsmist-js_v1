@@ -62,7 +62,7 @@ export default class SkinPerk extends Perk
 		SkinPerk.__loadAttrSettings(unit);
 
 		// Shadow DOM
-		switch (unit.get("settings" ,"system.shadowDOM", unit.get("settings", "skin.options.shadowDOM")))
+		switch (unit.get("settings" ,"system.skin.options.shadowDOM", unit.get("settings", "skin.options.shadowDOM")))
 		{
 		case "open":
 			unit._root = unit.attachShadow({mode:"open"});
@@ -115,7 +115,7 @@ export default class SkinPerk extends Perk
 
 		let promise = Promise.resolve();
 		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(unit, skinName);
-		let skinSettings = unit.get("settings", `skin.skins.${skinName}`, {});
+		let skinSettings = options || unit.get("settings", `skin.skins.${skinName}`, {});
 
 		if (skinInfo["status"] === "loaded")
 		{
@@ -322,9 +322,8 @@ export default class SkinPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					unit.get("settings", "system.appBaseURL", ""),
-					unit.get("settings", "system.skinPath", unit.get("settings", "system.unitPath", "")),
-					unit.get("settings", "unit.options.path", ""),
+					unit.get("settings", "system.skin.options.path", unit.get("settings", "system.unit.options.path", "")),
+					unit.get("settings", "style.options.path", unit.get("settings", "unit.options.path", "")),
 				]);
 			fileName = SkinPerk.__getDefaultFilename(unit) + ".html";
 			query = unit.get("settings", "unit.options.query");

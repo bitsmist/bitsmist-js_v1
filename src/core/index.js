@@ -54,7 +54,6 @@ PerkPerk.register(PerkPerk);
 import SettingPerk from "./perk/setting-perk.js";
 window.BITSMIST.v1.SettingPerk = SettingPerk;
 PerkPerk.register(SettingPerk);
-window.BITSMIST.v1.settings = Unit.settings;
 
 import StatusPerk from "./perk/status-perk.js";
 window.BITSMIST.v1.StatusPerk = StatusPerk;

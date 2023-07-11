@@ -258,11 +258,10 @@ export default class SettingPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					unit.get("settings", "system.appBaseURL"),
-					unit.get("settings", "system.unitPath"),
+					unit.get("settings", "system.unit.options.path"),
 					unit.get("settings", "unit.options.path", ""),
 				]);
-			let ext = unit.get("settings", "setting.settingFormat", unit.get("settings", "system.settingFormat", "json"));
+			let ext = unit.get("settings", "setting.options.settingFormat", unit.get("settings", "system.setting.options.settingFormat", "json"));
 			fileName = unit.get("settings", "unit.options.fileName", unit.tagName.toLowerCase()) + ".settings." + ext;
 			query = unit.get("settings", "unit.options.query");
 		}
