@@ -420,7 +420,7 @@ export default class UnitPerk extends Perk
 		}
 		else
 		{
-			root = unit;
+			root = unit._root;
 		}
 
 		Util.assert(root, `UnitPerk.__insertTag(): Root node does not exist. name=${unit.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
