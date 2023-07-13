@@ -43,8 +43,7 @@ export default class SettingPerk extends Perk
 	{
 
 		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "asset", "settings", new ChainableStore());
-		BITSMIST.v1.Unit.settings = BITSMIST.v1.Unit._assets["settings"];
+		this.upgrade(BITSMIST.v1.Unit, "asset", "setting", new ChainableStore());
 
 		// Upgrade Unit
 		this.upgrade(BITSMIST.v1.Unit, "skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
@@ -66,7 +65,7 @@ export default class SettingPerk extends Perk
 		settings = SettingPerk.__mergeSettings(unit, settings);
 
 		// Upgrade unit
-		this.upgrade(unit, "asset", "settings", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit._assets["settings"]}));
+		this.upgrade(unit, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit._assets["setting"]}));
 
 		return Promise.resolve().then(() => {
 			SettingPerk.__loadAttrSettings(unit);
@@ -140,7 +139,7 @@ export default class SettingPerk extends Perk
 	static _getSettings(unit, key, defaultValue)
 	{
 
-		return unit.get("settings", key, defaultValue);
+		return unit.get("setting", key, defaultValue);
 
 	}
 
@@ -156,7 +155,7 @@ export default class SettingPerk extends Perk
 	static _setSettings(unit, key, value)
 	{
 
-		return unit.set("settings", key, value);
+		return unit.set("setting", key, value);
 
 	}
 
@@ -172,7 +171,7 @@ export default class SettingPerk extends Perk
 	static _mergeSettings(unit, key, value)
 	{
 
-		return unit._assets["settings"].merge(key, value);
+		return unit._assets["setting"].merge(key, value);
 
 	}
 
@@ -195,7 +194,7 @@ export default class SettingPerk extends Perk
 			{
 				settingsRef = false;
 			}
-			unit.set("settings", "setting.options.settingsRef", settingsRef);
+			unit.set("setting", "setting.options.settingsRef", settingsRef);
 		}
 
 		if (unit.hasAttribute("bm-options"))
@@ -220,7 +219,7 @@ export default class SettingPerk extends Perk
 
 		let ret = false;
 
-		if (unit.get("settings", "setting.options.settingsRef"))
+		if (unit.get("setting", "setting.options.settingsRef"))
 		{
 			ret = true;
 		}
@@ -245,7 +244,7 @@ export default class SettingPerk extends Perk
 		let fileName;
 		let query;
 
-		let settingsRef = unit.get("settings", "setting.options.settingsRef");
+		let settingsRef = unit.get("setting", "setting.options.settingsRef");
 		if (settingsRef && settingsRef !== true)
 		{
 			// If URL is specified in ref, use it
@@ -258,12 +257,12 @@ export default class SettingPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					unit.get("settings", "system.unit.options.path"),
-					unit.get("settings", "unit.options.path", ""),
+					unit.get("setting", "system.unit.options.path"),
+					unit.get("setting", "unit.options.path", ""),
 				]);
-			let ext = unit.get("settings", "setting.options.settingFormat", unit.get("settings", "system.setting.options.settingFormat", "json"));
-			fileName = unit.get("settings", "unit.options.fileName", unit.tagName.toLowerCase()) + ".settings." + ext;
-			query = unit.get("settings", "unit.options.query");
+			let ext = unit.get("setting", "setting.options.settingFormat", unit.get("setting", "system.setting.options.settingFormat", "json"));
+			fileName = unit.get("setting", "unit.options.fileName", unit.tagName.toLowerCase()) + ".settings." + ext;
+			query = unit.get("setting", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");

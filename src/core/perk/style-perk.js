@@ -57,13 +57,13 @@ export default class StylePerk extends Perk
 		let chain = Promise.resolve();
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
 			let promises = [];
-			Object.entries(BITSMIST.v1.Unit.get("settings", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
+			Object.entries(BITSMIST.v1.Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
 				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName, sectionValue));
 			});
 
 			Promise.all(promises).then(() => {
 				let chain = Promise.resolve();
-				let styles = BITSMIST.v1.Unit.get("settings", "system.style.options.apply", []);
+				let styles = BITSMIST.v1.Unit.get("setting", "system.style.options.apply", []);
 				for (let i = 0; i < styles.length; i++)
 				{
 					chain = chain.then(() => {
@@ -106,14 +106,14 @@ export default class StylePerk extends Perk
 			StylePerk._clearCSS(this);
 
 			// List common CSS
-			let css = this.get("settings", "style.options.apply", []);
+			let css = this.get("setting", "style.options.apply", []);
 
 			if (e.detail.styleName || StylePerk.__hasExternalCSS(this))
 			{
 				let styleName = e.detail.styleName || "default";
 
 				// Add style specific common CSS
-				css = css.concat(this.get("settings", `style.styles.${styleName}.apply`, []));
+				css = css.concat(this.get("setting", `style.styles.${styleName}.apply`, []));
 
 				// Add unit specific CSS
 				css.push(styleName);
@@ -161,7 +161,7 @@ export default class StylePerk extends Perk
 
 		let promise = Promise.resolve();
 		let styleInfo = unit.get("inventory", "style.styles").get(styleName) || StylePerk.__createStyleInfo(unit, styleName);
-		let styleSettings = options || unit.get("settings", `style.styles.${styleName}`, {});
+		let styleSettings = options || unit.get("setting", `style.styles.${styleName}`, {});
 
 		if (styleInfo["status"] === "loaded")
 		{
@@ -271,7 +271,7 @@ export default class StylePerk extends Perk
 				styleRef = false;
 			}
 
-			unit.set("settings", "style.options.styleRef", styleRef);
+			unit.set("setting", "style.options.styleRef", styleRef);
 		}
 
 	}
@@ -311,7 +311,7 @@ export default class StylePerk extends Perk
 
 		let ret = false;
 
-		if (unit.get("settings", "style.options.styleRef"))
+		if (unit.get("setting", "style.options.styleRef"))
 		{
 			ret = true;
 		}
@@ -336,7 +336,7 @@ export default class StylePerk extends Perk
 		let fileName;
 		let query;
 
-		let cssRef = unit.get("settings", "style.options.styleRef");
+		let cssRef = unit.get("setting", "style.options.styleRef");
 		if (cssRef && cssRef !== true)
 		{
 			// If URL is specified in ref, use it
@@ -349,11 +349,11 @@ export default class StylePerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					unit.get("settings", "system.style.options.path", unit.get("settings", "system.unit.options.path", "")),
-					unit.get("settings", "skin.options.path", unit.get("settings", "unit.options.path", "")),
+					unit.get("setting", "system.style.options.path", unit.get("setting", "system.unit.options.path", "")),
+					unit.get("setting", "skin.options.path", unit.get("setting", "unit.options.path", "")),
 				]);
 			fileName =  StylePerk.__getDefaultFilename(unit) + ".css";
-			query = unit.get("settings", "unit.options.query");
+			query = unit.get("setting", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
@@ -372,8 +372,8 @@ export default class StylePerk extends Perk
 	static __getDefaultFilename(unit)
 	{
 
-		return unit.get("settings", "style.options.fileName",
-			unit.get("settings", "unit.options.fileName",
+		return unit.get("setting", "style.options.fileName",
+			unit.get("setting", "unit.options.fileName",
 				unit.tagName.toLowerCase()));
 
 	}

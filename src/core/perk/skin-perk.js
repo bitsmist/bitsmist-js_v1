@@ -62,7 +62,7 @@ export default class SkinPerk extends Perk
 		SkinPerk.__loadAttrSettings(unit);
 
 		// Shadow DOM
-		switch (unit.get("settings" ,"system.skin.options.shadowDOM", unit.get("settings", "skin.options.shadowDOM")))
+		switch (unit.get("setting" ,"system.skin.options.shadowDOM", unit.get("setting", "skin.options.shadowDOM")))
 		{
 		case "open":
 			unit._root = unit.attachShadow({mode:"open"});
@@ -115,7 +115,7 @@ export default class SkinPerk extends Perk
 
 		let promise = Promise.resolve();
 		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(unit, skinName);
-		let skinSettings = options || unit.get("settings", `skin.skins.${skinName}`, {});
+		let skinSettings = options || unit.get("setting", `skin.skins.${skinName}`, {});
 
 		if (skinInfo["status"] === "loaded")
 		{
@@ -199,7 +199,7 @@ export default class SkinPerk extends Perk
 	static _clone(unit, skinName)
 	{
 
-		skinName = skinName || unit.get("settings", "setting.skinName");
+		skinName = skinName || unit.get("setting", "setting.skinName");
 		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
 
 		Util.assert(skinInfo,`SkinPerk._clone(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
@@ -243,7 +243,7 @@ export default class SkinPerk extends Perk
 				skinRef = false;
 			}
 
-			unit.set("settings", "skin.options.skinRef", skinRef);
+			unit.set("setting", "skin.options.skinRef", skinRef);
 		}
 
 	}
@@ -283,7 +283,7 @@ export default class SkinPerk extends Perk
 
 		let ret = false;
 
-		if (unit.get("settings", "skin.options.skinRef", true))
+		if (unit.get("setting", "skin.options.skinRef", true))
 		{
 			ret = true;
 		}
@@ -309,7 +309,7 @@ export default class SkinPerk extends Perk
 		let fileName;
 		let query;
 
-		let skinRef = unit.get("settings", "skin.options.skinRef");
+		let skinRef = unit.get("setting", "skin.options.skinRef");
 		if (skinRef && skinRef !== true)
 		{
 			// If URL is specified in ref, use it
@@ -322,11 +322,11 @@ export default class SkinPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					unit.get("settings", "system.skin.options.path", unit.get("settings", "system.unit.options.path", "")),
-					unit.get("settings", "style.options.path", unit.get("settings", "unit.options.path", "")),
+					unit.get("setting", "system.skin.options.path", unit.get("setting", "system.unit.options.path", "")),
+					unit.get("setting", "style.options.path", unit.get("setting", "unit.options.path", "")),
 				]);
 			fileName = SkinPerk.__getDefaultFilename(unit) + ".html";
-			query = unit.get("settings", "unit.options.query");
+			query = unit.get("setting", "unit.options.query");
 		}
 
 		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
@@ -345,8 +345,8 @@ export default class SkinPerk extends Perk
 	static __getDefaultFilename(unit)
 	{
 
-		return unit.get("settings", "skin.options.fileName",
-			unit.get("settings", "unit.options.fileName",
+		return unit.get("setting", "skin.options.fileName",
+			unit.get("setting", "unit.options.fileName",
 				unit.tagName.toLowerCase()));
 
 	}

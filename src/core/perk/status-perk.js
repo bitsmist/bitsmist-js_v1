@@ -169,7 +169,7 @@ export default class StatusPerk extends Perk
 		let promise;
 		let timeout =
 				(options && options["timeout"]) ||
-				unit.get("settings", "status.options.waitForTimeout", unit.get("settings", "system.status.options.waitForTimeout", 10000));
+				unit.get("setting", "status.options.waitForTimeout", unit.get("setting", "system.status.options.waitForTimeout", 10000));
 		let waiter = ( options && options["waiter"] ? options["waiter"] : unit );
 		let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 
@@ -252,7 +252,7 @@ export default class StatusPerk extends Perk
 		let ret = [];
 
 		// Globally suspended?
-		if (StatusPerk.__suspends[status] && StatusPerk.__suspends[status].status === "pending" && !unit.get("settings", "setting.ignoreGlobalSuspend"))
+		if (StatusPerk.__suspends[status] && StatusPerk.__suspends[status].status === "pending" && !unit.get("setting", "setting.ignoreGlobalSuspend"))
 		{
 			ret.push(StatusPerk.__suspends[status].promise);
 		}

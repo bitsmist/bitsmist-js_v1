@@ -90,7 +90,7 @@ export default class BasicPerk extends Perk
 
 		// Load tags
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
-			//if (BITSMIST.v1.Unit.get("settings", "system.autoLoadOnStartup", true))
+			//if (BITSMIST.v1.Unit.get("setting", "system.autoLoadOnStartup", true))
 			{
 				BITSMIST.v1.UnitPerk._loadTags(null, document.body, {"waitForTags":false});
 			}
@@ -121,7 +121,7 @@ export default class BasicPerk extends Perk
 		this.__ready = this.__ready.then(() => {
 			console.debug(`BasicPerk._connectedHandler(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
 
-			if (!this.__initialized || this.get("settings", "basic.options.autoRestart", false))
+			if (!this.__initialized || this.get("setting", "basic.options.autoRestart", false))
 			{
 				this.__initialized = true;
 
@@ -261,20 +261,20 @@ export default class BasicPerk extends Perk
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit._uniqueId}`);
 
-			return unit.use("spell", "setting.apply", {"settings":unit._assets["settings"].items});
+			return unit.use("spell", "setting.apply", {"settings":unit._assets["setting"].items});
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "beforeStart");
 		}).then(() => {
 			return unit.use("skill", "status.change", "starting");
 		}).then(() => {
-			if (unit.get("settings", "basic.options.autoTransform", true))
+			if (unit.get("setting", "basic.options.autoTransform", true))
 			{
 				return unit.use("spell", "basic.transform");
 			}
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "doStart");
 		}).then(() => {
-			if (unit.get("settings", "basic.options.autoRefresh", true))
+			if (unit.get("setting", "basic.options.autoRefresh", true))
 			{
 				return unit.use("spell", "basic.refresh");
 			}
@@ -373,18 +373,18 @@ export default class BasicPerk extends Perk
 			console.debug(`BasicPerk._refresh(): Refreshing unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("spell", "event.trigger", "beforeRefresh", options);
 		}).then(() => {
-			let autoClear = Util.safeGet(options, "autoClear", unit.get("settings", "basic.options.autoClear", true));
+			let autoClear = Util.safeGet(options, "autoClear", unit.get("setting", "basic.options.autoClear", true));
 			if (autoClear)
 			{
 				return unit.use("spell", "basic.clear", options);
 			}
 		}).then(() => {
-			if (Util.safeGet(options, "autoFetch", unit.get("settings", "basic.options.autoFetch", true)))
+			if (Util.safeGet(options, "autoFetch", unit.get("setting", "basic.options.autoFetch", true)))
 			{
 				return unit.use("spell", "basic.fetch", options);
 			}
 		}).then(() => {
-			if (Util.safeGet(options, "autoFill", unit.get("settings", "basic.options.autoFill", true)))
+			if (Util.safeGet(options, "autoFill", unit.get("setting", "basic.options.autoFill", true)))
 			{
 				return unit.use("spell", "basic.fill", options);
 			}
