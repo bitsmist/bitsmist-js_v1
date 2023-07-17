@@ -244,9 +244,9 @@ export default class StylePerk extends Perk
 	static _clearCSS(unit)
 	{
 
-//		if (unit.shadowRoot)
+		if (unit.shadowRoot)
 		{
-			unit._root.adoptedStyleSheets = [];
+			unit.shadowRoot.adoptedStyleSheets = [];
 		}
 
 	}
