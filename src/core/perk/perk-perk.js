@@ -37,6 +37,7 @@ export default class PerkPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	/* Doesn't work on Safari
 	static
 	{
 
@@ -45,6 +46,7 @@ export default class PerkPerk extends Perk
 		this._sections = {};
 
 	}
+	*/
 
 	// -------------------------------------------------------------------------
 
@@ -222,3 +224,7 @@ export default class PerkPerk extends Perk
 	}
 
 }
+
+// Init
+PerkPerk._perks = {}
+PerkPerk._sections = {};

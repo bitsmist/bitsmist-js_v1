@@ -37,6 +37,7 @@ export default class StatusPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	/* Doesn't work on Safari
 	static
 	{
 
@@ -44,6 +45,7 @@ export default class StatusPerk extends Perk
 		this._statuses = {}
 
 	}
+*/
 
 	// -------------------------------------------------------------------------
 
@@ -618,3 +620,6 @@ export default class StatusPerk extends Perk
 	}
 
 }
+
+// Init
+StatusPerk._statuses = {}

@@ -41,6 +41,7 @@ export default class UnitPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
+	/* Doesn't work on Safari
 	static
 	{
 
@@ -48,6 +49,7 @@ export default class UnitPerk extends Perk
 		this._classes = {}
 
 	}
+	*/
 
 	// -------------------------------------------------------------------------
 
@@ -517,3 +519,6 @@ export default class UnitPerk extends Perk
 	}
 
 }
+
+// Init
+UnitPerk._classes = {}
