@@ -166,7 +166,9 @@ export default class StylePerk extends Perk
 		if (styleInfo["status"] === "loaded")
 		{
 			console.debug(`StylePerk._loadCSS(): Style already loaded. name=${unit.tagName}, styleName=${styleName}`);
-			return promise;
+			return promise.then(() => {
+				return styleInfo;
+			});
 		}
 
 		switch (styleSettings["type"]) {
@@ -198,7 +200,9 @@ export default class StylePerk extends Perk
 			break;
 		}
 
-		return promise;
+		return promise.then(() => {
+			return styleInfo;
+		});
 
 	}
 
