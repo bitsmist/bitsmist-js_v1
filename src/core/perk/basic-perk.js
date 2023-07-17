@@ -493,7 +493,7 @@ export default class BasicPerk extends Perk
 	static _scanAll(unit, query, options)
 	{
 
-		return Util.scopedSelectorAll(unit._root, query, options);
+		return Util.scopedSelectorAll(unit, query, options);
 
 	}
 
@@ -511,7 +511,7 @@ export default class BasicPerk extends Perk
 	static _scan(unit, query, options)
 	{
 
-		let nodes = Util.scopedSelectorAll(unit._root, query, options);
+		let nodes = Util.scopedSelectorAll(unit, query, options);
 
 		return ( nodes ? nodes[0] : null );
 
