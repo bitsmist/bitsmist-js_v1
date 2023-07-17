@@ -223,7 +223,7 @@ export default class StylePerk extends Perk
 		}).then(() => {
 			if (unit.shadowRoot)
 			{
-				unit._root.adoptedStyleSheets = [...unit._root.adoptedStyleSheets, ss];
+				unit.shadowRoot.adoptedStyleSheets = [...unit.shadowRoot.adoptedStyleSheets, ss];
 			}
 			else
 			{
