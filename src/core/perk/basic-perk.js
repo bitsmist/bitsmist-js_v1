@@ -73,6 +73,10 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit.prototype, "property", "uniqueId", {
 			get() { return this.__bm_uniqueid; },
 		});
+		this.upgrade(BITSMIST.v1.Unit.prototype, "property", "unitRoot", {
+			get() { return this.__bm_unitroot; },
+			set(value) { this.__bm_unitroot = value; },
+		});
 
 		// Create a promise that resolves when document is ready
 		BITSMIST.v1.Unit.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
@@ -346,7 +350,7 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "doTransform", options);
 		}).then(() => {
-			return unit.use("spell", "unit.materializeAll", unit._root);
+			return unit.use("spell", "unit.materializeAll", unit.unitRoot);
 		}).then(() => {
 			console.debug(`BasicPerk._transform(): Transformed. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("spell", "event.trigger", "afterTransform", options);

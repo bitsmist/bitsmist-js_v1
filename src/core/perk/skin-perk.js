@@ -73,7 +73,7 @@ export default class SkinPerk extends Perk
 			break;
 		}
 
-		unit._root = SkinPerk.__getRoot(unit);
+		unit.unitRoot = SkinPerk.__getRoot(unit);
 
 	}
 
@@ -89,7 +89,7 @@ export default class SkinPerk extends Perk
 			let skinName = e.detail.skinName || "default";
 
 			return SkinPerk._loadSkin(this, skinName).then((skinInfo) => {
-				this._root = skinInfo["template"].content.cloneNode(true);
+				this.unitRoot = skinInfo["template"].content.cloneNode(true);
 			});
 		}
 
@@ -104,7 +104,7 @@ export default class SkinPerk extends Perk
 		{
 			let skinName = e.detail.skinName || "default";
 
-			return SkinPerk._applySkin(this, skinName, this._root);
+			return SkinPerk._applySkin(this, skinName, this.unitRoot);
 		}
 
 	}
@@ -191,9 +191,9 @@ export default class SkinPerk extends Perk
 
 		// Append the clone to the unit
 		clone = clone || skinInfo["template"].content.cloneNode(true);
-		unit._root = SkinPerk.__getRoot(unit);
-		unit._root.innerHTML = "";
-		unit._root.appendChild(clone);
+		unit.unitRoot = SkinPerk.__getRoot(unit);
+		unit.unitRoot.innerHTML = "";
+		unit.unitRoot.appendChild(clone);
 
 		// Change active skin
 		unit.set("state", "skin.activeSkinName", skinName);
