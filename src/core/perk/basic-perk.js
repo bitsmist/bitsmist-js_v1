@@ -71,7 +71,7 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "has", this._has);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "use", this._use);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "property", "uniqueId", {
-			get() { return this._uniqueId; },
+			get() { return this.__bm_uniqueid; },
 		});
 
 		// Create a promise that resolves when document is ready
@@ -111,15 +111,15 @@ export default class BasicPerk extends Perk
 		// The first time only initialization
 		if (!this.__initialized)
 		{
-			this.__ready = Promise.resolve(); // A promise to prevent from start/stop while stopping/starting
-			this._uniqueId = Util.getUUID();
-			this._root = this;
+			this.__bm_ready = Promise.resolve(); // A promise to prevent from start/stop while stopping/starting
+			this.__bm_uniqueid = Util.getUUID();
+			this.__bm_unitroot = this;
 			this.setAttribute("bm-powered", "");
 		}
 
 		// Start
-		this.__ready = this.__ready.then(() => {
-			console.debug(`BasicPerk._connectedHandler(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+		this.__bm_ready = this.__bm_ready.then(() => {
+			console.debug(`BasicPerk._connectedHandler(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 
 			if (!this.__initialized || this.get("setting", "basic.options.autoRestart", false))
 			{
@@ -167,10 +167,10 @@ export default class BasicPerk extends Perk
 	{
 
 		// Stop
-		this.__ready = this.__ready.then(() => {
+		this.__bm_ready = this.__bm_ready.then(() => {
 			return this.use("spell", "basic.stop");
 		}).then(() => {
-			console.debug(`BasicPerk.disconnectedHandler(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this._uniqueId}`);
+			console.debug(`BasicPerk.disconnectedHandler(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 		});
 
 	}
@@ -259,7 +259,7 @@ export default class BasicPerk extends Perk
 	{
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit._uniqueId}`);
+			console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
 			return unit.use("spell", "setting.apply", {"settings":unit._assets["setting"].items});
 		}).then(() => {
@@ -281,12 +281,12 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			window.getComputedStyle(unit).getPropertyValue("visibility"); // Recalc styles
 
-			console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit._uniqueId}`);
+			console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("skill", "status.change", "started");
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "afterStart");
 		}).then(() => {
-			console.debug(`BasicPerk._start(): Unit is ready. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit._uniqueId}`);
+			console.debug(`BasicPerk._start(): Unit is ready. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("skill", "status.change", "ready");
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "afterReady");
@@ -310,14 +310,14 @@ export default class BasicPerk extends Perk
 		options = options || {};
 
 		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._stop(): Stopping unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit._uniqueId}`);
+			console.debug(`BasicPerk._stop(): Stopping unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("skill", "status.change", "stopping");
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "beforeStop", options);
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "doStop", options);
 		}).then(() => {
-			console.debug(`BasicPerk._stop(): Stopped unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit._uniqueId}`);
+			console.debug(`BasicPerk._stop(): Stopped unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("skill", "status.change", "stopped");
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "afterStop", options);
