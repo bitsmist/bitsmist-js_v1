@@ -66,14 +66,14 @@ export default class SkinPerk extends Perk
 		switch (unit.get("setting" ,"system.skin.options.shadowDOM", unit.get("setting", "skin.options.shadowDOM")))
 		{
 		case "open":
-			unit.attachShadow({mode:"open"});
+			unit.set("state", "skin.shadowRoot", unit.attachShadow({mode:"open"}));
 			break;
 		case "closed":
-			unit.attachShadow({mode:"closed"});
+			unit.set("state", "skin.shadowRoot", unit.attachShadow({mode:"closed"}));
 			break;
 		}
 
-		unit.unitRoot = SkinPerk.__getRoot(unit);
+		unit.unitRoot = unit.get("state", "skin.shadowRoot", unit);
 
 	}
 
@@ -191,7 +191,7 @@ export default class SkinPerk extends Perk
 
 		// Append the clone to the unit
 		clone = clone || skinInfo["template"].content.cloneNode(true);
-		unit.unitRoot = SkinPerk.__getRoot(unit);
+		unit.unitRoot = unit.get("state", "skin.shadowRoot", unit);
 		unit.unitRoot.innerHTML = "";
 		unit.unitRoot.appendChild(clone);
 
@@ -328,22 +328,6 @@ export default class SkinPerk extends Perk
 		return unit.get("setting", "skin.options.fileName",
 			unit.get("setting", "unit.options.fileName",
 				unit.tagName.toLowerCase()));
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get the root node of the unit.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 *
-	 * @return 	{HTMLElement}	Root node.
-	 */
-	static __getRoot(unit)
-	{
-
-		return unit.shadowRoot || unit;
 
 	}
 
