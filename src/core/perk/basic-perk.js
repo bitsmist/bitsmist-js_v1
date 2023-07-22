@@ -56,6 +56,7 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.start", function(...args) { return BasicPerk._start(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
@@ -283,7 +284,7 @@ export default class BasicPerk extends Perk
 				return unit.use("spell", "basic.refresh");
 			}
 		}).then(() => {
-			window.getComputedStyle(unit).getPropertyValue("visibility"); // Recalc styles
+//			window.getComputedStyle(unit).getPropertyValue("visibility"); // Recalc styles
 
 			console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("skill", "status.change", "started");
@@ -348,12 +349,44 @@ export default class BasicPerk extends Perk
 			console.debug(`BasicPerk._transform(): Transforming. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("spell", "event.trigger", "beforeTransform", options);
 		}).then(() => {
+			if (unit.get("setting", "basic.options.autoSetup", true))
+			{
+				return unit.use("spell", "basic.setup", options);
+			}
+		}).then(() => {
 			return unit.use("spell", "event.trigger", "doTransform", options);
 		}).then(() => {
 			return unit.use("spell", "unit.materializeAll", unit.unitRoot);
 		}).then(() => {
 			console.debug(`BasicPerk._transform(): Transformed. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("spell", "event.trigger", "afterTransform", options);
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Setup unit.
+	 *
+	 * @param       {Unit}                  unit                            Unit.
+	 * @param       {Object}                options                         Options.
+	 *
+	 * @return  {Promise}           Promise.
+	 */
+	static _setup(unit, options)
+	{
+
+		options = options || {};
+
+		return Promise.resolve().then(() => {
+			console.debug(`BasicPerk._setup(): Setting up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+			return unit.use("spell", "event.trigger", "beforeSetup", options);
+		}).then(() => {
+			return unit.use("spell", "event.trigger", "doSetup", options);
+		}).then(() => {
+			console.debug(`BasicPerk._setup(): Set up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+			return unit.use("spell", "event.trigger", "afterSetup", options);
 		});
 
 	}
