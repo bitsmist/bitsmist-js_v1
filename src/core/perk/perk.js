@@ -105,7 +105,7 @@ export default class Perk
 		switch (type)
 		{
 			case "asset":
-				unit._assets[name] = content;
+				unit.__bm_assets[name] = content;
 				break;
 			case "method":
 				unit[name] = content;
@@ -120,7 +120,7 @@ export default class Perk
 				});
 				break;
 			default:
-				unit._assets[type].set(name, content);
+				unit.__bm_assets[type].set(name, content);
 				break;
 		}
 

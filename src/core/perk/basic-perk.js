@@ -44,7 +44,7 @@ export default class BasicPerk extends Perk
 	{
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit._assets = {};
+		BITSMIST.v1.Unit.__bm_assets = {};
 		this.upgrade(BITSMIST.v1.Unit, "asset", "state", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Unit, "asset", "vault", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Unit, "asset", "inventory", new ChainableStore());
@@ -130,12 +130,12 @@ export default class BasicPerk extends Perk
 				this.__initialized = true;
 
 				// Upgrade unit
-				unit._assets = {};
-				Perk.upgrade(unit, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Unit._assets["state"]}));
+				unit.__bm_assets = {};
+				Perk.upgrade(unit, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["state"]}));
 				Perk.upgrade(unit, "asset", "vault", new ChainableStore());
-				Perk.upgrade(unit, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit._assets["inventory"]}));
-				Perk.upgrade(unit, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Unit._assets["skill"]}));
-				Perk.upgrade(unit, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Unit._assets["spell"]}));
+				Perk.upgrade(unit, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["inventory"]}));
+				Perk.upgrade(unit, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["skill"]}));
+				Perk.upgrade(unit, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["spell"]}));
 
 				// Attach default perks
 				return Promise.resolve().then(() => {
@@ -193,7 +193,7 @@ export default class BasicPerk extends Perk
 	static _get(assetName, key, ...args)
 	{
 
-		return this._assets[assetName].get(key, ...args);
+		return this.__bm_assets[assetName].get(key, ...args);
 
 	}
 
@@ -209,7 +209,7 @@ export default class BasicPerk extends Perk
 	static _set(assetName, key, value)
 	{
 
-		this._assets[assetName].set(key, value);
+		this.__bm_assets[assetName].set(key, value);
 
 	}
 
@@ -224,7 +224,7 @@ export default class BasicPerk extends Perk
 	static _has(assetName, key)
 	{
 
-		this._assets[assetName].has(key);
+		this.__bm_assets[assetName].has(key);
 
 	}
 
@@ -240,7 +240,7 @@ export default class BasicPerk extends Perk
 	static _use(assetName, key, ...args)
 	{
 
-		let func = this._assets[assetName].get(key);
+		let func = this.__bm_assets[assetName].get(key);
 		Util.assert(typeof(func) === "function", `${assetName} is not available. ${assetName}Name=${key}`);
 
 		return func.call(this, this, ...args);
@@ -265,7 +265,7 @@ export default class BasicPerk extends Perk
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
-			return unit.use("spell", "setting.apply", {"settings":unit._assets["setting"].items});
+			return unit.use("spell", "setting.apply", {"settings":unit.__bm_assets["setting"].items});
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "beforeStart");
 		}).then(() => {

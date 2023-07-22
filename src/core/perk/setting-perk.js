@@ -65,7 +65,7 @@ export default class SettingPerk extends Perk
 		settings = SettingPerk.__mergeSettings(unit, settings);
 
 		// Upgrade unit
-		this.upgrade(unit, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit._assets["setting"]}));
+		this.upgrade(unit, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit.__bm_assets["setting"]}));
 
 		return Promise.resolve().then(() => {
 			SettingPerk.__loadAttrSettings(unit);
@@ -171,7 +171,7 @@ export default class SettingPerk extends Perk
 	static _mergeSettings(unit, key, value)
 	{
 
-		return unit._assets["setting"].merge(key, value);
+		return unit.__bm_assets["setting"].merge(key, value);
 
 	}
 
