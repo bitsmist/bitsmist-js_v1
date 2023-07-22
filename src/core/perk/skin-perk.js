@@ -84,7 +84,7 @@ export default class SkinPerk extends Perk
 	static SkinPerk_onBeforeTransform(sender, e, ex)
 	{
 
-		if (e.detail.skinName || SkinPerk.__hasExternalSkin(this))
+		if (e.detail.skinName || SkinPerk.__hasDefaultSkin(this))
 		{
 			let skinName = e.detail.skinName || "default";
 
@@ -100,7 +100,7 @@ export default class SkinPerk extends Perk
 	static SkinPerk_onDoTransform(sender, e, ex)
 	{
 
-		if (e.detail.skinName || SkinPerk.__hasExternalSkin(this))
+		if (e.detail.skinName || SkinPerk.__hasDefaultSkin(this))
 		{
 			let skinName = e.detail.skinName || "default";
 
@@ -252,13 +252,13 @@ export default class SkinPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the unit has the external skin file.
+	 * Check if the unit has the default skin file.
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 *
 	 * @return  {Boolean}		True if the unit has the external skin file.
 	 */
-	static __hasExternalSkin(unit)
+	static __hasDefaultSkin(unit)
 	{
 
 		let ret = false;

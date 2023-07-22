@@ -108,7 +108,7 @@ export default class StylePerk extends Perk
 			// List common CSS
 			let css = this.get("setting", "style.options.apply", []);
 
-			if (e.detail.styleName || StylePerk.__hasExternalCSS(this))
+			if (e.detail.styleName || StylePerk.__hasDefaultCSS(this))
 			{
 				let styleName = e.detail.styleName || "default";
 
@@ -306,13 +306,13 @@ export default class StylePerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Check if the unit has the external CSS file.
+	 * Check if the unit has the default CSS file.
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 *
 	 * @return  {Boolean}		True if the unit has the external CSS file.
 	 */
-	static __hasExternalCSS(unit)
+	static __hasDefaultCSS(unit)
 	{
 
 		let ret = false;
