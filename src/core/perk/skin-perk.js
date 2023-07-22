@@ -56,7 +56,7 @@ export default class SkinPerk extends Perk
 
 		// Upgrade unit
 		this.upgrade(unit, "inventory", "skin.skins", {});
-		this.upgrade(unit, "state", "skin.activeSkinName", "");
+		this.upgrade(unit, "state", "skin.active.skinName", "");
 		this.upgrade(unit, "event", "beforeTransform", SkinPerk.SkinPerk_onBeforeTransform);
 		this.upgrade(unit, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
 
@@ -196,7 +196,7 @@ export default class SkinPerk extends Perk
 		unit.unitRoot.appendChild(clone);
 
 		// Change active skin
-		unit.set("state", "skin.activeSkinName", skinName);
+		unit.set("state", "skin.active.skinName", skinName);
 
 		console.debug(`SkinPerk._applySkin(): Applied skin. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
