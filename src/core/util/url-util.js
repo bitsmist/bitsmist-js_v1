@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import Util from "./util.js";
+
 // =============================================================================
 //	URL Util Class
 // =============================================================================
@@ -63,21 +65,22 @@ export default class URLUtil
 	static buildURL(routeInfo, options)
 	{
 
-		let url = "";
+		let newURLInfo = Object.assign({}, URLUtil.parseURL(), routeInfo);
+		let url = Util.concatPath([newURLInfo["protocol"] + "//", newURLInfo["host"], newURLInfo["pathname"]]);
 
-		url += ( routeInfo["url"] ? routeInfo["url"] : "" );
-		url += ( routeInfo["path"] ? routeInfo["path"] : "" );
-		url += ( routeInfo["query"] ? `?{routeInfo["query"]}` : "" );
-
-		if (routeInfo["queryParameters"])
+		if (newURLInfo["queryParameters"])
 		{
 			let params = {};
 			if (options && options["mergeParameters"])
 			{
 				params = Object.assign(params, URLUtil.loadParameters());
 			}
-			params = Object.assign(params, routeInfo["queryParameters"]);
+			params = Object.assign(params, newURLInfo["queryParameters"]);
 			url += URLUtil.buildQuery(params);
+		}
+		else
+		{
+			url += newURLInfo["query"];
 		}
 
 		return ( url ? url : "/" );
@@ -121,31 +124,6 @@ export default class URLUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get route info from the url.
-	 *
-	 * @param	{String}		url					URL.
-	 *
-	 * @return  {Object}		Route info.
-	 */
-	static loadRouteInfo(url)
-	{
-
-		let parsedURL = new URL(url, window.location.href);
-		let routeInfo = {
-			"URL":				url,
-			"path":				parsedURL.pathname,
-			"query":			parsedURL.search,
-			"parsedURL":		parsedURL,
-			"queryParameters":	URLUtil.loadParameters(url),
-		};
-
-		return routeInfo;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Parse URL.
 	 *
 	 * @param	{String}		url					URL to parse.
@@ -155,15 +133,22 @@ export default class URLUtil
 	static parseURL(url)
 	{
 
+		url = url || window.location.href;
 		let parsed = new URL(url, window.location.href);
 		let ret = {
 			"protocol": parsed.protocol,
+			"username":	parsed.username,
+			"password":	parsed.password,
+			"host":		parsed.host,
 			"hostname": parsed.hostname,
-			"pathname": parsed.pathname,
+			"port":		parsed.port,
+			"pathname":	parsed.pathname,
+			"path":		parsed.pathname.substring(0, parsed.pathname.lastIndexOf("/") + 1),
+			"search": 	parsed.search,
 			"query": 	parsed.search,
 			"hash": 	parsed.hash,
-			"path":		parsed.pathname.substring(0, parsed.pathname.lastIndexOf("/")),
 			"filename":	parsed.pathname.split("/").pop(),
+			"queryParameters": URLUtil.loadParameters(url),
 		};
 		ret["filenameWithoutExtension"] = ret["filename"].split(".")[0];
 		ret["extension"] = ret["filename"].split(".").pop();
