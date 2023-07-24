@@ -476,7 +476,7 @@ export default class Util
     {
 
         let newQuery = ":scope " + query.replace(",", ",:scope ");
-		let targetNode = ( rootNode.shadowRoot ? rootNode.shadowRoot : rootNode );
+		let targetNode = rootNode.unitRoot || rootNode;
         let allElements = targetNode.querySelectorAll(newQuery);
 		let allSet = new Set(allElements);
 		/*
@@ -490,7 +490,7 @@ export default class Util
 		{
 			// Remove elements descendant of other components unless penetrate option is set
 			let removeQuery = ":scope [bm-powered] " + query.replace(",", ", :scope [bm-powered] ");
-			let removeElements = rootNode.querySelectorAll(removeQuery);
+			let removeElements = targetNode.querySelectorAll(removeQuery);
 
 			let removeSet = new Set(removeElements);
 			removeSet.forEach((item) => {
