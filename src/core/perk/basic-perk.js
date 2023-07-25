@@ -284,7 +284,7 @@ export default class BasicPerk extends Perk
 				return unit.use("spell", "basic.refresh");
 			}
 		}).then(() => {
-//			window.getComputedStyle(unit).getPropertyValue("visibility"); // Recalc styles
+			window.getComputedStyle(unit).getPropertyValue("visibility"); // Recalc styles
 
 			console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("skill", "status.change", "started");
@@ -356,7 +356,7 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "doTransform", options);
 		}).then(() => {
-			return unit.use("spell", "unit.materializeAll", unit.unitRoot);
+			return unit.use("spell", "unit.materializeAll", unit);
 		}).then(() => {
 			console.debug(`BasicPerk._transform(): Transformed. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("spell", "event.trigger", "afterTransform", options);
