@@ -475,8 +475,8 @@ export default class Util
     static scopedSelectorAll(rootNode, query, options)
     {
 
-        let newQuery = ":scope " + query.replace(",", ",:scope ");
 		let targetNode = rootNode.unitRoot || rootNode;
+        let newQuery = ( targetNode instanceof DocumentFragment ? query : ":scope " + query.replace(",", ",:scope "));
         let allElements = targetNode.querySelectorAll(newQuery);
 		let allSet = new Set(allElements);
 		/*
@@ -489,7 +489,7 @@ export default class Util
 		if (!options || !options["penetrate"])
 		{
 			// Remove elements descendant of other components unless penetrate option is set
-			let removeQuery = ":scope [bm-powered] " + query.replace(",", ", :scope [bm-powered] ");
+			let removeQuery = ( targetNode instanceof DocumentFragment  ?  "[bm-powered] " + query.replace(",", ", [bm-powered] ") : ":scope [bm-powered] " + query.replace(",", ", :scope [bm-powered] " ));
 			let removeElements = targetNode.querySelectorAll(removeQuery);
 
 			let removeSet = new Set(removeElements);
@@ -499,36 +499,6 @@ export default class Util
 		}
 
         return Array.from(allSet);
-
-		/*
-        // Set temp id
-        let guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-        rootNode.setAttribute("__bm_tempid", guid);
-        let id = "[__bm_tempid='" + guid + "'] ";
-
-        // Query to select all
-        let newQuery = id + query.replace(",", "," + id);
-        let allElements = rootNode.querySelectorAll(newQuery);
-		let setAll = new Set(allElements);
-
-		if (!options || !options["penetrate"])
-		{
-			// Query to select descendant of other component
-			let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
-			let removeElements = rootNode.querySelectorAll(removeQuery);
-
-			// Remove elements descendant of other component
-			let setRemove = new Set(removeElements);
-			setRemove.forEach((item) => {
-				setAll.delete(item);
-			});
-		}
-
-        // Remove temp id
-        rootNode.removeAttribute("__bm_tempid");
-
-        return Array.from(setAll);
-		*/
 
     }
 
