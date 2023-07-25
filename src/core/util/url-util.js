@@ -16,7 +16,6 @@ import Util from "./util.js";
 
 export default class URLUtil
 {
-	// -------------------------------------------------------------------------
 
 	/**
 	 * Create options array from the current url.
