@@ -284,8 +284,6 @@ export default class BasicPerk extends Perk
 				return unit.use("spell", "basic.refresh");
 			}
 		}).then(() => {
-			window.getComputedStyle(unit).getPropertyValue("visibility"); // Recalc styles
-
 			console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 			return unit.use("skill", "status.change", "started");
 		}).then(() => {
