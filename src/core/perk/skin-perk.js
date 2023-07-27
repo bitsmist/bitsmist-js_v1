@@ -89,6 +89,7 @@ export default class SkinPerk extends Perk
 			let skinName = e.detail.skinName || "default";
 
 			return SkinPerk._loadSkin(this, skinName).then((skinInfo) => {
+				this.unitRoot.textContent = "";
 				this.unitRoot = skinInfo["template"].content.cloneNode(true);
 			});
 		}
