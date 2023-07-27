@@ -102,9 +102,6 @@ export default class StylePerk extends Perk
 	{
 
 		return StylePerk._cssReady.promise.then(() => {
-			// Clear CSS
-			StylePerk._clearCSS(this);
-
 			// List common CSS
 			let css = this.get("setting", "style.options.apply", []);
 
@@ -126,10 +123,12 @@ export default class StylePerk extends Perk
 				promises.push(StylePerk._loadCSS(this, css[i]));
 			}
 
-			// Apply CSS
 			return Promise.all(promises).then(() => {
-				let chain = Promise.resolve();
+				// Clear CSS
+				StylePerk._clearCSS(this);
 
+				// Apply CSS
+				let chain = Promise.resolve();
 				for (let i = 0; i < css.length; i++)
 				{
 					chain = chain.then(() => {
