@@ -43,6 +43,7 @@ export default class StylePerk extends Perk
 	{
 
 		// Upgrade Unit
+		this.upgrade(BITSMIST.v1.Unit, "vault", "style.applied", []);
 		this.upgrade(BITSMIST.v1.Unit, "inventory", "style.styles", new ChainableStore());
 		this.upgrade(BITSMIST.v1.Unit, "spell", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
@@ -85,6 +86,7 @@ export default class StylePerk extends Perk
 	{
 
 		// Upgrade unit
+		this.upgrade(unit, "vault", "style.applied", []);
 		this.upgrade(unit, "inventory", "style.styles", new ChainableStore({
 			"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
 		}));
@@ -227,12 +229,32 @@ export default class StylePerk extends Perk
 			let shadowRoot = unit.get("state", "skin.shadowRoot");
 			if (shadowRoot)
 			{
+				// Shadow DOM
 				shadowRoot.adoptedStyleSheets = [...shadowRoot.adoptedStyleSheets, ss];
 			}
 			else
 			{
-				document.adoptedStyleSheets = [...document.adoptedStyleSheets, ss];
+				// Light DOM
+				styleName = unit.tagName + "." + styleName;
+				if (!(styleName in StylePerk.__applied) || StylePerk.__applied[styleName]["count"] <= 0)
+				{
+					// Apply styles
+					StylePerk.__applied[styleName] = StylePerk.__applied[styleName] || {};
+					document.adoptedStyleSheets = [...document.adoptedStyleSheets, ss];
+					StylePerk.__applied[styleName]["object"] = ss;
+					StylePerk.__applied[styleName]["count"] = 1;
+				}
+				else
+				{
+					// Already applied
+					StylePerk.__applied[styleName]["count"]++;
+				}
+
+				let applied = unit.get("vault", "style.applied");
+				applied.push(styleName);
+				unit.set("vault", "style.applied", applied);
 			}
+
 			console.debug(`StylePerk._applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 		});
 
@@ -251,7 +273,30 @@ export default class StylePerk extends Perk
 		let shadowRoot = unit.get("state", "skin.shadowRoot");
 		if (shadowRoot)
 		{
+			// Shadow DOM
 			shadowRoot.adoptedStyleSheets = [];
+		}
+		else
+		{
+			// Light DOM
+			let applied = unit.get("vault", "style.applied");
+			if (applied.length > 0)
+			{
+				for (let i = 0; i < applied.length; i++)
+				{
+					StylePerk.__applied[applied[i]]["count"]--;
+				}
+				unit.set("vault", "style.applied", []);
+
+				// Re-apply other CSS
+				document.adoptedStyleSheets = [];
+				Object.keys(StylePerk.__applied).forEach((key) => {
+					if (StylePerk.__applied[key]["count"] > 0)
+					{
+						document.adoptedStyleSheets = [...document.adoptedStyleSheets, StylePerk.__applied[key]["object"]];
+					}
+				});
+			}
 		}
 
 	}
@@ -316,7 +361,7 @@ export default class StylePerk extends Perk
 
 		let ret = false;
 
-		if (unit.get("setting", "style.options.styleRef"))
+		if (unit.get("setting", "style.options.styleRef", true))
 		{
 			ret = true;
 		}
@@ -384,3 +429,6 @@ export default class StylePerk extends Perk
 	}
 
 }
+
+// Init
+StylePerk.__applied = {};
