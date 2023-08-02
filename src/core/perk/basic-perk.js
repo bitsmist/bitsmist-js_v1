@@ -53,6 +53,12 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit, "method", "get", this._get);
 		this.upgrade(BITSMIST.v1.Unit, "method", "set", this._set);
 		this.upgrade(BITSMIST.v1.Unit, "method", "use", this._use);
+		this.upgrade(BITSMIST.v1.Unit, "property", "tagName", {
+			get() { return "BODY"; },
+		});
+		this.upgrade(BITSMIST.v1.Unit, "property", "unitRoot", {
+			get() { return document.body; },
+		});
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.start", function(...args) { return BasicPerk._start(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
@@ -95,7 +101,7 @@ export default class BasicPerk extends Perk
 
 		// Load tags
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
-			//if (BITSMIST.v1.Unit.get("setting", "system.autoLoadOnStartup", true))
+			if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
 			{
 				BITSMIST.v1.UnitPerk._loadTags(null, document.body, {"waitForTags":false});
 			}
@@ -114,9 +120,10 @@ export default class BasicPerk extends Perk
 	{
 
 		// The first time only initialization
-		if (!this.__initialized)
+		if (!this.__bm_uniqueid)
 		{
-			this.__bm_ready = Promise.resolve(); // A promise to prevent from start/stop while stopping/starting
+			this.__bm_initialized = false;
+			this.__bm_ready = Promise.resolve(); // A promise to prevent from starting/stopping while stopping/starting
 			this.__bm_uniqueid = Util.getUUID();
 			this.__bm_unitroot = this;
 			this.setAttribute("bm-powered", "");
@@ -126,9 +133,9 @@ export default class BasicPerk extends Perk
 		this.__bm_ready = this.__bm_ready.then(() => {
 			console.debug(`BasicPerk._connectedHandler(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 
-			if (!this.__initialized || this.get("setting", "basic.options.autoRestart", false))
+			if (!this.__bm_initialized || this.get("setting", "basic.options.autoRestart", false))
 			{
-				this.__initialized = true;
+				this.__bm_initialized = true;
 
 				// Upgrade unit
 				unit.__bm_assets = {};
