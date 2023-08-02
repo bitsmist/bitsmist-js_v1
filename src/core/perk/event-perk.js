@@ -45,7 +45,7 @@ export default class EventPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "event.triggerAsync", function(...args) { return EventPerk._triggerAsync(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "event.triggerSync", function(...args) { return EventPerk._triggerSync(...args); });
 
 	}
 
@@ -280,14 +280,14 @@ export default class EventPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Trigger the event asynchronously.
+	 * Trigger the event synchronously.
 	 *
 	 * @param	{Unit}			unit					Unit.
 	 * @param	{String}		eventName				Event name to trigger.
 	 * @param	{Object}		options					Event parameter options.
 	 * @param	{HTMLElement}	element					HTML element.
 	 */
-	static _triggerAsync(unit, eventName, options, element)
+	static _triggerSync(unit, eventName, options, element)
 	{
 
 		options = options || {};
@@ -437,7 +437,7 @@ export default class EventPerk extends Perk
 
 		if (Util.safeGet(e, "detail.async", false) === false)
 		{
-			// Wait previous handler
+			// Async
 			this.__bm_eventinfo["promises"][e.type] = EventPerk.__handle(e, sender, unit, listeners).then(() => {
 				Util.safeSet(this, templatePromises, null);
 				Util.safeSet(this, templateStatuses, "");
@@ -449,10 +449,10 @@ export default class EventPerk extends Perk
 		}
 		else
 		{
-			// Does not wait previous handler
+			// Sync
 			try
 			{
-				this.__bm_eventinfo["promises"][e.type] = EventPerk.__handleAsync(e, sender, unit, listeners);
+				this.__bm_eventinfo["promises"][e.type] = EventPerk.__handleSync(e, sender, unit, listeners);
 				Util.safeSet(this, templatePromises, null);
 				Util.safeSet(this, templateStatuses, "");
 			}
@@ -516,14 +516,14 @@ export default class EventPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Call event handlers (Async).
+	 * Call event handlers Synchronously.
 	 *
 	 * @param	{Object}		e						Event parameter.
 	 * @param	{Object}		sender					Sender object.
 	 * @param	{Object}		unit					Target unit.
 	 * @param	{Object}		listener				Listers info.
 	 */
-	static __handleAsync(e, sender, unit, listeners)
+	static __handleSync(e, sender, unit, listeners)
 	{
 
 		let stopPropagation = false;
