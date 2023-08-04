@@ -37,22 +37,11 @@ export default class StatusPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/* Doesn't work on Safari
-	static
-	{
-
-		// Init vars
-		this._statuses = {}
-
-	}
-*/
-
-	// -------------------------------------------------------------------------
-
 	static globalInit()
 	{
 
 		// Init vars
+		StatusPerk._unitInfo = BITSMIST.v1.BasicPerk._unitInfo; // Shortcut
 		StatusPerk._waitingList = new Store();
 		StatusPerk.__suspends = {};
 		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk._waitFor(BITSMIST.v1.Unit, waitlist, timeout); }
@@ -148,7 +137,7 @@ export default class StatusPerk extends Perk
 		Util.assert(StatusPerk.__isTransitionable(unit.get("state", "status.status"), status), `StatusPerk._changeStatus(): Illegal transition. name=${unit.tagName}, fromStatus=${unit.get("state", "status.status")}, toStatus=${status}, id=${unit.id}`, Error);
 
 		unit.set("state", "status.status", status);
-		this._statuses[unit.uniqueId] = {"object":unit, "status":status};
+		StatusPerk._unitInfo[unit.uniqueId]["status"] = status;
 
 		StatusPerk.__processWaitingList();
 
@@ -371,16 +360,16 @@ export default class StatusPerk extends Perk
 
 		let unitInfo;
 
-		if (waitlistItem["id"])
+		if (waitlistItem["uniqueId"])
 		{
-			unitInfo = this._statuses[waitlistItem["id"]];
+			unitInfo = StatusPerk._unitInfo[waitlistItem["uniqueId"]];
 		}
 		else if (waitlistItem["name"])
 		{
-			Object.keys(this._statuses).forEach((key) => {
-				if (waitlistItem["name"] === this._statuses[key].object.name)
+			Object.keys(StatusPerk._unitInfo).forEach((key) => {
+				if (waitlistItem["name"] === StatusPerk._unitInfo[key].object.name)
 				{
-					unitInfo = this._statuses[key];
+					unitInfo = StatusPerk._unitInfo[key];
 				}
 			});
 		}
@@ -389,7 +378,7 @@ export default class StatusPerk extends Perk
 			let element = document.querySelector(waitlistItem["rootNode"]);
 			if (element && element.uniqueId)
 			{
-				unitInfo = this._statuses[element.uniqueId];
+				unitInfo = StatusPerk._unitInfo[element.uniqueId];
 			}
 		}
 		else if (waitlistItem["object"])
@@ -397,7 +386,7 @@ export default class StatusPerk extends Perk
 			let element = waitlistItem["object"];
 			if (element.uniqueId)
 			{
-				unitInfo = this._statuses[element.uniqueId];
+				unitInfo = StatusPerk._unitInfo[element.uniqueId];
 			}
 		}
 
@@ -496,7 +485,7 @@ export default class StatusPerk extends Perk
 			isMatch = false;
 		}
 		// check id
-		else if (waitlistItem["id"] && unitInfo["object"].uniqueId !== waitlistItem["id"])
+		else if (waitlistItem["uniqueId"] && unitInfo["object"].uniqueId !== waitlistItem["uniqueId"])
 		{
 			isMatch = false;
 		}
@@ -620,6 +609,3 @@ export default class StatusPerk extends Perk
 	}
 
 }
-
-// Init
-StatusPerk._statuses = {}

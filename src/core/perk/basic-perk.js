@@ -43,6 +43,13 @@ export default class BasicPerk extends Perk
 	static globalInit()
 	{
 
+		// Init vars
+		BasicPerk._classInfo = {};
+		BasicPerk._unitInfo = {};
+		BasicPerk._indexes = {
+			"tagName": {},
+		};
+
 		// Upgrade Unit
 		BITSMIST.v1.Unit.__bm_assets = {};
 		this.upgrade(BITSMIST.v1.Unit, "asset", "state", new ChainableStore());
@@ -127,6 +134,7 @@ export default class BasicPerk extends Perk
 			this.__bm_uniqueid = Util.getUUID();
 			this.__bm_unitroot = this;
 			this.setAttribute("bm-powered", "");
+			BasicPerk._register(this);
 		}
 
 		// Start
@@ -556,6 +564,33 @@ export default class BasicPerk extends Perk
 		let nodes = Util.scopedSelectorAll(unit, query, options);
 
 		return ( nodes ? nodes[0] : null );
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Register the unit.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {HTMLElement}	Element.
+	 */
+	static _register(unit, options)
+	{
+
+		let c = customElements.get(unit.tagName.toLowerCase());
+
+		BasicPerk._unitInfo[unit.uniqueId] = {
+			"object":		unit,
+			"class":		c,
+			"classInfo":	BasicPerk._classInfo[c.name],
+		};
+
+		// Indexes
+		BasicPerk._indexes["tagName"][unit.tagName] = BasicPerk._indexes["tagName"][unit.tagName] || [];
+		BasicPerk._indexes["tagName"][unit.tagName].push(unit)
 
 	}
 

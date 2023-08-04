@@ -41,20 +41,11 @@ export default class UnitPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	/* Doesn't work on Safari
-	static
+	static globalInit()
 	{
 
 		// Init vars
-		this._classes = {}
-
-	}
-	*/
-
-	// -------------------------------------------------------------------------
-
-	static globalInit()
-	{
+		UnitPerk._classInfo = BITSMIST.v1.BasicPerk._classInfo; // Shortcut
 
 		// Upgrade Unit
 		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materializeAll", function(...args) { return UnitPerk._loadTags(...args); });
@@ -141,25 +132,25 @@ export default class UnitPerk extends Perk
 		let promise = Promise.resolve();
 		if (UnitPerk.__hasExternalClass(tagName, baseClassName, settings))
 		{
-			if (this._classes[baseClassName] && this._classes[baseClassName]["status"] === "loading")
+			if (UnitPerk._classInfo[baseClassName] && UnitPerk._classInfo[baseClassName]["status"] === "loading")
 			{
 				// Already loading
 				console.debug(`UnitPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
-				promise = this._classes[baseClassName].promise;
+				promise = UnitPerk._classInfo[baseClassName].promise;
 			}
 			else
 			{
 				// Need loading
 				console.debug(`ClassPerk._loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
-				this._classes[baseClassName] = {"status":"loading"};
+				UnitPerk._classInfo[baseClassName] = {"status":"loading"};
 
 				let options = {
 					"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Unit.get("setting", "system.unit.options.splitClass", false)),
 				};
 				promise = AjaxUtil.loadClass(UnitPerk.__getClassURL(tagName, settings), options).then(() => {
-					this._classes[baseClassName] = {"status":"loaded"};
+					UnitPerk._classInfo[baseClassName] = {"status":"loaded"};
 				});
-				this._classes[baseClassName].promise = promise;
+				UnitPerk._classInfo[baseClassName].promise = promise;
 			}
 		}
 
@@ -232,7 +223,7 @@ export default class UnitPerk extends Perk
 				let status = (sync === true ? "ready" : sync);
 
 				return unit.use("spell", "status.wait", [{
-					"id":		addedUnit.uniqueId,
+					"uniqueId":	addedUnit.uniqueId,
 					"status":	status
 				}]);
 			}
@@ -385,7 +376,7 @@ export default class UnitPerk extends Perk
 			{
 				ret = false;
 			}
-			else if (this._classes[className] && this._classes[className]["status"] === "loaded")
+			else if (UnitPerk._classInfo[className] && UnitPerk._classInfo[className]["status"] === "loaded")
 			{
 				ret = false;
 			}
@@ -519,6 +510,3 @@ export default class UnitPerk extends Perk
 	}
 
 }
-
-// Init
-UnitPerk._classes = {}
