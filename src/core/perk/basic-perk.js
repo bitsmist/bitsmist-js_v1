@@ -60,6 +60,9 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit, "method", "get", this._get);
 		this.upgrade(BITSMIST.v1.Unit, "method", "set", this._set);
 		this.upgrade(BITSMIST.v1.Unit, "method", "use", this._use);
+		this.upgrade(BITSMIST.v1.Unit, "property", "uniqueId", {
+			get() { return "00000000-0000-0000-0000-000000000000"; },
+		});
 		this.upgrade(BITSMIST.v1.Unit, "property", "tagName", {
 			get() { return "BODY"; },
 		});
