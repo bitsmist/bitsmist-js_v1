@@ -87,6 +87,8 @@ export default class BasicPerk extends Perk
 		// Upgrade unit
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_connectedHandler", this._connectedHandler);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_disconnectedHandler", this._disconnectedHandler);
+		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_adoptedHandler", this._connectedHandler);
+		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_attributeChangedHandler", this._attributeChangedHandler);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "get", this._get);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "set", this._set);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "has", this._has);
@@ -199,6 +201,33 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			console.debug(`BasicPerk.disconnectedHandler(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Adopted callback handler.
+	 */
+	static _adoptedHandler(unit)
+	{
+
+		return unit.use("spell", "event.trigger", "afterAdopt");
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Attribute changed callback handler.
+	 */
+	static _attributeChangedHandler(unit, name, oldValue, newValue)
+	{
+
+		if (this.__bm_initialized)
+		{
+			return unit.use("spell", "event.trigger", "afterAttributeChange", {"name":name, "oldValue":oldValue, "newValue":newValue});
+		}
 
 	}
 
