@@ -78,7 +78,9 @@ export default class UnitPerk extends Perk
 			chain = chain.then(() => {
 				if (!this.get("inventory", `unit.units.${sectionName}.object`))
 				{
-					return UnitPerk._loadUnit(this, sectionName, sectionValue);
+					let parentUnit = Util.safeGet(sectionValue, "unit.options.parentUnit");
+					let targetUnit = ( parentUnit ? this.use("skill", "basic.locate", parentUnit) : this );
+					return targetUnit.use("spell", "unit.materialize", sectionName, sectionValue);
 				}
 			});
 		});
@@ -409,7 +411,7 @@ export default class UnitPerk extends Perk
 		// Check root node
 		if (Util.safeGet(settings, "unit.options.parentNode"))
 		{
-			root = document.querySelector(Util.safeGet(settings, "unit.options.parentNode"));
+			root = unit.use("skill", "basic.scan", Util.safeGet(settings, "unit.options.parentNode"));
 		}
 		else
 		{

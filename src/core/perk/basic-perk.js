@@ -48,6 +48,8 @@ export default class BasicPerk extends Perk
 		BasicPerk._unitInfo = {};
 		BasicPerk._indexes = {
 			"tagName": {},
+			"className": {},
+			"id": {},
 		};
 
 		// Upgrade Unit
@@ -79,6 +81,8 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.scan", function(...args) { return BasicPerk._scan(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.scanAll", function(...args) { return BasicPerk._scanAll(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.locate", function(...args) { return BasicPerk._locate(...args); });
+		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.locateAll", function(...args) { return BasicPerk._locateAll(...args); });
 
 		// Upgrade unit
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_connectedHandler", this._connectedHandler);
@@ -594,6 +598,91 @@ export default class BasicPerk extends Perk
 		// Indexes
 		BasicPerk._indexes["tagName"][unit.tagName] = BasicPerk._indexes["tagName"][unit.tagName] || [];
 		BasicPerk._indexes["tagName"][unit.tagName].push(unit)
+		BasicPerk._indexes["className"][c.name] = BasicPerk._indexes["className"][c.name] || [];
+		BasicPerk._indexes["className"][c.name].push(unit)
+		if (unit.id)
+		{
+			BasicPerk._indexes["id"][unit.id] = BasicPerk._indexes["id"][unit.id] || [];
+			BasicPerk._indexes["id"][unit.id].push(unit)
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Locate all the unit.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Object/String/Unit}	target		Target to locate.
+	 *
+	 * @return  {HTMLElement}	Target element.
+	 */
+	static _locateAll(unit, target)
+	{
+
+		if (typeof(target) === "object")
+		{
+			if ("selector" in target)
+			{
+				return document.querySelectorAll(target["selector"]);
+			}
+			else if ("scan" in target)
+			{
+				let nodes = unit.use("skill", "basic.scan", target["scan"]);
+				return unit.use("skill", "basic.scanAll", target["scan"]);
+			}
+			else if ("uniqueId" in target)
+			{
+				return [BasicPerk._unitInfo[target["uniqueId"]].object];
+			}
+			else if ("tagName" in target)
+			{
+				return BasicPerk._indexes["tagName"][target["tagName"].toUpperCase()];
+			}
+			else if ("object" in target)
+			{
+				return [target["object"]];
+			}
+			else if ("id" in target)
+			{
+				return BasicPerk._indexes["id"][target["id"]];
+			}
+			else if ("className" in target)
+			{
+				return BasicPerk._indexes["className"][target["className"]];
+			}
+		}
+		else if (typeof(target) === "string")
+		{
+			return BasicPerk._indexes["tagName"][target.toUpperCase()];
+		}
+		else
+		{
+			return [target];
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Locate the unit.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Object/String/Unit}	target		Target to locate.
+	 *
+	 * @return  {HTMLElement}	Target element.
+	 */
+	static _locate(unit, target)
+	{
+
+		let units = BasicPerk._locateAll(unit, target);
+
+		if (units)
+		{
+			return units[0];
+		}
 
 	}
 

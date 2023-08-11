@@ -355,39 +355,14 @@ export default class StatusPerk extends Perk
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
-	static __getUnitInfo(waitlistItem)
+	static __getUnitInfo(unit, waitlistItem)
 	{
 
 		let unitInfo;
-
-		if (waitlistItem["uniqueId"])
+		let target = unit.use("skill", "basic.locate", waitlistItem);
+		if (target)
 		{
-			unitInfo = StatusPerk._unitInfo[waitlistItem["uniqueId"]];
-		}
-		else if (waitlistItem["name"])
-		{
-			Object.keys(StatusPerk._unitInfo).forEach((key) => {
-				if (waitlistItem["name"] === StatusPerk._unitInfo[key].object.name)
-				{
-					unitInfo = StatusPerk._unitInfo[key];
-				}
-			});
-		}
-		else if (waitlistItem["rootNode"])
-		{
-			let element = document.querySelector(waitlistItem["rootNode"]);
-			if (element && element.uniqueId)
-			{
-				unitInfo = StatusPerk._unitInfo[element.uniqueId];
-			}
-		}
-		else if (waitlistItem["object"])
-		{
-			let element = waitlistItem["object"];
-			if (element.uniqueId)
-			{
-				unitInfo = StatusPerk._unitInfo[element.uniqueId];
-			}
+			unitInfo = BITSMIST.v1.BasicPerk._unitInfo[target.uniqueId];
 		}
 
 		return unitInfo;
@@ -412,10 +387,10 @@ export default class StatusPerk extends Perk
 		for (let i = 0; i < waitlist.length; i++)
 		{
 			let match = false;
-			let unitInfo = this.__getUnitInfo(waitlist[i]);
+			let unitInfo = this.__getUnitInfo(waitInfo["waiter"], waitlist[i]);
 			if (unitInfo)
 			{
-				if (StatusPerk.__isReady(waitlist[i], unitInfo))
+				if (StatusPerk.__isStatusMatch(unitInfo["status"], waitlist[i]["status"]))
 				{
 					match = true;
 				}
@@ -430,72 +405,6 @@ export default class StatusPerk extends Perk
 		}
 
 		return result;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if the unit is ready.
-	 *
-	 * @param	{Object}		waitlistItem		Wait list item.
-	 * @param	{Object}		unitInfo		Registered unit info.
-	 *
-	 * @return  {Boolean}		True if ready.
-	 */
-	static __isReady(waitlistItem, unitInfo)
-	{
-
-		// Check unit
-		let isMatch = StatusPerk.__isUnitMatch(unitInfo, waitlistItem);
-
-		// Check status
-		if (isMatch)
-		{
-			isMatch = StatusPerk.__isStatusMatch(unitInfo["status"], waitlistItem["status"]);
-		}
-
-		return isMatch;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Check if unit match.
-	 *
-	 * @param	{Object}		unitInfo		Registered unit info.
-	 * @param	{Object}		waitlistItem		Wait list item.
-	 *
-	 * @return  {Boolean}		True if match.
-	 */
-	static __isUnitMatch(unitInfo, waitlistItem)
-	{
-
-		let isMatch = true;
-
-		// check instance
-		if (waitlistItem["object"] && unitInfo["object"] !== waitlistItem["object"])
-		{
-			isMatch = false;
-		}
-		// check name
-		else if (waitlistItem["name"] && unitInfo["object"].name !== waitlistItem["name"])
-		{
-			isMatch = false;
-		}
-		// check id
-		else if (waitlistItem["uniqueId"] && unitInfo["object"].uniqueId !== waitlistItem["uniqueId"])
-		{
-			isMatch = false;
-		}
-		// check node
-		else if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
-		{
-			isMatch = false;
-		}
-
-		return isMatch;
 
 	}
 
