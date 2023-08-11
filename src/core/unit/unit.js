@@ -58,10 +58,10 @@ export default class Unit extends HTMLElement
 	/**
 	 * Attribute changed callback.
 	 */
-	attributeChangedCallback()
+	attributeChangedCallback(name, oldValue, newValue)
 	{
 
-		this._attributeChangedHandler(this);
+		this._attributeChangedHandler(this, name, oldValue, newValue);
 
 	}
 
