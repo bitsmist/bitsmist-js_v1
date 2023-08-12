@@ -58,7 +58,7 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Set a value to object.
+		 * Set the value to object.
 		 *
 		 * @param	{Object}		store				Object that holds keys/values.
 		 * @param	{String}		key					Key to store.
@@ -84,7 +84,7 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Remove a value from object.
+		 * Remove the value from object.
 		 *
 		 * @param	{Object}		store				Object that holds keys/values.
 		 * @param	{String}		key					Key to store.
@@ -121,7 +121,7 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Merge a value to store.
+		 * Merge the value to store.
 		 *
 		 * @param	{Object}		store				Object that holds keys/values.
 		 * @param	{String}		key					Key to store.
@@ -184,30 +184,18 @@
 	 	 * Execute Javascript code from string.
 		 *
 		 * @param	{String}		code				Code to execute.
-		 * @param	{Object}		context				Context refered as "this" inside the code.
 		 * @param	{Object}		parameters			Parameters passed to the code.
 		 *
 		 * @return	{*}				Result of eval.
 		 */
-		static safeEval(code, context, parameters)
+		static safeEval(code, parameters)
 		{
-
-			let names;
-			let values = [];
-
-			if (parameters)
-			{
-				names = Object.keys(parameters).join(",");
-				Object.keys(parameters).forEach((key) => {
-					values.push(parameters[key]);
-				});
-			}
 
 			let ret = false;
 
 			try
 			{
-				ret = Function(names, '"use strict";return (' + code + ')').apply(context, values);
+				ret = Function(`"use strict";return (${code})`).apply(parameters);
 			}
 			catch(e)
 			{
@@ -345,7 +333,7 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Get a class name from tag name.
+		 * Get the class name from tag name.
 		 *
 		 * @param	{String}		tagName				Tag name.
 		 *
@@ -392,62 +380,6 @@
 			}
 
 			return result;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Parse URL.
-		 *
-		 * @param	{String}		url					URL to parse.
-		 *
-		 * @return 	{String}		Object contains each URL part.
-		 */
-		static parseURL(url)
-		{
-
-			var pattern = RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-			var matches =  url.match(pattern);
-			let parsed = {
-				"protocol": matches[2],
-				"hostname": matches[4],
-				"pathname": matches[5],
-				"path": "",
-				"filename": "",
-				"filenameWithoutExtension": "",
-				"extension": "",
-				"query": matches[7],
-				"hash": matches[8],
-			};
-
-			parsed["path"] = (parsed.protocol ? parsed.protocol + "://" : "") + (parsed.hostname ? parsed.hostname : "" );
-
-			// path and filename
-			let pos = matches[5].lastIndexOf("/");
-			if (pos > -1)
-			{
-				parsed["path"] += matches[5].substr(0, pos + 1);
-				parsed["filename"] = matches[5].substr(pos + 1);
-			}
-			else
-			{
-				parsed["filename"] = matches[5];
-			}
-
-			// filename and extension
-			let posExt =  parsed.filename.lastIndexOf(".");
-			if (posExt)
-			{
-				parsed["filenameWithoutExtension"] = parsed.filename.substr(0, posExt);
-				parsed["extension"] = parsed.filename.substr(posExt + 1);
-			}
-			else
-			{
-				parsed["filenameWithoutExtension"] = parsed.filename;
-			}
-
-			return parsed;
 
 		}
 
@@ -545,33 +477,30 @@
 	    static scopedSelectorAll(rootNode, query, options)
 	    {
 
-	        // Set temp id
-	        let guid = new Date().getTime().toString(16) + Math.floor(100*Math.random()).toString(16);
-	        rootNode.setAttribute("__bm_tempid", guid);
-	        let id = "[__bm_tempid='" + guid + "'] ";
-
-	        // Query to select all
-	        let newQuery = id + query.replace(",", "," + id);
-	        let allElements = rootNode.querySelectorAll(newQuery);
-			let setAll = new Set(allElements);
-
-			if (options && !options["penetrate"])
+			let targetNode = rootNode.unitRoot || rootNode;
+	        let newQuery = ( targetNode instanceof DocumentFragment ? query : ":scope " + query.replace(",", ",:scope "));
+	        let allElements = targetNode.querySelectorAll(newQuery);
+			let allSet = new Set(allElements);
+			/*
+			if (rootNode.matches(query))
 			{
-				// Query to select descendant of other component
-				let removeQuery = id + "[bm-powered] " + query.replace(",", ", " + id + "[bm-powered] ");
-				let removeElements = rootNode.querySelectorAll(removeQuery);
+				allSet.add(rootNode);
+			}
+			*/
 
-				// Remove elements descendant of other component
-				let setRemove = new Set(removeElements);
-				setRemove.forEach((item) => {
-					setAll.delete(item);
+			if (!options || !options["penetrate"])
+			{
+				// Remove elements descendant of other components unless penetrate option is set
+				let removeQuery = ( targetNode instanceof DocumentFragment  ?  "[bm-powered] " + query.replace(",", ", [bm-powered] ") : ":scope [bm-powered] " + query.replace(",", ", :scope [bm-powered] " ));
+				let removeElements = targetNode.querySelectorAll(removeQuery);
+
+				let removeSet = new Set(removeElements);
+				removeSet.forEach((item) => {
+					allSet.delete(item);
 				});
 			}
 
-	        // Remove temp id
-	        rootNode.removeAttribute("__bm_tempid");
-
-	        return Array.from(setAll);
+	        return Array.from(allSet);
 
 	    }
 
@@ -599,6 +528,44 @@
 			}
 
 			return uuid;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Convert given target to Javascript object if possible.
+		 *
+		 * @param	{*}				target					Target to convert to an object.
+		 * @param	{Object}		options					Options.
+		 *
+		 * @return  {Object}		Object.
+		 */
+		static getObject(target, options)
+		{
+
+			let ret;
+
+			if (Util.__isObject(target))
+			{
+				ret = target;
+			}
+			else if (typeof(target) === "string")
+			{
+				// String
+				if (options && options["format"] === "js")
+				{
+					// Javascript Object
+					ret = Util.safeEval(target, options && options["bindTo"]);
+				}
+				else
+				{
+					// JSON
+					ret = JSON.parse(target);
+				}
+			}
+
+			return ret;
 
 		}
 
@@ -748,33 +715,29 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Define new component in ES5 way.
+		 * Define new unit in ES5 way.
 		 *
 		 * @param	{String}		className			Class name.
-		 * @param	{Object}		settings			Component Settings.
+		 * @param	{Object}		settings			Unit Settings.
 		 * @param	{Object}		superClass			Super class.
 		 * @param	{String}		tagName				Tag name.
 		 */
-		static newComponent(className, settings, superClass, tagName)
+		static newUnit(className, settings, superClass, tagName)
 		{
 
-			superClass = ( superClass ? superClass : BITSMIST.v1.Component );
+			superClass = ( superClass ? superClass : BITSMIST.v1.Unit );
 
 			// Define class
 			let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
-			let classDef = Function("superClass", "return function " + ClassUtil.__validateClassName(className) + "()" + funcDef)(superClass);
+			let classDef = Function("superClass", `return function ${ClassUtil.__validateClassName(className)}()${funcDef}`)(superClass);
 			ClassUtil.inherit(classDef, superClass);
 
 			// Class settings
 			settings = settings || {};
-			settings.settings = ( settings.settings ? settings.settings : {} );
-			settings["settings"]["name"] = className;
+			settings.setting = ( settings.setting ? settings.setting : {} );
 			classDef.prototype._getSettings = function() {
 				return settings;
 			};
-
-			// Export class
-			window[className] = classDef;
 
 			// Define tag
 			if (tagName)
@@ -789,7 +752,7 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Inherit the component in ES5 way.
+		 * Inherit the unit in ES5 way.
 		 *
 		 * @param	{Object}		subClass			Sub class.
 		 * @param	{Object}		superClass			Super class.
@@ -806,10 +769,10 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Instantiate a component.
+		 * Instantiate the class.
 		 *
 		 * @param	{String}		className			Class name.
-		 * @param	{Object}		options				Options for the component.
+		 * @param	{Object}		options				Options for the unit.
 		 *
 		 * @return  {Object}		Initaiated object.
 		 */
@@ -826,7 +789,7 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Get a class.
+		 * Get the class.
 		 *
 		 * @param	{String}		className			Class name.
 		 *
@@ -839,7 +802,7 @@
 
 			try
 			{
-				ret = Function("return (" + ClassUtil.__validateClassName(className) + ")")();
+				ret = Function(`return (${ClassUtil.__validateClassName(className)})`)();
 			}
 			catch(e)
 			{
@@ -898,7 +861,7 @@
 		{
 
 			return new Promise((resolve, reject) => {
-				let url = Util.safeGet(options, "url");
+				let url = Util.safeGet(options, "URL");
 				let method = Util.safeGet(options, "method");
 				let data = Util.safeGet(options, "data", "");
 				let headers = Util.safeGet(options, "headers");
@@ -928,12 +891,6 @@
 					if (xhr.status === 200 || xhr.status === 201)
 					{
 						resolve(xhr);
-						/*
-						let wait = Math.floor(Math.random() * 2000);
-						setTimeout(() => {
-							resolve(xhr);
-						}, wait);
-						*/
 					}
 					else
 					{
@@ -955,9 +912,10 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Load the javascript file.
+		 * Load a Javascript file.
 		 *
-		 * @param	{string}		url					Javascript url.
+		 * @param	{String}		url					Javascript url.
+		 * @param	{Object}		options				Load Options.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
@@ -979,6 +937,283 @@
 				let head = document.getElementsByTagName('head')[0];
 				head.appendChild(script);
 			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load a JSON or Javascript Object file.
+		 *
+		 * @param	{String}		url					JSON URL.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static loadJSON(url, options)
+		{
+
+			let format = Util.safeGet(options, "format", url.split('?')[0].split('.').pop());
+
+			console.debug(`AjaxUtil.loadJSON(): Loading a JSON file. URL=${url}, format=${format}`);
+
+			return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
+				console.debug(`AjaxUtil.loadJSON(): Loaded the JSON file. URL=${url}, format=${format}`);
+
+				return Util.getObject(xhr.responseText, {"format":format});
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load a Text file.
+		 *
+		 * @param	{String}		url					HTML URL without extension.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static loadText(url, options)
+		{
+
+			console.debug(`AjaxUtil.loadText(): Loading a Text file. URL=${url}`);
+
+			return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
+				console.debug(`AjaxUtil.loadText(): Loaded the Text file. URL=${url}`);
+
+				return xhr.responseText;
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load an HTML file.
+		 *
+		 * @param	{String}		url					HTML URL.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static loadHTML(url, options)
+		{
+
+			console.debug(`AjaxUtil.loadHTML(): Loading an HTML file. URL=${url}`);
+
+			return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
+				console.debug(`AjaxUtil.loadHTML(): Loaded the HTML file. URL=${url}`);
+
+				return xhr.responseText;
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load a CSS file.
+		 *
+		 * @param	{String}		url					CSS URL.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static loadCSS(url, options)
+		{
+
+			console.debug(`AjaxUtil.loadCSS(): Loading an CSS file. URL=${url}`);
+
+			return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
+				console.debug(`AjaxUtil.loadCSS(): Loaded the CSS file. URL=${url}`);
+
+				return xhr.responseText;
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load class files.
+		 *
+		 * @param	{String}		url					Class URL without extension.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static loadClass(url, options)
+		{
+
+			console.debug(`AjaxUtil.loadClass(): Loading class files. URL=${url}`);
+
+			let url1 = url + ".js";
+			console.debug(`AjaxUtil.loadClass(): Loading the first file. URL1=${url1}`);
+
+			return Promise.resolve().then(() => {
+				return AjaxUtil.loadScript(url1);
+			}).then(() => {
+				if (options["splitClass"])
+				{
+					let url2 = url + ".settings.js";
+					console.debug(`AjaxUtil.loadClass(): Loading the second file. URL2=${url2}`);
+					return AjaxUtil.loadScript(url2);
+				}
+			}).then(() => {
+				console.debug(`AjaxUtil.loadClass(): Loaded the class files. URL=${url}`);
+			});
+
+		}
+
+	}
+
+	// =============================================================================
+
+	// =============================================================================
+	//	URL Util Class
+	// =============================================================================
+
+	class URLUtil
+	{
+
+		/**
+		 * Create options array from the current url.
+		 *
+		 * @param	{String}		url					URL.
+		 *
+		 * @return  {Array}			Parameters array.
+		 */
+		static loadParameters(url)
+		{
+
+			url = url || window.location.href;
+			let vars = {};
+			let hash;
+			let value;
+
+			if (window.location.href.indexOf("?") > -1)
+			{
+				let hashes = url.slice(url.indexOf('?') + 1).split('&');
+
+				for(let i = 0; i < hashes.length; i++) {
+					hash = hashes[i].split('=');
+					if (hash[1]){
+						value = hash[1].split('#')[0];
+					} else {
+						value = hash[1];
+					}
+					vars[hash[0]] = decodeURIComponent(value);
+				}
+			}
+
+			return vars;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Build url from route info.
+		 *
+		 * @param	{Object}		routeInfo			Route information.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {String}		URL.
+		 */
+		static buildURL(routeInfo, options)
+		{
+
+			let newURLInfo = Object.assign({}, URLUtil.parseURL(), routeInfo);
+			let url = (routeInfo["URL"] ? routeInfo["URL"] : Util.concatPath([newURLInfo["protocol"] + "//", newURLInfo["host"], newURLInfo["pathname"]]));
+
+			if (newURLInfo["queryParameters"])
+			{
+				let params = {};
+				if (options && options["mergeParameters"])
+				{
+					params = Object.assign(params, URLUtil.loadParameters());
+				}
+				params = Object.assign(params, newURLInfo["queryParameters"]);
+				url += URLUtil.buildQuery(params);
+			}
+			else
+			{
+				url += newURLInfo["query"];
+			}
+
+			return ( url ? url : "/" );
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Build query string from the options object.
+		 *
+		 * @param	{Object}		options				Query options.
+		 *
+		 * @return	{String}		Query string.
+		 */
+		static buildQuery(options)
+		{
+
+			let query = "";
+
+			if (options)
+			{
+				query = Object.keys(options).reduce((result, current) => {
+					if (Array.isArray(options[current]))
+					{
+						result += `${encodeURIComponent(current)}=${encodeURIComponent(options[current].join())}&`;
+					}
+					else if (options[current])
+					{
+						result += `${encodeURIComponent(current)}=${encodeURIComponent(options[current])}&`;
+					}
+
+					return result;
+				}, "");
+			}
+
+			return ( query ? `?${query.slice(0, -1)}` : "");
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Parse URL.
+		 *
+		 * @param	{String}		url					URL to parse.
+		 *
+		 * @return 	{Object}		Object contains each URL part.
+		 */
+		static parseURL(url)
+		{
+
+			url = url || window.location.href;
+			let parsed = new URL(url, window.location.href);
+			let ret = {
+				"protocol": parsed.protocol,
+				"username":	parsed.username,
+				"password":	parsed.password,
+				"host":		parsed.host,
+				"hostname": parsed.hostname,
+				"port":		parsed.port,
+				"pathname":	parsed.pathname,
+				"path":		parsed.pathname.substring(0, parsed.pathname.lastIndexOf("/") + 1),
+				"search": 	parsed.search,
+				"query": 	parsed.search,
+				"hash": 	parsed.hash,
+				"filename":	parsed.pathname.split("/").pop(),
+				"queryParameters": URLUtil.loadParameters(url),
+			};
+			ret["filenameWithoutExtension"] = ret["filename"].split(".")[0];
+			ret["extension"] = ret["filename"].split(".").pop();
+
+			return ret;
 
 		}
 
@@ -1134,7 +1369,7 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Get a value from store. Return default value when specified key is not available.
+		 * Get the value from store. Return default value when specified key is not available.
 		 *
 		 * @param	{String}		key					Key to get.
 		 * @param	{Object}		defaultValue		Value returned when key is not found.
@@ -1144,14 +1379,14 @@
 		get(key, defaultValue)
 		{
 
-			return Util.safeGet(this._items, key, defaultValue);
+			return Util.deepClone(Util.safeGet(this._items, key, defaultValue));
 
 		}
 
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Set a value to the store. If key is empty, it sets the value to the root.
+		 * Set the value to the store. If key is empty, it sets the value to the root.
 		 *
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
@@ -1161,7 +1396,7 @@
 
 			if (options && options["merge"])
 			{
-				return Util.safeMerge(this._items, key, defaultValue);
+				Util.safeMerge(this._items, key, defaultValue);
 			}
 			else
 			{
@@ -1282,13 +1517,10 @@
 		/**
 	     * Chain another store.
 	     *
-		 * @param	{Object}		component			Component to attach.
-		 * @param	{Object}		options				Plugin options.
+		 * @param	{Store}			store				Store to chain.
 	     */
 		chain(store)
 		{
-
-			Util.assert(store instanceof ChainableStore, `ChainableStore.chain(): "store" parameter must be a ChainableStore.`, TypeError);
 
 			this._chain = store;
 
@@ -1297,8 +1529,10 @@
 		// -----------------------------------------------------------------------------
 
 		/**
-		 * Get a value from store. Return default value when specified key is not available.
-		 * If chained, chained store is also considiered (Override).
+		 * Get the value from store. If chained, return from chained store when not available.
+		 * Return default value when not available in both stores.
+		 * When both has keys, then they are deep merged. Note that they are merged only when
+		 * chain has mergeable value, an object or an array.
 		 *
 		 * @param	{String}		key					Key to get.
 		 * @param	{Object}		defaultValue		Value returned when key is not found.
@@ -1310,12 +1544,19 @@
 
 			let result = defaultValue;
 
-			if (Store.prototype.has.call(this, key))
+			if (Store.prototype.has.call(this, key) && this._chain && Store.prototype.has.call(this._chain, key))
 			{
+				// Both has key then deep merge
+				result = Util.deepMerge(Store.prototype.get.call(this._chain, key), Store.prototype.get.call(this, key));
+			}
+			else if (Store.prototype.has.call(this, key))
+			{
+				// Only this has key
 				result = Store.prototype.get.call(this, key, defaultValue);
 			}
 			else if (this._chain)
 			{
+				// Only chain has key
 				result = this._chain.get(key, defaultValue);
 			}
 
@@ -1348,7 +1589,7 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Set a value to the store. If key is empty, it sets the value to the root.
+		 * Set the value to the store. If key is empty, it sets the value to the root.
 		 *
 		 * @param	{String}		key					Key to store.
 		 * @param	{Object}		value				Value to store.
@@ -1383,7 +1624,7 @@
 
 			if (result === false && this._chain)
 			{
-				result = Util.safeHas(this._chain._items, key);
+				result = this._chain.has(key);
 			}
 
 			return result;
@@ -1403,33 +1644,93 @@
 	// =============================================================================
 
 	// =============================================================================
-	//	Base organizer class
+	//	Unit Class
 	// =============================================================================
 
-	class Organizer
+	class Unit extends HTMLElement
 	{
 
 		// -------------------------------------------------------------------------
-		//  Setter/Getter
+		//  Callbacks
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Organizer name.
-		 *
-		 * @type	{Object}
+		 * Connected callback.
 		 */
-		static get name()
+		connectedCallback()
 		{
 
-			return "Organizer";
+			this._connectedHandler(this);
 
 		}
 
 		// -------------------------------------------------------------------------
-		//  Methods
+
+		/**
+		 * Disconnected callback.
+		 */
+		disconnectedCallback()
+		{
+
+			this._disconnectedHandler(this);
+
+		}
+
 		// -------------------------------------------------------------------------
 
-		static getInfo()
+		/**
+		 * Adopted callback.
+		 */
+		adoptedCallback()
+		{
+
+			this._adoptedHandler(this);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Attribute changed callback.
+		 */
+		attributeChangedCallback(name, oldValue, newValue)
+		{
+
+			this._attributeChangedHandler(this, name, oldValue, newValue);
+
+		}
+
+	}
+
+	customElements.define("bm-unit", Unit);
+
+	// =============================================================================
+	/**
+	 * BitsmistJS - Javascript Web Client Framework
+	 *
+	 * @copyright		Masaki Yasutake
+	 * @link			https://bitsmist.com/
+	 * @license			https://github.com/bitsmist/bitsmist/blob/master/LICENSE
+	 */
+	// =============================================================================
+
+	// =============================================================================
+	//	Base Perk Class
+	// =============================================================================
+
+	class Perk
+	{
+
+		// -------------------------------------------------------------------------
+		//  Properties
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Perk info.
+		 *
+		 * @type	{Object}
+		 */
+		static get info()
 		{
 
 			return {};
@@ -1437,11 +1738,13 @@
 		}
 
 		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
 		/**
-		 *  Initialize an organizer and Component class when the organizer is registered.
+		 *  Initialize an perk and Unit class when the perk is registered.
 		 *
-		 * @param	{Component}		component			Component.
+		 * @param	{Unit}			unit				Unit.
 		 * @param	{Object}		options				Options.
 		 *
 		 * @return 	{Promise}		Promise.
@@ -1453,35 +1756,35 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 *  Initialize an attached component when organizer is attached.
+		 *  Initialize an attached unit when perk is attached.
 		 *
-		 * @param	{Component}		component			Component.
+		 * @param	{Unit}			unit				Unit.
 		 * @param	{Object}		options				Options.
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		static init(component, options)
+		static init(unit, options)
 		{
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Deinitialize a component when organizer is detached.
+		 * Deinitialize the unit when perk is detached.
 		 *
-		 * @param	{Component}		component			Component.
+		 * @param	{Unit}			unit				Unit.
 		 * @param	{Object}		options				Options.
 		 *
 		 * @return 	{Promise}		Promise.
 		 */
-		static deinit(component, options)
+		static deinit(unit, options)
 		{
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Get editor for the organizer.
+		 * Get editor for the perk.
 		 *
 		 * @return 	{String}		Editor.
 		 */
@@ -1493,539 +1796,38 @@
 		}
 
 		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
 
 		/**
-		 * Set event handler for organizer.
+		 * Set event handler for perk.
 		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		eventName			Event name.
-		 * @param	{Function}		handler				Event handler.
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		type				Upgrade type.
+		 * @param	{String}		name				Section name.
+		 * @param	{Function}		content				Upgrade content.
 		 */
-		static _addOrganizerHandler(component, eventName, handler)
+		static upgrade(unit, type, name, content)
 		{
 
-			component.addEventHandler(eventName, {
-				"handler":	handler,
-				"order":	this.getInfo()["order"],
-			});
-
-		}
-
-	}
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Organizer organizer class
-	// =============================================================================
-
-	class OrganizerOrganizer extends Organizer
-	{
-
-		// -------------------------------------------------------------------------
-		//  Setter/Getter
-		// -------------------------------------------------------------------------
-
-		static get name()
-		{
-
-			return "OrganizerOrganizer";
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Registered Organizers.
-		 *
-		 * @type	{Object}
-		 */
-		static get organizers()
-		{
-
-			return OrganizerOrganizer._organizers;
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Methods
-		// -------------------------------------------------------------------------
-
-		static getInfo()
-		{
-
-			return {
-				"sections":		"organizers",
-				"order":		0,
-			};
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static globalInit()
-		{
-
-			// Add properties to Component
-			Object.defineProperty(BITSMIST.v1.Component.prototype, "organizers", {
-				get() { return this._organizers; },
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static init(component, options)
-		{
-
-			// Init component vars
-		//	component._organizers = {};
-
-			// Add methods to Component
-			BITSMIST.v1.Component.prototype.attachOrganizers = function(...args) { return OrganizerOrganizer._attachOrganizers(this, ...args); };
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Attach an organizer to a component.
-		 *
-		 * @param	{Component}		component			Component to be attached.
-		 * @param	{Organizer}		organizer			Organizer to attach.
-		 * @param	{Object}		options				Options.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		static attach(component, organizer, options)
-		{
-
-			component._organizers = component._organizers || {};
-
-			if (!component._organizers[organizer.name])
+			switch (type)
 			{
-				// Attach dependencies first
-				let deps = OrganizerOrganizer._organizers[organizer.name]["depends"];
-				for (let i = 0; i < deps.length; i++)
-				{
-					OrganizerOrganizer.attach(component, OrganizerOrganizer._organizers[deps[i]].object, options);
-				}
-
-				component._organizers[organizer.name] = {
-					"object":organizer
-				};
-
-				return organizer.init(component, options);
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Register an organizer.
-		 *
-		 * @param	{Organizer}		organizer			Organizer to register.
-		 */
-		static register(organizer)
-		{
-
-			let info = organizer.getInfo();
-			info["sections"] = info["sections"] || [];
-			info["sections"] = ( Array.isArray(info["sections"]) ? info["sections"] : [info["sections"]] );
-			info["order"] = ("order" in info ? info["order"] : 500);
-			info["depends"] = info["depends"] || [];
-			info["depends"] = ( Array.isArray(info["depends"]) ? info["depends"] : [info["depends"]] );
-
-			OrganizerOrganizer._organizers[organizer.name] = {
-				"name":			organizer.name,
-				"object":		organizer,
-				"sections":		info["sections"],
-				"order":		info["order"],
-				"depends":		info["depends"],
-			};
-
-			// Global init
-			organizer.globalInit();
-
-			// Create target word index
-			for (let i = 0; i < info["sections"].length; i++)
-			{
-				OrganizerOrganizer._sections[info["sections"][i]] = OrganizerOrganizer._organizers[organizer.name];
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Attach new organizers to component according to settings.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		options				Options.
-		 */
-		static _attachOrganizers(component, options)
-		{
-
-			let settings = options["settings"];
-			let chain = Promise.resolve();
-			let targets = OrganizerOrganizer.__listNewOrganizers(component, settings);
-
-			OrganizerOrganizer.__sortItems(targets).forEach((organizerName) => {
-				chain = chain.then(() => {
-					return OrganizerOrganizer.attach(component, OrganizerOrganizer._organizers[organizerName].object, options);
-				});
-			});
-
-			return chain;
-
-		}
-
-		// ------------------------------------------------------------------------
-		//  Privates
-		// ------------------------------------------------------------------------
-
-		/**
-		 * List not-attached organizers according to settings.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Object}		settings			Settings.
-		 */
-		static __listNewOrganizers(component, settings)
-		{
-
-			let targets = {};
-			Promise.resolve();
-
-			// List new organizers
-			let organizers = settings["organizers"];
-			if (organizers)
-			{
-				Object.keys(organizers).forEach((organizerName) => {
-					Util.assert(OrganizerOrganizer._organizers[organizerName], `OrganizerOrganizer.__listNewOrganizer(): Organizer not found. name=${component.name}, organizerName=${organizerName}`);
-					if (Util.safeGet(organizers[organizerName], "settings.attach") && !component._organizers[organizerName])
-					{
-						targets[organizerName] = OrganizerOrganizer._organizers[organizerName];
-					}
-				});
-			}
-
-			// List new organizers from settings keyword
-			Object.keys(settings).forEach((key) => {
-				let organizerInfo = OrganizerOrganizer._sections[key];
-				if (organizerInfo && !component._organizers[organizerInfo.name])
-				{
-					targets[organizerInfo.name] = organizerInfo;
-				}
-			});
-
-			return targets;
-
-		}
-
-		// ------------------------------------------------------------------------
-
-		/**
-		 * Sort item keys.
-		 *
-		 * @param	{Object}		observerInfo		Observer info.
-		 *
-		 * @return  {Array}			Sorted keys.
-		 */
-		static __sortItems(organizers)
-		{
-
-			return Object.keys(organizers).sort((a,b) => {
-				return organizers[a]["order"] - organizers[b]["order"];
-			})
-
-		}
-
-	}
-
-	// Init vars
-	OrganizerOrganizer._organizers = {};
-	OrganizerOrganizer._sections = {};
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Setting organizer class
-	// =============================================================================
-
-	class SettingOrganizer extends Organizer
-	{
-
-		// -------------------------------------------------------------------------
-		//  Setter/Getter
-		// -------------------------------------------------------------------------
-
-		static get name()
-		{
-
-			return "SettingOrganizer";
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Event Handlers
-		// -------------------------------------------------------------------------
-
-		static SettingOrganizer_onDoOrganize(sender, e, ex)
-		{
-
-			this._name = Util.safeGet(e.detail.settings, "settings.name", this._name);
-			this._rootElement = Util.safeGet(e.detail.settings, "settings.rootElement", this._rootElement);
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Methods
-		// -------------------------------------------------------------------------
-
-		static getInfo()
-		{
-
-			return {
-				"sections":		"settings",
-				"order":		10,
-			};
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static globalInit()
-		{
-
-			// Add properties to Component
-			Object.defineProperty(BITSMIST.v1.Component.prototype, "settings", {
-				get() { return this._settings; },
-			});
-
-			// Add methods to Component
-			BITSMIST.v1.Component.prototype.loadSettings = function(...args) { return SettingOrganizer._loadSettings(this, ...args); };
-			BITSMIST.v1.Component.prototype._enumSettings = function(...args) { return SettingOrganizer._enumSettings(...args); };
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static init(component, options)
-		{
-
-			let settings = options["settings"] || {};
-
-			// Init vars
-			component._settings = new ChainableStore({"items":settings});
-
-			// Add event handlers to component
-			this._addOrganizerHandler(component, "doOrganize", SettingOrganizer.SettingOrganizer_onDoOrganize);
-
-			// Chain global settings
-			if (component._settings.get("settings.useGlobalSettings"))
-			{
-				component._settings.chain(BITSMIST.v1.settings);
-			}
-
-			return Promise.resolve().then(() => {
-				// Load settings from an external file.
-				return SettingOrganizer._loadExternalSetting(component, "setting");
-			}).then(() => {
-				// Load settings from attributes
-				SettingOrganizer._loadAttrSettings(component);
-			}).then(() => {
-				return component.attachOrganizers({"settings":component._settings.items});
-			}).then(() => {
-				return component.trigger("doOrganize", {"settings":component._settings.items});
-			}).then(() => {
-				return component.trigger("afterLoadSettings", {"settings":component._settings.items});
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load a settings file.
-		 *
-		 * @param	{String}		fileName			File name.
-		 * @param	{String}		path				Path to the file.
-		 * @param	{Object}		loadOptions			Load Options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static loadFile(fileName, path, loadOptions)
-		{
-
-			let type = Util.safeGet(loadOptions, "type", "js");
-			let query = Util.safeGet(loadOptions, "query");
-			let url = Util.concatPath([path, fileName + "." + type]) + (query ? "?" + query : "");
-			let settings;
-
-			console.debug(`Loading settings file. fileName=${fileName}, path=${path}`);
-
-			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`Loaded settings. url=${url}`);
-
-				switch (type)
-				{
-				case "json":
-					try
-					{
-						settings = JSON.parse(xhr.responseText);
-					}
-					catch(e)
-					{
-						if (e instanceof SyntaxError)
-						{
-							throw new SyntaxError(`Illegal json string. url=${url}, message=${e.message}`);
-						}
-						else
-						{
-							throw e;
-						}
-					}
+				case "asset":
+					unit.__bm_assets[name] = content;
 					break;
-				case "js":
+				case "method":
+					unit[name] = content;
+					break;
+				case "property":
+					Object.defineProperty(unit, name, content);
+					break;
+				case "event":
+					unit.use("skill", "event.add", name, {
+						"handler":	content,
+						"order":	this.info["order"],
+					});
+					break;
 				default:
-					let bindTo = Util.safeGet(loadOptions, "bindTo");
-					settings = Function('"use strict";return (' + xhr.responseText + ')').call(bindTo);
+					unit.__bm_assets[type].set(name, content);
 					break;
-				}
-
-				return settings;
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load a settings file and merge to component's settings.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		settingName			Setting name.
-		 * @param	{Object}		loadOptions			Load options.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		static _loadSettings(component, settingName, loadOptions)
-		{
-
-			let path;
-			return Promise.resolve().then(() => {
-				path = Util.safeGet(loadOptions, "path",
-					Util.concatPath([
-						component.settings.get("system.appBaseUrl"),
-						component.settings.get("system.componentPath"),
-						component.settings.get("settings.path", ""),
-					])
-				);
-
-				return SettingOrganizer.loadFile(settingName, path, Object.assign({"type":"js", "bindTo":component}, loadOptions));
-			}).then((extraSettings) => {
-				if (extraSettings)
-				{
-					component.settings.merge(extraSettings);
-				}
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load an external setting file.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		settingName			Setting name.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static _loadExternalSetting(component, settingName)
-		{
-
-			let fileName;
-			let loadOptions = {};
-
-			if (component.hasAttribute("bm-" + settingName + "ref"))
-			{
-				let url = Util.parseURL(component.getAttribute("bm-" + settingName + "ref"));
-				fileName = url.filenameWithoutExtension;
-				loadOptions["path"] = url.path;
-				loadOptions["query"] = url.query;
-			}
-			else
-			{
-				let path = ( component.hasAttribute("bm-" + settingName + "path") ? component.getAttribute("bm-" + settingName + "path") : "" );
-				fileName = ( component.hasAttribute("bm-" + settingName + "name") ? component.getAttribute("bm-" + settingName + "name") : "" );
-				if (path && !fileName)
-				{
-					fileName = "settings";
-				}
-				loadOptions["path"] = path;
-			}
-
-			if (fileName || loadOptions["path"])
-			{
-				return SettingOrganizer._loadSettings(component, fileName, loadOptions);
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Get settings from element's attribute.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		static _loadAttrSettings(component)
-		{
-
-			// Get settings from the attribute
-
-			let dataSettings = ( document.querySelector(component._settings.get("settings.rootNode")) ?
-				document.querySelector(component._settings.get("settings.rootNode")).getAttribute("bm-settings") :
-				component.getAttribute("bm-settings")
-			);
-
-			if (dataSettings)
-			{
-				let settings = {"settings": JSON.parse(dataSettings)};
-				component._settings.merge(settings);
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Enumerate enumerable settings.
-		 *
-		 * @param	{Settings}		setting				Settings.
-		 * @param	{Function}		callback			Callback function.
-		 */
-		static _enumSettings(settings, callback)
-		{
-
-			Util.assert(typeof(callback) === "function", "not function");
-
-			if (settings)
-			{
-				Object.keys(settings).forEach((key) => {
-					if (key !== "settings")
-					{
-						callback(key, settings[key]);
-					}
-				});
 			}
 
 		}
@@ -2035,687 +1837,158 @@
 	// =============================================================================
 
 	// =============================================================================
-	//	Component class
+	//	Status Perk Class
 	// =============================================================================
 
-	// -----------------------------------------------------------------------------
-	//  Constructor
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Constructor.
-	 */
-	function Component()
-	{
-
-		// super()
-		return Reflect.construct(HTMLElement, [], this.constructor);
-
-	}
-
-	ClassUtil.inherit(Component, HTMLElement);
-
-	// -----------------------------------------------------------------------------
-	//  Callbacks
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Connected callback.
-	 */
-	Component.prototype.connectedCallback = function()
-	{
-
-		// The first time only initialization
-		if (!this._ready)
-		{
-			// Create a promise to prevent from start/stop while stopping/starting
-			this._ready = Promise.resolve();
-
-			this.setAttribute("bm-powered", "");
-			this._uniqueId = Util.getUUID();
-			this._name = this.constructor.name;
-			this._rootElement = this;
-		}
-
-		// Start
-		this._ready = this._ready.then(() => {
-			console.debug(`Component.connectedCallback(): Component is connected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.changeState("connected");
-		}).then(() => {
-			if (!this._initialized || this.settings.get("settings.autoRestart"))
-			{
-				this._initialized = true;
-				return this.start();
-			}
-			else
-			{
-				console.debug(`Component.start(): Restarted component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-				return this.changeState("ready");
-			}
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Disconnected callback.
-	 */
-	Component.prototype.disconnectedCallback = function()
-	{
-
-		// Stop
-		this._ready = this._ready.then(() => {
-			if (this.settings.get("settings.autoStop"))
-			{
-				return this.stop();
-			}
-		}).then(() => {
-			console.debug(`Component.disconnectedCallback(): Component is disconnected. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.changeState("disconnected");
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Adopted callback.
-	 */
-	Component.prototype.adoptedCallback = function()
-	{
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Attribute changed callback.
-	 */
-	Component.prototype.attributeChangedCallback = function()
-	{
-	};
-
-	// -----------------------------------------------------------------------------
-	//  Setter/Getter
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Component name.
-	 *
-	 * @type	{String}
-	 */
-	Object.defineProperty(Component.prototype, 'name', {
-		get()
-		{
-			return this._name;
-		}
-	});
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Instance's unique id.
-	 *
-	 * @type	{String}
-	 */
-	Object.defineProperty(Component.prototype, 'uniqueId', {
-		get()
-		{
-			return this._uniqueId;
-		}
-	});
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Root element.
-	 *
-	 * @type	{HTMLElement}
-	 */
-	Object.defineProperty(Component.prototype, 'rootElement', {
-		get()
-		{
-			return this._rootElement;
-		}
-	});
-
-	// -----------------------------------------------------------------------------
-	//  Methods
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Start component.
-	 *
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype.start = function(settings)
-	{
-
-		// Defaults
-		let defaults = {
-			"settings": {
-				"autoClear":			true,
-				"autoFetch":			true,
-				"autoFill":				true,
-				"autoRefresh":			true,
-				"autoRestart":			false,
-				"autoSetup":			true,
-				"autoStop":				true,
-				"autoTransform":		true,
-				"useGlobalSettings":	true,
-			},
-			"organizers": {
-	//			"OrganizerOrganizer":	{"settings":{"attach":true}},	// Attach manually
-	//			"SettingOrganizer":		{"settings":{"attach":true}},	// Attach manually
-				"StateOrganizer":		{"settings":{"attach":true}},
-				"EventOrganizer":		{"settings":{"attach":true}},
-				"TemplateOrganizer":	{"settings":{"attach":true}},
-				"ComponentOrganizer":	{"settings":{"attach":true}},
-			}
-		};
-		settings = Util.deepMerge(defaults, settings);
-
-		return Promise.resolve().then(() => {
-			return OrganizerOrganizer.attach(this, OrganizerOrganizer);
-		}).then(() => {
-			return this._injectSettings(settings);
-		}).then((newSettings) => {
-			return this.__mergeSettings(newSettings);
-		}).then((newSettings) => {
-			return OrganizerOrganizer.attach(this, SettingOrganizer, {"settings":newSettings});
-		}).then(() => {
-			return this.trigger("beforeStart");
-		}).then(() => {
-			console.debug(`Component.start(): Starting component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.changeState("starting");
-		}).then(() => {
-			if (this.settings.get("settings.autoTransform"))
-			{
-				return this.transform();
-			}
-		}).then(() => {
-			if (this.settings.get("settings.autoRefresh"))
-			{
-				return this.refresh();
-			}
-		}).then(() => {
-			return this.trigger("doStart");
-		}).then(() => {
-			window.getComputedStyle(this).getPropertyValue("visibility"); // Recalc styles
-
-			console.debug(`Component.start(): Started component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.changeState("started");
-		}).then(() => {
-			return this.trigger("afterStart");
-		}).then(() => {
-			console.debug(`Component.start(): Component is ready. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.changeState("ready");
-		}).then(() => {
-			return this.trigger("afterReady");
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Stop component.
-	 *
-	 * @param	{Object}		options				Options for the component.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype.stop = function(options)
-	{
-
-		options = options || {};
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.stop(): Stopping component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.changeState("stopping");
-		}).then(() => {
-			return this.trigger("beforeStop", options);
-		}).then(() => {
-			return this.trigger("doStop", options);
-		}).then(() => {
-			console.debug(`Component.stop(): Stopped component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.changeState("stopped");
-		}).then(() => {
-			return this.trigger("afterStop", options);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Transform component (Load HTML and attach to node).
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype.transform = function(options)
-	{
-
-		options = options || {};
-		let templateName = Util.safeGet(options, "templateName", "");
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.transform(): Transforming. name=${this.name}, templateName=${templateName}, id=${this.id}, uniqueId=${this.uniqueId}`);
-			return this.trigger("beforeTransform", options);
-		}).then(() => {
-			return this.trigger("doTransform", options);
-		}).then(() => {
-			// Setup
-			let autoSetup = this.settings.get("settings.autoSetup");
-			if (autoSetup)
-			{
-				return this.setup(options);
-			}
-		}).then(() => {
-			return this.loadTags(this.rootElement);
-		}).then(() => {
-			console.debug(`Component.transform(): Transformed. name=${this.name}, templateName=${templateName}, id=${this.id}, uniqueId=${this.uniqueId}`);
-			return this.trigger("afterTransform", options);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Setup component.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype.setup = function(options)
-	{
-
-		options = options || {};
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.setup(): Setting up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.trigger("beforeSetup", options);
-		}).then(() => {
-			return this.trigger("doSetup", options);
-		}).then(() => {
-			console.debug(`Component.setup(): Set up component. name=${this._name}, state=${this.state}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.trigger("afterSetup", options);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Refresh component.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype.refresh = function(options)
-	{
-
-		options = options || {};
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.refresh(): Refreshing component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.trigger("beforeRefresh", options);
-		}).then(() => {
-			let autoClear = Util.safeGet(options, "autoClear", this.settings.get("settings.autoClear"));
-			if (autoClear)
-			{
-				return this.clear();
-			}
-		}).then(() => {
-			return this.trigger("doTarget", options);
-		}).then(() => {
-			// Fetch
-			if (Util.safeGet(options, "autoFetch", this.settings.get("settings.autoFetch")))
-			{
-				return this.fetch(options);
-			}
-		}).then(() => {
-			// Fill
-			if (Util.safeGet(options, "autoFill", this.settings.get("settings.autoFill")))
-			{
-				return this.fill(options);
-			}
-		}).then(() => {
-			return this.trigger("doRefresh", options);
-		}).then(() => {
-			console.debug(`Component.refresh(): Refreshed component. name=${this._name}, id=${this.id}, uniqueId=${this._uniqueId}`);
-			return this.trigger("afterRefresh", options);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Fetch data.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype.fetch = function(options)
-	{
-
-		options = options || {};
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.fetch(): Fetching data. name=${this._name}, uniqueId=${this._uniqueId}`);
-			return this.trigger("beforeFetch", options);
-		}).then(() => {
-			return this.trigger("doFetch", options);
-		}).then(() => {
-			return this.trigger("afterFetch", options);
-		}).then(() => {
-			console.debug(`Component.fetch(): Fetched data. name=${this._name}, uniqueId=${this._uniqueId}`);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Fill component.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype.fill = function(options)
-	{
-
-		options = options || {};
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.fill(): Filling with data. name=${this._name}, uniqueId=${this._uniqueId}`);
-			return this.trigger("beforeFill", options);
-		}).then(() => {
-			return this.trigger("doFill", options);
-		}).then(() => {
-			console.debug(`Component.fill(): Filled with data. name=${this._name}, uniqueId=${this._uniqueId}`);
-			return this.trigger("afterFill", options);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Clear component.
-	 *
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {Promise}		Promise.
-	 */
-	Component.prototype.clear = function(options)
-	{
-
-		return Promise.resolve().then(() => {
-			console.debug(`Component.clear(): Clearing the component. name=${this._name}, uniqueId=${this._uniqueId}`);
-			return this.trigger("beforeClear", options);
-		}).then(() => {
-			return this.trigger("doClear", options);
-		}).then(() => {
-			console.debug(`Component.clear(): Cleared the component. name=${this._name}, uniqueId=${this._uniqueId}`);
-			return this.trigger("afterClear", options);
-		});
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Execute query on this component excluding nested components inside.
-	 *
-	 * @param	{String}		query				Query.
-	 *
-	 * @return  {Array}			Array of matched elements.
-	 */
-	Component.prototype.scopedSelectorAll = function(query)
-	{
-
-		return Util.scopedSelectorAll(this, query);
-
-	};
-
-	// -----------------------------------------------------------------------------
-	//  Protected
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Inject settings.
-	 *
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return  {Object}		New settings.
-	 */
-	Component.prototype._injectSettings = function(settings)
-	{
-
-		return settings;
-
-	};
-
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Get component settings. Need to override.
-	 *
-	 * @return  {Object}		Options.
-	 */
-	Component.prototype._getSettings = function()
-	{
-
-		return {};
-
-	};
-
-	// -----------------------------------------------------------------------------
-	//  Privates
-	// -----------------------------------------------------------------------------
-
-	/**
-	 * Inject settings.
-	 *
-	 * @param	{Object}		settings			Settings.
-	 *
-	 * @return  {Object}		New settings.
-	 */
-	Component.prototype.__mergeSettings = function(settings)
-	{
-
-		let curComponent = Object.getPrototypeOf(this);
-		let curSettings = {};
-		let parentSettings;
-
-		// Merge superclass settings
-		while (typeof(Object.getPrototypeOf(curComponent)._getSettings) === "function")
-		{
-			parentSettings = Object.getPrototypeOf(curComponent)._getSettings();
-			if (Object.keys(parentSettings).length > 0)
-			{
-				Util.deepMerge(parentSettings, curSettings);
-				curSettings = parentSettings;
-			}
-
-			curComponent= Object.getPrototypeOf(curComponent);
-		}
-		Util.deepMerge(settings, curSettings);
-
-		// Merge this settings
-		Util.deepMerge(settings, this._getSettings());
-
-		return settings;
-
-	};
-
-	customElements.define("bm-component", Component);
-
-	// =============================================================================
-
-	// =============================================================================
-	//	State organizer class
-	// =============================================================================
-
-	class StateOrganizer extends Organizer
+	class StatusPerk extends Perk
 	{
 
 		// -------------------------------------------------------------------------
-		//  Setter/Getter
+		//  Properties
 		// -------------------------------------------------------------------------
 
-		static get name()
-		{
-
-			return "StateOrganizer";
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Event Handlers
-		// -------------------------------------------------------------------------
-
-		static StateOrganizer_onDoOrganize(sender, e, ex)
-		{
-
-			this._enumSettings(e.detail.settings["waitFor"], (sectionName, sectionValue) => {
-				this.addEventHandler(sectionName, {"handler":StateOrganizer.StateOrganizer_onDoProcess, "options":sectionValue});
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static StateOrganizer_onDoProcess(sender, e, ex)
-		{
-
-			return StateOrganizer._waitFor(this, ex.options);
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Methods
-		// -------------------------------------------------------------------------
-
-		static getInfo()
+		static get info()
 		{
 
 			return {
-				"sections":		"waitFor",
+				"section":		"status",
 				"order":		100,
 			};
 
 		}
 
 		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
 
 		static globalInit()
 		{
 
-			// Add properties to Component
-			Object.defineProperty(BITSMIST.v1.Component.prototype, "state", {
-				get() { return this._state; },
-				set(value) { this._state = value; }
+			// Init vars
+			StatusPerk._unitInfo = BITSMIST.v1.BasicPerk._unitInfo; // Shortcut
+			StatusPerk._waitingList = new Store();
+			StatusPerk.__suspends = {};
+			StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk._waitFor(BITSMIST.v1.Unit, waitlist, timeout); };
+
+			// Upgrade Unit
+			this.upgrade(BITSMIST.v1.Unit, "skill", "status.change", function(...args) { return StatusPerk._changeStatus(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "status.wait", function(...args) { return StatusPerk._waitFor(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "status.suspend", function(...args) { return StatusPerk._suspend(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "status.resume", function(...args) { return StatusPerk._resume(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "status.pause", function(...args) { return StatusPerk._pause(...args); });
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		static init(unit, options)
+		{
+
+			// Upgrade unit;
+			this.upgrade(unit, "state", "status.status", "connected");
+			this.upgrade(unit, "inventory", "status.suspends", {});
+			this.upgrade(unit, "event", "doApplySettings", StatusPerk.StatusPerk_onDoApplySettings);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Suspend all units at the specified status.
+		 *
+		 * @param	{String}		status				Unit status.
+		 */
+		static globalSuspend(status)
+		{
+
+			StatusPerk.__suspends[status] = StatusPerk.__createSuspendInfo(status);
+			StatusPerk.__suspends[status].status = "pending";
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Resume all units at the specified status.
+		 *
+		 * @param	{String}		status				Unit status.
+		 */
+		static globalResume(status)
+		{
+
+			StatusPerk.__suspends[status].resolve();
+			StatusPerk.__suspends[status].status = "resolved";
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Event Handlers
+		// -------------------------------------------------------------------------
+
+		static StatusPerk_onDoApplySettings(sender, e, ex)
+		{
+
+			Object.entries(Util.safeGet(e.detail, "settings.status.waitFor", {})).forEach(([sectionName, sectionValue]) => {
+				this.addEventHandler(sectionName, {"handler":StatusPerk.StatusPerk_onDoProcess, "options":sectionValue});
 			});
 
-			// Add methods to Component
-			BITSMIST.v1.Component.prototype.changeState= function(...args) { return StateOrganizer._changeState(this, ...args); };
-			BITSMIST.v1.Component.prototype.waitFor = function(...args) { return StateOrganizer._waitFor(this, ...args); };
-			BITSMIST.v1.Component.prototype.suspend = function(...args) { return StateOrganizer._suspend(this, ...args); };
-			BITSMIST.v1.Component.prototype.resume = function(...args) { return StateOrganizer._resume(this, ...args); };
-			BITSMIST.v1.Component.prototype.pause = function(...args) { return StateOrganizer._pause(this, ...args); };
-
-			// Init vars
-			StateOrganizer._components = new Store();
-			StateOrganizer._waitingList = new Store();
-			StateOrganizer.__suspends = {};
-			StateOrganizer.waitFor = function(waitlist, timeout) { return StateOrganizer._waitFor(null, waitlist, timeout); };
-
 		}
 
 		// -------------------------------------------------------------------------
 
-		static init(component, options)
+		static StatusPerk_onDoProcess(sender, e, ex)
 		{
 
-			// Init component vars
-			component._state = "";
-			component._suspends = {};
-
-			// Load settings from attributes
-			StateOrganizer._loadAttrSettings(component);
-
-			// Add event handlers to component
-			this._addOrganizerHandler(component, "doOrganize", StateOrganizer.StateOrganizer_onDoOrganize);
+			return StatusPerk._waitFor(this, ex.options);
 
 		}
 
+		// -------------------------------------------------------------------------
+		//  Skills
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Suspend all components at a specified state.
+		 * Change unit status and check waiting list.
 		 *
-		 * @param	{String}		state				Component state.
+		 * @param	{Unit}			unit				Unit to register.
+		 * @param	{String}		status				Unit status.
+		 *
+		 * @return  {Promise}		Promise.
 		 */
-		static globalSuspend(state)
+		static _changeStatus(unit, status)
 		{
 
-			StateOrganizer.__suspends[state] = StateOrganizer.__createSuspendInfo(state);
-			StateOrganizer.__suspends[state].state = "pending";
+			Util.assert(StatusPerk.__isTransitionable(unit.get("state", "status.status"), status), `StatusPerk._changeStatus(): Illegal transition. name=${unit.tagName}, fromStatus=${unit.get("state", "status.status")}, toStatus=${status}, id=${unit.id}`, Error);
+
+			unit.set("state", "status.status", status);
+			StatusPerk._unitInfo[unit.uniqueId]["status"] = status;
+
+			StatusPerk.__processWaitingList();
 
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Resume all components at a specified state.
+		 * Wait for units to become specific statuses.
 		 *
-		 * @param	{String}		state				Component state.
-		 */
-		static globalResume(state)
-		{
-
-			StateOrganizer.__suspends[state].resolve();
-			StateOrganizer.__suspends[state].state = "resolved";
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Wait for components to become specific states.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{Array}			waitlist			Components to wait.
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Array}			waitlist			Units to wait.
 		 * @param	{Object}		options				Options.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static _waitFor(component, waitlist, options)
+		static _waitFor(unit, waitlist, options)
 		{
 
 			let promise;
 			let timeout =
 					(options && options["timeout"]) ||
-					(component && component.settings.get("system.waitForTimeout")) || // component could be null
-					BITSMIST.v1.settings.get("system.waitForTimeout", 10000);
-			let waiter = ( options && options["waiter"] ? options["waiter"] : component );
+					unit.get("setting", "status.options.waitForTimeout", unit.get("setting", "system.status.options.waitForTimeout", 10000));
+			let waiter = ( options && options["waiter"] ? options["waiter"] : unit );
 			let waitInfo = {"waiter":waiter, "waitlist":Util.deepClone(waitlist)};
 
-			if (StateOrganizer.__isAllReady(waitInfo))
+			if (StatusPerk.__isAllReady(waitInfo))
 			{
 				promise = Promise.resolve();
 			}
@@ -2726,14 +1999,15 @@
 					waitInfo["resolve"] = resolve;
 					waitInfo["reject"] = reject;
 					waitInfo["timer"] = setTimeout(() => {
-						let name = ( component && component.name ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
-						reject(`StateOrganizer._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StateOrganizer.__dumpWaitlist(waitlist)}, name=${name}, uniqueId=${component.uniqueId}.`);
+						let name = ( unit && unit.tagName ) || ( waitInfo["waiter"] && waitInfo["waiter"].tagName ) || "";
+						let uniqueId = (unit && unit.uniqueId) || "";
+						reject(`StatusPerk._waitFor(): Timed out after ${timeout} milliseconds waiting for ${StatusPerk.__dumpWaitlist(waitlist)}, name=${name}, uniqueId=${uniqueId}.`);
 					}, timeout);
 				});
 				waitInfo["promise"] = promise;
 
-				// Add to info to a waiting list.
-				StateOrganizer.__addToWaitingList(waitInfo);
+				// Add info to the waiting list.
+				StatusPerk.__addToWaitingList(waitInfo);
 			}
 
 			return promise;
@@ -2743,111 +2017,69 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Change component state and check waiting list.
+		 * Suspend the unit at the specified status.
 		 *
-		 * @param	{Component}		component			Component to register.
-		 * @param	{String}		state				Component state.
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		status				Unit status.
+		 */
+		static _suspend(unit, status)
+		{
+
+			/*
+			unit._suspends[status] = StatusPerk.__createSuspendInfo();
+		 	unit._suspends[status].status = "pending";
+			*/
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Resume the unit at the specified status.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		status				Unit status.
+		 */
+		static _resume(unit, status)
+		{
+
+			/*
+		 	unit._suspends[status].resolve();
+		 	unit._suspends[status].status = "resolved";
+			*/
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Pause the unit if it is suspended.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		status				Unit status.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static _changeState(component, state)
+		static _pause(unit, status)
 		{
 
-			Util.assert(StateOrganizer.__isTransitionable(component._state, state), `StateOrganizer._changeState(): Illegal transition. name=${component.name}, fromState=${component._state}, toState=${state}, id=${component.id}`, Error);
-
-			component._state = state;
-			StateOrganizer._components.set(component.uniqueId, {"object":component, "state":state});
-
-			StateOrganizer.__processWaitingList();
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Suspend a component at a specified state.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		state				Component state.
-		 */
-		static _suspend(component, state)
-		{
-
-			component._suspends[state] = StateOrganizer.__createSuspendInfo();
-		 	component._suspends[state].state = "pending";
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Resume a component at a specified state.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		state				Component state.
-		 */
-		static _resume(component, state)
-		{
-
-		 	component._suspends[state].resolve();
-		 	component._suspends[state].state = "resolved";
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Pause a component if it is suspended.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		state				Component state.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static _pause(component, state)
-		{
-
+			/*
 			let ret = [];
 
 			// Globally suspended?
-			if (StateOrganizer.__suspends[state] && StateOrganizer.__suspends[state].state === "pending" && !component.settings.get("settings.ignoreGlobalSuspend"))
+			if (StatusPerk.__suspends[status] && StatusPerk.__suspends[status].status === "pending" && !unit.get("setting", "setting.ignoreGlobalSuspend"))
 			{
-				ret.push(StateOrganizer.__suspends[state].promise);
+				ret.push(StatusPerk.__suspends[status].promise);
 			}
 
-			// Component suspended?
-			if (component._suspends[state] && component._suspends[state].state === "pending")
+			// Unit suspended?
+			if (unit._suspends[status] && unit._suspends[status].status === "pending")
 			{
-				ret.push(component._suspends[state].promise);
+				ret.push(unit._suspends[status].promise);
 			}
 
 			return Promise.all(ret);
-
-		}
-
-		// -----------------------------------------------------------------------------
-
-		/**
-		 * Get settings from element's attribute.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		static _loadAttrSettings(component)
-		{
-
-			// Get waitFor from attribute
-
-			if (component.hasAttribute("bm-waitfor"))
-			{
-				let waitInfo = {"name":component.getAttribute("bm-waitfor"), "state":"ready"};
-				component.settings.merge({"waitFor": [waitInfo]});
-			}
-
-			if (component.hasAttribute("bm-waitfornode"))
-			{
-				let waitInfo = {"rootNode":component.getAttribute("bm-waitfornode"), "state":"ready"};
-				component.settings.merge({"waitFor": [waitInfo]});
-			}
+			*/
 
 		}
 
@@ -2862,11 +2094,11 @@
 		{
 
 			let removeList = [];
-			Object.keys(StateOrganizer._waitingList.items).forEach((id) => {
-				if (StateOrganizer.__isAllReady(StateOrganizer._waitingList.get(id)))
+			Object.keys(StatusPerk._waitingList.items).forEach((id) => {
+				if (StatusPerk.__isAllReady(StatusPerk._waitingList.get(id)))
 				{
-					clearTimeout(StateOrganizer._waitingList.get(id)["timer"]);
-					StateOrganizer._waitingList.get(id).resolve();
+					clearTimeout(StatusPerk._waitingList.get(id)["timer"]);
+					StatusPerk._waitingList.get(id).resolve();
 					removeList.push(id);
 				}
 			});
@@ -2874,7 +2106,7 @@
 			// Remove from waiting list
 			for (let i = 0; i < removeList.length; i++)
 			{
-				StateOrganizer._waitingList.remove(removeList[i]);
+				StatusPerk._waitingList.remove(removeList[i]);
 			}
 
 		}
@@ -2899,35 +2131,35 @@
 				{
 					let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
 
-					Util.assert(element && element.uniqueId, `StateOrganizer.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
+					Util.assert(element && element.uniqueId, `StatusPerk.__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
 				}
 			}
 			*/
 
-			StateOrganizer._waitingList.set(id, waitInfo);
+			StatusPerk._waitingList.set(id, waitInfo);
 
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Check whether changing current state to new state is allowed.
+		 * Check whether changing current status to new status is allowed.
 		 *
-		 * @param	{String}		currentState		Current state.
-		 * @param	{String}		newState			New state.
+		 * @param	{String}		currentStatus		Current status.
+		 * @param	{String}		newStatus			New status.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static __isTransitionable(currentState, newState)
+		static __isTransitionable(currentStatus, newStatus)
 		{
 
 			let ret = true;
 
-			if (currentState && currentState.slice(-3) === "ing")
+			if (currentStatus && currentStatus.slice(-3) === "ing")
 			{
 				if(
-					( currentState === "stopping" && newState !== "stopped") ||
-					( currentState === "starting" && newState !== "started")
+					( currentStatus === "stopping" && newStatus !== "stopped") ||
+					( currentStatus === "starting" && newStatus !== "started")
 				)
 				{
 					ret = false;
@@ -2941,55 +2173,30 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Get component info from wait list item.
+		 * Get unit info from wait list item.
 		 *
 		 * @param	{Object}		waitlistItem		Wait list item.
 		 *
 		 * @return  {Boolean}		True if ready.
 		 */
-		static __getComponentInfo(waitlistItem)
+		static __getUnitInfo(unit, waitlistItem)
 		{
 
-			let componentInfo;
-
-			if (waitlistItem["id"])
+			let unitInfo;
+			let target = unit.use("skill", "basic.locate", waitlistItem);
+			if (target)
 			{
-				componentInfo = StateOrganizer._components.get(waitlistItem["id"]);
-			}
-			else if (waitlistItem["name"])
-			{
-				Object.keys(StateOrganizer._components.items).forEach((key) => {
-					if (waitlistItem["name"] === StateOrganizer._components.get(key).object.name)
-					{
-						componentInfo = StateOrganizer._components.get(key);
-					}
-				});
-			}
-			else if (waitlistItem["rootNode"])
-			{
-				let element = document.querySelector(waitlistItem["rootNode"]);
-				if (element && element.uniqueId)
-				{
-					componentInfo = StateOrganizer._components.get(element.uniqueId);
-				}
-			}
-			else if (waitlistItem["object"])
-			{
-				let element = waitlistItem["object"];
-				if (element.uniqueId)
-				{
-					componentInfo = StateOrganizer._components.get(element.uniqueId);
-				}
+				unitInfo = BITSMIST.v1.BasicPerk._unitInfo[target.uniqueId];
 			}
 
-			return componentInfo;
+			return unitInfo;
 
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Check if all components are ready.
+		 * Check if all units are ready.
 		 *
 		 * @param	{Object}		waitInfo			Wait info.
 		 *
@@ -3004,10 +2211,10 @@
 			for (let i = 0; i < waitlist.length; i++)
 			{
 				let match = false;
-				let componentInfo = this.__getComponentInfo(waitlist[i]);
-				if (componentInfo)
+				let unitInfo = this.__getUnitInfo(waitInfo["waiter"], waitlist[i]);
+				if (unitInfo)
 				{
-					if (StateOrganizer.__isReady(waitlist[i], componentInfo))
+					if (StatusPerk.__isStatusMatch(unitInfo["status"], waitlist[i]["status"]))
 					{
 						match = true;
 					}
@@ -3028,92 +2235,26 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Check if a component is ready.
+		 * Check if status match.
 		 *
-		 * @param	{Object}		waitlistItem		Wait list item.
-		 * @param	{Object}		componentInfo		Registered component info.
-		 *
-		 * @return  {Boolean}		True if ready.
-		 */
-		static __isReady(waitlistItem, componentInfo)
-		{
-
-			// Check component
-			let isMatch = StateOrganizer.__isComponentMatch(componentInfo, waitlistItem);
-
-			// Check state
-			if (isMatch)
-			{
-				isMatch = StateOrganizer.__isStateMatch(componentInfo["state"], waitlistItem["state"]);
-			}
-
-			return isMatch;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if component match.
-		 *
-		 * @param	{Object}		componentInfo		Registered component info.
-		 * @param	{Object}		waitlistItem		Wait list item.
+		 * @param	{String}		currentStatus		Current status.
+		 * @param	{String}		expectedStatus		Expected status.
 		 *
 		 * @return  {Boolean}		True if match.
 		 */
-		static __isComponentMatch(componentInfo, waitlistItem)
+		static __isStatusMatch(currentStatus, expectedStatus)
 		{
 
-			let isMatch = true;
-
-			// check instance
-			if (waitlistItem["object"] && componentInfo["object"] !== waitlistItem["object"])
-			{
-				isMatch = false;
-			}
-			// check name
-			else if (waitlistItem["name"] && componentInfo["object"].name !== waitlistItem["name"])
-			{
-				isMatch = false;
-			}
-			// check id
-			else if (waitlistItem["id"] && componentInfo["object"].uniqueId !== waitlistItem["id"])
-			{
-				isMatch = false;
-			}
-			// check node
-			else if (waitlistItem["rootNode"]  && !document.querySelector(waitlistItem["rootNode"]))
-			{
-				isMatch = false;
-			}
-
-			return isMatch;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if state match.
-		 *
-		 * @param	{String}		currentState		Current state.
-		 * @param	{String}		expectedState		Expected state.
-		 *
-		 * @return  {Boolean}		True if match.
-		 */
-		static __isStateMatch(currentState, expectedState)
-		{
-
-			expectedState = expectedState || "ready";
+			expectedStatus = expectedStatus || "ready";
 			let isMatch = false;
 
-			switch (currentState)
+			switch (currentStatus)
 			{
 				case "ready":
 					if (
-						expectedState === "ready" ||
-						expectedState === "started" ||
-						expectedState === "starting"
+						expectedStatus === "ready" ||
+						expectedStatus === "started" ||
+						expectedStatus === "starting"
 					)
 					{
 						isMatch = true;
@@ -3121,8 +2262,8 @@
 					break;
 				case "started":
 					if (
-						expectedState === "started" ||
-						expectedState === "starting"
+						expectedStatus === "started" ||
+						expectedStatus === "starting"
 					)
 					{
 						isMatch = true;
@@ -3130,15 +2271,15 @@
 					break;
 				case "stopped":
 					if (
-						expectedState === "stopped" ||
-						expectedState === "stopping"
+						expectedStatus === "stopped" ||
+						expectedStatus === "stopping"
 					)
 					{
 						isMatch = true;
 					}
 					break;
 				default:
-					if ( currentState === expectedState )
+					if ( currentStatus === expectedStatus )
 					{
 						isMatch = true;
 					}
@@ -3165,22 +2306,30 @@
 
 			for (let i = 0; i < waitlist.length; i++)
 			{
-				let id = (waitlist[i].id ? "id:" + waitlist[i].id + "," : "");
-				let name = (waitlist[i].name ? "name:" + waitlist[i].name + "," : "");
-				let object = (waitlist[i].object ? "element:" + waitlist[i].object.tagName + "," : "");
-				let node = (waitlist[i].rootNode ? "node:" + waitlist[i].rootNode + "," : "");
-				let state = (waitlist[i].state ? "state:" + waitlist[i].state: "");
-				result += "\n\t{" + id + name + object + node + state + "},";
+				if (typeof(waitlist[i]) === "string")
+				{
+					result += `\n\t{"${waitlist[i]}", status:ready},`;
+				}
+				else
+				{
+					let uniqueId = (waitlist[i].id ? `uniqueId:${waitlist[i].uniqueId}, ` : "");
+					let id = (waitlist[i].id ? `id:${waitlist[i].id}, ` : "");
+					let tagName = (waitlist[i].tagName ? `tagName:${waitlist[i].tagName}, ` : "");
+					let object = (waitlist[i].object ? `object:${waitlist[i].object.tagName}, ` : "");
+					let selector = (waitlist[i].selector ? `selector:${waitlist[i].selector}, ` : "");
+					let status = (waitlist[i].status ? `status:${waitlist[i].status}` : "status:ready");
+					result += `\n\t{${uniqueId}${id}${tagName}${object}${selector}${status}},`;
+				}
 			}
 
-			return "[" + result + "\n]";
+			return `[${result}\n]`;
 
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Create a suspend info object.
+		 * Create the suspend info object.
 		 *
 		 * @return  {Object}		Suspend info.
 		 */
@@ -3192,7 +2341,7 @@
 			let promise = new Promise((resolve, reject) => {
 				suspendInfo["resolve"] = resolve;
 				suspendInfo["reject"] = reject;
-				suspendInfo["state"] = "pending";
+				suspendInfo["status"] = "pending";
 			});
 			suspendInfo["promise"] = promise;
 
@@ -3205,74 +2354,23 @@
 	// =============================================================================
 
 	// =============================================================================
-	//	Template organizer class
+	//	Unit Perk Class
 	// =============================================================================
 
-	class TemplateOrganizer extends Organizer
+	class UnitPerk extends Perk
 	{
 
 		// -------------------------------------------------------------------------
-		//  Setter/Getter
+		//  Properties
 		// -------------------------------------------------------------------------
 
-		static get name()
+		static get info()
 		{
 
-			return "TemplateOrganizer";
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Event Handlers
-		// -------------------------------------------------------------------------
-
-		static TemplateOrganizer_onDoOrganize(sender, e, ex)
-		{
-
-			let promises = [];
-
-			this._enumSettings(e.detail.settings["templates"], (sectionName, sectionValue) => {
-				if (sectionValue["type"] === "html" || sectionValue["type"] === "url")
-				{
-					promises.push(this.loadTemplate(sectionName));
-				}
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static TemplateOrganizer_onDoTransform(sender, e, ex)
-		{
-
-			if (this.settings.get("templates.settings.hasTemplate", true))
-			{
-				let templateName = this.settings.get("templates.settings.templateName");
-
-				return Promise.resolve().then(() => {
-					return this.loadTemplate(templateName);
-				}).then(() => {
-					return this.applyTemplate(templateName);
-				});
-			}
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static TemplateOrganizer_onAfterTransform(sender, e, ex)
-		{
-
-			let promises = [];
-
-			this._enumSettings(this.settings.get("templates"), (sectionName, sectionValue) => {
-				if (sectionValue["type"] === "node")
-				{
-					promises.push(this.loadTemplate(sectionName));
-				}
-			});
-
-			return Promise.all(promises);
+			return {
+				"section":		"unit",
+				"order":		400,
+			};
 
 		}
 
@@ -3280,136 +2378,137 @@
 		//  Methods
 		// -------------------------------------------------------------------------
 
-		static getInfo()
-		{
-
-			return {
-				"sections":		"templates",
-				"order":		200,
-			};
-
-		}
-
-		// -------------------------------------------------------------------------
-
 		static globalInit()
 		{
 
-			// Add properties to Component
-			Object.defineProperty(BITSMIST.v1.Component.prototype, 'templates', { get() { return this._templates; }, });
-			Object.defineProperty(BITSMIST.v1.Component.prototype, 'activeTemplateName', { get() { return this._activeTemplateName; }, set(value) { this._activeTemplateName = value; } });
+			// Init vars
+			UnitPerk._classInfo = BITSMIST.v1.BasicPerk._classInfo; // Shortcut
 
-			// Add methods to Component
-			BITSMIST.v1.Component.prototype.loadTemplate = function(...args) { return TemplateOrganizer._loadTemplate(this, ...args); };
-			BITSMIST.v1.Component.prototype.applyTemplate = function(...args) { return TemplateOrganizer._applyTemplate(this, ...args); };
-			BITSMIST.v1.Component.prototype.cloneTemplate = function(...args) { return TemplateOrganizer._clone(this, ...args); };
+			// Upgrade Unit
+			this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materializeAll", function(...args) { return UnitPerk._loadTags(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materialize", function(...args) { return UnitPerk._loadUnit(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "unit.summon", function(...args) { return UnitPerk._loadClass(...args); });
 
 		}
 
 		// -------------------------------------------------------------------------
 
-		static init(component, options)
+		static init(unit, options)
 		{
 
-			// Init component vars
-			component._templates = {};
-			component._activeTemplateName = "";
-
-			// Set defaults if not set
-			if (!component.settings.get("templates.settings.templateName"))
-			{
-				let templateName = component.settings.get("settings.fileName", component.tagName.toLowerCase());
-				component.settings.set("templates.settings.templateName", templateName);
-			}
-
-			// Add event handlers to component
-			this._addOrganizerHandler(component, "doOrganize", TemplateOrganizer.TemplateOrganizer_onDoOrganize);
-			this._addOrganizerHandler(component, "doTransform", TemplateOrganizer.TemplateOrganizer_onDoTransform);
-			this._addOrganizerHandler(component, "afterTransform", TemplateOrganizer.TemplateOrganizer_onAfterTransform);
+			// Upgrade unit
+			this.upgrade(unit, "inventory", "unit.units", {});
+			this.upgrade(unit, "event", "doApplySettings", UnitPerk.UnitPerk_onDoApplySettings);
 
 		}
 
+		// -------------------------------------------------------------------------
+		//  Event Handlers
+		// -------------------------------------------------------------------------
+
+		static UnitPerk_onDoApplySettings(sender, e, ex)
+		{
+
+			let chain = Promise.resolve();
+
+			Object.entries(Util.safeGet(e.detail, "settings.unit.units", {})).forEach(([sectionName, sectionValue]) => {
+				chain = chain.then(() => {
+					if (!this.get("inventory", `unit.units.${sectionName}.object`))
+					{
+						let parentUnit = Util.safeGet(sectionValue, "unit.options.parentUnit");
+						let targetUnit = ( parentUnit ? this.use("skill", "basic.locate", parentUnit) : this );
+						return targetUnit.use("spell", "unit.materialize", sectionName, sectionValue);
+					}
+				});
+			});
+
+			return chain;
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Skills
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Load the template html.
+		 * Load the class.
 		 *
-		 * @param	{String}		fileName			File name.
-		 * @param	{String}		path				Path to the file.
-		 * @param	{Object}		loadOptions			Load Options.
+		 * @param	{String}		tagName				Tag name.
+		 * @param	{Object}		settings			Unit settings.
 		 *
 		 * @return  {Promise}		Promise.
 		 */
-		static loadFile(fileName, path, loadOptions)
+		static _loadClass(tagName, settings)
 		{
 
-			console.debug(`Loading template file. fileName=${fileName}, path=${path}`);
+			console.debug(`UnitPerk._loadClass(): Loading class. tagName=${tagName}`);
 
-			let query = Util.safeGet(loadOptions, "query");
-			let url = Util.concatPath([path, fileName]) + ".html" + (query ? "?" + query : "");
-			return AjaxUtil.ajaxRequest({url:url, method:"GET"}).then((xhr) => {
-				console.debug(`Loaded template. fileName=${fileName}, path=${path}`);
-
-				return xhr.responseText;
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Get a template html according to settings.
-		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{String}		templateName		Template name.
-		 * @param	{Object}		loadOptions			Load options.
-		 *
-		 * @return 	{Promise}		Promise.
-		 */
-		static _loadTemplate(component, templateName, loadOptions)
-		{
-
-			let templateInfo = component._templates[templateName] || TemplateOrganizer.__createTemplateInfo(component, templateName);
-
-			if (templateInfo["isLoaded"])
-			//if (templateInfo["isLoaded"] && options && !options["forceLoad"])
+			// Override settings if URL is specified
+			let classRef = Util.safeGet(settings, "unit.options.autoLoad");
+			if (classRef && classRef !== true)
 			{
-				console.debug(`TemplateOrganizer._loadTemplate(): Template already loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`);
-				return Promise.resolve();
+				settings["system"] = settings["system"] || {};
+				settings["system"]["appBaseURL"] = "";
+				settings["system"]["unitPath"] = "";
+				settings["system"]["skinPath"] = "";
+				settings["unit"] = settings["unit"] || {};
+				settings["unit"]["options"] = settings["unit"]["options"] || {};
+				let url = URLUtil.parseURL(classRef);
+				settings["unit"]["options"]["path"] = url.path;
+				settings["unit"]["options"]["fileName"] = url.filenameWithoutExtension;
+				if (url.extension === "html")
+				{
+					settings["unit"]["options"]["autoMorph"] = ( settings["unit"]["options"]["autoMorph"] ? settings["unit"]["options"]["autoMorph"] : true );
+				}
 			}
 
-			let promise;
-			let settings = component.settings.get("templates." + templateName, {});
+			tagName = tagName.toLowerCase();
+			let className = Util.safeGet(settings, "unit.options.className", Util.getClassNameFromTagName(tagName));
+			let baseClassName = Util.safeGet(settings, "unit.options.autoMorph", className );
+			baseClassName = ( baseClassName === true ? "BITSMIST.v1.Unit" : baseClassName );
 
-			switch (settings["type"]) {
-			case "html":
-				templateInfo["html"] = settings["html"];
-				promise = Promise.resolve();
-				break;
-			case "node":
-				templateInfo["html"] = component.querySelector(settings["rootNode"]).innerHTML;
-				promise = Promise.resolve();
-				break;
-			case "url":
-			default:
-				let path = Util.safeGet(loadOptions, "path",
-					Util.concatPath([
-						component.settings.get("system.appBaseUrl", ""),
-						component.settings.get("system.templatePath", component.settings.get("system.componentPath", "")),
-						component.settings.get("settings.path", ""),
-					])
-				);
+			// Load the class if needed
+			let promise = Promise.resolve();
+			if (UnitPerk.__hasExternalClass(tagName, baseClassName, settings))
+			{
+				if (UnitPerk._classInfo[baseClassName] && UnitPerk._classInfo[baseClassName]["status"] === "loading")
+				{
+					// Already loading
+					console.debug(`UnitPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
+					promise = UnitPerk._classInfo[baseClassName].promise;
+				}
+				else
+				{
+					// Need loading
+					console.debug(`ClassPerk._loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
+					UnitPerk._classInfo[baseClassName] = {"status":"loading"};
 
-				promise = TemplateOrganizer.loadFile(templateInfo["name"], path, loadOptions).then((template) => {
-					templateInfo["html"] = template;
-				});
-				break;
+					let options = {
+						"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Unit.get("setting", "system.unit.options.splitClass", false)),
+					};
+					promise = AjaxUtil.loadClass(UnitPerk.__getClassURL(tagName, settings), options).then(() => {
+						UnitPerk._classInfo[baseClassName] = {"status":"loaded"};
+					});
+					UnitPerk._classInfo[baseClassName].promise = promise;
+				}
 			}
 
 			return promise.then(() => {
-				templateInfo["isLoaded"] = true;
+				// Morph
+				if (baseClassName !== className)
+				{
+					let superClass = ClassUtil.getClass(baseClassName);
+					ClassUtil.newUnit(className, settings, superClass, tagName);
+				}
+
+				// Define the tag
+				if (!customElements.get(tagName))
+				{
+					let classDef = ClassUtil.getClass(className);
+					Util.assert(classDef, `UnitPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
+
+					customElements.define(tagName, classDef);
+				}
 			});
 
 		}
@@ -3417,77 +2516,102 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Apply template.
+		 * Load the unit and add to parent unit.
 		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		templateName		Template name.
+		 * @param	{Unit}			unit				Parent unit.
+		 * @param	{String}		tagName				Unit tag name.
+		 * @param	{Object}		settings			Settings for the unit.
+		 * @param	{Object}		options				Load Options.
+		 *
+		 * @return  {Promise}		Promise.
 		 */
-		static _applyTemplate(component, templateName)
+		static _loadUnit(unit, tagName, settings, options)
 		{
 
-			if (component._activeTemplateName === templateName)
+			console.debug(`UnitPerk._loadUnit(): Adding the unit. name=${unit.tagName}, tagName=${tagName}`);
+
+			// Already loaded
+			if (unit.get("inventory", `unit.units.${tagName}.object`))
 			{
-				console.debug(`TemplateOrganizer._applyTemplate(): Template already applied. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`);
-				return Promise.resolve();
+				console.debug(`UnitPerk._loadUnit(): Already loaded. name=${unit.tagName}, tagName=${tagName}`);
+				return Promise.resolve(unit.get("inventory", `unit.units.${tagName}.object`));
 			}
 
-			let templateInfo = component._templates[templateName];
-
-			Util.assert(templateInfo,`TemplateOrganizer._applyTemplate(): Template not loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
-
-			if (templateInfo["node"])
+			// Get the tag name from settings if specified
+			let tag = Util.safeGet(settings, "unit.options.tag");
+			if (tag)
 			{
-				// Template node
-				let clone = TemplateOrganizer.clone(component, templateInfo["name"]);
-				component.insertBefore(clone, component.firstChild);
-			}
-			else
-			{
-				// HTML
-				component.innerHTML = templateInfo["html"];
+				let pattern = /([\w-]+)\s+\w+.*?>/;
+				tagName = tag.match(pattern)[1];
 			}
 
-			// Change active template
-			component._activeTemplateName = templateName;
+			let addedUnit;
+			return Promise.resolve().then(() => {
+				return UnitPerk._loadClass(tagName, settings);
+			}).then(() => {
+				// Insert tag
+				addedUnit = UnitPerk.__insertTag(unit, tagName, settings);
+				unit.set("inventory", `unit.units.${tagName}.object`, addedUnit);
+			}).then(() => {
+				// Wait for the added unit to be ready
+				let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "unit.options.syncOnAdd"));
+				if (sync)
+				{
+					let status = (sync === true ? "ready" : sync);
 
-			console.debug(`TemplateOrganizer._applyTemplate(): Applied template. name=${component.name}, templateName=${templateInfo["name"]}, id=${component.id}, uniqueId=${component.uniqueId}`);
+					return unit.use("spell", "status.wait", [{
+						"uniqueId":	addedUnit.uniqueId,
+						"status":	status
+					}]);
+				}
+			}).then(() => {
+				return addedUnit;
+			});
 
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Clone the component.
+		 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
 		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		templateName		Template name.
+		 * @param	{Unit}			unit				Unit. Nullable.
+		 * @param	{HTMLElement}	rootNode			Target node.
+		 * @param	{Object}		options				Load Options.
 		 *
-		 * @return  {Object}		Cloned component.
+		 * @return  {Promise}		Promise.
 		 */
-		static _clone(component, templateName)
+		static _loadTags(unit, rootNode, options)
 		{
 
-			templateName = templateName || component.settings.get("settings.templateName");
-			let templateInfo = component._templates[templateName];
+			console.debug(`UnitPerk._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
 
-			Util.assert(templateInfo,`TemplateOrganizer._clone(): Template not loaded. name=${component.name}, templateName=${templateName}, id=${component.id}, uniqueId=${component.uniqueId}`, ReferenceError);
+			let promises = [];
 
-			let clone;
-			if (templateInfo["node"])
-			{
-				// A template tag
-				clone = document.importNode(templateInfo["node"], true);
-			}
-			else
-			{
-				// Not a template tag
-				let ele = document.createElement("div");
-				ele.innerHTML = templateInfo["html"];
+			// Load tags that has bm-autoload/bm-classref/bm-automorph attribute
+			let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
+			targets.forEach((element) => {
+				// Get settings from attributes
+				let settings = this.__loadAttrSettings(element);
 
-				clone = ele.firstElementChild;
-			}
+				element.setAttribute("bm-autoloading", "");
+				element._injectSettings = function(curSettings){
+					return Util.deepMerge(curSettings, settings);
+				};
 
-			return clone;
+				// Load the class
+				promises.push(UnitPerk._loadClass(element.tagName, settings).then(() => {
+					element.removeAttribute("bm-autoloading");
+				}));
+			});
+
+			return Promise.all(promises).then(() => {
+				let waitFor = Util.safeGet(options, "waitForTags");
+				if (waitFor)
+				{
+					return UnitPerk.__waitForChildren(rootNode);
+				}
+			});
 
 		}
 
@@ -3496,25 +2620,229 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Returns a new template info object.
+		 * Get settings from element's attribute.
 		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		templateName		Template name.
-		 *
-		 * @return  {Object}		Template info.
+		 * @param	{Unit}			unit				Unit.
 		 */
-		static __createTemplateInfo(component, templateName)
+		static __loadAttrSettings(element)
 		{
 
-			if (!component._templates[templateName])
+			let settings = {
+				"unit": {
+					"options": {}
+				}
+			};
+
+			// Class name
+			if (element.hasAttribute("bm-classname"))
 			{
-				component._templates[templateName] = {};
-				component._templates[templateName]["name"] = templateName;
-				component._templates[templateName]["html"] = "";
-				component._templates[templateName]["isLoaded"] = false;
+				settings["unit"]["options"]["className"] = element.getAttribute("bm-classname");
 			}
 
-			return component._templates[templateName];
+			// Split  class
+			if (element.hasAttribute("bm-splitclass"))
+			{
+				let splitClass = unit.getAttribute("bm-splitclass") || true;
+				if (splitClass === "false")
+				{
+					splitClass = false;
+				}
+				settings["unit"]["options"]["splitClass"] = splitClass;
+			}
+
+			// Path
+			if (element.hasAttribute("bm-path"))
+			{
+				settings["unit"]["options"]["path"] = element.getAttribute("bm-path");
+			}
+
+			// File name
+			if (element.hasAttribute("bm-filename"))
+			{
+				settings["unit"]["options"]["fileName"] = element.getAttribute("bm-filename");
+			}
+
+			// Morphing
+			if (element.hasAttribute("bm-automorph"))
+			{
+				settings["unit"]["options"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
+			}
+			if (element.hasAttribute("bm-htmlref"))
+			{
+				settings["unit"]["options"]["autoMorph"] = ( element.getAttribute("bm-htmlref") ? element.getAttribute("bm-htmlref") : true );
+			}
+
+			// Auto loading
+			if (element.hasAttribute("bm-autoload"))
+			{
+				settings["unit"]["options"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
+			}
+			if (element.hasAttribute("bm-classref"))
+			{
+				settings["unit"]["options"]["autoLoad"] = ( element.getAttribute("bm-classref") ? element.getAttribute("bm-classref") : true );
+			}
+
+			return settings;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the unit has the external class file.
+		 *
+		 * @param	{String}		tagName				Tag name.
+		 * @param	{String}		className			Class name.
+		 * @param	{Object}		settings			Unit settings.
+		 *
+		 * @return  {Boolean}		True if the unit has the external class file.
+		 */
+		static __hasExternalClass(tagName, className, settings)
+		{
+
+			let ret = false;
+
+			if ((Util.safeGet(settings, "unit.options.classRef"))
+					|| (Util.safeGet(settings, "unit.options.htmlRef"))
+					|| (Util.safeGet(settings, "unit.options.autoLoad"))
+					|| (Util.safeGet(settings, "unit.options.autoMorph")))
+			{
+				ret = true;
+
+				if (customElements.get(tagName))
+				{
+					ret = false;
+				}
+				else if (UnitPerk._classInfo[className] && UnitPerk._classInfo[className]["status"] === "loaded")
+				{
+					ret = false;
+				}
+				else if (ClassUtil.getClass(className))
+				{
+					ret = false;
+				}
+			}
+
+			return ret;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Insert the tag and return the inserted unit.
+		 *
+		 * @param	{String}		tagName				Tagname.
+		 * @param	{Object}		settings			Unit settings.
+		 *
+		 * @return  {Unit}		Unit.
+		 */
+		static __insertTag(unit, tagName, settings)
+		{
+
+			let addedUnit;
+			let root;
+
+			// Check root node
+			if (Util.safeGet(settings, "unit.options.parentNode"))
+			{
+				root = unit.use("skill", "basic.scan", Util.safeGet(settings, "unit.options.parentNode"));
+			}
+			else
+			{
+				root = unit.unitRoot;
+			}
+
+			Util.assert(root, `UnitPerk.__insertTag(): Root node does not exist. name=${unit.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
+
+			// Build tag
+			let tag = ( Util.safeGet(settings, "unit.options.tag") ? Util.safeGet(settings, "unit.options.tag") : `<${tagName}></${tagName}>` );
+
+			// Insert tag
+			if (Util.safeGet(settings, "unit.options.replaceParent"))
+			{
+				root.outerHTML = tag;
+				addedUnit = root;
+			}
+			else
+			{
+				let position = Util.safeGet(settings, "unit.options.adjacentPosition", "afterbegin");
+				root.insertAdjacentHTML(position, tag);
+
+				// Get new instance
+				switch (position)
+				{
+				case "beforebegin":
+					addedUnit = root.previousSibling;
+					break;
+				case "afterbegin":
+					addedUnit = root.children[0];
+					break;
+				case "beforeend":
+					addedUnit = root.lastChild;
+					break;
+				case "afterend":
+					addedUnit = root.nextSibling;
+					break;
+				}
+			}
+
+			// Inject settings to added unit
+			addedUnit._injectSettings = function(curSettings){
+				return Util.deepMerge(curSettings, settings);
+			};
+
+			return addedUnit;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Wait for units under the specified root node to be ready.
+		 *
+		 * @param	{HTMLElement}	rootNode			Target node.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static __waitForChildren(rootNode)
+		{
+
+			let waitList = [];
+			let targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
+			targets.forEach((element) => {
+				if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
+				{
+					let waitItem = {"object":element, "status":"ready"};
+					waitList.push(waitItem);
+				}
+			});
+
+			return StatusPerk.waitFor(waitList, {"waiter":rootNode});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Return URL to Class file.
+		 *
+		 * @param	{String}		tagName				Tag name.
+		 * @param	{Object}		settings			Unit settings.
+		 *
+		 * @return  {String}		URL.
+		 */
+		static __getClassURL(tagName, settings)
+		{
+
+			let path = Util.concatPath([
+				Util.safeGet(settings, "system.unit.options.path", BITSMIST.v1.Unit.get("setting", "system.unit.options.path", "")),
+				Util.safeGet(settings, "unit.options.path", ""),
+			]);
+			let fileName = Util.safeGet(settings, "unit.options.fileName", tagName);
+			let query = Util.safeGet(settings, "unit.options.query");
+
+			return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
 
 		}
 
@@ -3523,48 +2851,23 @@
 	// =============================================================================
 
 	// =============================================================================
-	//	Event organizer class
+	//	Basic Perk Class
 	// =============================================================================
 
-	class EventOrganizer extends Organizer
+	class BasicPerk extends Perk
 	{
 
 		// -------------------------------------------------------------------------
-		//  Setter/Getter
+		//  Properties
 		// -------------------------------------------------------------------------
 
-		static get name()
+		static get info()
 		{
 
-			return "EventOrganizer";
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Event Handlers
-		// -------------------------------------------------------------------------
-
-		static EventOrganizer_onDoOrganize(sender, e, ex)
-		{
-
-			this._enumSettings(e.detail.settings["events"], (sectionName, sectionValue) => {
-				EventOrganizer._initEvents(this, sectionName, sectionValue);
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static EventOrganizer_onAfterTransform(sender, e, ex)
-		{
-
-			this._enumSettings(this.settings.get("events"), (sectionName, sectionValue) => {
-				// Initialize only elements inside component
-				if (!EventOrganizer.__isTargetSelf(sectionName, sectionValue))
-				{
-					EventOrganizer._initEvents(this, sectionName, sectionValue);
-				}
-			});
+			return {
+				"section":		"basic",
+				"order":		0,
+			};
 
 		}
 
@@ -3572,83 +2875,2101 @@
 		//  Methods
 		// -------------------------------------------------------------------------
 
-		static getInfo()
+		static globalInit()
+		{
+
+			// Init vars
+			BasicPerk._classInfo = {};
+			BasicPerk._unitInfo = {};
+			BasicPerk._indexes = {
+				"tagName": {},
+				"className": {},
+				"id": {},
+			};
+
+			// Upgrade Unit
+			BITSMIST.v1.Unit.__bm_assets = {};
+			this.upgrade(BITSMIST.v1.Unit, "asset", "state", new ChainableStore());
+			this.upgrade(BITSMIST.v1.Unit, "asset", "vault", new ChainableStore());
+			this.upgrade(BITSMIST.v1.Unit, "asset", "inventory", new ChainableStore());
+			this.upgrade(BITSMIST.v1.Unit, "asset", "skill", new ChainableStore());
+			this.upgrade(BITSMIST.v1.Unit, "asset", "spell", new ChainableStore());
+			this.upgrade(BITSMIST.v1.Unit, "method", "get", this._get);
+			this.upgrade(BITSMIST.v1.Unit, "method", "set", this._set);
+			this.upgrade(BITSMIST.v1.Unit, "method", "use", this._use);
+			this.upgrade(BITSMIST.v1.Unit, "property", "uniqueId", {
+				get() { return "00000000-0000-0000-0000-000000000000"; },
+			});
+			this.upgrade(BITSMIST.v1.Unit, "property", "tagName", {
+				get() { return "BODY"; },
+			});
+			this.upgrade(BITSMIST.v1.Unit, "property", "unitRoot", {
+				get() { return document.body; },
+			});
+			this.upgrade(BITSMIST.v1.Unit, "spell", "basic.start", function(...args) { return BasicPerk._start(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "basic.scan", function(...args) { return BasicPerk._scan(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "basic.scanAll", function(...args) { return BasicPerk._scanAll(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "basic.locate", function(...args) { return BasicPerk._locate(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "basic.locateAll", function(...args) { return BasicPerk._locateAll(...args); });
+
+			// Upgrade unit
+			this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_connectedHandler", this._connectedHandler);
+			this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_disconnectedHandler", this._disconnectedHandler);
+			this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_adoptedHandler", this._connectedHandler);
+			this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_attributeChangedHandler", this._attributeChangedHandler);
+			this.upgrade(BITSMIST.v1.Unit.prototype, "method", "get", this._get);
+			this.upgrade(BITSMIST.v1.Unit.prototype, "method", "set", this._set);
+			this.upgrade(BITSMIST.v1.Unit.prototype, "method", "has", this._has);
+			this.upgrade(BITSMIST.v1.Unit.prototype, "method", "use", this._use);
+			this.upgrade(BITSMIST.v1.Unit.prototype, "property", "uniqueId", {
+				get() { return this.__bm_uniqueid; },
+			});
+			this.upgrade(BITSMIST.v1.Unit.prototype, "property", "unitRoot", {
+				get() { return this.__bm_unitroot; },
+				set(value) { this.__bm_unitroot = value; },
+			});
+
+			// Create a promise that resolves when document is ready
+			BITSMIST.v1.Unit.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
+				if ((document.readyState === "interactive" || document.readyState === "complete"))
+				{
+					resolve();
+				}
+				else
+				{
+					document.addEventListener("DOMContentLoaded", () => {
+						resolve();
+					});
+				}
+			}));
+
+			// Load tags
+			BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
+				if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
+				{
+					BITSMIST.v1.UnitPerk._loadTags(null, document.body, {"waitForTags":false});
+				}
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+		// 	Methods (unit)
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Connected callback handler.
+		 */
+		static _connectedHandler(unit)
+		{
+
+			// The first time only initialization
+			if (!this.__bm_uniqueid)
+			{
+				this.__bm_initialized = false;
+				this.__bm_ready = Promise.resolve(); // A promise to prevent from starting/stopping while stopping/starting
+				this.__bm_uniqueid = Util.getUUID();
+				this.__bm_unitroot = this;
+				this.setAttribute("bm-powered", "");
+				BasicPerk._register(this);
+			}
+
+			// Start
+			this.__bm_ready = this.__bm_ready.then(() => {
+				console.debug(`BasicPerk._connectedHandler(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+
+				if (!this.__bm_initialized || this.get("setting", "basic.options.autoRestart", false))
+				{
+					this.__bm_initialized = true;
+
+					// Upgrade unit
+					unit.__bm_assets = {};
+					Perk.upgrade(unit, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["state"]}));
+					Perk.upgrade(unit, "asset", "vault", new ChainableStore());
+					Perk.upgrade(unit, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["inventory"]}));
+					Perk.upgrade(unit, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["skill"]}));
+					Perk.upgrade(unit, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["spell"]}));
+
+					// Attach default perks
+					return Promise.resolve().then(() => {
+						return this.use("spell", "perk.attach", BITSMIST.v1.BasicPerk);
+					}).then(() => {
+						return this.use("spell", "perk.attach", BITSMIST.v1.SettingPerk);
+					}).then(() => {
+						return this.use("spell", "perk.attach", BITSMIST.v1.PerkPerk);
+					}).then(() => {
+						return this.use("spell", "perk.attach", BITSMIST.v1.StatusPerk);
+					}).then(() => {
+						return this.use("spell", "perk.attach", BITSMIST.v1.EventPerk);
+					}).then(() => {
+						return this.use("spell", "perk.attach", BITSMIST.v1.SkinPerk);
+					}).then(() => {
+						return this.use("spell", "perk.attach", BITSMIST.v1.StylePerk);
+					}).then(() => {
+						return this.use("spell", "perk.attach", BITSMIST.v1.UnitPerk);
+					}).then(() => {
+						return this.use("spell", "basic.start");
+					});
+				}
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Disconnected callback handler.
+		 */
+		static _disconnectedHandler(unit)
+		{
+
+			// Stop
+			this.__bm_ready = this.__bm_ready.then(() => {
+				return this.use("spell", "basic.stop");
+			}).then(() => {
+				console.debug(`BasicPerk.disconnectedHandler(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Adopted callback handler.
+		 */
+		static _adoptedHandler(unit)
+		{
+
+			return unit.use("spell", "event.trigger", "afterAdopt");
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Attribute changed callback handler.
+		 */
+		static _attributeChangedHandler(unit, name, oldValue, newValue)
+		{
+
+			if (this.__bm_initialized)
+			{
+				return unit.use("spell", "event.trigger", "afterAttributeChange", {"name":name, "oldValue":oldValue, "newValue":newValue});
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get the value from the asset.
+		 *
+		 * @param	{String}		assetName			Asset name.
+		 * @param	{String}		key					Key.
+		 * @param	{*}				...args				Arguments.
+		 *
+		 * @return  {*}				Value.
+		 */
+		static _get(assetName, key, ...args)
+		{
+
+			return this.__bm_assets[assetName].get(key, ...args);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Set the value to the asset.
+		 *
+		 * @param	{String}		assetName			Asset name.
+		 * @param	{String}		key					Key.
+		 * @param	{*}				value				Value.
+		 */
+		static _set(assetName, key, value)
+		{
+
+			this.__bm_assets[assetName].set(key, value);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Return if the unit has the asset.
+		 *
+		 * @param	{String}		assetName			Asset name.
+		 * @param	{String}		key					Key.
+		 */
+		static _has(assetName, key)
+		{
+
+			this.__bm_assets[assetName].has(key);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Call the function in the asset.
+		 *
+		 * @param	{String}		assetName			Asset name.
+		 * @param	{String}		key					Key.
+		 * @param	{*}				...args				Arguments.
+		 */
+		static _use(assetName, key, ...args)
+		{
+
+			let func = this.__bm_assets[assetName].get(key);
+			Util.assert(typeof(func) === "function", `${assetName} is not available. ${assetName}Name=${key}`);
+
+			return func.call(this, this, ...args);
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Skills
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Start unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _start(unit, options)
+		{
+
+			return Promise.resolve().then(() => {
+				console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+
+				return unit.use("spell", "setting.apply", {"settings":unit.__bm_assets["setting"].items});
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "beforeStart");
+			}).then(() => {
+				return unit.use("skill", "status.change", "starting");
+			}).then(() => {
+				if (unit.get("setting", "basic.options.autoTransform", true))
+				{
+					return unit.use("spell", "basic.transform");
+				}
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doStart");
+			}).then(() => {
+				if (unit.get("setting", "basic.options.autoRefresh", true))
+				{
+					return unit.use("spell", "basic.refresh");
+				}
+			}).then(() => {
+				console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("skill", "status.change", "started");
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "afterStart");
+			}).then(() => {
+				console.debug(`BasicPerk._start(): Unit is ready. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("skill", "status.change", "ready");
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "afterReady");
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Stop unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options for the unit.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _stop(unit, options)
+		{
+
+			options = options || {};
+
+			return Promise.resolve().then(() => {
+				console.debug(`BasicPerk._stop(): Stopping unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("skill", "status.change", "stopping");
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "beforeStop", options);
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doStop", options);
+			}).then(() => {
+				console.debug(`BasicPerk._stop(): Stopped unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("skill", "status.change", "stopped");
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "afterStop", options);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Transform unit (Load HTML and attach to node).
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _transform(unit, options)
+		{
+
+			options = options || {};
+
+			return Promise.resolve().then(() => {
+				console.debug(`BasicPerk._transform(): Transforming. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "beforeTransform", options);
+			}).then(() => {
+				if (unit.get("setting", "basic.options.autoSetup", true))
+				{
+					return unit.use("spell", "basic.setup", options);
+				}
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doTransform", options);
+			}).then(() => {
+				return unit.use("spell", "unit.materializeAll", unit);
+			}).then(() => {
+				console.debug(`BasicPerk._transform(): Transformed. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "afterTransform", options);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Setup unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _setup(unit, options)
+		{
+
+			options = options || {};
+
+			return Promise.resolve().then(() => {
+				console.debug(`BasicPerk._setup(): Setting up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "beforeSetup", options);
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doSetup", options);
+			}).then(() => {
+				console.debug(`BasicPerk._setup(): Set up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "afterSetup", options);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Refresh unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _refresh(unit, options)
+		{
+
+			options = options || {};
+
+			return Promise.resolve().then(() => {
+				console.debug(`BasicPerk._refresh(): Refreshing unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "beforeRefresh", options);
+			}).then(() => {
+				let autoClear = Util.safeGet(options, "autoClear", unit.get("setting", "basic.options.autoClear", true));
+				if (autoClear)
+				{
+					return unit.use("spell", "basic.clear", options);
+				}
+			}).then(() => {
+				if (Util.safeGet(options, "autoFetch", unit.get("setting", "basic.options.autoFetch", true)))
+				{
+					return unit.use("spell", "basic.fetch", options);
+				}
+			}).then(() => {
+				if (Util.safeGet(options, "autoFill", unit.get("setting", "basic.options.autoFill", true)))
+				{
+					return unit.use("spell", "basic.fill", options);
+				}
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doRefresh", options);
+			}).then(() => {
+				console.debug(`BasicPerk._refresh(): Refreshed unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "afterRefresh", options);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Fetch data.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _fetch(unit, options)
+		{
+
+			options = options || {};
+
+			return Promise.resolve().then(() => {
+				console.debug(`BasicPerk._fetch(): Fetching data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "beforeFetch", options);
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doFetch", options);
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "afterFetch", options);
+			}).then(() => {
+				console.debug(`BasicPerk._fetch(): Fetched data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Fill unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _fill(unit, options)
+		{
+
+			options = options || {};
+
+			return Promise.resolve().then(() => {
+				console.debug(`BasicPerk._fill(): Filling with data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "beforeFill", options);
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doFill", options);
+			}).then(() => {
+				console.debug(`BasicPerk._fill(): Filled with data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "afterFill", options);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Clear unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {Promise}		Promise.
+		 */
+		static _clear(unit, options)
+		{
+
+			options = options || {};
+
+			return Promise.resolve().then(() => {
+				console.debug(`BasicPerk._clear(): Clearing the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "beforeClear", options);
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doClear", options);
+			}).then(() => {
+				console.debug(`BasicPerk._clear(): Cleared the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+				return unit.use("spell", "event.trigger", "afterClear", options);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get elements inside the unit speicified by the query.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		query				Query.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {NodeList}		Elements.
+		 */
+		static _scanAll(unit, query, options)
+		{
+
+			return Util.scopedSelectorAll(unit, query, options);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get the first element inside the unit speicified by the query.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		query				Query.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {HTMLElement}	Element.
+		 */
+		static _scan(unit, query, options)
+		{
+
+			let nodes = Util.scopedSelectorAll(unit, query, options);
+
+			return ( nodes ? nodes[0] : null );
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Register the unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return  {HTMLElement}	Element.
+		 */
+		static _register(unit, options)
+		{
+
+			let c = customElements.get(unit.tagName.toLowerCase());
+
+			BasicPerk._unitInfo[unit.uniqueId] = {
+				"object":		unit,
+				"class":		c,
+				"classInfo":	BasicPerk._classInfo[c.name],
+			};
+
+			// Indexes
+			BasicPerk._indexes["tagName"][unit.tagName] = BasicPerk._indexes["tagName"][unit.tagName] || [];
+			BasicPerk._indexes["tagName"][unit.tagName].push(unit);
+			BasicPerk._indexes["className"][c.name] = BasicPerk._indexes["className"][c.name] || [];
+			BasicPerk._indexes["className"][c.name].push(unit);
+			if (unit.id)
+			{
+				BasicPerk._indexes["id"][unit.id] = BasicPerk._indexes["id"][unit.id] || [];
+				BasicPerk._indexes["id"][unit.id].push(unit);
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Locate all the unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object/String/Unit}	target		Target to locate.
+		 *
+		 * @return  {HTMLElement}	Target element.
+		 */
+		static _locateAll(unit, target)
+		{
+
+			if (typeof(target) === "object")
+			{
+				if ("selector" in target)
+				{
+					return document.querySelectorAll(target["selector"]);
+				}
+				else if ("scan" in target)
+				{
+					unit.use("skill", "basic.scan", target["scan"]);
+					return unit.use("skill", "basic.scanAll", target["scan"]);
+				}
+				else if ("uniqueId" in target)
+				{
+					return [BasicPerk._unitInfo[target["uniqueId"]].object];
+				}
+				else if ("tagName" in target)
+				{
+					return BasicPerk._indexes["tagName"][target["tagName"].toUpperCase()];
+				}
+				else if ("object" in target)
+				{
+					return [target["object"]];
+				}
+				else if ("id" in target)
+				{
+					return BasicPerk._indexes["id"][target["id"]];
+				}
+				else if ("className" in target)
+				{
+					return BasicPerk._indexes["className"][target["className"]];
+				}
+			}
+			else if (typeof(target) === "string")
+			{
+				return BasicPerk._indexes["tagName"][target.toUpperCase()];
+			}
+			else
+			{
+				return [target];
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Locate the unit.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object/String/Unit}	target		Target to locate.
+		 *
+		 * @return  {HTMLElement}	Target element.
+		 */
+		static _locate(unit, target)
+		{
+
+			let units = BasicPerk._locateAll(unit, target);
+
+			if (units)
+			{
+				return units[0];
+			}
+
+		}
+
+	}
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Perk Perk Class
+	// =============================================================================
+
+	class PerkPerk extends Perk
+	{
+
+		// -------------------------------------------------------------------------
+		//  Properties
+		// -------------------------------------------------------------------------
+
+		static get info()
 		{
 
 			return {
-				"sections":		"events",
-				"order":		210,
+				"section":		"perk",
+				"order":		0,
 			};
 
 		}
+
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
+
+		/* Doesn't work on Safari
+		static
+		{
+
+			// Init vars
+			this._perks = {}
+			this._sections = {};
+
+		}
+		*/
 
 		// -------------------------------------------------------------------------
 
 		static globalInit()
 		{
 
-			// Add methods to Component
-			BITSMIST.v1.Component.prototype.initEvents = function(...args) { EventOrganizer._initEvents(this, ...args); };
-			BITSMIST.v1.Component.prototype.addEventHandler = function(...args) { EventOrganizer._addEventHandler(this, ...args); };
-			BITSMIST.v1.Component.prototype.trigger = function(...args) { return EventOrganizer._trigger(this, ...args) };
-			BITSMIST.v1.Component.prototype.triggerAsync = function(...args) { return EventOrganizer._triggerAsync(this, ...args) };
-			BITSMIST.v1.Component.prototype.removeEventHandler = function(...args) { return EventOrganizer._removeEventHandler(this, ...args) };
+			// Upgrade Unit
+			this.upgrade(BITSMIST.v1.Unit, "spell", "perk.attachPerks", function(...args) { return PerkPerk._attachPerks(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "perk.attach", function(...args) { return PerkPerk._attach(...args); });
 
 		}
 
 		// -------------------------------------------------------------------------
 
-		static init(component, options)
+		static init(unit, options)
 		{
 
-			// Add event handlers to component
-			this._addOrganizerHandler(component, "doOrganize", EventOrganizer.EventOrganizer_onDoOrganize);
-			this._addOrganizerHandler(component, "afterTransform", EventOrganizer.EventOrganizer_onAfterTransform);
+			// Upgrade unit
+			this.upgrade(unit, "inventory", "perk.perks.PerkPerk", {"object": this});
 
 		}
 
 		// -------------------------------------------------------------------------
 
-		static deinit(component, options)
+		/**
+		 * Register an perk.
+		 *
+		 * @param	{Perk}		perk			Perk to register.
+		 */
+		static register(perk)
 		{
 
-			let events = this.settings.get("events");
-			if (events)
+			let info = perk.info;
+			info["section"] = info["section"];
+			info["order"] = ("order" in info ? info["order"] : 500);
+			info["depends"] = info["depends"] || [];
+			info["depends"] = ( Array.isArray(info["depends"]) ? info["depends"] : [info["depends"]] );
+
+			this._perks[perk.name] = {
+				"name":			perk.name,
+				"object":		perk,
+				"section":		info["section"],
+				"order":		info["order"],
+				"depends":		info["depends"],
+			};
+
+			// Global init
+			perk.globalInit();
+
+			// Create target word index
+			PerkPerk._sections[info["section"]] = this._perks[perk.name];
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Skills
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Attach new perks to unit according to settings.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 */
+		static _attachPerks(unit, options)
+		{
+
+			let settings = options["settings"];
+			let chain = Promise.resolve();
+			let targets = PerkPerk.__listNewPerks(unit, settings);
+
+			PerkPerk.__sortItems(targets).forEach((perkName) => {
+				chain = chain.then(() => {
+					return PerkPerk._attach(unit, this._perks[perkName].object, options);
+				});
+			});
+
+			return chain;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Attach a perk to the unit.
+		 *
+		 * @param	{Unit}			unit				Unit to be attached.
+		 * @param	{Perk}			perk				Perk to attach.
+		 * @param	{Object}		options				Options.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		static _attach(unit, perk, options)
+		{
+
+			if (!unit.get("inventory", `perk.perks.${perk.name}`))
 			{
-				Object.keys(events).forEach((elementName) => {
-					EventOrganizer._removeEvents(component, elementName, events[eventName]);
+				// Attach dependencies first
+				let deps = this._perks[perk.name]["depends"];
+				for (let i = 0; i < deps.length; i++)
+				{
+					PerkPerk._attach(unit, this._perks[deps[i]].object, options);
+				}
+
+				unit.set("inventory", `perk.perks.${perk.name}`, {
+					"object":perk
+				});
+
+				return perk.init(unit, options);
+			}
+
+		}
+
+		// ------------------------------------------------------------------------
+		//  Privates
+		// ------------------------------------------------------------------------
+
+		/**
+		 * List not-attached perks according to settings.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		settings			Settings.
+		 */
+		static __listNewPerks(unit, settings)
+		{
+
+			let targets = {};
+			Promise.resolve();
+
+			// List new perks from "perk" section
+			let perks = Util.safeGet(settings, "perk.options.apply");
+			if (perks)
+			{
+				for (let i = 0; i < perks.length; i++)
+				{
+					let perkName = perks[i];
+					Util.assert(this._perks[perkName], `PerkPerk.__listNewPerk(): Perk not found. name=${unit.tagName}, perkName=${perkName}`);
+					if (!unit.get("inventory", `perk.perks.${perkName}`))
+					{
+						targets[perkName] = this._perks[perkName];
+					}
+				}
+			}
+
+			// List new perks from settings keyword
+			Object.keys(settings).forEach((key) => {
+				let perkInfo = PerkPerk._sections[key];
+
+				if (perkInfo && !unit.get("inventory", `perk.perks.${perkInfo.name}`))
+				{
+					targets[perkInfo.name] = perkInfo;
+				}
+			});
+
+			return targets;
+
+		}
+
+		// ------------------------------------------------------------------------
+
+		/**
+		 * Sort item keys.
+		 *
+		 * @param	{Object}		observerInfo		Observer info.
+		 *
+		 * @return  {Array}			Sorted keys.
+		 */
+		static __sortItems(perks)
+		{
+
+			return Object.keys(perks).sort((a,b) => {
+				return perks[a]["order"] - perks[b]["order"];
+			})
+
+		}
+
+	}
+
+	// Init
+	PerkPerk._perks = {};
+	PerkPerk._sections = {};
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Setting Perk Class
+	// =============================================================================
+
+	class SettingPerk extends Perk
+	{
+
+		// -------------------------------------------------------------------------
+		//  Properties
+		// -------------------------------------------------------------------------
+
+		static get info()
+		{
+
+			return {
+				"section":		"setting",
+				"order":		10,
+			};
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
+
+		static globalInit()
+		{
+
+			// Upgrade Unit
+			this.upgrade(BITSMIST.v1.Unit, "asset", "setting", new ChainableStore());
+
+			// Upgrade Unit
+			this.upgrade(BITSMIST.v1.Unit, "skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		static init(unit, options)
+		{
+
+			// Get settings
+			let settings = (options && options["settings"]) || {};
+			settings = SettingPerk.__injectSettings(unit, settings);
+			settings = SettingPerk.__mergeSettings(unit, settings);
+
+			// Upgrade unit
+			this.upgrade(unit, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit.__bm_assets["setting"]}));
+
+			return Promise.resolve().then(() => {
+				SettingPerk.__loadAttrSettings(unit);
+			}).then(() => {
+				if (SettingPerk.__hasExternalSettings(unit))
+				{
+					return SettingPerk._loadSettings(unit);
+				}
+			}).then(() => {
+				SettingPerk.__loadAttrSettings(unit); // Do it again to overwrite since attribute settings have higher priority
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Skills
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Apply settings.
+		 *
+	     * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Options.
+		 */
+		static _applySettings(unit, options)
+		{
+
+			return Promise.resolve().then(() => {
+				return unit.use("spell", "event.trigger", "beforeApplySettings", options);
+			}).then(() => {
+				return unit.use("spell", "perk.attachPerks", options);
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "doApplySettings", options);
+			}).then(() => {
+				return unit.use("spell", "event.trigger", "afterApplySettings", options);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the settings file and merge to unit's settings.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		options				Load options.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		static _loadSettings(unit, options)
+		{
+
+			return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(unit), Object.assign({"bindTo":unit}, options)).then((settings) => {
+				if (settings)
+				{
+					unit.use("skill", "setting.merge", settings);
+				}
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get settings.
+		 *
+	     * @param	{Unit}			unit				Unit.
+		 * @param	{String}		key					Key.
+		 * @param	{*}				defaultValue		Value returned when key is not found.
+		 */
+		static _getSettings(unit, key, defaultValue)
+		{
+
+			return unit.get("setting", key, defaultValue);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Set settings.
+		 *
+	     * @param	{Unit}			unit				Unit.
+		 * @param	{String}		key					Key.
+		 * @param	{*}				value				Value.
+		 */
+		static _setSettings(unit, key, value)
+		{
+
+			return unit.set("setting", key, value);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Set settings.
+		 *
+	     * @param	{Unit}			unit				Unit.
+		 * @param	{String}		key					Key.
+		 * @param	{*}				value				Value.
+		 */
+		static _mergeSettings(unit, key, value)
+		{
+
+			return unit.__bm_assets["setting"].merge(key, value);
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get settings from element's attribute.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 */
+		static __loadAttrSettings(unit)
+		{
+
+			if (unit.hasAttribute("bm-settingsref"))
+			{
+				let settingsRef = unit.getAttribute("bm-settingsref") || true;
+				if (settingsRef === "false")
+				{
+					settingsRef = false;
+				}
+				unit.set("setting", "setting.options.settingsRef", settingsRef);
+			}
+
+			if (unit.hasAttribute("bm-options"))
+			{
+				let options = {"options": JSON.parse(unit.getAttribute("bm-options"))};
+				unit.use("skill", "setting.merge", options);
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the unit has the external settings file.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 *
+		 * @return  {Boolean}		True if the unit has the external settings file.
+		 */
+		static __hasExternalSettings(unit)
+		{
+
+			let ret = false;
+
+			if (unit.get("setting", "setting.options.settingsRef"))
+			{
+				ret = true;
+			}
+
+			return ret;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Return URL to setting file.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 *
+		 * @return  {String}		URL.
+		 */
+		static __getSettingsURL(unit)
+		{
+
+			let path;
+			let fileName;
+			let query;
+
+			let settingsRef = unit.get("setting", "setting.options.settingsRef");
+			if (settingsRef && settingsRef !== true)
+			{
+				// If URL is specified in ref, use it
+				let url = URLUtil.parseURL(settingsRef);
+				path = url.path;
+				fileName = url.filename;
+				query = url.query;
+			}
+			else
+			{
+				// Use default path and filename
+				path = Util.concatPath([
+						unit.get("setting", "system.unit.options.path"),
+						unit.get("setting", "unit.options.path", ""),
+					]);
+				let ext = unit.get("setting", "setting.options.settingFormat", unit.get("setting", "system.setting.options.settingFormat", "json"));
+				fileName = unit.get("setting", "unit.options.fileName", unit.tagName.toLowerCase()) + ".settings." + ext;
+				query = unit.get("setting", "unit.options.query");
+			}
+
+			return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Inject settings.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return  {Object}		New settings.
+		 */
+		static __injectSettings(unit, settings)
+		{
+
+			if (typeof(unit._injectSettings) === "function")
+			{
+				settings = unit._injectSettings.call(unit, settings);
+			}
+
+			return settings;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get unit settings. Need to override.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 *
+		 * @return  {Object}		Options.
+		 */
+		static _getSettings(unit)
+		{
+
+			return {};
+
+		}
+
+		// -----------------------------------------------------------------------------
+
+		/**
+	 	 * Inject settings.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{Object}		settings			Settings.
+		 *
+		 * @return  {Object}		New settings.
+		 */
+		static __mergeSettings(unit, settings)
+		{
+
+			let curUnit = Object.getPrototypeOf(unit);
+			let curSettings = {};
+			let parentSettings;
+
+			// Merge superclass settings
+			while (typeof(Object.getPrototypeOf(curUnit)._getSettings) === "function")
+			{
+				parentSettings = Object.getPrototypeOf(curUnit)._getSettings.call(unit);
+				if (Object.keys(parentSettings).length > 0)
+				{
+					Util.deepMerge(parentSettings, curSettings);
+					curSettings = parentSettings;
+				}
+
+				curUnit= Object.getPrototypeOf(curUnit);
+			}
+			Util.deepMerge(settings, curSettings);
+
+			// Merge unit settings
+			Util.deepMerge(settings, unit._getSettings.call(unit));
+
+			return settings;
+
+		}
+
+	}
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Skin Perk Class
+	// =============================================================================
+
+	class SkinPerk extends Perk
+	{
+
+		// -------------------------------------------------------------------------
+		//  Properties
+		// -------------------------------------------------------------------------
+
+		static get info()
+		{
+
+			return {
+				"section":		"skin",
+				"order":		210,
+			};
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
+
+		static globalInit()
+		{
+
+			// Upgrade Unit
+			this.upgrade(BITSMIST.v1.Unit, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		static init(unit, options)
+		{
+
+			// Upgrade unit
+			this.upgrade(unit, "inventory", "skin.skins", {});
+			this.upgrade(unit, "state", "skin.active.skinName", "");
+			this.upgrade(unit, "event", "beforeTransform", SkinPerk.SkinPerk_onBeforeTransform);
+			this.upgrade(unit, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
+
+			SkinPerk.__loadAttrSettings(unit);
+
+			// Shadow DOM
+			switch (unit.get("setting", "skin.options.shadowDOM", unit.get("setting" ,"system.skin.options.shadowDOM")))
+			{
+			case "open":
+				unit.set("state", "skin.shadowRoot", unit.attachShadow({mode:"open"}));
+				break;
+			case "closed":
+				unit.set("state", "skin.shadowRoot", unit.attachShadow({mode:"closed"}));
+				break;
+			}
+
+			unit.unitRoot = unit.get("state", "skin.shadowRoot", unit);
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Event Handlers
+		// -------------------------------------------------------------------------
+
+		static SkinPerk_onBeforeTransform(sender, e, ex)
+		{
+
+			if (e.detail.skinName || SkinPerk.__hasDefaultSkin(this))
+			{
+				let skinName = e.detail.skinName || "default";
+
+				return SkinPerk._loadSkin(this, skinName).then((skinInfo) => {
+					this.unitRoot.textContent = "";
+					this.unitRoot = skinInfo["template"].content.cloneNode(true);
 				});
 			}
 
 		}
 
 		// -------------------------------------------------------------------------
-		//  Protected
+
+		static SkinPerk_onDoTransform(sender, e, ex)
+		{
+
+			if (e.detail.skinName || SkinPerk.__hasDefaultSkin(this))
+			{
+				let skinName = e.detail.skinName || "default";
+
+				return SkinPerk._applySkin(this, skinName, this.unitRoot);
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Skills
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the skin HTML.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		skinName			Skin name.
+		 * @param	{Object}		options				Load options.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		static _loadSkin(unit, skinName, options)
+		{
+
+			let promise = Promise.resolve();
+			let skinInfo = unit.get("inventory", `skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(unit, skinName);
+			let skinSettings = options || unit.get("setting", `skin.skins.${skinName}`, {});
+
+			if (skinInfo["status"] === "loaded")
+			{
+				console.debug(`SkinPerk._loadSkin(): Skin already loaded. name=${unit.tagName}, skinName=${skinName}`);
+				return promise.then(() => {
+					return skinInfo;
+				});
+			}
+
+			switch (skinSettings["type"]) {
+			case "HTML":
+				skinInfo["HTML"] = skinSettings["HTML"];
+				skinInfo["template"] = document.createElement("template");
+				skinInfo["template"].innerHTML = skinInfo["HTML"];
+				skinInfo["status"] = "loaded";
+				unit.set("inventory", `skin.skins.${skinName}`, skinInfo);
+				break;
+			case "node":
+				let rootNode = unit.use("skill", "basic.scan", skinSettings["rootNode"] || "");
+				Util.assert(rootNode, `SkinPerk._loadSkin(): Root node does not exist. name=${unit.tagName}, skinName=${skinName}, rootNode=${skinSettings["rootNode"]}`);
+				skinInfo["HTML"] = rootNode.innerHTML;
+				skinInfo["template"] = document.createElement("template");
+				skinInfo["template"].innerHTML = skinInfo["HTML"];
+				skinInfo["status"] = "loaded";
+				unit.set("inventory", `skin.skins.${skinName}`, skinInfo);
+				break;
+			case "URL":
+			default:
+				let url = skinSettings["URL"] || (skinName === "default" && SkinPerk.__getSkinURL(unit));
+				Util.assert(url, `SkinPerk._loadSkin(): Skin URL is not speicified. name=${unit.tagName}, skinName=${skinName}`);
+				promise = AjaxUtil.loadHTML(url).then((skin) => {
+					skinInfo["HTML"] = skin;
+					skinInfo["template"] = document.createElement("template");
+					skinInfo["template"].innerHTML = skinInfo["HTML"];
+					skinInfo["status"] = "loaded";
+					unit.set("inventory", `skin.skins.${skinName}`, skinInfo);
+				});
+				break;
+			}
+
+			return promise.then(() => {
+				return skinInfo;
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Apply skin.
+		 *
+		 * @param	{Unit}			unit				Parent unit.
+		 * @param	{String}		skinName			Skin name.
+		 */
+		static _applySkin(unit, skinName, clone)
+		{
+
+			let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
+
+			Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
+
+			// Append the clone to the unit
+			clone = clone || skinInfo["template"].content.cloneNode(true);
+			unit.unitRoot = unit.get("state", "skin.shadowRoot", unit);
+			unit.unitRoot.innerHTML = "";
+			unit.unitRoot.appendChild(clone);
+
+			// Change active skin
+			unit.set("state", "skin.active.skinName", skinName);
+
+			console.debug(`SkinPerk._applySkin(): Applied skin. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
+		//
+		/**
+		 * Get settings from element's attribute.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 */
+		static __loadAttrSettings(unit)
+		{
+
+			if (unit.hasAttribute("bm-skinref"))
+			{
+				let skinRef = unit.getAttribute("bm-styleref") || true;
+				if (skinRef === "false")
+				{
+					skinRef = false;
+				}
+
+				unit.set("setting", "skin.options.skinRef", skinRef);
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Returns a new skin info object.
+		 *
+		 * @param	{Unit}			unit				Parent unit.
+		 * @param	{String}		skinName			Skin name.
+		 *
+		 * @return  {Object}		Skin info.
+		 */
+		static __createSkinInfo(unit, skinName)
+		{
+
+			return {
+				"name":		skinName,
+				"HTML":		"",
+				"template": null,
+				"status":	"",
+			};
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the unit has the default skin file.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 *
+		 * @return  {Boolean}		True if the unit has the external skin file.
+		 */
+		static __hasDefaultSkin(unit)
+		{
+
+			let ret = false;
+
+			if (unit.get("setting", "skin.options.skinRef", true))
+			{
+				ret = true;
+			}
+
+			return ret;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Return URL to skin file.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String	}		skinName			Skin name.
+		 *
+		 * @return  {String}		URL.
+		 */
+		static __getSkinURL(unit)
+		{
+
+			let path;
+			let fileName;
+			let query;
+
+			let skinRef = unit.get("setting", "skin.options.skinRef");
+			if (skinRef && skinRef !== true)
+			{
+				// If URL is specified in ref, use it
+				let url = URLUtil.parseURL(skinRef);
+				path = url.path;
+				fileName = url.filename;
+				query = url.query;
+			}
+			else
+			{
+				// Use default path and filename
+				path = Util.concatPath([
+						unit.get("setting", "system.skin.options.path", unit.get("setting", "system.unit.options.path", "")),
+						unit.get("setting", "style.options.path", unit.get("setting", "unit.options.path", "")),
+					]);
+				fileName = SkinPerk.__getDefaultFilename(unit) + ".html";
+				query = unit.get("setting", "unit.options.query");
+			}
+
+			return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get the default skin name.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 *
+		 * @return 	{String}		Skin name.
+		 */
+		static __getDefaultFilename(unit)
+		{
+
+			return unit.get("setting", "skin.options.fileName",
+				unit.get("setting", "unit.options.fileName",
+					unit.tagName.toLowerCase()));
+
+		}
+
+	}
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Style Perk Class
+	// =============================================================================
+
+	class StylePerk extends Perk
+	{
+
+		// -------------------------------------------------------------------------
+		//  Properties
+		// -------------------------------------------------------------------------
+
+		static get info()
+		{
+
+			return {
+				"section":		"style",
+				"order":		200,
+			};
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
+
+		static globalInit()
+		{
+
+			// Upgrade Unit
+			this.upgrade(BITSMIST.v1.Unit, "vault", "style.applied", []);
+			this.upgrade(BITSMIST.v1.Unit, "inventory", "style.styles", new ChainableStore());
+			this.upgrade(BITSMIST.v1.Unit, "spell", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
+
+			this._cssReady = {};
+			this._cssReady["promise"] = new Promise((resolve, reject) => {
+				this._cssReady["resolve"] = resolve;
+				this._cssReady["reject"] = reject;
+			});
+
+			// Load and apply common CSS
+			Promise.resolve();
+			BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
+				let promises = [];
+				Object.entries(BITSMIST.v1.Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
+					promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName, sectionValue));
+				});
+
+				Promise.all(promises).then(() => {
+					let chain = Promise.resolve();
+					let styles = BITSMIST.v1.Unit.get("setting", "system.style.options.apply", []);
+					for (let i = 0; i < styles.length; i++)
+					{
+						chain = chain.then(() => {
+							return StylePerk._applyCSS(BITSMIST.v1.Unit, styles[i]);
+						});
+					}
+
+					return chain.then(() => {
+						this._cssReady["resolve"]();
+					});
+				});
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		static init(unit, options)
+		{
+
+			// Upgrade unit
+			this.upgrade(unit, "vault", "style.applied", []);
+			this.upgrade(unit, "inventory", "style.styles", new ChainableStore({
+				"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
+			}));
+			this.upgrade(unit, "event", "doTransform", StylePerk.StylePerk_onDoTransform);
+
+			StylePerk.__loadAttrSettings(unit);
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Event Handlers
+		// -------------------------------------------------------------------------
+
+		static StylePerk_onDoTransform(sender, e, ex)
+		{
+
+			return StylePerk._cssReady.promise.then(() => {
+				// List common CSS
+				let css = this.get("setting", "style.options.apply", []);
+
+				if (e.detail.styleName || StylePerk.__hasDefaultCSS(this))
+				{
+					let styleName = e.detail.styleName || "default";
+
+					// Add style specific common CSS
+					css = css.concat(this.get("setting", `style.styles.${styleName}.apply`, []));
+
+					// Add unit specific CSS
+					css.push(styleName);
+				}
+
+				// Load CSS
+				let promises = [];
+				for (let i = 0; i < css.length; i++)
+				{
+					promises.push(StylePerk._loadCSS(this, css[i]));
+				}
+
+				return Promise.all(promises).then(() => {
+					// Clear CSS
+					StylePerk._clearCSS(this);
+
+					// Apply CSS
+					let chain = Promise.resolve();
+					for (let i = 0; i < css.length; i++)
+					{
+						chain = chain.then(() => {
+							return StylePerk._applyCSS(this, css[i]);
+						});
+					}
+
+					return chain;
+				});
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Skills
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Load the CSS.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		styleName			Style name.
+		 * @param	{Object}		options				Load options.
+		 *
+		 * @return 	{Promise}		Promise.
+		 */
+		static _loadCSS(unit, styleName, options)
+		{
+
+			let promise = Promise.resolve();
+			let styleInfo = unit.get("inventory", "style.styles").get(styleName) || StylePerk.__createStyleInfo(unit, styleName);
+			let styleSettings = options || unit.get("setting", `style.styles.${styleName}`, {});
+
+			if (styleInfo["status"] === "loaded")
+			{
+				console.debug(`StylePerk._loadCSS(): Style already loaded. name=${unit.tagName}, styleName=${styleName}`);
+				return promise.then(() => {
+					return styleInfo;
+				});
+			}
+
+			switch (styleSettings["type"]) {
+			case "CSS":
+				styleInfo["CSS"] = styleSettings["CSS"];
+				styleInfo["status"] = "loaded";
+				unit.get("inventory", `style.styles`).set(styleName, styleInfo);
+				break;
+			case "URL":
+			default:
+				if (styleInfo["status"] === "loading")
+				{
+					promise = styleInfo["promise"];
+				}
+				else
+				{
+					let url = styleSettings["URL"] || (styleName === "default" && StylePerk.__getCSSURL(unit));
+					Util.assert(url, `StylePerk._loadCSS(): CSS URL is not speicified. name=${unit.tagName}, styleName=${styleName}`);
+					promise = AjaxUtil.loadCSS(url).then((css) => {
+						let styleInfo = unit.get("inventory", "style.styles").get(styleName);
+						styleInfo["CSS"] = css;
+						styleInfo["status"] = "loaded";
+						unit.get("inventory", "style.styles").set(styleName, styleInfo);
+					});
+					styleInfo["promise"] = promise;
+					styleInfo["status"] = "loading";
+					unit.get("inventory", `style.styles`).set(styleName, styleInfo);
+				}
+				break;
+			}
+
+			return promise.then(() => {
+				return styleInfo;
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Apply style.
+		 *
+		 * @param	{Unit}			unit				Parent unit.
+		 * @param	{String}		styleName			Style name.
+		 */
+		static _applyCSS(unit, styleName)
+		{
+
+			let cssInfo = unit.get("inventory", "style.styles").get(styleName);
+			let ss = new CSSStyleSheet();
+
+			Util.assert(cssInfo,`StylePerk._applyCSS(): CSS not loaded. name=${unit.tagName || "Global"}, styleName=${styleName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
+
+			return Promise.resolve().then(() => {
+				return ss.replace(`${cssInfo["CSS"]}`);
+			}).then(() => {
+				let shadowRoot = unit.get("state", "skin.shadowRoot");
+				if (shadowRoot)
+				{
+					// Shadow DOM
+					shadowRoot.adoptedStyleSheets = [...shadowRoot.adoptedStyleSheets, ss];
+				}
+				else
+				{
+					// Light DOM
+					styleName = unit.tagName + "." + styleName;
+					if (!(styleName in StylePerk.__applied) || StylePerk.__applied[styleName]["count"] <= 0)
+					{
+						// Apply styles
+						StylePerk.__applied[styleName] = StylePerk.__applied[styleName] || {};
+						document.adoptedStyleSheets = [...document.adoptedStyleSheets, ss];
+						StylePerk.__applied[styleName]["object"] = ss;
+						StylePerk.__applied[styleName]["count"] = 1;
+					}
+					else
+					{
+						// Already applied
+						StylePerk.__applied[styleName]["count"]++;
+					}
+
+					let applied = unit.get("vault", "style.applied");
+					applied.push(styleName);
+					unit.set("vault", "style.applied", applied);
+				}
+
+				console.debug(`StylePerk._applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Clear styles. Works only in ShadowDOM.
+		 *
+		 * @param	{Unit}			unit				Parent unit.
+		 */
+		static _clearCSS(unit)
+		{
+
+			let shadowRoot = unit.get("state", "skin.shadowRoot");
+			if (shadowRoot)
+			{
+				// Shadow DOM
+				shadowRoot.adoptedStyleSheets = [];
+			}
+			else
+			{
+				// Light DOM
+				let applied = unit.get("vault", "style.applied");
+				if (applied.length > 0)
+				{
+					for (let i = 0; i < applied.length; i++)
+					{
+						StylePerk.__applied[applied[i]]["count"]--;
+					}
+					unit.set("vault", "style.applied", []);
+
+					// Re-apply other CSS
+					document.adoptedStyleSheets = [];
+					Object.keys(StylePerk.__applied).forEach((key) => {
+						if (StylePerk.__applied[key]["count"] > 0)
+						{
+							document.adoptedStyleSheets = [...document.adoptedStyleSheets, StylePerk.__applied[key]["object"]];
+						}
+					});
+				}
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
+		//
+		/**
+		 * Get settings from element's attribute.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 */
+		static __loadAttrSettings(unit)
+		{
+
+			if (unit.hasAttribute("bm-styleref"))
+			{
+				let styleRef = unit.getAttribute("bm-styleref") || true;
+				if (styleRef === "false")
+				{
+					styleRef = false;
+				}
+
+				unit.set("setting", "style.options.styleRef", styleRef);
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Returns a new Style info object.
+		 *
+		 * @param	{Unit}			unit				Parent unit.
+		 * @param	{String}		styleName			Style name.
+		 *
+		 * @return  {Object}		Style info.
+		 */
+		static __createStyleInfo(unit, styleName)
+		{
+
+			return {
+				"name": 	styleName,
+				"CSS":		"",
+				"status":	"",
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Check if the unit has the default CSS file.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 *
+		 * @return  {Boolean}		True if the unit has the external CSS file.
+		 */
+		static __hasDefaultCSS(unit)
+		{
+
+			let ret = false;
+
+			if (unit.get("setting", "style.options.styleRef", true))
+			{
+				ret = true;
+			}
+
+			return ret;
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Return URL to CSS file.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 *
+		 * @return  {String}		URL.
+		 */
+		static __getCSSURL(unit)
+		{
+
+			let path;
+			let fileName;
+			let query;
+
+			let cssRef = unit.get("setting", "style.options.styleRef");
+			if (cssRef && cssRef !== true)
+			{
+				// If URL is specified in ref, use it
+				let url = URLUtil.parseURL(cssRef);
+				path = url.path;
+				fileName = url.filename;
+				query = url.query;
+			}
+			else
+			{
+				// Use default path and filename
+				path = Util.concatPath([
+						unit.get("setting", "system.style.options.path", unit.get("setting", "system.unit.options.path", "")),
+						unit.get("setting", "skin.options.path", unit.get("setting", "unit.options.path", "")),
+					]);
+				fileName =  StylePerk.__getDefaultFilename(unit) + ".css";
+				query = unit.get("setting", "unit.options.query");
+			}
+
+			return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		/**
+		 * Get the default style name.
+		 *
+		 * @param	{Unit}			unit				Unit.
+		 *
+		 * @return 	{String}		Style name.
+		 */
+		static __getDefaultFilename(unit)
+		{
+
+			return unit.get("setting", "style.options.fileName",
+				unit.get("setting", "unit.options.fileName",
+					unit.tagName.toLowerCase()));
+
+		}
+
+	}
+
+	// Init
+	StylePerk.__applied = {};
+
+	// =============================================================================
+
+	// =============================================================================
+	//	Event Perk class
+	// =============================================================================
+
+	class EventPerk extends Perk
+	{
+
+		// -------------------------------------------------------------------------
+		//  Properties
+		// -------------------------------------------------------------------------
+
+		static get info()
+		{
+
+			return {
+				"section":		"event",
+				"order":		210,
+			};
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Methods
+		// -------------------------------------------------------------------------
+
+		static globalInit()
+		{
+
+			// Upgrade Unit
+			this.upgrade(BITSMIST.v1.Unit, "skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "spell", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
+			this.upgrade(BITSMIST.v1.Unit, "skill", "event.triggerSync", function(...args) { return EventPerk._triggerSync(...args); });
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		static init(unit, options)
+		{
+
+			// Upgrade unit
+			this.upgrade(unit, "event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
+			this.upgrade(unit, "event", "afterTransform", EventPerk.EventPerk_onAfterTransform);
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		static deinit(unit, options)
+		{
+
+			let events = this.get("setting", "event");
+			if (events)
+			{
+				Object.keys(events).forEach((elementName) => {
+					EventPerk._removeEvents(unit, elementName, events[eventName]);
+				});
+			}
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Event Handlers
+		// -------------------------------------------------------------------------
+
+		static EventPerk_onDoApplySettings(sender, e, ex)
+		{
+
+			Object.entries(Util.safeGet(e.detail, "settings.event.events", {})).forEach(([sectionName, sectionValue]) => {
+				EventPerk._initEvents(this, sectionName, sectionValue);
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+
+		static EventPerk_onAfterTransform(sender, e, ex)
+		{
+
+			Object.entries(this.get("setting", "event.events", {})).forEach(([sectionName, sectionValue]) => {
+				// Initialize only elements inside unit
+				if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
+				{
+					EventPerk._initEvents(this, sectionName, sectionValue);
+				}
+			});
+
+		}
+
+		// -------------------------------------------------------------------------
+		//  Skills
 		// -------------------------------------------------------------------------
 
 		/**
 		 * Add an event handler.
 		 *
-		 * @param	{Component}		component			Component.
+		 * @param	{Unit}			unit				Unit.
 		 * @param	{String}		eventName			Event name.
 		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
 		 * @param	{HTMLElement}	element				HTML element.
 		 * @param	{Object}		bindTo				Object that binds to the handler.
 		 */
-		static _addEventHandler(component, eventName, handlerInfo, element, bindTo)
+		static _addEventHandler(unit, eventName, handlerInfo, element, bindTo)
 		{
 
-			element = element || component;
+			element = element || unit;
 			let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 			// Get handler
-			let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-			Util.assert(handler, `EventOrganizer._addEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
+			let handler = EventPerk.__getEventHandler(unit, handlerInfo);
+			Util.assert(handler, `EventPerk._addEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
 
 			// Init holder object for the element
 			if (!element.__bm_eventinfo)
 			{
-				element.__bm_eventinfo = { "component":component, "listeners":{}, "promises":{}, "statuses":{} };
+				element.__bm_eventinfo = { "unit":unit, "listeners":{}, "promises":{}, "statuses":{} };
 			}
 
 			// Add hook event handler
@@ -3656,7 +4977,7 @@
 			if (!listeners[eventName])
 			{
 				listeners[eventName] = [];
-				element.addEventListener(eventName, EventOrganizer.__callEventHandler, handlerOptions["listnerOptions"]);
+				element.addEventListener(eventName, EventPerk.__callEventHandler, handlerOptions["listnerOptions"]);
 			}
 
 			let order = Util.safeGet(handlerOptions, "order", 1000);
@@ -3678,21 +4999,21 @@
 		/**
 		 * Remove an event handler.
 		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{HTMLElement}	element					HTML element.
-		 * @param	{String}		eventName				Event name.
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{String}		eventName			Event name.
+		 * @param	{HTMLElement}	element				HTML element.
 		 * @param	{Object/Function/String}	handlerInfo	Event handler info.
 		 */
-		static _removeEventHandler(component, element, eventName, handlerInfo)
+		static _removeEventHandler(unit, eventName, handlerInfo, element)
 		{
 
-			element = element || component;
+			element = element || unit;
 
 			// Get handler
-			let handler = EventOrganizer._getEventHandler(component, handlerInfo);
-			Util.assert(handler, `EventOrganizer._removeEventHandler(): handler not found. name=${component.name}, eventName=${eventName}`);
+			let handler = EventPerk.__getEventHandler(unit, handlerInfo);
+			Util.assert(handler, `EventPerk._removeEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
 
-			let listeners = Util.safeGet(element, "__bm_eventinfo.listeners." + eventName);
+			let listeners = Util.safeGet(element, `__bm_eventinfo.listeners.${eventName}`);
 			if (listeners)
 			{
 				for (let i = listeners.length - 1; i >= 0; i--)
@@ -3712,20 +5033,19 @@
 		/**
 		 * Set event handlers to the element.
 		 *
-		 * @param	{Component}		component			Component.
+		 * @param	{Unit}			unit				Unit.
 		 * @param	{String}		elementName			Element name.
 		 * @param	{Object}		eventInfo			Event info.
 		 * @param	{HTMLElement}	rootNode			Root node of elements.
 		 */
-		static _initEvents(component, elementName, eventInfo, rootNode)
+		static _initEvents(unit, elementName, eventInfo, rootNode)
 		{
 
-			rootNode = ( rootNode ? rootNode : component );
-			eventInfo = ( eventInfo ? eventInfo : component.settings.get("events." + elementName) );
+			eventInfo = ( eventInfo ? eventInfo : unit.get("setting", `event.events.${elementName}`) );
 
 			// Get target elements
-			let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
-			//Util.assert(elements.length > 0, `EventOrganizer._initEvents: No elements for the event found. name=${component.name}, elementName=${elementName}`, TypeError);
+			let elements = EventPerk.__getTargetElements(unit, rootNode, elementName, eventInfo);
+			//Util.warn(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${unit.tagName}, elementName=${elementName}`);
 
 			// Set event handlers
 			Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -3734,7 +5054,7 @@
 				{
 					for (let j = 0; j < elements.length; j++)
 					{
-						component.addEventHandler(eventName, handlers[i], elements[j]);
+						EventPerk._addEventHandler(unit, eventName, handlers[i], elements[j]);
 					}
 				}
 			});
@@ -3746,18 +5066,19 @@
 		/**
 		 * Remove event handlers from the element.
 		 *
-		 * @param	{Component}		component			Component.
+		 * @param	{Unit}			unit				Unit.
 		 * @param	{String}		elementName			Element name.
 		 * @param	{Object}		eventInfo			Event info.
 		 * @param	{HTMLElement}	rootNode			Root node of elements.
 		 */
-		static _removeEvents(component, elementName, eventInfo, rootNode)
+		static _removeEvents(unit, elementName, eventInfo, rootNode)
 		{
 
-			rootNode = ( rootNode ? rootNode : component );
+			eventInfo = ( eventInfo ? eventInfo : unit.get("setting", `event.events.${elementName}`) );
 
 			// Get target elements
-			let elements = EventOrganizer.__getTargetElements(component, rootNode, elementName, eventInfo);
+			let elements = EventPerk.__getTargetElements(unit, rootNode, elementName, eventInfo);
+			//Util.warn(elements.length > 0, `EventPerk._removeEvents: No elements for the event found. name=${unit.tagName}, elementName=${elementName}`);
 
 			// Remove event handlers
 			Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -3766,7 +5087,7 @@
 				{
 					for (let j = 0; j < elements.length; j++)
 					{
-						component.removeEventHandler(eventName, handlers[i], elements[j]);
+						unit.removeEventHandler(eventName, handlers[i], elements[j]);
 					}
 				}
 			});
@@ -3778,64 +5099,55 @@
 		/**
 		 * Trigger the event synchronously.
 		 *
-		 * @param	{Component}		component				Component.
+		 * @param	{Unit}			unit					Unit.
 		 * @param	{String}		eventName				Event name to trigger.
 		 * @param	{Object}		options					Event parameter options.
 		 * @param	{HTMLElement}	element					HTML element.
 		 */
-		static _trigger(component, eventName, options, element)
+		static _trigger(unit, eventName, options, element)
 		{
 
 			options = options || {};
-			element = ( element ? element : component );
-			let e = null;
+			element = ( element ? element : unit );
 
-			try
-			{
-				e = new CustomEvent(eventName, { detail: options });
-			}
-			catch(error)
-			{
-				e  = document.createEvent("CustomEvent");
-				e.initCustomEvent(eventName, false, false, options);
-			}
-
-			element.dispatchEvent(e);
+			element.dispatchEvent(new CustomEvent(eventName, { detail: options }));
 
 			// return the promise if exists
-			return Util.safeGet(element, "__bm_eventinfo.promises." + eventName) || Promise.resolve();
+			return Util.safeGet(element, `__bm_eventinfo.promises.${eventName}`) || Promise.resolve();
 
 		}
 
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Trigger the event asynchronously.
+		 * Trigger the event synchronously.
 		 *
-		 * @param	{Component}		component				Component.
+		 * @param	{Unit}			unit					Unit.
 		 * @param	{String}		eventName				Event name to trigger.
 		 * @param	{Object}		options					Event parameter options.
 		 * @param	{HTMLElement}	element					HTML element.
 		 */
-		static _triggerAsync(component, eventName, options, element)
+		static _triggerSync(unit, eventName, options, element)
 		{
 
 			options = options || {};
 			options["async"] = true;
 
-			return EventOrganizer._trigger.call(component, component, eventName, options, element);
+			return EventPerk._trigger.call(unit, unit, eventName, options, element);
 
 		}
 
-		// -----------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
+		//  Privates
+		// -------------------------------------------------------------------------
 
 		/**
-		 * Get an event handler from a handler info object.
+		 * Get the event handler from the handler info object.
 		 *
-		 * @param	{Component}		component				Component.
+		 * @param	{Unit}			unit					Unit.
 		 * @param	{Object/Function/String}	handlerInfo	Handler info.
 		 */
-		static _getEventHandler(component, handlerInfo)
+		static __getEventHandler(unit, handlerInfo)
 		{
 
 			let handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
@@ -3845,16 +5157,14 @@
 		}
 
 		// -------------------------------------------------------------------------
-		//  Privates
-		// -------------------------------------------------------------------------
 
 		/**
-		 * Check if a target element is component itself.
+		 * Check if the target element is unit itself.
 		 *
 		 * @param	{String}		elementName			Element name.
 		 * @param	{Object}		elementInfo			Element info.
 		 *
-		 * @return 	{Boolean}			Target node list.
+		 * @return 	{Boolean}		Target node list.
 		 */
 			static __isTargetSelf(elementName, eventInfo)
 		{
@@ -3875,29 +5185,33 @@
 		/**
 		 * Get target elements for the eventInfo.
 		 *
-		 * @param	{Component}		component			Component.
-		 * @param	{HTMLElement}	rootNode			A root node to search elements.
+		 * @param	{Unit}			unit				Unit.
+		 * @param	{HTMLElement}	rootNode			Root node to search elements.
 		 * @param	{String}		elementName			Element name.
 		 * @param	{Object}		elementInfo			Element info.
 		 *
 		 * @return 	{Array}			Target node list.
 		 */
-		static __getTargetElements(component, rootNode, elementName, eventInfo)
+		static __getTargetElements(unit, rootNode, elementName, eventInfo)
 		{
 
+			rootNode = rootNode || unit;
 			let elements;
 
-			if (EventOrganizer.__isTargetSelf(elementName, eventInfo))
+			if (EventPerk.__isTargetSelf(elementName, eventInfo))
 			{
+				// Target is "this"
 				elements = [rootNode];
 			}
 			else if (eventInfo && eventInfo["rootNode"])
 			{
+				// If eventInfo["rootNode"] is specified, target is eventInfo["rootNode"]
 				elements = Util.scopedSelectorAll(rootNode, eventInfo["rootNode"]);
 			}
 			else
 			{
-				elements = Util.scopedSelectorAll(rootNode, "#" + elementName);
+				// Target is #elementName
+				elements = Util.scopedSelectorAll(rootNode, `#${elementName}`);
 			}
 
 			return elements;
@@ -3919,7 +5233,7 @@
 		{
 
 			let isInstalled = false;
-			let listeners = Util.safeGet(element.__bm_eventinfo, "listeners." + eventName);
+			let listeners = Util.safeGet(element.__bm_eventinfo, `listeners.${eventName}`);
 
 			if (listeners)
 			{
@@ -3950,41 +5264,42 @@
 		static __callEventHandler(e)
 		{
 
-			let listeners = Util.safeGet(this, "__bm_eventinfo.listeners." + e.type);
+			let listeners = Util.safeGet(this, `__bm_eventinfo.listeners.${e.type}`);
 			let sender = Util.safeGet(e, "detail.sender", this);
-			let component = Util.safeGet(this, "__bm_eventinfo.component");
+			let unit = Util.safeGet(this, "__bm_eventinfo.unit");
+			let templateStatuses = `__bm_eventinfo.statuses.${e.type}`;
+			let templatePromises = `__bm_eventinfo.promises.${e.type}`;
 
 			// Check if handler is already running
-			//Util.assert(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`, Error);
-			Util.warn(Util.safeGet(this, "__bm_eventinfo.statuses." + e.type) !== "handling", `EventOrganizer.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
+			//Util.warn(Util.safeGet(this, templateStatuses) !== "handling", `EventPerk.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
 
-			Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "handling");
+			Util.safeSet(this, templateStatuses, "handling");
 
 			if (Util.safeGet(e, "detail.async", false) === false)
 			{
-				// Wait previous handler
-				this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handle(e, sender, component, listeners).then(() => {
-					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+				// Async
+				this.__bm_eventinfo["promises"][e.type] = EventPerk.__handle(e, sender, unit, listeners).then(() => {
+					Util.safeSet(this, templatePromises, null);
+					Util.safeSet(this, templateStatuses, "");
 				}).catch((err) => {
-					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+					Util.safeSet(this, templatePromises, null);
+					Util.safeSet(this, templateStatuses, "");
 					throw(err);
 				});
 			}
 			else
 			{
-				// Does not wait previous handler
+				// Sync
 				try
 				{
-					this.__bm_eventinfo["promises"][e.type] = EventOrganizer.__handleAsync(e, sender, component, listeners);
-					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+					this.__bm_eventinfo["promises"][e.type] = EventPerk.__handleSync(e, sender, unit, listeners);
+					Util.safeSet(this, templatePromises, null);
+					Util.safeSet(this, templateStatuses, "");
 				}
 				catch (err)
 				{
-					Util.safeSet(this, "__bm_eventinfo.promises." + e.type, null);
-					Util.safeSet(this, "__bm_eventinfo.statuses." + e.type, "");
+					Util.safeSet(this, templatePromises, null);
+					Util.safeSet(this, templateStatuses, "");
 					throw err;
 				}
 			}
@@ -3998,10 +5313,10 @@
 		 *
 		 * @param	{Object}		e						Event parameter.
 		 * @param	{Object}		sender					Sender object.
-		 * @param	{Object}		component				Target component.
+		 * @param	{Object}		unit					Target unit.
 		 * @param	{Object}		listener				Listers info.
 		 */
-		static __handle(e, sender, component, listeners)
+		static __handle(e, sender, unit, listeners)
 		{
 
 			let chain = Promise.resolve();
@@ -4011,18 +5326,18 @@
 			{
 				// Options set in addEventHandler()
 				let ex = {
-					"component": component,
+					"unit": unit,
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 				};
 
 				chain = chain.then(() => {
-					// Get a handler
+					// Get the handler
 					let handler = listeners[i]["handler"];
-					handler = ( typeof handler === "string" ? component[handler] : handler );
-					Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
+					handler = ( typeof handler === "string" ? unit[handler] : handler );
+					Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
 
 					// Execute the handler
-					let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+					let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : unit );
 					return handler.call(bindTo, sender, e, ex);
 				});
 
@@ -4041,14 +5356,14 @@
 		// -------------------------------------------------------------------------
 
 		/**
-		 * Call event handlers (Async).
+		 * Call event handlers Synchronously.
 		 *
 		 * @param	{Object}		e						Event parameter.
 		 * @param	{Object}		sender					Sender object.
-		 * @param	{Object}		component				Target component.
+		 * @param	{Object}		unit					Target unit.
 		 * @param	{Object}		listener				Listers info.
 		 */
-		static __handleAsync(e, sender, component, listeners)
+		static __handleSync(e, sender, unit, listeners)
 		{
 
 			let stopPropagation = false;
@@ -4057,17 +5372,17 @@
 			{
 				// Options set on addEventHandler()
 				let ex = {
-					"component": component,
+					"unit": unit,
 					"options": ( listeners[i]["options"] ? listeners[i]["options"] : {} )
 				};
 
-				// Get a handler
+				// Get the handler
 				let handler = listeners[i]["handler"];
-				handler = ( typeof handler === "string" ? component[handler] : handler );
-				Util.assert(typeof handler === "function", `EventOrganizer._addEventHandler(): Event handler is not a function. name=${component.name}, eventName=${e.type}`, TypeError);
+				handler = ( typeof handler === "string" ? unit[handler] : handler );
+				Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
 
 				// Execute handler
-				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : component );
+				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : unit );
 				handler.call(bindTo, sender, e, ex);
 
 				stopPropagation = (listeners[i]["options"] && listeners[i]["options"]["stopPropagation"] ? true : stopPropagation);
@@ -4079,565 +5394,6 @@
 			}
 
 			return Promise.resolve();
-
-		}
-
-	}
-
-	// =============================================================================
-
-	// =============================================================================
-	//	Component organizer class
-	// =============================================================================
-
-	class ComponentOrganizer extends Organizer
-	{
-
-		// -------------------------------------------------------------------------
-		//  Setter/Getter
-		// -------------------------------------------------------------------------
-
-		static get name()
-		{
-
-			return "ComponentOrganizer";
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Event Handlers
-		// -------------------------------------------------------------------------
-
-		static ComponentOrganizer_onDoOrganize(sender, e, ex)
-		{
-
-			let chain = Promise.resolve();
-
-			// Load molds
-			this._enumSettings(e.detail.settings["molds"], (sectionName, sectionValue) => {
-				chain = chain.then(() => {
-					if (!this.components[sectionName])
-					{
-						return ComponentOrganizer._loadComponent(this, sectionName, sectionValue, {"syncOnAdd":true});
-					}
-				});
-			});
-
-			// Load components
-			this._enumSettings(e.detail.settings["components"], (sectionName, sectionValue) => {
-				chain = chain.then(() => {
-					if (!this.components[sectionName])
-					{
-						return ComponentOrganizer._loadComponent(this, sectionName, sectionValue);
-					}
-				});
-			});
-
-			return chain;
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Methods
-		// -------------------------------------------------------------------------
-
-		static getInfo()
-		{
-
-			return {
-				"sections":		["molds", "components"],
-				"order":		400,
-			};
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static globalInit()
-		{
-
-			// Add properties to Component
-			Object.defineProperty(BITSMIST.v1.Component.prototype, "components", {
-				get() { return this._components; },
-			});
-
-			// Add methods to Component
-			BITSMIST.v1.Component.prototype.loadTags = function(...args) { return ComponentOrganizer._loadTags(...args); };
-			BITSMIST.v1.Component.prototype.loadComponent = function(...args) { return ComponentOrganizer._loadComponent(this, ...args); };
-
-			// Init vars
-			ComponentOrganizer.__classes = new Store();
-
-			// Load tags on DOMContentLoaded event
-			document.addEventListener("DOMContentLoaded", () => {
-				if (BITSMIST.v1.settings.get("organizers.ComponentOrgaznier.settings.autoLoadOnStartup", true))
-				{
-					ComponentOrganizer._loadTags(document.body, {"waitForTags":false});
-				}
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		static init(component, options)
-		{
-
-			// Init component vars
-			component._components = {};
-
-			// Add event handlers to the component
-			this._addOrganizerHandler(component, "doOrganize", ComponentOrganizer.ComponentOrganizer_onDoOrganize);
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load the component js files.
-		 *
-		 * @param	{String}		fileName			File name.
-		 * @param	{String}		path				Path to the file.
-		 * @param	{Object}		loadOptions			Load Options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static loadFile(fileName, path, loadOptions)
-		{
-
-			console.debug(`Loading component file. fileName=${fileName}, path=${path}`);
-
-			let query = Util.safeGet(loadOptions, "query");
-			let url1 = Util.concatPath([path, fileName + ".js"]) + (query ? "?" + query : "");
-			let url2 = Util.concatPath([path, fileName + ".settings.js"]) + (query ? "?" + query : "");
-
-			return Promise.resolve().then(() => {
-				return AjaxUtil.loadScript(url1);
-			}).then(() => {
-				if (loadOptions["splitComponent"])
-				{
-					return AjaxUtil.loadScript(url2);
-				}
-			}).then(() => {
-				console.debug(`Loaded script. fileName=${fileName}`);
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Protected
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load scripts for tags that has bm-autoload/bm-automorph attribute.
-		 *
-		 * @param	{HTMLElement}	rootNode			Target node.
-		 * @param	{Object}		options				Load Options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static _loadTags(rootNode, options)
-		{
-
-			console.debug(`Loading tags. rootNode=${rootNode.tagName}`);
-
-			let promises = [];
-
-			// Load tags that has bm-autoload/bm-automorph attribute
-			let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered])");
-			targets.forEach((element) => {
-				element.setAttribute("bm-autoloading", "");
-
-				// Load a tag
-				let settings = this._loadAttrSettings(element);
-				let className = Util.safeGet(settings, "settings.className", Util.getClassNameFromTagName(element.tagName));
-				element._injectSettings = function(curSettings){
-					return Util.deepMerge(curSettings, settings);
-				};
-				promises.push(ComponentOrganizer._loadClass(element.tagName.toLowerCase(), className, settings).then(() => {
-					element.removeAttribute("bm-autoloading");
-				}));
-			});
-
-			return Promise.all(promises).then(() => {
-				let waitFor = Util.safeGet(options, "waitForTags");
-				if (waitFor)
-				{
-					return ComponentOrganizer.__waitForChildren(rootNode);
-				}
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load a class.
-		 *
-		 * @param	{String}		tagName				Tag name.
-		 * @param	{String}		className			Class name.
-		 * @param	{Object}		settings			Component settings.
-		 * @param	{Object}		loadOptions			Load options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static _loadClass(tagName, className, settings, loadOptions)
-		{
-
-			console.debug(`Loading a component. tagName=${tagName}, className=${className}`);
-
-			// Check if the tag is already defined
-			if (customElements.get(tagName))
-			{
-				console.debug(`Tag already defined. tagName=${tagName}, className=${className}`);
-				return Promise.resolve();
-			}
-
-			loadOptions = loadOptions || {};
-
-			// Override path and filename when url is specified in autoLoad option
-			let href = Util.safeGet(settings, "settings.autoLoad");
-			href = ( href === true ? "" : href );
-			if (href)
-			{
-				let url = Util.parseURL(href);
-
-				settings["system"] = settings["system"] || {};
-				settings["system"]["appBaseUrl"] = "";
-				settings["system"]["componentPath"] = "";
-				settings["system"]["templatePath"] = "";
-				settings["settings"] = settings["settings"] || {};
-				settings["settings"]["path"] = url.path;
-				settings["settings"]["fileName"] = url.filenameWithoutExtension;
-
-				if (url.extension === "html")
-				{
-					settings["settings"]["autoMorph"] = ( settings["settings"]["autoMorph"] ? settings["settings"]["autoMorph"] : true );
-				}
-
-				loadOptions["query"] = url.query;
-			}
-
-			// Get a base class name
-			let baseClassName = Util.safeGet(settings, "settings.autoMorph", className );
-			baseClassName = ( baseClassName === true ? "BITSMIST.v1.Component" : baseClassName );
-
-			// Get a path
-			let path = Util.safeGet(loadOptions, "path",
-				Util.concatPath([
-					Util.safeGet(settings, "system.appBaseUrl", BITSMIST.v1.settings.get("system.appBaseUrl", "")),
-					Util.safeGet(settings, "system.componentPath", BITSMIST.v1.settings.get("system.componentPath", "")),
-					Util.safeGet(settings, "settings.path", ""),
-				])
-			);
-
-			// Load a class
-			let fileName = Util.safeGet(settings, "settings.fileName", tagName.toLowerCase());
-			loadOptions["splitComponent"] = Util.safeGet(loadOptions, "splitComponent", Util.safeGet(settings, "settings.splitComponent", BITSMIST.v1.settings.get("system.splitComponent", false)));
-			loadOptions["query"] = Util.safeGet(loadOptions, "query",  Util.safeGet(settings, "settings.query"), "");
-
-			return ComponentOrganizer.__autoloadClass(baseClassName, fileName, path, loadOptions).then(() => {
-				// Morphing
-				if (baseClassName !== className)
-				{
-					let superClass = ClassUtil.getClass(baseClassName);
-					ClassUtil.newComponent(className, settings, superClass, tagName);
-				}
-
-				// Define the tag
-				if (!customElements.get(tagName))
-				{
-					let classDef = ClassUtil.getClass(className);
-					Util.assert(classDef, `ComponentOrganizer_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
-
-					customElements.define(tagName, classDef);
-				}
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load a component and add to parent component.
-		 *
-		 * @param	{Component}		component			Parent component.
-		 * @param	{String}		componentName		Component name.
-		 * @param	{Object}		settings			Settings for the component.
-		 * @param	{Object}		loadOptions			Load Options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static _loadComponent(component, componentName, settings, loadOptions)
-		{
-
-			console.debug(`Adding a component. name=${component.name}, componentName=${componentName}`);
-
-			// Get a tag name
-			let tagName;
-			let tag = Util.safeGet(settings, "settings.tag");
-			if (tag)
-			{
-				let pattern = /([\w-]+)\s+\w+.*?>/;
-				tagName = tag.match(pattern)[1];
-			}
-			else
-			{
-				tagName = Util.safeGet(settings, "settings.tagName", Util.getTagNameFromClassName(componentName)).toLowerCase();
-			}
-
-			let addedComponent;
-
-			return Promise.resolve().then(() => {
-				// Load component
-				if (Util.safeGet(settings, "settings.autoLoad") || Util.safeGet(settings, "settings.autoMorph"))
-				{
-					let className = Util.safeGet(settings, "settings.className", componentName);
-					return ComponentOrganizer._loadClass(tagName, className, settings);
-				}
-			}).then(() => {
-				// Insert tag
-				if (!component._components[componentName])
-				{
-					addedComponent = ComponentOrganizer.__insertTag(component, tagName, settings);
-					component._components[componentName] = addedComponent;
-				}
-			}).then(() => {
-				// Wait for the added component to be ready
-				let sync = Util.safeGet(loadOptions, "syncOnAdd", Util.safeGet(settings, "settings.syncOnAdd"));
-				if (sync)
-				{
-					let state = (sync === true ? "ready" : sync);
-
-					return component.waitFor([{"id":component._components[componentName].uniqueId, "state":state}]);
-				}
-			}).then(() => {
-				return addedComponent;
-			});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Get settings from element's attribute.
-		 *
-		 * @param	{Component}		component			Component.
-		 */
-		static _loadAttrSettings(element)
-		{
-
-			let settings = {
-				"settings": {}
-			};
-
-			// Class name
-			if (element.hasAttribute("bm-classname"))
-			{
-				settings["settings"]["className"] = element.getAttribute("bm-classname");
-			}
-
-			// Split component
-			if (element.hasAttribute("bm-split"))
-			{
-				settings["system"]["splitComponent"] = true;
-			}
-
-			// Path
-			if (element.hasAttribute("bm-path"))
-			{
-				settings["settings"]["path"] = element.getAttribute("bm-path");
-			}
-
-			// File name
-			if (element.hasAttribute("bm-filename"))
-			{
-				settings["settings"]["fileName"] = element.getAttribute("bm-filename");
-			}
-
-			// Morphing
-			if (element.hasAttribute("bm-automorph"))
-			{
-				settings["settings"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
-			}
-
-			// Auto loading
-			if (element.hasAttribute("bm-autoload"))
-			{
-				settings["settings"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
-			}
-
-			return settings;
-
-		}
-
-		// -------------------------------------------------------------------------
-		//  Privates
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Load a class if not loaded yet.
-		 *
-		 * @param	{String}		className			Component class name.
-		 * @param	{String}		fileName			Component file name.
-		 * @param	{String}		path				Path to component.
-		 * @param	{Object}		loadOptions			Load Options.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static __autoloadClass(className, fileName, path, loadOptions)
-		{
-
-			console.debug(`Auto loading component. className=${className}, fileName=${fileName}, path=${path}`);
-
-			let promise;
-
-			if (ComponentOrganizer.__isLoadedClass(className))
-			{
-				// Already loaded
-				console.debug(`Component Already exists. className=${className}`);
-				ComponentOrganizer.__classes.set(className + ".state", "loaded");
-				promise = Promise.resolve();
-			}
-			else if (ComponentOrganizer.__classes.get(className, {})["state"] === "loading")
-			{
-				// Already loading
-				console.debug(`Component Already loading. className=${className}`);
-				promise = ComponentOrganizer.__classes.get(className)["promise"];
-			}
-			else
-			{
-				// Not loaded
-				ComponentOrganizer.__classes.set(className + ".state", "loading");
-				promise = ComponentOrganizer.loadFile(fileName, path, loadOptions).then(() => {
-					ComponentOrganizer.__classes.set(className, {"state":"loaded", "promise":null});
-				});
-				ComponentOrganizer.__classes.set(className + ".promise", promise);
-			}
-
-			return promise;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Insert a tag and return the inserted component.
-		 *
-		 * @param	{String}		tagName				Tagname.
-		 * @param	{Object}		settings			Component settings.
-		 *
-		 * @return  {Component}		Component.
-		 */
-		static __insertTag(component, tagName, settings)
-		{
-
-			let addedComponent;
-			let root;
-
-			// Check root node
-			if (Util.safeGet(settings, "settings.parentNode"))
-			{
-				root = Util.scopedSelectorAll(component.rootElement, Util.safeGet(settings, "settings.parentNode"), {"penetrate":true})[0];
-			}
-			else
-			{
-				root = component;
-			}
-
-			Util.assert(root, `ComponentOrganizer.__insertTag(): Root node does not exist. name=${component.name}, tagName=${tagName}, Ntrentode=${Util.safeGet(settings, "settings.parentNode")}`, ReferenceError);
-
-			// Build tag
-			let tag = ( Util.safeGet(settings, "settings.tag") ? Util.safeGet(settings, "settings.tag") : "<" + tagName +  "></" + tagName + ">" );
-
-			// Insert tag
-			if (Util.safeGet(settings, "settings.replaceParent"))
-			{
-				root.outerHTML = tag;
-				addedComponent = root;
-			}
-			else
-			{
-				let position = Util.safeGet(settings, "settings.adjacentPosition", "afterbegin");
-				root.insertAdjacentHTML(position, tag);
-
-				// Get new instance
-				switch (position)
-				{
-					case "beforebegin":
-						addedComponent = root.previousSibling;
-						break;
-					case "afterbegin":
-						addedComponent = root.children[0];
-						break;
-					case "beforeend":
-						addedComponent = root.lastChild;
-						break;
-					case "afterend":
-						addedComponent = root.nextSibling;
-						break;
-				}
-			}
-
-			// Inject settings to added component
-			addedComponent._injectSettings = function(curSettings){
-				return Util.deepMerge(curSettings, settings);
-			};
-
-			return addedComponent;
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Wait for components under the specified root node.
-		 *
-		 * @param	{HTMLElement}	rootNode			Target node.
-		 *
-		 * @return  {Promise}		Promise.
-		 */
-		static __waitForChildren(rootNode)
-		{
-
-			let waitList = [];
-			let targets = Util.scopedSelectorAll(rootNode, "[bm-powered],[bm-autoloading]");
-			targets.forEach((element) => {
-				if (rootNode != element.rootElement && !element.hasAttribute("bm-nowait"))
-				{
-					let waitItem = {"object":element, "state":"ready"};
-					waitList.push(waitItem);
-				}
-			});
-
-			return StateOrganizer.waitFor(waitList, {"waiter":rootNode});
-
-		}
-
-		// -------------------------------------------------------------------------
-
-		/**
-		 * Check if the class exists.
-		 *
-		 * @param	{String}		className			Class name.
-		 *
-		 * @return  {Bool}			True if exists.
-		 */
-		static __isLoadedClass(className)
-		{
-
-			let ret = false;
-
-			if (ComponentOrganizer.__classes.get(className, {})["state"] === "loaded")
-			{
-				ret = true;
-			}
-			else if (ClassUtil.getClass(className))
-			{
-				ret = true;
-			}
-
-			return ret;
 
 		}
 
@@ -4658,26 +5414,27 @@
 	window.BITSMIST.v1.Util = Util;
 	window.BITSMIST.v1.ClassUtil = ClassUtil;
 	window.BITSMIST.v1.AjaxUtil = AjaxUtil;
+	window.BITSMIST.v1.URLUtil = URLUtil;
 	window.BITSMIST.v1.Store = Store;
 	window.BITSMIST.v1.ChainableStore = ChainableStore;
-
-	// Global Settings
-
-	window.BITSMIST.v1.settings = new ChainableStore();
-	window.BITSMIST.v1.Component = Component;
-	window.BITSMIST.v1.Organizer = Organizer;
-	window.BITSMIST.v1.OrganizerOrganizer = OrganizerOrganizer;
-	OrganizerOrganizer.register(OrganizerOrganizer);
-	window.BITSMIST.v1.SettingOrganizer = SettingOrganizer;
-	OrganizerOrganizer.register(SettingOrganizer);
-	window.BITSMIST.v1.StateOrganizer = StateOrganizer;
-	OrganizerOrganizer.register(StateOrganizer);
-	window.BITSMIST.v1.TemplateOrganizer = TemplateOrganizer;
-	OrganizerOrganizer.register(TemplateOrganizer);
-	window.BITSMIST.v1.EventOrganizer = EventOrganizer;
-	OrganizerOrganizer.register(EventOrganizer);
-	window.BITSMIST.v1.ComponentOrganizer = ComponentOrganizer;
-	OrganizerOrganizer.register(ComponentOrganizer);
+	window.BITSMIST.v1.Unit = Unit;
+	window.BITSMIST.v1.Perk = Perk;
+	window.BITSMIST.v1.BasicPerk = BasicPerk;
+	PerkPerk.register(BasicPerk);
+	window.BITSMIST.v1.PerkPerk = PerkPerk;
+	PerkPerk.register(PerkPerk);
+	window.BITSMIST.v1.SettingPerk = SettingPerk;
+	PerkPerk.register(SettingPerk);
+	window.BITSMIST.v1.StatusPerk = StatusPerk;
+	PerkPerk.register(StatusPerk);
+	window.BITSMIST.v1.SkinPerk = SkinPerk;
+	PerkPerk.register(SkinPerk);
+	window.BITSMIST.v1.StylePerk = StylePerk;
+	PerkPerk.register(StylePerk);
+	window.BITSMIST.v1.EventPerk = EventPerk;
+	PerkPerk.register(EventPerk);
+	window.BITSMIST.v1.UnitPerk = UnitPerk;
+	PerkPerk.register(UnitPerk);
 
 })();
 //# sourceMappingURL=bitsmist-js_v1.js.map
