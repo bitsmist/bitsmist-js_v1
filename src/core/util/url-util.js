@@ -65,7 +65,7 @@ export default class URLUtil
 	{
 
 		let newURLInfo = Object.assign({}, URLUtil.parseURL(), routeInfo);
-		let url = Util.concatPath([newURLInfo["protocol"] + "//", newURLInfo["host"], newURLInfo["pathname"]]);
+		let url = (routeInfo["URL"] ? routeInfo["URL"] : Util.concatPath([newURLInfo["protocol"] + "//", newURLInfo["host"], newURLInfo["pathname"]]));
 
 		if (newURLInfo["queryParameters"])
 		{
