@@ -418,10 +418,10 @@ export default class BasicPerk extends Perk
 	/**
 	 * Setup unit.
 	 *
-	 * @param       {Unit}                  unit                            Unit.
-	 * @param       {Object}                options                         Options.
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Object}		options				Options.
 	 *
-	 * @return  {Promise}           Promise.
+	 * @return  {Promise}		Promise.
 	 */
 	static _setup(unit, options)
 	{
