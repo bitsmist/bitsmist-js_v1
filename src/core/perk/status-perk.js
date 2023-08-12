@@ -482,12 +482,20 @@ export default class StatusPerk extends Perk
 
 		for (let i = 0; i < waitlist.length; i++)
 		{
-			let id = (waitlist[i].id ? `id:${waitlist[i].id},` : "");
-			let name = (waitlist[i].name ? `name:${waitlist[i].name},` : "");
-			let object = (waitlist[i].object ? `element:${waitlist[i].object.tagName},` : "");
-			let node = (waitlist[i].rootNode ? `node:${waitlist[i].rootNode},` : "");
-			let status = (waitlist[i].status ? `status:${waitlist[i].status}` : "");
-			result += `\n\t{${id}${name}${object}${node}${status}},`;
+			if (typeof(waitlist[i]) === "string")
+			{
+				result += `\n\t{"${waitlist[i]}", status:ready},`;
+			}
+			else
+			{
+				let uniqueId = (waitlist[i].id ? `uniqueId:${waitlist[i].uniqueId}, ` : "");
+				let id = (waitlist[i].id ? `id:${waitlist[i].id}, ` : "");
+				let tagName = (waitlist[i].tagName ? `tagName:${waitlist[i].tagName}, ` : "");
+				let object = (waitlist[i].object ? `object:${waitlist[i].object.tagName}, ` : "");
+				let selector = (waitlist[i].selector ? `selector:${waitlist[i].selector}, ` : "");
+				let status = (waitlist[i].status ? `status:${waitlist[i].status}` : "status:ready");
+				result += `\n\t{${uniqueId}${id}${tagName}${object}${selector}${status}},`;
+			}
 		}
 
 		return `[${result}\n]`;
