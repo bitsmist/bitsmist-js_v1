@@ -1710,7 +1710,7 @@
 	 *
 	 * @copyright		Masaki Yasutake
 	 * @link			https://bitsmist.com/
-	 * @license			https://github.com/bitsmist/bitsmist/blob/master/LICENSE
+	 * @license			https://github.com/bitsmist/bitsmist/blob/main/LICENSE
 	 */
 	// =============================================================================
 
