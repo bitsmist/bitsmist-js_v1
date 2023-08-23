@@ -54,7 +54,7 @@ In BitmistJS, you create components (called units in this framework) and combine
 
 ### HTML Only Unit
 
-![bitmistjs_htmlonly](https://bitsmist.com/images/en/bitsmistjs_htmlonly.png?20210621)
+![bitmistjs_htmlonly](https://bitsmist.com/images/en/bitsmistjs_htmlonly.png?20230823)
 
 
 **`index.html`**
@@ -85,7 +85,7 @@ pad-hello {
 
 ### HTML and Javascript Unit
 
-![bitmistjs_htmlandjs](https://bitsmist.com/images/en/bitsmistjs_htmlandjs.png?20210621)
+![bitmistjs_htmlandjs](https://bitsmist.com/images/en/bitsmistjs_htmlandjs.png?20230823)
 
 **`index.html`**
 ``` html
