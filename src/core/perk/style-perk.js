@@ -8,11 +8,11 @@
  */
 // =============================================================================
 
-import AjaxUtil from "../util/ajax-util";
+import AjaxUtil from "../util/ajax-util.js";
 import ChainableStore from "../store/chainable-store.js";
-import Perk from "./perk";
+import Perk from "./perk.js";
 import URLUtil from "../util/url-util.js";
-import Util from "../util/util";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Style Perk Class

@@ -9,8 +9,8 @@
 // =============================================================================
 
 import ChainableStore from "../store/chainable-store.js";
-import Perk from "./perk";
-import Util from "../util/util";
+import Perk from "./perk.js";
+import Util from "../util/util.js";
 
 // =============================================================================
 //	Perk Perk Class
