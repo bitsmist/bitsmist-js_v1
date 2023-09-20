@@ -272,19 +272,21 @@ export default class Util
 
 		if (Array.isArray(obj1))
 		{
-			// obj1 is array
+			// obj1 is an array
 			if (Array.isArray(obj2))
 			{
+				// if obj2 is an array, concat them
 				Array.prototype.push.apply(result, Util.__cloneArr(obj2));
 			}
 			else
 			{
+				// if obj2 is not an array, push it
 				result.push(Util.deepClone(obj2));
 			}
 		}
 		else if (Util.__isObject(obj1) && Util.__isMergeable(obj2))
 		{
-			// obj1 is Object and obj2 is Object/Array
+			// obj1 is an Object and obj2 is an Object/Array
 			Object.keys(obj2).forEach((key) => {
 				result[key] = Util.deepMerge(obj1[key], obj2[key]);
 			});
