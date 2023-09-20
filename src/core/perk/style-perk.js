@@ -400,7 +400,7 @@ export default class StylePerk extends Perk
 			// Use default path and filename
 			path = Util.concatPath([
 					unit.get("setting", "system.style.options.path", unit.get("setting", "system.unit.options.path", "")),
-					unit.get("setting", "skin.options.path", unit.get("setting", "unit.options.path", "")),
+					unit.get("setting", "style.options.path", unit.get("setting", "unit.options.path", "")),
 				]);
 			fileName =  StylePerk.__getDefaultFilename(unit) + ".css";
 			query = unit.get("setting", "unit.options.query");
