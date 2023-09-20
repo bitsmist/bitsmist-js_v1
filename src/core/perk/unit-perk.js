@@ -110,10 +110,6 @@ export default class UnitPerk extends Perk
 		let classRef = Util.safeGet(settings, "unit.options.autoLoad");
 		if (classRef && classRef !== true)
 		{
-			settings["system"] = settings["system"] || {};
-			settings["system"]["appBaseURL"] = "";
-			settings["system"]["unitPath"] = "";
-			settings["system"]["skinPath"] = "";
 			settings["unit"] = settings["unit"] || {};
 			settings["unit"]["options"] = settings["unit"]["options"] || {};
 			let url = URLUtil.parseURL(classRef);
