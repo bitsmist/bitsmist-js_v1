@@ -44,7 +44,6 @@ export default class SkinPerk extends Perk
 
 		// Upgrade Unit
 		this.upgrade(BITSMIST.v1.Unit, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "skin.clone", function(...args) { return SkinPerk._cloneSkin(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
 
 	}
@@ -182,6 +181,7 @@ export default class SkinPerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Parent unit.
 	 * @param	{String}		skinName			Skin name.
+	 * @param	{Node}			clone				Template node.
 	 */
 	static _applySkin(unit, skinName, clone)
 	{
@@ -217,7 +217,7 @@ export default class SkinPerk extends Perk
 
 		if (unit.hasAttribute("bm-skinref"))
 		{
-			let skinRef = unit.getAttribute("bm-styleref") || true;
+			let skinRef = unit.getAttribute("bm-skinref") || true;
 			if (skinRef === "false")
 			{
 				skinRef = false;
@@ -304,7 +304,7 @@ export default class SkinPerk extends Perk
 			// Use default path and filename
 			path = Util.concatPath([
 					unit.get("setting", "system.skin.options.path", unit.get("setting", "system.unit.options.path", "")),
-					unit.get("setting", "style.options.path", unit.get("setting", "unit.options.path", "")),
+					unit.get("setting", "skin.options.path", unit.get("setting", "unit.options.path", "")),
 				]);
 			fileName = SkinPerk.__getDefaultFilename(unit) + ".html";
 			query = unit.get("setting", "unit.options.query");
