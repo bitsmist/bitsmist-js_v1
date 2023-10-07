@@ -183,14 +183,7 @@ export default class Store
 	set(key, value, options)
 	{
 
-		if (options && options["merge"])
-		{
-			Util.safeMerge(this._items, key, defaultValue);
-		}
-		else
-		{
-			Util.safeSet(this._items, key, value);
-		}
+		Util.safeSet(this._items, key, value);
 
 	}
 
