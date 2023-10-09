@@ -131,7 +131,7 @@ export default class AjaxUtil
 		return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
 			console.debug(`AjaxUtil.loadJSON(): Loaded the JSON file. URL=${url}, format=${format}`);
 
-			return Util.getObject(xhr.responseText, {"format":format});
+			return Util.getObject(xhr.responseText, Object.assign({"format":format}, options));
 		});
 
 	}
