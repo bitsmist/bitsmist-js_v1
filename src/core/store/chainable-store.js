@@ -143,11 +143,12 @@ export default class ChainableStore extends Store
 	 *
 	 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
 	 * @param	{Function}		merger				Merge function.
+	 * @param	{Object}		options				Options.
 	 */
-	merge(newItems, merger)
+	merge(newItems, merger, options)
 	{
 
-		if (this._options["writeThrough"])
+		if (Util.safeGet(options, "writeThrough", this._options["writeThrough"]))
 		{
 			this._chain.merge(newItems, merger);
 		}
@@ -165,6 +166,7 @@ export default class ChainableStore extends Store
 	 *
 	 * @param	{String}		key					Key to store.
 	 * @param	{Object}		value				Value to store.
+	 * @param	{Object}		options				Options.
 	 */
 	set(key, value, options)
 	{
