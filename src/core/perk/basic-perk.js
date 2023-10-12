@@ -325,7 +325,7 @@ export default class BasicPerk extends Perk
 		}).then(() => {
 			if (unit.get("setting", "basic.options.autoTransform", true))
 			{
-				return unit.use("spell", "basic.transform");
+				return unit.use("spell", "basic.transform", {"skinName": "default", "styleName": "default"});
 			}
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "doStart");
