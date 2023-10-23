@@ -225,6 +225,7 @@ export default class AjaxUtil
 
 		return Promise.resolve().then(() => {
 			return AjaxUtil.loadScript(url1);
+			/*
 		}).then(() => {
 			if (options["splitClass"])
 			{
@@ -232,6 +233,7 @@ export default class AjaxUtil
 				console.debug(`AjaxUtil.loadClass(): Loading the second file. URL2=${url2}`);
 				return AjaxUtil.loadScript(url2);
 			}
+			*/
 		}).then(() => {
 			console.debug(`AjaxUtil.loadClass(): Loaded the class files. URL=${url}`);
 		});
