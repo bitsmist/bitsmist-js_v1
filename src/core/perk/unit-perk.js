@@ -63,6 +63,9 @@ export default class UnitPerk extends Perk
 		this.upgrade(unit, "inventory", "unit.units", {});
 		this.upgrade(unit, "event", "doApplySettings", UnitPerk.UnitPerk_onDoApplySettings);
 
+		let settings = this.__loadAttrSettings(unit);
+		unit.use("skill", "setting.merge", settings);
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -106,21 +109,6 @@ export default class UnitPerk extends Perk
 
 		console.debug(`UnitPerk._loadClass(): Loading class. tagName=${tagName}`);
 
-		// Override settings if URL is specified
-		let classRef = Util.safeGet(settings, "unit.options.autoLoad");
-		if (classRef && classRef !== true)
-		{
-			settings["unit"] = settings["unit"] || {};
-			settings["unit"]["options"] = settings["unit"]["options"] || {};
-			let url = URLUtil.parseURL(classRef);
-			settings["unit"]["options"]["path"] = url.path;
-			settings["unit"]["options"]["fileName"] = url.filenameWithoutExtension;
-			if (url.extension === "html")
-			{
-				settings["unit"]["options"]["autoMorph"] = ( settings["unit"]["options"]["autoMorph"] ? settings["unit"]["options"]["autoMorph"] : true );
-			}
-		}
-
 		tagName = tagName.toLowerCase();
 		let className = Util.safeGet(settings, "unit.options.className", Util.getClassNameFromTagName(tagName));
 		let baseClassName = Util.safeGet(settings, "unit.options.autoMorph", className );
@@ -153,24 +141,14 @@ export default class UnitPerk extends Perk
 		}
 
 		return promise.then(() => {
-			// Morph
 			if (baseClassName !== className)
 			{
+				// Morph
 				let superClass = ClassUtil.getClass(baseClassName);
-				ClassUtil.newUnit(className, settings, superClass, tagName);
-			}
-
-			// Define the tag
-			if (!customElements.get(tagName))
-			{
-				let classDef = ClassUtil.getClass(className);
-				Util.assert(classDef, `UnitPerk_loadClass(): Class does not exists. tagName=${tagName}, className=${className}`);
-
-				customElements.define(tagName, classDef);
+				let classDef = ClassUtil.newUnit(className, settings, superClass, tagName);
+				UnitPerk._classInfo[className] = {"status":"loaded"};
 			}
 		});
-
-		return promise;
 
 	}
 
@@ -202,14 +180,11 @@ export default class UnitPerk extends Perk
 		let tag = Util.safeGet(settings, "unit.options.tag");
 		if (tag)
 		{
-			let pattern = /([\w-]+)\s+\w+.*?>/;
-			tagName = tag.match(pattern)[1];
+			tagName = tag.match(/([\w-]+)\s+\w+.*?>/)[1];
 		}
 
 		let addedUnit;
-		return Promise.resolve().then(() => {
-			return UnitPerk._loadClass(tagName, settings);
-		}).then(() => {
+		return UnitPerk._loadClass(tagName, settings).then(() => {
 			// Insert tag
 			addedUnit = UnitPerk.__insertTag(unit, tagName, settings);
 			unit.set("inventory", `unit.units.${tagName}.object`, addedUnit);
@@ -218,11 +193,9 @@ export default class UnitPerk extends Perk
 			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "unit.options.syncOnAdd"));
 			if (sync)
 			{
-				let status = (sync === true ? "ready" : sync);
-
 				return unit.use("spell", "status.wait", [{
 					"uniqueId":	addedUnit.uniqueId,
-					"status":	status
+					"status":	(sync === true ? "ready" : sync)
 				}]);
 			}
 		}).then(() => {
@@ -281,11 +254,11 @@ export default class UnitPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Get settings from element's attribute.
+	 * Get settings from unit's attribute.
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 */
-	static __loadAttrSettings(element)
+	static __loadAttrSettings(unit)
 	{
 
 		let settings = {
@@ -295,13 +268,13 @@ export default class UnitPerk extends Perk
 		};
 
 		// Class name
-		if (element.hasAttribute("bm-classname"))
+		if (unit.hasAttribute("bm-classname"))
 		{
-			settings["unit"]["options"]["className"] = element.getAttribute("bm-classname");
+			settings["unit"]["options"]["className"] = unit.getAttribute("bm-classname");
 		}
 
 		// Split  class
-		if (element.hasAttribute("bm-splitclass"))
+		if (unit.hasAttribute("bm-splitclass"))
 		{
 			let splitClass = unit.getAttribute("bm-splitclass") || true;
 			if (splitClass === "false")
@@ -312,36 +285,65 @@ export default class UnitPerk extends Perk
 		}
 
 		// Path
-		if (element.hasAttribute("bm-path"))
+		if (unit.hasAttribute("bm-path"))
 		{
-			settings["unit"]["options"]["path"] = element.getAttribute("bm-path");
+			settings["unit"]["options"]["path"] = unit.getAttribute("bm-path");
 		}
 
 		// File name
-		if (element.hasAttribute("bm-filename"))
+		if (unit.hasAttribute("bm-filename"))
 		{
-			settings["unit"]["options"]["fileName"] = element.getAttribute("bm-filename");
+			settings["unit"]["options"]["fileName"] = unit.getAttribute("bm-filename");
 		}
 
 		// Morphing
-		if (element.hasAttribute("bm-automorph"))
+		if (unit.hasAttribute("bm-automorph"))
 		{
-			settings["unit"]["options"]["autoMorph"] = ( element.getAttribute("bm-automorph") ? element.getAttribute("bm-automorph") : true );
+			settings["unit"]["options"]["autoMorph"] = ( unit.getAttribute("bm-automorph") ? unit.getAttribute("bm-automorph") : true );
 		}
-		if (element.hasAttribute("bm-htmlref"))
+		if (unit.hasAttribute("bm-htmlref"))
 		{
-			settings["unit"]["options"]["autoMorph"] = ( element.getAttribute("bm-htmlref") ? element.getAttribute("bm-htmlref") : true );
+			settings["unit"]["options"]["autoMorph"] = ( unit.getAttribute("bm-htmlref") ? unit.getAttribute("bm-htmlref") : true );
 		}
 
 		// Auto loading
-		if (element.hasAttribute("bm-autoload"))
+		if (unit.hasAttribute("bm-autoload"))
 		{
-			settings["unit"]["options"]["autoLoad"] = ( element.getAttribute("bm-autoload") ? element.getAttribute("bm-autoload") : true );
+			settings["unit"]["options"]["autoLoad"] = ( unit.getAttribute("bm-autoload") ? unit.getAttribute("bm-autoload") : true );
 		}
-		if (element.hasAttribute("bm-classref"))
+		if (unit.hasAttribute("bm-classref"))
 		{
-			settings["unit"]["options"]["autoLoad"] = ( element.getAttribute("bm-classref") ? element.getAttribute("bm-classref") : true );
+			settings["unit"]["options"]["autoLoad"] = ( unit.getAttribute("bm-classref") ? unit.getAttribute("bm-classref") : true );
 		}
+
+		//return settings;
+		return UnitPerk.__adjustSettings(unit, settings);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Adjust unit settings.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 */
+	static __adjustSettings(unit, settings)
+	{
+
+		let autoLoad = Util.safeGet(settings, "unit.options.autoLoad");
+		if (typeof(autoLoad) === "string")
+		{
+			let url = URLUtil.parseURL(autoLoad);
+			settings["unit"]["options"]["path"] = url.path;
+			settings["unit"]["options"]["fileName"] = url.filenameWithoutExtension;
+
+			if (url.extension === "html")
+			{
+				settings["unit"]["options"]["autoMorph"] = Util.safeGet(settings, "unit.options.autoMorph", true);
+			}
+		}
+
 
 		return settings;
 
