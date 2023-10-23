@@ -342,8 +342,17 @@ export default class Util
 	static getClassNameFromTagName(tagName)
 	{
 
-		let tag = tagName.split("-");
-		let className = tag[0].charAt(0).toUpperCase() + tag[0].slice(1).toLowerCase() + tag[1].charAt(0).toUpperCase() + tag[1].slice(1).toLowerCase();
+		let className;
+
+		if (tagName === "bm-unit")
+		{
+			className = "Unit";
+		}
+		else
+		{
+			let tag = tagName.split("-");
+			className = tag[0].charAt(0).toUpperCase() + tag[0].slice(1).toLowerCase() + tag[1].charAt(0).toUpperCase() + tag[1].slice(1).toLowerCase();
+		}
 
 		return className;
 
