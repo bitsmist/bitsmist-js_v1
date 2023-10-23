@@ -168,6 +168,8 @@ export default class BasicPerk extends Perk
 				}).then(() => {
 					return this.use("spell", "perk.attach", BITSMIST.v1.SettingPerk);
 				}).then(() => {
+					return this.use("spell", "perk.attach", BITSMIST.v1.UnitPerk);
+				}).then(() => {
 					return this.use("spell", "perk.attach", BITSMIST.v1.PerkPerk);
 				}).then(() => {
 					return this.use("spell", "perk.attach", BITSMIST.v1.StatusPerk);
@@ -177,8 +179,6 @@ export default class BasicPerk extends Perk
 					return this.use("spell", "perk.attach", BITSMIST.v1.SkinPerk);
 				}).then(() => {
 					return this.use("spell", "perk.attach", BITSMIST.v1.StylePerk);
-				}).then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.UnitPerk);
 				}).then(() => {
 					return this.use("spell", "basic.start");
 				});
