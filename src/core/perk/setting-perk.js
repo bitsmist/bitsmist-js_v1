@@ -203,6 +203,30 @@ export default class SettingPerk extends Perk
 			unit.use("skill", "setting.merge", options);
 		}
 
+		// Path
+		if (unit.hasAttribute("bm-path"))
+		{
+			unit.set("setting", "setting.options.path", unit.getAttribute("bm-path"));
+		}
+
+		// File name
+		if (unit.hasAttribute("bm-filename"))
+		{
+			unit.set("setting", "setting.options.fileName", unit.getAttribute("bm-filename"));
+		}
+
+		// Auto loading
+		if (unit.hasAttribute("bm-autoload"))
+		{
+			let autoLoad = unit.getAttribute("bm-autoload");
+			if (autoLoad)
+			{
+				let url = URLUtil.parseURL(autoLoad);
+				unit.set("setting", "setting.options.path", url.path);
+				unit.set("setting", "setting.options.fileName", url.filenameWithoutExtension);
+			}
+		}
+
 	}
 
 	// -------------------------------------------------------------------------
@@ -219,7 +243,7 @@ export default class SettingPerk extends Perk
 
 		let ret = false;
 
-		if (unit.get("setting", "setting.options.settingsRef"))
+		if (unit.get("setting", "setting.options.settingsRef", unit.get("setting", "system.setting.options.settingsRef")))
 		{
 			ret = true;
 		}
@@ -257,11 +281,14 @@ export default class SettingPerk extends Perk
 		{
 			// Use default path and filename
 			path = Util.concatPath([
-					unit.get("setting", "system.unit.options.path"),
-					unit.get("setting", "unit.options.path", ""),
+					unit.get("setting", "system.setting.options.path", unit.get("setting", "system.unit.options.path", "")),
+					unit.get("setting", "setting.options.path", unit.get("setting", "unit.options.path", "")),
 				]);
-			let ext = unit.get("setting", "setting.options.settingFormat", unit.get("setting", "system.setting.options.settingFormat", "json"));
-			fileName = unit.get("setting", "unit.options.fileName", unit.tagName.toLowerCase()) + ".settings." + ext;
+			let ext = unit.get("setting", "setting.options.settingFormat",
+						unit.get("setting", "system.setting.options.settingFormat", "json"));
+			fileName = unit.get("setting", "setting.options.fileName",
+							unit.get("setting", "unit.options.fileName",
+								unit.tagName.toLowerCase())) + ".settings." + ext;
 			query = unit.get("setting", "unit.options.query");
 		}
 
@@ -288,22 +315,6 @@ export default class SettingPerk extends Perk
 		}
 
 		return settings;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get unit settings. Need to override.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 *
-	 * @return  {Object}		Options.
-	 */
-	static _getSettings(unit)
-	{
-
-		return {};
 
 	}
 
@@ -339,7 +350,10 @@ export default class SettingPerk extends Perk
 		Util.deepMerge(settings, curSettings);
 
 		// Merge unit settings
-		Util.deepMerge(settings, unit._getSettings.call(unit));
+		if (typeof(unit._getSettings) === "function")
+		{
+			Util.deepMerge(settings, unit._getSettings.call(unit));
+		}
 
 		return settings;
 
