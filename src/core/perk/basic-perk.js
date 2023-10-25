@@ -119,7 +119,7 @@ export default class BasicPerk extends Perk
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
 			if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
 			{
-				BITSMIST.v1.UnitPerk._loadTags(null, document.body, {"waitForTags":false});
+				Perk.getPerk("UnitPerk")._loadTags(null, document.body, {"waitForTags":false});
 			}
 		});
 
@@ -164,21 +164,21 @@ export default class BasicPerk extends Perk
 
 				// Attach default perks
 				return Promise.resolve().then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.BasicPerk);
+					return this.use("spell", "perk.attach", Perk.getPerk("Perk"));
 				}).then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.SettingPerk);
+					return this.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
 				}).then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.UnitPerk);
+					return this.use("spell", "perk.attach", Perk.getPerk("SettingPerk"));
 				}).then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.PerkPerk);
+					return this.use("spell", "perk.attach", Perk.getPerk("UnitPerk"));
 				}).then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.StatusPerk);
+					return this.use("spell", "perk.attach", Perk.getPerk("StatusPerk"));
 				}).then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.EventPerk);
+					return this.use("spell", "perk.attach", Perk.getPerk("EventPerk"));
 				}).then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.SkinPerk);
+					return this.use("spell", "perk.attach", Perk.getPerk("SkinPerk"));
 				}).then(() => {
-					return this.use("spell", "perk.attach", BITSMIST.v1.StylePerk);
+					return this.use("spell", "perk.attach", Perk.getPerk("StylePerk"));
 				}).then(() => {
 					return this.use("spell", "basic.start");
 				});

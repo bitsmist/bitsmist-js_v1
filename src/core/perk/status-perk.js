@@ -41,7 +41,7 @@ export default class StatusPerk extends Perk
 	{
 
 		// Init vars
-		StatusPerk._unitInfo = BITSMIST.v1.BasicPerk._unitInfo; // Shortcut
+		StatusPerk._unitInfo = Perk.getPerk("BasicPerk")._unitInfo; // Shortcut
 		StatusPerk._waitingList = new Store();
 		StatusPerk.__suspends = {};
 		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk._waitFor(BITSMIST.v1.Unit, waitlist, timeout); }
@@ -362,7 +362,7 @@ export default class StatusPerk extends Perk
 		let target = unit.use("skill", "basic.locate", waitlistItem);
 		if (target)
 		{
-			unitInfo = BITSMIST.v1.BasicPerk._unitInfo[target.uniqueId];
+			unitInfo = StatusPerk._unitInfo[target.uniqueId];
 		}
 
 		return unitInfo;

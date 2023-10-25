@@ -40,37 +40,27 @@ window.BITSMIST.v1.Unit = Unit;
 
 // Perk
 
+import BasicPerk from "./perk/basic-perk.js";
+Perk.registerPerk(BasicPerk);
+
 import Perk from "./perk/perk.js";
 window.BITSMIST.v1.Perk = Perk;
-
-import BasicPerk from "./perk/basic-perk.js";
-window.BITSMIST.v1.BasicPerk = BasicPerk;
-PerkPerk.register(BasicPerk);
-
-import PerkPerk from "./perk/perk-perk.js";
-window.BITSMIST.v1.PerkPerk = PerkPerk;
-PerkPerk.register(PerkPerk);
+Perk.registerPerk(Perk);
 
 import SettingPerk from "./perk/setting-perk.js";
-window.BITSMIST.v1.SettingPerk = SettingPerk;
-PerkPerk.register(SettingPerk);
+Perk.registerPerk(SettingPerk);
 
 import StatusPerk from "./perk/status-perk.js";
-window.BITSMIST.v1.StatusPerk = StatusPerk;
-PerkPerk.register(StatusPerk);
+Perk.registerPerk(StatusPerk);
 
 import SkinPerk from "./perk/skin-perk.js";
-window.BITSMIST.v1.SkinPerk = SkinPerk;
-PerkPerk.register(SkinPerk);
+Perk.registerPerk(SkinPerk);
 
 import StylePerk from "./perk/style-perk.js";
-window.BITSMIST.v1.StylePerk = StylePerk;
-PerkPerk.register(StylePerk);
+Perk.registerPerk(StylePerk);
 
 import EventPerk from "./perk/event-perk.js";
-window.BITSMIST.v1.EventPerk = EventPerk;
-PerkPerk.register(EventPerk);
+Perk.registerPerk(EventPerk);
 
 import UnitPerk from "./perk/unit-perk.js";
-window.BITSMIST.v1.UnitPerk = UnitPerk;
-PerkPerk.register(UnitPerk);
+Perk.registerPerk(UnitPerk);
