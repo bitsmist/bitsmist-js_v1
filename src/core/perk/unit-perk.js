@@ -146,6 +146,15 @@ export default class UnitPerk extends Perk
 				let classDef = ClassUtil.newUnit(className, settings, superClass, tagName);
 				UnitPerk._classInfo[className] = {"status":"loaded"};
 			}
+
+			// Define the tag
+			if (!customElements.get(tagName))
+			{
+				let classDef = ClassUtil.getClass(className);
+				Util.assert(classDef, `UnitPerk._loadClass(): Class does not exist. tagName=${tagName}, className=${className}`);
+
+				customElements.define(tagName, classDef);
+			}
 		});
 
 	}
