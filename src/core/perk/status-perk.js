@@ -41,7 +41,7 @@ export default class StatusPerk extends Perk
 	{
 
 		// Init vars
-		StatusPerk._unitInfo = Perk.getPerk("BasicPerk")._unitInfo; // Shortcut
+		StatusPerk._statusInfo = {};
 		StatusPerk._waitingList = new Store();
 		StatusPerk.__suspends = {};
 		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk._waitFor(BITSMIST.v1.Unit, waitlist, timeout); }
@@ -137,7 +137,7 @@ export default class StatusPerk extends Perk
 		Util.assert(StatusPerk.__isTransitionable(unit.get("state", "status.status"), status), `StatusPerk._changeStatus(): Illegal transition. name=${unit.tagName}, fromStatus=${unit.get("state", "status.status")}, toStatus=${status}, id=${unit.id}`, Error);
 
 		unit.set("state", "status.status", status);
-		StatusPerk._unitInfo[unit.uniqueId]["status"] = status;
+		StatusPerk._statusInfo[unit.uniqueId] = {"status":status};
 
 		StatusPerk.__processWaitingList();
 
@@ -355,17 +355,17 @@ export default class StatusPerk extends Perk
 	 *
 	 * @return  {Boolean}		True if ready.
 	 */
-	static __getUnitInfo(unit, waitlistItem)
+	static __getStatusInfo(unit, waitlistItem)
 	{
 
-		let unitInfo;
+		let statusInfo;
 		let target = unit.use("skill", "basic.locate", waitlistItem);
 		if (target)
 		{
-			unitInfo = StatusPerk._unitInfo[target.uniqueId];
+			statusInfo = StatusPerk._statusInfo[target.uniqueId];
 		}
 
-		return unitInfo;
+		return statusInfo;
 
 	}
 
@@ -387,10 +387,10 @@ export default class StatusPerk extends Perk
 		for (let i = 0; i < waitlist.length; i++)
 		{
 			let match = false;
-			let unitInfo = this.__getUnitInfo(waitInfo["waiter"], waitlist[i]);
-			if (unitInfo)
+			let statusInfo = this.__getStatusInfo(waitInfo["waiter"], waitlist[i]);
+			if (statusInfo)
 			{
-				if (StatusPerk.__isStatusMatch(unitInfo["status"], waitlist[i]["status"]))
+				if (StatusPerk.__isStatusMatch(statusInfo["status"], waitlist[i]["status"]))
 				{
 					match = true;
 				}

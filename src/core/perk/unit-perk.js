@@ -45,7 +45,7 @@ export default class UnitPerk extends Perk
 	{
 
 		// Init vars
-		UnitPerk._classInfo = BITSMIST.v1.BasicPerk._classInfo; // Shortcut
+		UnitPerk._classInfo = {};
 
 		// Upgrade Unit
 		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materializeAll", function(...args) { return UnitPerk._loadTags(...args); });
@@ -113,6 +113,7 @@ export default class UnitPerk extends Perk
 		let className = Util.safeGet(settings, "unit.options.className", Util.getClassNameFromTagName(tagName));
 		let baseClassName = Util.safeGet(settings, "unit.options.autoMorph", className );
 		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Unit" : baseClassName );
+		//baseClassName = ( baseClassName === true ? "Unit" : baseClassName );
 
 		// Load the class if needed
 		let promise = Promise.resolve();

@@ -44,7 +44,6 @@ export default class BasicPerk extends Perk
 	{
 
 		// Init vars
-		BasicPerk._classInfo = {};
 		BasicPerk._unitInfo = {};
 		BasicPerk._indexes = {
 			"tagName": {},
@@ -621,7 +620,6 @@ export default class BasicPerk extends Perk
 		BasicPerk._unitInfo[unit.uniqueId] = {
 			"object":		unit,
 			"class":		c,
-			"classInfo":	BasicPerk._classInfo[c.name],
 		};
 
 		// Indexes
