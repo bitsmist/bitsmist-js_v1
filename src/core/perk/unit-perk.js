@@ -130,10 +130,7 @@ export default class UnitPerk extends Perk
 				console.debug(`ClassPerk._loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
 				UnitPerk._classInfo[baseClassName] = {"status":"loading"};
 
-				let options = {
-					"splitClass": Util.safeGet(settings, "unit.options.splitClass", BITSMIST.v1.Unit.get("setting", "system.unit.options.splitClass", false)),
-				};
-				promise = AjaxUtil.loadClass(UnitPerk.__getClassURL(tagName, settings), options).then(() => {
+				promise = AjaxUtil.loadClass(UnitPerk.__getClassURL(tagName, settings)).then(() => {
 					UnitPerk._classInfo[baseClassName] = {"status":"loaded"};
 				});
 				UnitPerk._classInfo[baseClassName].promise = promise;
