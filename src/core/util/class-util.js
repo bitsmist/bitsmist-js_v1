@@ -76,26 +76,6 @@ export default class ClassUtil
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Instantiate the class.
-	 *
-	 * @param	{String}		className			Class name.
-	 * @param	{Object}		options				Options for the unit.
-	 *
-	 * @return  {Object}		Initaiated object.
-	 */
-	static createObject(className, ...args)
-	{
-
-		let c = ClassUtil.getClass(className);
-		Util.assert(c, `ClassUtil.createObject(): Class '${className}' is not defined.`, ReferenceError);
-
-		return  new c(...args);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Get the class.
 	 *
 	 * @param	{String}		className			Class name.
@@ -105,17 +85,34 @@ export default class ClassUtil
 	static getClass(className)
 	{
 
+		className = className.replace("BITSMIST.v1.", "");
 		let ret;
 
-		try
+		if (BITSMIST.v1[className])
 		{
-			ret = Function(`return (${ClassUtil.__validateClassName(className)})`)();
+			ret = BITSMIST.v1[className];
 		}
-		catch(e)
+
+		if (!ret)
 		{
-			if (!(e instanceof ReferenceError))
+			if (window[className])
 			{
-				throw e;
+				ret = window[className];
+			}
+		}
+
+		if (!ret)
+		{
+			try
+			{
+				ret = Function(`return (${ClassUtil.__validateClassName(className)})`)();
+			}
+			catch(e)
+			{
+				if (!(e instanceof ReferenceError))
+				{
+					throw e;
+				}
 			}
 		}
 
