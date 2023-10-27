@@ -1,4 +1,3 @@
-import buble from '@rollup/plugin-buble'
 import commonjs from '@rollup/plugin-commonjs'
 import nodeResolve from '@rollup/plugin-node-resolve';
 import terser from "@rollup/plugin-terser";
@@ -30,28 +29,4 @@ export default [
 			commonjs()
 		]
 	},
-	/*
-	{
-		input: 'src/core/index.js',
-		output: [
-			{
-				file: 'dist/bitsmist-js_v1.bubled.min.js',
-				format: 'iife',
-				sourcemap: false,
-				plugins: [
-					terser({
-						format:				{comments:false},
-						compress:			{drop_console:true},
-						keep_classnames:	true,
-					})
-				],
-			},
-		],
-		plugins: [
-			nodeResolve(),
-			commonjs(),
-			buble()
-		]
-	}
-	*/
 ]
