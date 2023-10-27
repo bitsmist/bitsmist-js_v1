@@ -172,7 +172,7 @@ export default class AjaxUtil
 	static loadHTML(url, options)
 	{
 
-		console.debug(`AjaxUtil.loadHTML(): Loading an HTML file. URL=${url}`);
+		console.debug(`AjaxUtil.loadHTML(): Loading the HTML file. URL=${url}`);
 
 		return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
 			console.debug(`AjaxUtil.loadHTML(): Loaded the HTML file. URL=${url}`);
@@ -195,7 +195,7 @@ export default class AjaxUtil
 	static loadCSS(url, options)
 	{
 
-		console.debug(`AjaxUtil.loadCSS(): Loading an CSS file. URL=${url}`);
+		console.debug(`AjaxUtil.loadCSS(): Loading the CSS file. URL=${url}`);
 
 		return AjaxUtil.ajaxRequest({URL:url, method:"GET"}).then((xhr) => {
 			console.debug(`AjaxUtil.loadCSS(): Loaded the CSS file. URL=${url}`);
