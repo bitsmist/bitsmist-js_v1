@@ -59,7 +59,7 @@ export default class StylePerk extends Perk
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
 			let promises = [];
 			Object.entries(BITSMIST.v1.Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
-				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName, sectionValue));
+				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName, sectionValue, true));
 			});
 
 			return Promise.all(promises).then(() => {
@@ -177,7 +177,7 @@ export default class StylePerk extends Perk
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadCSS(unit, styleName, options)
+	static _loadCSS(unit, styleName, options, shared)
 	{
 
 		let promise = Promise.resolve();
@@ -215,6 +215,7 @@ export default class StylePerk extends Perk
 
 		return promise.then(() => {
 			styleInfo["status"] = "loaded";
+			styleInfo["shared"] = shared;
 
 			return styleInfo;
 		});
@@ -249,7 +250,7 @@ export default class StylePerk extends Perk
 			else
 			{
 				// Light DOM
-				styleName = unit.tagName + "." + styleName;
+				styleName = (cssInfo["shared"] ? styleName : `${unit.tagName}.${styleName}`);
 				if (!(styleName in StylePerk.__applied) || StylePerk.__applied[styleName]["count"] <= 0)
 				{
 					// Apply styles
