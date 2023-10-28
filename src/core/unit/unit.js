@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import Util from "../util/util.js";
+
 // =============================================================================
 //	Unit Class
 // =============================================================================
@@ -25,7 +27,20 @@ export default class Unit extends HTMLElement
 	connectedCallback()
 	{
 
-		this._connectedHandler(this);
+		if (!this.__bm_initialized)
+		{
+			this.__bm_initialized = false;
+			this.__bm_ready = Promise.resolve(); // A promise to prevent from starting/stopping while stopping/starting
+			this.setAttribute("bm-powered", "");
+		}
+
+		this.__bm_ready = this.__bm_ready.then(() => {
+			console.debug(`connectedCallback(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+
+			return this.__bm_connectedHandler(this);
+		}).then(() => {
+			this.__bm_initialized = true;
+		});
 
 	}
 
@@ -37,7 +52,11 @@ export default class Unit extends HTMLElement
 	disconnectedCallback()
 	{
 
-		this._disconnectedHandler(this);
+		this.__bm_ready = this.__bm_ready.then(() => {
+			console.debug(`disconnectedCallback(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+
+			return this.__bm_disconnectedHandler(this);
+		});
 
 	}
 
@@ -49,7 +68,11 @@ export default class Unit extends HTMLElement
 	adoptedCallback()
 	{
 
-		this._adoptedHandler(this);
+		this.__bm_ready = this.__bm_ready.then(() => {
+			console.debug(`adoptedCallback(): Unit is adopted. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+
+			return this.__bm_adoptedHandler(this);
+		});
 
 	}
 
@@ -61,7 +84,10 @@ export default class Unit extends HTMLElement
 	attributeChangedCallback(name, oldValue, newValue)
 	{
 
-		this._attributeChangedHandler(this, name, oldValue, newValue);
+		if (this.__bm_initialized)
+		{
+			return this.__bm_attributeChangedHandler(this, name, oldValue, newValue);
+		}
 
 	}
 

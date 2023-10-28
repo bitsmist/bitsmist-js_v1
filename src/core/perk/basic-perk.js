@@ -84,10 +84,10 @@ export default class BasicPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.locateAll", function(...args) { return BasicPerk._locateAll(...args); });
 
 		// Upgrade unit
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_connectedHandler", this._connectedHandler);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_disconnectedHandler", this._disconnectedHandler);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_adoptedHandler", this._connectedHandler);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "_attributeChangedHandler", this._attributeChangedHandler);
+		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "__bm_connectedHandler", this._connectedHandler);
+		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "__bm_disconnectedHandler", this._disconnectedHandler);
+		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "__bm_adoptedHandler", this._connectedHandler);
+		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "__bm_attributeChangedHandler", this._attributeChangedHandler);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "get", this._get);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "set", this._set);
 		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "has", this._has);
@@ -134,55 +134,46 @@ export default class BasicPerk extends Perk
 	static _connectedHandler(unit)
 	{
 
-		// The first time only initialization
-		if (!this.__bm_uniqueid)
+		if (!this.__bm_initialized || this.get("setting", "basic.options.autoRestart", false))
 		{
-			this.__bm_initialized = false;
-			this.__bm_ready = Promise.resolve(); // A promise to prevent from starting/stopping while stopping/starting
+
+			// Init vars
 			this.__bm_uniqueid = Util.getUUID();
 			this.__bm_unitroot = this;
-			this.setAttribute("bm-powered", "");
+			this.__bm_assets = {};
+
 			BasicPerk._register(this);
+
+			// Upgrade unit
+			Perk.upgrade(unit, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["state"]}));
+			Perk.upgrade(unit, "asset", "vault", new ChainableStore());
+			Perk.upgrade(unit, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["inventory"]}));
+			Perk.upgrade(unit, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["skill"]}));
+			Perk.upgrade(unit, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["spell"]}));
+
+			// Attach default perks
+			return Promise.resolve().then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
+			}).then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("Perk"));
+			}).then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
+			}).then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("SettingPerk"));
+			}).then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("UnitPerk"));
+			}).then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("StatusPerk"));
+			}).then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("EventPerk"));
+			}).then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("SkinPerk"));
+			}).then(() => {
+				return this.use("spell", "perk.attach", Perk.getPerk("StylePerk"));
+			}).then(() => {
+				return this.use("spell", "basic.start");
+			});
 		}
-
-		// Start
-		this.__bm_ready = this.__bm_ready.then(() => {
-			console.debug(`BasicPerk._connectedHandler(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
-
-			if (!this.__bm_initialized || this.get("setting", "basic.options.autoRestart", false))
-			{
-				this.__bm_initialized = true;
-
-				// Upgrade unit
-				unit.__bm_assets = {};
-				Perk.upgrade(unit, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["state"]}));
-				Perk.upgrade(unit, "asset", "vault", new ChainableStore());
-				Perk.upgrade(unit, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["inventory"]}));
-				Perk.upgrade(unit, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["skill"]}));
-				Perk.upgrade(unit, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["spell"]}));
-
-				// Attach default perks
-				return Promise.resolve().then(() => {
-					return this.use("spell", "perk.attach", Perk.getPerk("Perk"));
-				}).then(() => {
-					return this.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
-				}).then(() => {
-					return this.use("spell", "perk.attach", Perk.getPerk("SettingPerk"));
-				}).then(() => {
-					return this.use("spell", "perk.attach", Perk.getPerk("UnitPerk"));
-				}).then(() => {
-					return this.use("spell", "perk.attach", Perk.getPerk("StatusPerk"));
-				}).then(() => {
-					return this.use("spell", "perk.attach", Perk.getPerk("EventPerk"));
-				}).then(() => {
-					return this.use("spell", "perk.attach", Perk.getPerk("SkinPerk"));
-				}).then(() => {
-					return this.use("spell", "perk.attach", Perk.getPerk("StylePerk"));
-				}).then(() => {
-					return this.use("spell", "basic.start");
-				});
-			}
-		});
 
 	}
 
@@ -194,12 +185,7 @@ export default class BasicPerk extends Perk
 	static _disconnectedHandler(unit)
 	{
 
-		// Stop
-		this.__bm_ready = this.__bm_ready.then(() => {
-			return this.use("spell", "basic.stop");
-		}).then(() => {
-			console.debug(`BasicPerk.disconnectedHandler(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
-		});
+		return this.use("spell", "basic.stop");
 
 	}
 
@@ -223,10 +209,7 @@ export default class BasicPerk extends Perk
 	static _attributeChangedHandler(unit, name, oldValue, newValue)
 	{
 
-		if (this.__bm_initialized)
-		{
-			return unit.use("spell", "event.trigger", "afterAttributeChange", {"name":name, "oldValue":oldValue, "newValue":newValue});
-		}
+		return unit.use("spell", "event.trigger", "afterAttributeChange", {"name":name, "oldValue":oldValue, "newValue":newValue});
 
 	}
 
