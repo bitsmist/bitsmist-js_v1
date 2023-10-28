@@ -9,7 +9,6 @@
 // =============================================================================
 
 import ChainableStore from "../store/chainable-store.js";
-import UnitPerk from "./unit-perk.js";
 import Perk from "./perk.js";
 import Store from "../store/store.js";
 import URLUtil from "../util/url-util.js";
@@ -113,14 +112,6 @@ export default class BasicPerk extends Perk
 				});
 			}
 		}));
-
-		// Load tags
-		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
-			if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
-			{
-				Perk.getPerk("UnitPerk")._loadTags(null, document.body, {"waitForTags":false});
-			}
-		});
 
 	}
 

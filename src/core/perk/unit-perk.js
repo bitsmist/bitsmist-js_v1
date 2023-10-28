@@ -52,6 +52,14 @@ export default class UnitPerk extends Perk
 		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materialize", function(...args) { return UnitPerk._loadUnit(...args); });
 		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.summon", function(...args) { return UnitPerk._loadClass(...args); });
 
+		// Load tags
+		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
+			if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
+			{
+				this._loadTags(null, document.body, {"waitForTags":false});
+			}
+		});
+
 	}
 
 	// -------------------------------------------------------------------------
