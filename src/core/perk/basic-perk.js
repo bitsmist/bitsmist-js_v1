@@ -125,13 +125,13 @@ export default class BasicPerk extends Perk
 	static _connectedHandler(unit)
 	{
 
-		if (!this.__bm_initialized || this.get("setting", "basic.options.autoRestart", false))
+		if (!unit.__bm_initialized || unit.get("setting", "basic.options.autoRestart", false))
 		{
 
 			// Init vars
-			this.__bm_uniqueid = Util.getUUID();
-			this.__bm_unitroot = this;
-			this.__bm_assets = {};
+			unit.__bm_uniqueid = Util.getUUID();
+			unit.__bm_unitroot = unit;
+			unit.__bm_assets = {};
 
 			BasicPerk._register(this);
 
@@ -144,25 +144,25 @@ export default class BasicPerk extends Perk
 
 			// Attach default perks
 			return Promise.resolve().then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
 			}).then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("Perk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("Perk"));
 			}).then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
 			}).then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("SettingPerk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("SettingPerk"));
 			}).then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("UnitPerk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("UnitPerk"));
 			}).then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("StatusPerk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("StatusPerk"));
 			}).then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("EventPerk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("EventPerk"));
 			}).then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("SkinPerk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("SkinPerk"));
 			}).then(() => {
-				return this.use("spell", "perk.attach", Perk.getPerk("StylePerk"));
+				return unit.use("spell", "perk.attach", Perk.getPerk("StylePerk"));
 			}).then(() => {
-				return this.use("spell", "basic.start");
+				return unit.use("spell", "basic.start");
 			});
 		}
 
@@ -176,7 +176,7 @@ export default class BasicPerk extends Perk
 	static _disconnectedHandler(unit)
 	{
 
-		return this.use("spell", "basic.stop");
+		return unit.use("spell", "basic.stop");
 
 	}
 
