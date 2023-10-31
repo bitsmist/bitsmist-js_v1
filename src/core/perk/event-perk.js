@@ -40,12 +40,12 @@ export default class EventPerk extends Perk
 	{
 
 		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "event.triggerSync", function(...args) { return EventPerk._triggerSync(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.triggerSync", function(...args) { return EventPerk._triggerSync(...args); });
 
 	}
 
@@ -55,8 +55,8 @@ export default class EventPerk extends Perk
 	{
 
 		// Upgrade unit
-		this.upgrade(unit, "event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings);
-		this.upgrade(unit, "event", "afterTransform", EventPerk.EventPerk_onAfterTransform);
+		unit.upgrade("event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings, {"order":this.info["order"]});
+		unit.upgrade("event", "afterTransform", EventPerk.EventPerk_onAfterTransform, {"order":this.info["order"]});
 
 	}
 

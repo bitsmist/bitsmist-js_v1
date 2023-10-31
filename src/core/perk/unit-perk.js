@@ -48,9 +48,9 @@ export default class UnitPerk extends Perk
 		UnitPerk._classInfo = {};
 
 		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materializeAll", function(...args) { return UnitPerk._loadTags(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.materialize", function(...args) { return UnitPerk._loadUnit(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "unit.summon", function(...args) { return UnitPerk._loadClass(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "unit.materializeAll", function(...args) { return UnitPerk._loadTags(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "unit.materialize", function(...args) { return UnitPerk._loadUnit(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "unit.summon", function(...args) { return UnitPerk._loadClass(...args); });
 
 		// Load tags
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
@@ -68,8 +68,8 @@ export default class UnitPerk extends Perk
 	{
 
 		// Upgrade unit
-		this.upgrade(unit, "inventory", "unit.units", {});
-		this.upgrade(unit, "event", "doApplySettings", UnitPerk.UnitPerk_onDoApplySettings);
+		unit.upgrade("inventory", "unit.units", {});
+		unit.upgrade("event", "doApplySettings", UnitPerk.UnitPerk_onDoApplySettings, {"order":this.info["order"]});
 
 		let settings = this.__loadAttrSettings(unit);
 		unit.use("skill", "setting.merge", settings);

@@ -43,8 +43,8 @@ export default class SkinPerk extends Perk
 	{
 
 		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
 
 	}
 
@@ -54,10 +54,10 @@ export default class SkinPerk extends Perk
 	{
 
 		// Upgrade unit
-		this.upgrade(unit, "inventory", "skin.skins", {});
-		this.upgrade(unit, "state", "skin.active.skinName", "");
-		this.upgrade(unit, "event", "beforeTransform", SkinPerk.SkinPerk_onBeforeTransform);
-		this.upgrade(unit, "event", "doTransform", SkinPerk.SkinPerk_onDoTransform);
+		unit.upgrade("inventory", "skin.skins", {});
+		unit.upgrade("state", "skin.active.skinName", "");
+		unit.upgrade("event", "beforeTransform", SkinPerk.SkinPerk_onBeforeTransform, {"order":this.info["order"]});
+		unit.upgrade("event", "doTransform", SkinPerk.SkinPerk_onDoTransform, {"order":this.info["order"]});
 
 		SkinPerk.__loadAttrSettings(unit);
 		SkinPerk.__adjustSettings(unit);

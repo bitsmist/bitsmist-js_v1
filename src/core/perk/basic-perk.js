@@ -51,52 +51,34 @@ export default class BasicPerk extends Perk
 		};
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit.__bm_assets = {};
-		this.upgrade(BITSMIST.v1.Unit, "asset", "state", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Unit, "asset", "vault", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Unit, "asset", "inventory", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Unit, "asset", "skill", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Unit, "asset", "spell", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Unit, "method", "get", this._get);
-		this.upgrade(BITSMIST.v1.Unit, "method", "set", this._set);
-		this.upgrade(BITSMIST.v1.Unit, "method", "use", this._use);
-		this.upgrade(BITSMIST.v1.Unit, "property", "uniqueId", {
-			get() { return "00000000-0000-0000-0000-000000000000"; },
-		});
-		this.upgrade(BITSMIST.v1.Unit, "property", "tagName", {
-			get() { return "BODY"; },
-		});
-		this.upgrade(BITSMIST.v1.Unit, "property", "unitRoot", {
+		BITSMIST.v1.Unit.upgrade("asset", "callback", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("asset", "state", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("asset", "vault", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("asset", "inventory", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("asset", "skill", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("asset", "spell", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("property", "unitRoot", {
 			get() { return document.body; },
 		});
-		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.start", function(...args) { return BasicPerk._start(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.scan", function(...args) { return BasicPerk._scan(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.scanAll", function(...args) { return BasicPerk._scanAll(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.locate", function(...args) { return BasicPerk._locate(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "basic.locateAll", function(...args) { return BasicPerk._locateAll(...args); });
-
-		// Upgrade unit
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "__bm_connectedHandler", this._connectedHandler);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "__bm_disconnectedHandler", this._disconnectedHandler);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "__bm_adoptedHandler", this._connectedHandler);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "__bm_attributeChangedHandler", this._attributeChangedHandler);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "get", this._get);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "set", this._set);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "has", this._has);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "method", "use", this._use);
-		this.upgrade(BITSMIST.v1.Unit.prototype, "property", "uniqueId", {
-			get() { return this.__bm_uniqueid; },
-		});
-		this.upgrade(BITSMIST.v1.Unit.prototype, "property", "unitRoot", {
-			get() { return this.__bm_unitroot; },
-			set(value) { this.__bm_unitroot = value; },
+		BITSMIST.v1.Unit.upgrade("callback", "connectedCallback", this._connectedHandler);
+		BITSMIST.v1.Unit.upgrade("callback", "disconnectedCallback", this._disconnectedHandler);
+		BITSMIST.v1.Unit.upgrade("callback", "adoptedCallback", this._connectedHandler);
+		BITSMIST.v1.Unit.upgrade("callback", "attributeChangedCallback", this._attributeChangedHandler);
+		BITSMIST.v1.Unit.upgrade("spell", "basic.start", function(...args) { return BasicPerk._start(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "basic.scan", function(...args) { return BasicPerk._scan(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "basic.scanAll", function(...args) { return BasicPerk._scanAll(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "basic.locate", function(...args) { return BasicPerk._locate(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "basic.locateAll", function(...args) { return BasicPerk._locateAll(...args); });
+		Object.defineProperty(BITSMIST.v1.Unit.prototype, "unitRoot", {
+			get() { return this.get("vault", "unitroot"); },
+			set(value) { this.set("vault", "unitroot", value); },
 		});
 
 		// Create a promise that resolves when document is ready
@@ -127,41 +109,26 @@ export default class BasicPerk extends Perk
 
 		if (!unit.__bm_initialized || unit.get("setting", "basic.options.autoRestart", false))
 		{
-
-			// Init vars
-			unit.__bm_uniqueid = Util.getUUID();
-			unit.__bm_unitroot = unit;
-			unit.__bm_assets = {};
-
-			BasicPerk._register(this);
-
 			// Upgrade unit
-			Perk.upgrade(unit, "asset", "state", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["state"]}));
-			Perk.upgrade(unit, "asset", "vault", new ChainableStore());
-			Perk.upgrade(unit, "asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["inventory"]}));
-			Perk.upgrade(unit, "asset", "skill", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["skill"]}));
-			Perk.upgrade(unit, "asset", "spell", new ChainableStore({"chain":BITSMIST.v1.Unit.__bm_assets["spell"]}));
+			unit.upgrade("asset", "state", new ChainableStore(), {"chain":true});
+			unit.upgrade("asset", "vault", new ChainableStore(), {"chain":true, "acl":"ro"});
+			unit.upgrade("asset", "inventory", new ChainableStore(), {"chain":true});
+			unit.upgrade("asset", "skill", new ChainableStore(), {"chain":true});
+			unit.upgrade("asset", "spell", new ChainableStore(), {"chain":true});
+			unit.upgrade("vault", "unitroot", unit);
+
+			BasicPerk._register(unit);
 
 			// Attach default perks
-			return Promise.resolve().then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
-			}).then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("Perk"));
-			}).then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("BasicPerk"));
-			}).then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("SettingPerk"));
-			}).then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("UnitPerk"));
-			}).then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("StatusPerk"));
-			}).then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("EventPerk"));
-			}).then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("SkinPerk"));
-			}).then(() => {
-				return unit.use("spell", "perk.attach", Perk.getPerk("StylePerk"));
-			}).then(() => {
+			let chain = Promise.resolve();
+			["BasicPerk","Perk","SettingPerk","UnitPerk","StatusPerk","EventPerk", "SkinPerk", "StylePerk"].forEach((perkName) => {
+				chain = chain.then(() => {
+					return unit.use("spell", "perk.attach", Perk.getPerk(perkName));
+				});
+			});
+
+			// Start
+			return chain.then(() => {
 				return unit.use("spell", "basic.start");
 			});
 		}
@@ -205,74 +172,6 @@ export default class BasicPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Get the value from the asset.
-	 *
-	 * @param	{String}		assetName			Asset name.
-	 * @param	{String}		key					Key.
-	 * @param	{*}				...args				Arguments.
-	 *
-	 * @return  {*}				Value.
-	 */
-	static _get(assetName, key, ...args)
-	{
-
-		return this.__bm_assets[assetName].get(key, ...args);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Set the value to the asset.
-	 *
-	 * @param	{String}		assetName			Asset name.
-	 * @param	{String}		key					Key.
-	 * @param	{*}				value				Value.
-	 */
-	static _set(assetName, key, value)
-	{
-
-		this.__bm_assets[assetName].set(key, value);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Return if the unit has the asset.
-	 *
-	 * @param	{String}		assetName			Asset name.
-	 * @param	{String}		key					Key.
-	 */
-	static _has(assetName, key)
-	{
-
-		this.__bm_assets[assetName].has(key);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Call the function in the asset.
-	 *
-	 * @param	{String}		assetName			Asset name.
-	 * @param	{String}		key					Key.
-	 * @param	{*}				...args				Arguments.
-	 */
-	static _use(assetName, key, ...args)
-	{
-
-		let func = this.__bm_assets[assetName].get(key);
-		Util.assert(typeof(func) === "function", `${assetName} is not available. ${assetName}Name=${key}`);
-
-		return func.call(this, this, ...args);
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Skills
 	// -------------------------------------------------------------------------
 
@@ -290,7 +189,7 @@ export default class BasicPerk extends Perk
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
-			return unit.use("spell", "setting.apply", {"settings":unit.__bm_assets["setting"].items});
+			return unit.use("spell", "setting.apply", {"settings":unit.get("setting")});
 		}).then(() => {
 			return unit.use("spell", "event.trigger", "beforeStart");
 		}).then(() => {

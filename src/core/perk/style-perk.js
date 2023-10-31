@@ -43,10 +43,10 @@ export default class StylePerk extends Perk
 	{
 
 		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "vault", "style.applied", []);
-		this.upgrade(BITSMIST.v1.Unit, "inventory", "style.styles", new ChainableStore());
-		this.upgrade(BITSMIST.v1.Unit, "spell", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
+		BITSMIST.v1.Unit.upgrade("vault", "style.applied", []);
+		BITSMIST.v1.Unit.upgrade("inventory", "style.styles", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("spell", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
 
 		this._cssReady = {};
 		this._cssReady["promise"] = new Promise((resolve, reject) => {
@@ -86,12 +86,12 @@ export default class StylePerk extends Perk
 	{
 
 		// Upgrade unit
-		this.upgrade(unit, "vault", "style.applied", []);
-		this.upgrade(unit, "inventory", "style.styles", new ChainableStore({
+		unit.upgrade("vault", "style.applied", []);
+		unit.upgrade("inventory", "style.styles", new ChainableStore({
 			"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
 		}));
-		this.upgrade(unit, "event", "beforeTransform", StylePerk.StylePerk_onBeforeTransform);
-		this.upgrade(unit, "event", "doTransform", StylePerk.StylePerk_onDoTransform);
+		unit.upgrade("event", "beforeTransform", StylePerk.StylePerk_onBeforeTransform, {"order":this.info["order"]});
+		unit.upgrade("event", "doTransform", StylePerk.StylePerk_onDoTransform, {"order":this.info["order"]});
 
 		StylePerk.__loadAttrSettings(unit);
 		StylePerk.__adjustSettings(unit);

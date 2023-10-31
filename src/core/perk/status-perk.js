@@ -47,11 +47,11 @@ export default class StatusPerk extends Perk
 		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk._waitFor(BITSMIST.v1.Unit, waitlist, timeout); }
 
 		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "skill", "status.change", function(...args) { return StatusPerk._changeStatus(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "status.wait", function(...args) { return StatusPerk._waitFor(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "status.suspend", function(...args) { return StatusPerk._suspend(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "status.resume", function(...args) { return StatusPerk._resume(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "status.pause", function(...args) { return StatusPerk._pause(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "status.change", function(...args) { return StatusPerk._changeStatus(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "status.wait", function(...args) { return StatusPerk._waitFor(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "status.suspend", function(...args) { return StatusPerk._suspend(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "status.resume", function(...args) { return StatusPerk._resume(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "status.pause", function(...args) { return StatusPerk._pause(...args); });
 
 	}
 
@@ -61,9 +61,9 @@ export default class StatusPerk extends Perk
 	{
 
 		// Upgrade unit;
-		this.upgrade(unit, "state", "status.status", "connected");
-		this.upgrade(unit, "inventory", "status.suspends", {});
-		this.upgrade(unit, "event", "doApplySettings", StatusPerk.StatusPerk_onDoApplySettings);
+		unit.upgrade("state", "status.status", "connected");
+		unit.upgrade("inventory", "status.suspends", {});
+		unit.upgrade("event", "doApplySettings", StatusPerk.StatusPerk_onDoApplySettings, {"order":this.info["order"]});
 
 	}
 

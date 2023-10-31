@@ -43,14 +43,12 @@ export default class SettingPerk extends Perk
 	{
 
 		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "asset", "setting", new ChainableStore());
-
-		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
+		BITSMIST.v1.Unit.upgrade("asset", "setting", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
 
 	}
 
@@ -65,7 +63,7 @@ export default class SettingPerk extends Perk
 		settings = SettingPerk.__mergeSettings(unit, settings);
 
 		// Upgrade unit
-		this.upgrade(unit, "asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit.__bm_assets["setting"]}));
+		unit.upgrade("asset", "setting", new ChainableStore({"items":settings}), {"chain":true});
 
 		return Promise.resolve().then(() => {
 			SettingPerk.__loadAttrSettings(unit);
@@ -171,7 +169,7 @@ export default class SettingPerk extends Perk
 	static _mergeSettings(unit, key, value)
 	{
 
-		return unit.__bm_assets["setting"].merge(key, value);
+		unit.merge("setting", key, value);
 
 	}
 

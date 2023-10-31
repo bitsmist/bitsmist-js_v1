@@ -53,8 +53,8 @@ export default class Perk
 	{
 
 		// Upgrade Unit
-		this.upgrade(BITSMIST.v1.Unit, "spell", "perk.attachPerks", function(...args) { return Perk._attachPerks(...args); });
-		this.upgrade(BITSMIST.v1.Unit, "spell", "perk.attach", function(...args) { return Perk._attach(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "perk.attachPerks", function(...args) { return Perk._attachPerks(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "perk.attach", function(...args) { return Perk._attach(...args); });
 
 	}
 
@@ -72,7 +72,7 @@ export default class Perk
 	{
 
 		// Upgrade unit
-		this.upgrade(unit, "inventory", "perk.perks.Perk", {"object": Perk});
+		unit.upgrade("inventory", "perk.perks.Perk", {"object": Perk});
 
 	}
 
@@ -88,43 +88,6 @@ export default class Perk
 	 */
 	static deinit(unit, options)
 	{
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Set event handler for perk.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 * @param	{String}		type				Upgrade type.
-	 * @param	{String}		name				Section name.
-	 * @param	{Function}		content				Upgrade content.
-	 */
-	static upgrade(unit, type, name, content)
-	{
-
-		switch (type)
-		{
-			case "asset":
-				unit.__bm_assets[name] = content;
-				break;
-			case "method":
-				unit[name] = content;
-				break;
-			case "property":
-				Object.defineProperty(unit, name, content);
-				break;
-			case "event":
-				unit.use("skill", "event.add", name, {
-					"handler":	content,
-					"order":	this.info["order"],
-				});
-				break;
-			default:
-				unit.__bm_assets[type].set(name, content);
-				break;
-		}
-
 	}
 
 	// -------------------------------------------------------------------------
