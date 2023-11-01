@@ -25,6 +25,7 @@ export default class StylePerk extends Perk
 	//  Private Variables
 	// -------------------------------------------------------------------------
 
+	static #__vault = new WeakMap();
 	static #__applied = {};
 	static #__cssReady = {};
 	static #__info = {
@@ -51,8 +52,10 @@ export default class StylePerk extends Perk
 	static globalInit()
 	{
 
+		// Init Vars
+		StylePerk.#__vault.set(BITSMIST.v1.Unit, {"applied": []});
+
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("vault", "style.applied", []);
 		BITSMIST.v1.Unit.upgrade("inventory", "style.styles", new ChainableStore());
 		BITSMIST.v1.Unit.upgrade("spell", "style.summon", function(...args) { return StylePerk.#_loadCSS(...args); });
 		BITSMIST.v1.Unit.upgrade("spell", "style.apply", function(...args) { return StylePerk.#_applyCSS(...args); });
@@ -94,7 +97,7 @@ export default class StylePerk extends Perk
 	{
 
 		// Upgrade unit
-		unit.upgrade("vault", "style.applied", []);
+		StylePerk.#__vault.set(unit, {"applied": []});
 		unit.upgrade("inventory", "style.styles", new ChainableStore({
 			"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
 		}));
@@ -273,9 +276,7 @@ export default class StylePerk extends Perk
 					StylePerk.#__applied[styleName]["count"]++;
 				}
 
-				let applied = unit.get("vault", "style.applied");
-				applied.push(styleName);
-				unit.set("vault", "style.applied", applied);
+				StylePerk.#__vault.get(unit)["applied"].push(styleName);
 			}
 
 			console.debug(`StylePerk.#_applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
@@ -302,14 +303,14 @@ export default class StylePerk extends Perk
 		else
 		{
 			// Light DOM
-			let applied = unit.get("vault", "style.applied");
+			let applied = StylePerk.#__vault.get(unit)["applied"];
 			if (applied.length > 0)
 			{
 				for (let i = 0; i < applied.length; i++)
 				{
 					StylePerk.#__applied[applied[i]]["count"]--;
 				}
-				unit.set("vault", "style.applied", []);
+				StylePerk.#__vault.get(unit)["applied"] = [];
 
 				// Re-apply other CSS
 				document.adoptedStyleSheets = [];
