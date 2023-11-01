@@ -19,6 +19,16 @@ export default class Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	static #__info = {
+		"privateId":	Util.getUUID(),
+		"section":		"perk",
+		"order":		0,
+	};
+
+	// -------------------------------------------------------------------------
 	//  Properties
 	// -------------------------------------------------------------------------
 
@@ -30,10 +40,7 @@ export default class Perk
 	static get info()
 	{
 
-		return {
-			"section":		"perk",
-			"order":		0,
-		};
+		return Perk.#__info;
 
 	}
 
@@ -53,8 +60,8 @@ export default class Perk
 	{
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("spell", "perk.attachPerks", function(...args) { return Perk._attachPerks(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "perk.attach", function(...args) { return Perk._attach(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "perk.attachPerks", function(...args) { return Perk.#_attachPerks(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "perk.attach", function(...args) { return Perk.#_attach(...args); });
 
 	}
 
@@ -151,14 +158,12 @@ export default class Perk
 
 		perkName = perkName || "common";
 
-		if (!this._handlers[perkName])
+		if (!Perk._handlers[perkName])
 		{
-			this._handlers[perkName] = {};
+			Perk._handlers[perkName] = {};
 		}
 
-		//this._handlers[handler.name] = handler;
-		this._handlers[perkName][handler.name] = handler;
-
+		Perk._handlers[perkName][handler.name] = handler;
 
 	}
 
@@ -174,7 +179,7 @@ export default class Perk
 	{
 
 		handlerName = handlerName.replace("BITSMIST.v1.", "");
-		let handler = (this._handlers[this.name] && this._handlers[this.name][handlerName]) || this._handlers["common"][handlerName];
+		let handler = (Perk._handlers[this.name] && this._handlers[this.name][handlerName]) || Perk._handlers["common"][handlerName];
 
 		Util.assert(handler, `Perk.createHandler(): Handler '${handlerName}' is not registered.`, ReferenceError);
 
@@ -192,16 +197,16 @@ export default class Perk
 	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Options.
 	 */
-	static _attachPerks(unit, options)
+	static #_attachPerks(unit, options)
 	{
 
 		let settings = options["settings"];
 		let chain = Promise.resolve();
-		let targets = Perk.__listNewPerks(unit, settings);
+		let targets = Perk.#__listNewPerks(unit, settings);
 
-		Perk.__sortItems(targets).forEach((perkName) => {
+		Perk.#__sortItems(targets).forEach((perkName) => {
 			chain = chain.then(() => {
-				return Perk._attach(unit, Perk._perks[perkName].object, options);
+				return Perk.#_attach(unit, Perk._perks[perkName].object, options);
 			});
 		});
 
@@ -220,7 +225,7 @@ export default class Perk
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _attach(unit, perk, options)
+	static #_attach(unit, perk, options)
 	{
 
 		if (!unit.get("inventory", `perk.perks.${perk.name}`))
@@ -229,7 +234,7 @@ export default class Perk
 			let deps = Perk._perks[perk.name]["depends"];
 			for (let i = 0; i < deps.length; i++)
 			{
-				Perk._attach(unit, Perk._perks[deps[i]].object, options);
+				Perk.#_attach(unit, Perk._perks[deps[i]].object, options);
 			}
 
 			unit.set("inventory", `perk.perks.${perk.name}`, {
@@ -251,7 +256,7 @@ export default class Perk
 	 * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		settings			Settings.
 	 */
-	static __listNewPerks(unit, settings)
+	static #__listNewPerks(unit, settings)
 	{
 
 		let targets = {};
@@ -295,7 +300,7 @@ export default class Perk
 	 *
 	 * @return  {Array}			Sorted keys.
 	 */
-	static __sortItems(perks)
+	static #__sortItems(perks)
 	{
 
 		return Object.keys(perks).sort((a,b) => {

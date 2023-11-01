@@ -22,16 +22,23 @@ export default class SkinPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	static #__info = {
+		"privateId":	Util.getUUID(),
+		"section":		"skin",
+		"order":		210,
+	};
+
+	// -------------------------------------------------------------------------
 	//  Properties
 	// -------------------------------------------------------------------------
 
 	static get info()
 	{
 
-		return {
-			"section":		"skin",
-			"order":		210,
-		};
+		return SkinPerk.#__info;
 
 	}
 
@@ -43,8 +50,8 @@ export default class SkinPerk extends Perk
 	{
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("skill", "skin.apply", function(...args) { return SkinPerk._applySkin(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "skin.summon", function(...args) { return SkinPerk._loadSkin(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "skin.apply", function(...args) { return SkinPerk.#_applySkin(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "skin.summon", function(...args) { return SkinPerk.#_loadSkin(...args); });
 
 	}
 
@@ -56,11 +63,11 @@ export default class SkinPerk extends Perk
 		// Upgrade unit
 		unit.upgrade("inventory", "skin.skins", {});
 		unit.upgrade("state", "skin.active.skinName", "");
-		unit.upgrade("event", "beforeTransform", SkinPerk.SkinPerk_onBeforeTransform, {"order":this.info["order"]});
-		unit.upgrade("event", "doTransform", SkinPerk.SkinPerk_onDoTransform, {"order":this.info["order"]});
+		unit.upgrade("event", "beforeTransform", SkinPerk.#SkinPerk_onBeforeTransform, {"order":SkinPerk.info["order"]});
+		unit.upgrade("event", "doTransform", SkinPerk.#SkinPerk_onDoTransform, {"order":SkinPerk.info["order"]});
 
-		SkinPerk.__loadAttrSettings(unit);
-		SkinPerk.__adjustSettings(unit);
+		SkinPerk.#__loadAttrSettings(unit);
+		SkinPerk.#__adjustSettings(unit);
 
 		// Shadow DOM
 		switch (unit.get("setting", "skin.options.shadowDOM", unit.get("setting" ,"system.skin.options.shadowDOM")))
@@ -81,12 +88,12 @@ export default class SkinPerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static SkinPerk_onBeforeTransform(sender, e, ex)
+	static #SkinPerk_onBeforeTransform(sender, e, ex)
 	{
 
 		if (this.get("setting", "skin.options.hasSkin", true))
 		{
-			return SkinPerk._loadSkin(this, e.detail.skinName, e.detail.skinOptions).then((skinInfo) => {
+			return SkinPerk.#_loadSkin(this, e.detail.skinName, e.detail.skinOptions).then((skinInfo) => {
 				this.unitRoot.textContent = "";
 				this.unitRoot = skinInfo["template"].content.cloneNode(true);
 			});
@@ -96,12 +103,12 @@ export default class SkinPerk extends Perk
 
 	// -------------------------------------------------------------------------
 
-	static SkinPerk_onDoTransform(sender, e, ex)
+	static #SkinPerk_onDoTransform(sender, e, ex)
 	{
 
 		if (this.get("setting", "skin.options.hasSkin", true))
 		{
-			return SkinPerk._applySkin(this, e.detail.skinName, this.unitRoot);
+			return SkinPerk.#_applySkin(this, e.detail.skinName, this.unitRoot);
 		}
 
 	}
@@ -119,16 +126,16 @@ export default class SkinPerk extends Perk
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadSkin(unit, skinName, options)
+	static #_loadSkin(unit, skinName, options)
 	{
 
 		let promise = Promise.resolve();
-		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`) || SkinPerk.__createSkinInfo(unit, skinName);
+		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`) || SkinPerk.#__createSkinInfo(unit, skinName);
 		let skinSettings = options || unit.get("setting", `skin.skins.${skinName}`, {});
 
 		if (skinInfo["status"] === "loaded")
 		{
-			console.debug(`SkinPerk._loadSkin(): Skin already loaded. name=${unit.tagName}, skinName=${skinName}`);
+			console.debug(`SkinPerk.#_loadSkin(): Skin already loaded. name=${unit.tagName}, skinName=${skinName}`);
 			return Promise.resolve(skinInfo);
 		}
 
@@ -138,13 +145,13 @@ export default class SkinPerk extends Perk
 			break;
 		case "node":
 			let rootNode = unit.use("skill", "basic.scan", skinSettings["rootNode"] || "");
-			Util.assert(rootNode, `SkinPerk._loadSkin(): Root node does not exist. name=${unit.tagName}, skinName=${skinName}, rootNode=${skinSettings["rootNode"]}`);
+			Util.assert(rootNode, `SkinPerk.#_loadSkin(): Root node does not exist. name=${unit.tagName}, skinName=${skinName}, rootNode=${skinSettings["rootNode"]}`);
 			skinInfo["HTML"] = rootNode.innerHTML;
 			break;
 		case "URL":
 		default:
-			let url = skinSettings["URL"] || SkinPerk.__getDefaultURL(unit, skinName, skinSettings);
-			Util.assert(url, `SkinPerk._loadSkin(): Skin URL is not speicified. name=${unit.tagName}, skinName=${skinName}`);
+			let url = skinSettings["URL"] || SkinPerk.#__getDefaultURL(unit, skinName, skinSettings);
+			Util.assert(url, `SkinPerk.#_loadSkin(): Skin URL is not speicified. name=${unit.tagName}, skinName=${skinName}`);
 			promise = AjaxUtil.loadHTML(url).then((skin) => {
 				skinInfo["HTML"] = skin;
 			});
@@ -185,12 +192,12 @@ export default class SkinPerk extends Perk
 	 * @param	{String}		skinName			Skin name.
 	 * @param	{Node}			clone				Template node.
 	 */
-	static _applySkin(unit, skinName, clone)
+	static #_applySkin(unit, skinName, clone)
 	{
 
 		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
 
-		Util.assert(skinInfo,`SkinPerk._applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
+		Util.assert(skinInfo,`SkinPerk.#_applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
 
 		// Append the clone to the unit
 		clone = clone || unit.unitRoot;
@@ -201,7 +208,7 @@ export default class SkinPerk extends Perk
 		// Change active skin
 		unit.set("state", "skin.active.skinName", skinName);
 
-		console.debug(`SkinPerk._applySkin(): Applied skin. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		console.debug(`SkinPerk.#_applySkin(): Applied skin. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
 	}
 
@@ -214,7 +221,7 @@ export default class SkinPerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 */
-	static __loadAttrSettings(unit)
+	static #__loadAttrSettings(unit)
 	{
 
 		if (unit.hasAttribute("bm-skinref"))
@@ -237,7 +244,7 @@ export default class SkinPerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 */
-	static __adjustSettings(unit)
+	static #__adjustSettings(unit)
 	{
 
 		let url = unit.get("setting", "skin.options.skinRef");
@@ -265,7 +272,7 @@ export default class SkinPerk extends Perk
 	 *
 	 * @return  {Object}		Skin info.
 	 */
-	static __createSkinInfo(unit, skinName)
+	static #__createSkinInfo(unit, skinName)
 	{
 
 		let info = {
@@ -292,7 +299,7 @@ export default class SkinPerk extends Perk
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getDefaultURL(unit, skinName, options)
+	static #__getDefaultURL(unit, skinName, options)
 	{
 
 		let path;
@@ -319,7 +326,7 @@ export default class SkinPerk extends Perk
 						unit.get("setting", "skin.options.path",
 							unit.get("setting", "unit.options.path", ""))),
 				]);
-			fileName = SkinPerk.__getDefaultFilename(unit, skinName, options) + ".html";
+			fileName = SkinPerk.#__getDefaultFilename(unit, skinName, options) + ".html";
 			query = unit.get("setting", "unit.options.query");
 		}
 
@@ -338,7 +345,7 @@ export default class SkinPerk extends Perk
 	 *
 	 * @return 	{String}		Skin name.
 	 */
-	static __getDefaultFilename(unit, skinName, options)
+	static #__getDefaultFilename(unit, skinName, options)
 	{
 
 		return	Util.safeGet(options, "fileName",

@@ -22,16 +22,24 @@ export default class SettingPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	static #__info = {
+		"privateId":	Util.getUUID(),
+		"section":		"setting",
+		"order":		10,
+	};
+
+
+	// -------------------------------------------------------------------------
 	//  Properties
 	// -------------------------------------------------------------------------
 
 	static get info()
 	{
 
-		return {
-			"section":		"setting",
-			"order":		10,
-		};
+		return SettingPerk.#__info;
 
 	}
 
@@ -44,11 +52,11 @@ export default class SettingPerk extends Perk
 
 		// Upgrade Unit
 		BITSMIST.v1.Unit.upgrade("asset", "setting", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("skill", "setting.get", function(...args) { return SettingPerk._getSettings(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "setting.set", function(...args) { return SettingPerk._setSettings(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "setting.merge", function(...args) { return SettingPerk._mergeSettings(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "setting.summon", function(...args) { return SettingPerk._loadSettings(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "setting.apply", function(...args) { return SettingPerk._applySettings(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "setting.get", function(...args) { return SettingPerk.#_getSettings(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "setting.set", function(...args) { return SettingPerk.#_setSettings(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "setting.merge", function(...args) { return SettingPerk.#_mergeSettings(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "setting.summon", function(...args) { return SettingPerk.#_loadSettings(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "setting.apply", function(...args) { return SettingPerk.#_applySettings(...args); });
 
 	}
 
@@ -59,21 +67,21 @@ export default class SettingPerk extends Perk
 
 		// Get settings
 		let settings = (options && options["settings"]) || {};
-		settings = SettingPerk.__injectSettings(unit, settings);
-		settings = SettingPerk.__mergeSettings(unit, settings);
+		settings = SettingPerk.#__injectSettings(unit, settings);
+		settings = SettingPerk.#__mergeSettings(unit, settings);
 
 		// Upgrade unit
 		unit.upgrade("asset", "setting", new ChainableStore({"items":settings}), {"chain":true});
 
 		return Promise.resolve().then(() => {
-			SettingPerk.__loadAttrSettings(unit);
+			SettingPerk.#__loadAttrSettings(unit);
 		}).then(() => {
-			if (SettingPerk.__hasExternalSettings(unit))
+			if (SettingPerk.#__hasExternalSettings(unit))
 			{
-				return SettingPerk._loadSettings(unit);
+				return SettingPerk.#_loadSettings(unit);
 			}
 		}).then(() => {
-			SettingPerk.__loadAttrSettings(unit); // Do it again to overwrite since attribute settings have higher priority
+			SettingPerk.#__loadAttrSettings(unit); // Do it again to overwrite since attribute settings have higher priority
 		});
 
 	}
@@ -88,7 +96,7 @@ export default class SettingPerk extends Perk
      * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Options.
 	 */
-	static _applySettings(unit, options)
+	static #_applySettings(unit, options)
 	{
 
 		return Promise.resolve().then(() => {
@@ -113,10 +121,10 @@ export default class SettingPerk extends Perk
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadSettings(unit, options)
+	static #_loadSettings(unit, options)
 	{
 
-		return AjaxUtil.loadJSON(SettingPerk.__getSettingsURL(unit), Object.assign({"bindTo":unit}, options)).then((settings) => {
+		return AjaxUtil.loadJSON(SettingPerk.#__getSettingsURL(unit), Object.assign({"bindTo":unit}, options)).then((settings) => {
 			if (settings)
 			{
 				unit.use("skill", "setting.merge", settings);
@@ -134,7 +142,7 @@ export default class SettingPerk extends Perk
 	 * @param	{String}		key					Key.
 	 * @param	{*}				defaultValue		Value returned when key is not found.
 	 */
-	static _getSettings(unit, key, defaultValue)
+	static #_getSettings(unit, key, defaultValue)
 	{
 
 		return unit.get("setting", key, defaultValue);
@@ -150,7 +158,7 @@ export default class SettingPerk extends Perk
 	 * @param	{String}		key					Key.
 	 * @param	{*}				value				Value.
 	 */
-	static _setSettings(unit, key, value)
+	static #_setSettings(unit, key, value)
 	{
 
 		return unit.set("setting", key, value);
@@ -166,7 +174,7 @@ export default class SettingPerk extends Perk
 	 * @param	{String}		key					Key.
 	 * @param	{*}				value				Value.
 	 */
-	static _mergeSettings(unit, key, value)
+	static #_mergeSettings(unit, key, value)
 	{
 
 		unit.merge("setting", key, value);
@@ -182,7 +190,7 @@ export default class SettingPerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 */
-	static __loadAttrSettings(unit)
+	static #__loadAttrSettings(unit)
 	{
 
 		if (unit.hasAttribute("bm-settingsref"))
@@ -236,7 +244,7 @@ export default class SettingPerk extends Perk
 	 *
 	 * @return  {Boolean}		True if the unit has the external settings file.
 	 */
-	static __hasExternalSettings(unit)
+	static #__hasExternalSettings(unit)
 	{
 
 		let ret = false;
@@ -259,7 +267,7 @@ export default class SettingPerk extends Perk
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getSettingsURL(unit)
+	static #__getSettingsURL(unit)
 	{
 
 		let path;
@@ -304,7 +312,7 @@ export default class SettingPerk extends Perk
 	 *
 	 * @return  {Object}		New settings.
 	 */
-	static __injectSettings(unit, settings)
+	static #__injectSettings(unit, settings)
 	{
 
 		if (typeof(unit._injectSettings) === "function")
@@ -326,7 +334,7 @@ export default class SettingPerk extends Perk
 	 *
 	 * @return  {Object}		New settings.
 	 */
-	static __mergeSettings(unit, settings)
+	static #__mergeSettings(unit, settings)
 	{
 
 		let curUnit = Object.getPrototypeOf(unit);

@@ -22,16 +22,25 @@ export default class StylePerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	static #__applied = {};
+	static #__cssReady = {};
+	static #__info = {
+		"privateId":	Util.getUUID(),
+		"section":		"style",
+		"order":		200,
+	};
+
+	// -------------------------------------------------------------------------
 	//  Properties
 	// -------------------------------------------------------------------------
 
 	static get info()
 	{
 
-		return {
-			"section":		"style",
-			"order":		200,
-		};
+		return StylePerk.#__info;
 
 	}
 
@@ -45,13 +54,12 @@ export default class StylePerk extends Perk
 		// Upgrade Unit
 		BITSMIST.v1.Unit.upgrade("vault", "style.applied", []);
 		BITSMIST.v1.Unit.upgrade("inventory", "style.styles", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("spell", "style.summon", function(...args) { return StylePerk._loadCSS(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "style.apply", function(...args) { return StylePerk._applyCSS(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "style.summon", function(...args) { return StylePerk.#_loadCSS(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "style.apply", function(...args) { return StylePerk.#_applyCSS(...args); });
 
-		this._cssReady = {};
-		this._cssReady["promise"] = new Promise((resolve, reject) => {
-			this._cssReady["resolve"] = resolve;
-			this._cssReady["reject"] = reject;
+		StylePerk.#__cssReady["promise"] = new Promise((resolve, reject) => {
+			StylePerk.#__cssReady["resolve"] = resolve;
+			StylePerk.#__cssReady["reject"] = reject;
 		});
 
 		// Load and apply common CSS
@@ -59,7 +67,7 @@ export default class StylePerk extends Perk
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
 			let promises = [];
 			Object.entries(BITSMIST.v1.Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
-				promises.push(StylePerk._loadCSS(BITSMIST.v1.Unit, sectionName, sectionValue, true));
+				promises.push(StylePerk.#_loadCSS(BITSMIST.v1.Unit, sectionName, sectionValue, true));
 			});
 
 			return Promise.all(promises).then(() => {
@@ -68,12 +76,12 @@ export default class StylePerk extends Perk
 				for (let i = 0; i < styles.length; i++)
 				{
 					chain = chain.then(() => {
-						return StylePerk._applyCSS(BITSMIST.v1.Unit, styles[i]);
+						return StylePerk.#_applyCSS(BITSMIST.v1.Unit, styles[i]);
 					});
 				}
 
 				return chain.then(() => {
-					this._cssReady["resolve"]();
+					StylePerk.#__cssReady["resolve"]();
 				});
 			});
 		});
@@ -90,11 +98,11 @@ export default class StylePerk extends Perk
 		unit.upgrade("inventory", "style.styles", new ChainableStore({
 			"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
 		}));
-		unit.upgrade("event", "beforeTransform", StylePerk.StylePerk_onBeforeTransform, {"order":this.info["order"]});
-		unit.upgrade("event", "doTransform", StylePerk.StylePerk_onDoTransform, {"order":this.info["order"]});
+		unit.upgrade("event", "beforeTransform", StylePerk.#StylePerk_onBeforeTransform, {"order":StylePerk.info["order"]});
+		unit.upgrade("event", "doTransform", StylePerk.#StylePerk_onDoTransform, {"order":StylePerk.info["order"]});
 
-		StylePerk.__loadAttrSettings(unit);
-		StylePerk.__adjustSettings(unit);
+		StylePerk.#__loadAttrSettings(unit);
+		StylePerk.#__adjustSettings(unit);
 
 	}
 
@@ -102,10 +110,10 @@ export default class StylePerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static StylePerk_onBeforeTransform(sender, e, ex)
+	static #StylePerk_onBeforeTransform(sender, e, ex)
 	{
 
-		return StylePerk._cssReady.promise.then(() => {
+		return StylePerk.#__cssReady.promise.then(() => {
 			let promises = [];
 
 			// List common CSS
@@ -117,13 +125,13 @@ export default class StylePerk extends Perk
 				css = css.concat(this.get("setting", `style.styles.${e.detail.styleName}.apply`, []));
 
 				// Load unit-specific CSS
-				promises.push(StylePerk._loadCSS(this, e.detail.styleName, e.detail.styleOptions));
+				promises.push(StylePerk.#_loadCSS(this, e.detail.styleName, e.detail.styleOptions));
 			}
 
 			// Load common CSS
 			for (let i = 0; i < css.length; i++)
 			{
-				promises.push(StylePerk._loadCSS(this, css[i]));
+				promises.push(StylePerk.#_loadCSS(this, css[i]));
 			}
 
 			return Promise.all(promises);
@@ -133,7 +141,7 @@ export default class StylePerk extends Perk
 
 	// -------------------------------------------------------------------------
 
-	static StylePerk_onDoTransform(sender, e, ex)
+	static #StylePerk_onDoTransform(sender, e, ex)
 	{
 
 		// List common CSS
@@ -149,14 +157,14 @@ export default class StylePerk extends Perk
 		}
 
 		// Clear CSS
-		StylePerk._clearCSS(this);
+		StylePerk.#_clearCSS(this);
 
 		// Apply All CSS
 		let chain = Promise.resolve();
 		for (let i = 0; i < css.length; i++)
 		{
 			chain = chain.then(() => {
-				return StylePerk._applyCSS(this, css[i]);
+				return StylePerk.#_applyCSS(this, css[i]);
 			});
 		}
 
@@ -177,16 +185,16 @@ export default class StylePerk extends Perk
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static _loadCSS(unit, styleName, options, shared)
+	static #_loadCSS(unit, styleName, options, shared)
 	{
 
 		let promise = Promise.resolve();
-		let styleInfo = unit.get("inventory", "style.styles").get(styleName) || StylePerk.__createStyleInfo(unit, styleName);
+		let styleInfo = unit.get("inventory", "style.styles").get(styleName) || StylePerk.#__createStyleInfo(unit, styleName);
 		let styleSettings = options || unit.get("setting", `style.styles.${styleName}`, {});
 
 		if (styleInfo["status"] === "loaded")
 		{
-			console.debug(`StylePerk._loadCSS(): Style already loaded. name=${unit.tagName}, styleName=${styleName}`);
+			console.debug(`StylePerk.#_loadCSS(): Style already loaded. name=${unit.tagName}, styleName=${styleName}`);
 			return Promise.resolve(styleInfo);
 		}
 
@@ -202,8 +210,8 @@ export default class StylePerk extends Perk
 			}
 			else
 			{
-				let url = styleSettings["URL"] || StylePerk.__getDefaultURL(unit, styleName, styleSettings);
-				Util.assert(url, `StylePerk._loadCSS(): CSS URL is not speicified. name=${unit.tagName}, styleName=${styleName}`);
+				let url = styleSettings["URL"] || StylePerk.#__getDefaultURL(unit, styleName, styleSettings);
+				Util.assert(url, `StylePerk.#_loadCSS(): CSS URL is not speicified. name=${unit.tagName}, styleName=${styleName}`);
 				promise = AjaxUtil.loadCSS(url).then((css) => {
 					styleInfo["CSS"] = css;
 				});
@@ -230,13 +238,13 @@ export default class StylePerk extends Perk
 	 * @param	{Unit}			unit				Parent unit.
 	 * @param	{String}		styleName			Style name.
 	 */
-	static _applyCSS(unit, styleName)
+	static #_applyCSS(unit, styleName)
 	{
 
 		let cssInfo = unit.get("inventory", "style.styles").get(styleName);
 		let ss = new CSSStyleSheet();
 
-		Util.assert(cssInfo,`StylePerk._applyCSS(): CSS not loaded. name=${unit.tagName || "Global"}, styleName=${styleName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
+		Util.assert(cssInfo,`StylePerk.#_applyCSS(): CSS not loaded. name=${unit.tagName || "Global"}, styleName=${styleName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
 
 		return Promise.resolve().then(() => {
 			return ss.replace(`${cssInfo["CSS"]}`);
@@ -251,18 +259,18 @@ export default class StylePerk extends Perk
 			{
 				// Light DOM
 				styleName = (cssInfo["shared"] ? styleName : `${unit.tagName}.${styleName}`);
-				if (!(styleName in StylePerk.__applied) || StylePerk.__applied[styleName]["count"] <= 0)
+				if (!(styleName in StylePerk.#__applied) || StylePerk.#__applied[styleName]["count"] <= 0)
 				{
 					// Apply styles
-					StylePerk.__applied[styleName] = StylePerk.__applied[styleName] || {};
+					StylePerk.#__applied[styleName] = StylePerk.#__applied[styleName] || {};
 					document.adoptedStyleSheets = [...document.adoptedStyleSheets, ss];
-					StylePerk.__applied[styleName]["object"] = ss;
-					StylePerk.__applied[styleName]["count"] = 1;
+					StylePerk.#__applied[styleName]["object"] = ss;
+					StylePerk.#__applied[styleName]["count"] = 1;
 				}
 				else
 				{
 					// Already applied
-					StylePerk.__applied[styleName]["count"]++;
+					StylePerk.#__applied[styleName]["count"]++;
 				}
 
 				let applied = unit.get("vault", "style.applied");
@@ -270,7 +278,7 @@ export default class StylePerk extends Perk
 				unit.set("vault", "style.applied", applied);
 			}
 
-			console.debug(`StylePerk._applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+			console.debug(`StylePerk.#_applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 		});
 
 	}
@@ -282,7 +290,7 @@ export default class StylePerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Parent unit.
 	 */
-	static _clearCSS(unit)
+	static #_clearCSS(unit)
 	{
 
 		let shadowRoot = unit.get("state", "skin.shadowRoot");
@@ -299,16 +307,16 @@ export default class StylePerk extends Perk
 			{
 				for (let i = 0; i < applied.length; i++)
 				{
-					StylePerk.__applied[applied[i]]["count"]--;
+					StylePerk.#__applied[applied[i]]["count"]--;
 				}
 				unit.set("vault", "style.applied", []);
 
 				// Re-apply other CSS
 				document.adoptedStyleSheets = [];
-				Object.keys(StylePerk.__applied).forEach((key) => {
-					if (StylePerk.__applied[key]["count"] > 0)
+				Object.keys(StylePerk.#__applied).forEach((key) => {
+					if (StylePerk.#__applied[key]["count"] > 0)
 					{
-						document.adoptedStyleSheets = [...document.adoptedStyleSheets, StylePerk.__applied[key]["object"]];
+						document.adoptedStyleSheets = [...document.adoptedStyleSheets, StylePerk.#__applied[key]["object"]];
 					}
 				});
 			}
@@ -325,7 +333,7 @@ export default class StylePerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 */
-	static __loadAttrSettings(unit)
+	static #__loadAttrSettings(unit)
 	{
 
 		if (unit.hasAttribute("bm-styleref"))
@@ -348,7 +356,7 @@ export default class StylePerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 */
-	static __adjustSettings(unit)
+	static #__adjustSettings(unit)
 	{
 
 		let url = unit.get("setting", "style.options.styleRef");
@@ -377,7 +385,7 @@ export default class StylePerk extends Perk
 	 *
 	 * @return  {Object}		Style info.
 	 */
-	static __createStyleInfo(unit, styleName)
+	static #__createStyleInfo(unit, styleName)
 	{
 
 		let info = {
@@ -403,7 +411,7 @@ export default class StylePerk extends Perk
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getDefaultURL(unit, styleName, options)
+	static #__getDefaultURL(unit, styleName, options)
 	{
 
 		let path;
@@ -429,7 +437,7 @@ export default class StylePerk extends Perk
 						unit.get("setting", "style.options.path",
 							unit.get("setting", "unit.options.path", ""))),
 				]);
-			fileName =  StylePerk.__getDefaultFilename(unit, styleName, options) + ".css";
+			fileName =  StylePerk.#__getDefaultFilename(unit, styleName, options) + ".css";
 			query = unit.get("setting", "unit.options.query");
 		}
 
@@ -448,7 +456,7 @@ export default class StylePerk extends Perk
 	 *
 	 * @return 	{String}		Style name.
 	 */
-	static __getDefaultFilename(unit, styleName, options)
+	static #__getDefaultFilename(unit, styleName, options)
 	{
 
 		return	Util.safeGet(options, "fileName",
@@ -459,6 +467,3 @@ export default class StylePerk extends Perk
 	}
 
 }
-
-// Init
-StylePerk.__applied = {};

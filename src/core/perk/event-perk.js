@@ -19,16 +19,24 @@ export default class EventPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	static #__eventInfo = new WeakMap();
+	static #__info = {
+		"privateId":	Util.getUUID(),
+		"section":		"event",
+		"order":		210,
+	};
+
+	// -------------------------------------------------------------------------
 	//  Properties
 	// -------------------------------------------------------------------------
 
 	static get info()
 	{
 
-		return {
-			"section":		"event",
-			"order":		210,
-		};
+		return EventPerk.#__info;
 
 	}
 
@@ -40,12 +48,12 @@ export default class EventPerk extends Perk
 	{
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("skill", "event.add", function(...args) { return EventPerk._addEventHandler(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "event.remove", function(...args) { return EventPerk._removeEventHandler(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "event.init", function(...args) { return EventPerk._initEvents(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "event.reset", function(...args) { return EventPerk._removeEvents(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "event.trigger", function(...args) { return EventPerk._trigger(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "event.triggerSync", function(...args) { return EventPerk._triggerSync(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.add", function(...args) { return EventPerk.#_addEventHandler(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.remove", function(...args) { return EventPerk.#_removeEventHandler(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.init", function(...args) { return EventPerk.#_initEvents(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.reset", function(...args) { return EventPerk.#_removeEvents(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "event.trigger", function(...args) { return EventPerk.#_trigger(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "event.triggerSync", function(...args) { return EventPerk.#_triggerSync(...args); });
 
 	}
 
@@ -55,8 +63,8 @@ export default class EventPerk extends Perk
 	{
 
 		// Upgrade unit
-		unit.upgrade("event", "doApplySettings", EventPerk.EventPerk_onDoApplySettings, {"order":this.info["order"]});
-		unit.upgrade("event", "afterTransform", EventPerk.EventPerk_onAfterTransform, {"order":this.info["order"]});
+		unit.upgrade("event", "doApplySettings", EventPerk.#EventPerk_onDoApplySettings, {"order":EventPerk.info["order"]});
+		unit.upgrade("event", "afterTransform", EventPerk.#EventPerk_onAfterTransform, {"order":EventPerk.info["order"]});
 
 	}
 
@@ -65,11 +73,11 @@ export default class EventPerk extends Perk
 	static deinit(unit, options)
 	{
 
-		let events = this.get("setting", "event");
+		let events = unit.get("setting", "event");
 		if (events)
 		{
 			Object.keys(events).forEach((elementName) => {
-				EventPerk._removeEvents(unit, elementName, events[eventName]);
+				EventPerk.#_removeEvents(unit, elementName, events[eventName]);
 			});
 		}
 
@@ -79,25 +87,25 @@ export default class EventPerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static EventPerk_onDoApplySettings(sender, e, ex)
+	static #EventPerk_onDoApplySettings(sender, e, ex)
 	{
 
 		Object.entries(Util.safeGet(e.detail, "settings.event.events", {})).forEach(([sectionName, sectionValue]) => {
-			EventPerk._initEvents(this, sectionName, sectionValue);
+			EventPerk.#_initEvents(this, sectionName, sectionValue);
 		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static EventPerk_onAfterTransform(sender, e, ex)
+	static #EventPerk_onAfterTransform(sender, e, ex)
 	{
 
 		Object.entries(this.get("setting", "event.events", {})).forEach(([sectionName, sectionValue]) => {
 			// Initialize only elements inside unit
-			if (!EventPerk.__isTargetSelf(sectionName, sectionValue))
+			if (!EventPerk.#__isTargetSelf(sectionName, sectionValue))
 			{
-				EventPerk._initEvents(this, sectionName, sectionValue);
+				EventPerk.#_initEvents(this, sectionName, sectionValue);
 			}
 		});
 
@@ -116,28 +124,28 @@ export default class EventPerk extends Perk
 	 * @param	{HTMLElement}	element				HTML element.
 	 * @param	{Object}		bindTo				Object that binds to the handler.
 	 */
-	static _addEventHandler(unit, eventName, handlerInfo, element, bindTo)
+	static #_addEventHandler(unit, eventName, handlerInfo, element, bindTo)
 	{
 
 		element = element || unit;
 		let handlerOptions = (typeof handlerInfo === "object" ? handlerInfo : {});
 
 		// Get handler
-		let handler = EventPerk.__getEventHandler(unit, handlerInfo);
-		Util.assert(handler, `EventPerk._addEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
+		let handler = EventPerk.#__getEventHandler(unit, handlerInfo);
+		Util.assert(handler, `EventPerk.#_addEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
 
-		// Init holder object for the element
-		if (!element.__bm_eventinfo)
+		// Init event info object for the element
+		if (!EventPerk.#__eventInfo.get(element))
 		{
-			element.__bm_eventinfo = { "unit":unit, "listeners":{}, "promises":{}, "statuses":{} };
+			EventPerk.#__eventInfo.set(element, {"unit":unit, "listeners":{}, "promises":{}, "statuses":{}});
 		}
 
 		// Add hook event handler
-		let listeners = element.__bm_eventinfo.listeners;
+		let listeners = EventPerk.#__eventInfo.get(element)["listeners"];
 		if (!listeners[eventName])
 		{
 			listeners[eventName] = [];
-			element.addEventListener(eventName, EventPerk.__callEventHandler, handlerOptions["listnerOptions"]);
+			element.addEventListener(eventName, EventPerk.#__callEventHandler, handlerOptions["listnerOptions"]);
 		}
 
 		let order = Util.safeGet(handlerOptions, "order", 1000);
@@ -164,16 +172,16 @@ export default class EventPerk extends Perk
 	 * @param	{HTMLElement}	element				HTML element.
 	 * @param	{Object/Function/String}	handlerInfo	Event handler info.
 	 */
-	static _removeEventHandler(unit, eventName, handlerInfo, element)
+	static #_removeEventHandler(unit, eventName, handlerInfo, element)
 	{
 
 		element = element || unit;
 
 		// Get handler
-		let handler = EventPerk.__getEventHandler(unit, handlerInfo);
-		Util.assert(handler, `EventPerk._removeEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
+		let handler = EventPerk.#__getEventHandler(unit, handlerInfo);
+		Util.assert(handler, `EventPerk.#_removeEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
 
-		let listeners = Util.safeGet(element, `__bm_eventinfo.listeners.${eventName}`);
+		let listeners = Util.safeGet(EventPerk.#__eventInfo.get(element), `.listeners.${eventName}`);
 		if (listeners)
 		{
 			for (let i = listeners.length - 1; i >= 0; i--)
@@ -198,14 +206,14 @@ export default class EventPerk extends Perk
 	 * @param	{Object}		eventInfo			Event info.
 	 * @param	{HTMLElement}	rootNode			Root node of elements.
 	 */
-	static _initEvents(unit, elementName, eventInfo, rootNode)
+	static #_initEvents(unit, elementName, eventInfo, rootNode)
 	{
 
 		eventInfo = ( eventInfo ? eventInfo : unit.get("setting", `event.events.${elementName}`) );
 
 		// Get target elements
-		let elements = EventPerk.__getTargetElements(unit, rootNode, elementName, eventInfo);
-		//Util.warn(elements.length > 0, `EventPerk._initEvents: No elements for the event found. name=${unit.tagName}, elementName=${elementName}`);
+		let elements = EventPerk.#__getTargetElements(unit, rootNode, elementName, eventInfo);
+		//Util.warn(elements.length > 0, `EventPerk.#_initEvents: No elements for the event found. name=${unit.tagName}, elementName=${elementName}`);
 
 		// Set event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -214,7 +222,7 @@ export default class EventPerk extends Perk
 			{
 				for (let j = 0; j < elements.length; j++)
 				{
-					EventPerk._addEventHandler(unit, eventName, handlers[i], elements[j]);
+					EventPerk.#_addEventHandler(unit, eventName, handlers[i], elements[j]);
 				}
 			}
 		});
@@ -231,14 +239,14 @@ export default class EventPerk extends Perk
 	 * @param	{Object}		eventInfo			Event info.
 	 * @param	{HTMLElement}	rootNode			Root node of elements.
 	 */
-	static _removeEvents(unit, elementName, eventInfo, rootNode)
+	static #_removeEvents(unit, elementName, eventInfo, rootNode)
 	{
 
 		eventInfo = ( eventInfo ? eventInfo : unit.get("setting", `event.events.${elementName}`) );
 
 		// Get target elements
-		let elements = EventPerk.__getTargetElements(unit, rootNode, elementName, eventInfo);
-		//Util.warn(elements.length > 0, `EventPerk._removeEvents: No elements for the event found. name=${unit.tagName}, elementName=${elementName}`);
+		let elements = EventPerk.#__getTargetElements(unit, rootNode, elementName, eventInfo);
+		//Util.warn(elements.length > 0, `EventPerk.#_removeEvents: No elements for the event found. name=${unit.tagName}, elementName=${elementName}`);
 
 		// Remove event handlers
 		Object.keys(eventInfo["handlers"]).forEach((eventName) => {
@@ -264,7 +272,7 @@ export default class EventPerk extends Perk
 	 * @param	{Object}		options					Event parameter options.
 	 * @param	{HTMLElement}	element					HTML element.
 	 */
-	static _trigger(unit, eventName, options, element)
+	static #_trigger(unit, eventName, options, element)
 	{
 
 		options = options || {};
@@ -273,7 +281,7 @@ export default class EventPerk extends Perk
 		element.dispatchEvent(new CustomEvent(eventName, { detail: options }));
 
 		// return the promise if exists
-		return Util.safeGet(element, `__bm_eventinfo.promises.${eventName}`) || Promise.resolve();
+		return Util.safeGet(EventPerk.#__eventInfo.get(element), `promises.${eventName}`) || Promise.resolve();
 
 	}
 
@@ -287,13 +295,13 @@ export default class EventPerk extends Perk
 	 * @param	{Object}		options					Event parameter options.
 	 * @param	{HTMLElement}	element					HTML element.
 	 */
-	static _triggerSync(unit, eventName, options, element)
+	static #_triggerSync(unit, eventName, options, element)
 	{
 
 		options = options || {};
 		options["async"] = true;
 
-		return EventPerk._trigger.call(unit, unit, eventName, options, element);
+		return EventPerk.#_trigger(unit, eventName, options, element);
 
 	}
 
@@ -307,7 +315,7 @@ export default class EventPerk extends Perk
 	 * @param	{Unit}			unit					Unit.
 	 * @param	{Object/Function/String}	handlerInfo	Handler info.
 	 */
-	static __getEventHandler(unit, handlerInfo)
+	static #__getEventHandler(unit, handlerInfo)
 	{
 
 		let handler = ( typeof handlerInfo === "object" ? handlerInfo["handler"] : handlerInfo );
@@ -326,7 +334,7 @@ export default class EventPerk extends Perk
 	 *
 	 * @return 	{Boolean}		Target node list.
 	 */
-		static __isTargetSelf(elementName, eventInfo)
+		static #__isTargetSelf(elementName, eventInfo)
 	{
 
 		let ret = false;
@@ -352,13 +360,13 @@ export default class EventPerk extends Perk
 	 *
 	 * @return 	{Array}			Target node list.
 	 */
-	static __getTargetElements(unit, rootNode, elementName, eventInfo)
+	static #__getTargetElements(unit, rootNode, elementName, eventInfo)
 	{
 
 		rootNode = rootNode || unit;
 		let elements;
 
-		if (EventPerk.__isTargetSelf(elementName, eventInfo))
+		if (EventPerk.#__isTargetSelf(elementName, eventInfo))
 		{
 			// Target is "this"
 			elements = [rootNode];
@@ -389,11 +397,11 @@ export default class EventPerk extends Perk
 	 *
 	 * @return 	{Boolean}		True if already installed.
 	 */
-	static __isHandlerInstalled(element, eventName, handler)
+	static #__isHandlerInstalled(element, eventName, handler)
 	{
 
 		let isInstalled = false;
-		let listeners = Util.safeGet(element.__bm_eventinfo, `listeners.${eventName}`);
+		let listeners = Util.safeGet(EventPerk.#__eventInfo.get(element), `listeners.${eventName}`);
 
 		if (listeners)
 		{
@@ -421,29 +429,30 @@ export default class EventPerk extends Perk
 	 *
 	 * @param	{Object}		e						Event parameter.
 	 */
-	static __callEventHandler(e)
+	static #__callEventHandler(e)
 	{
 
-		let listeners = Util.safeGet(this, `__bm_eventinfo.listeners.${e.type}`);
+		let eventInfo = EventPerk.#__eventInfo.get(this);
+		let listeners = Util.safeGet(eventInfo, `listeners.${e.type}`);
 		let sender = Util.safeGet(e, "detail.sender", this);
-		let unit = Util.safeGet(this, "__bm_eventinfo.unit");
-		let templateStatuses = `__bm_eventinfo.statuses.${e.type}`;
-		let templatePromises = `__bm_eventinfo.promises.${e.type}`;
+		let unit = Util.safeGet(eventInfo, "unit");
+		let templateStatuses = `statuses.${e.type}`;
+		let templatePromises = `promises.${e.type}`;
 
 		// Check if handler is already running
-		//Util.warn(Util.safeGet(this, templateStatuses) !== "handling", `EventPerk.__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
+		//Util.warn(Util.safeGet(this, templateStatuses) !== "handling", `EventPerk.#__callEventHandler(): Event handler is already running. name=${this.tagName}, eventName=${e.type}`);
 
-		Util.safeSet(this, templateStatuses, "handling");
+		Util.safeSet(eventInfo, templateStatuses, "handling");
 
 		if (Util.safeGet(e, "detail.async", false) === false)
 		{
 			// Async
-			this.__bm_eventinfo["promises"][e.type] = EventPerk.__handle(e, sender, unit, listeners).then(() => {
-				Util.safeSet(this, templatePromises, null);
-				Util.safeSet(this, templateStatuses, "");
+			eventInfo["promises"][e.type] = EventPerk.#__handle(e, sender, unit, listeners).then(() => {
+				Util.safeSet(eventInfo, templatePromises, null);
+				Util.safeSet(eventInfo, templateStatuses, "");
 			}).catch((err) => {
-				Util.safeSet(this, templatePromises, null);
-				Util.safeSet(this, templateStatuses, "");
+				Util.safeSet(eventInfo, templatePromises, null);
+				Util.safeSet(eventInfo, templateStatuses, "");
 				throw(err);
 			});
 		}
@@ -452,14 +461,14 @@ export default class EventPerk extends Perk
 			// Sync
 			try
 			{
-				this.__bm_eventinfo["promises"][e.type] = EventPerk.__handleSync(e, sender, unit, listeners);
-				Util.safeSet(this, templatePromises, null);
-				Util.safeSet(this, templateStatuses, "");
+				eventInfo["promises"][e.type] = EventPerk.#__handleSync(e, sender, unit, listeners);
+				Util.safeSet(eventInfo, templatePromises, null);
+				Util.safeSet(eventInfo, templateStatuses, "");
 			}
 			catch (err)
 			{
-				Util.safeSet(this, templatePromises, null);
-				Util.safeSet(this, templateStatuses, "");
+				Util.safeSet(eventInfo, templatePromises, null);
+				Util.safeSet(eventInfo, templateStatuses, "");
 				throw err;
 			}
 		}
@@ -476,7 +485,7 @@ export default class EventPerk extends Perk
 	 * @param	{Object}		unit					Target unit.
 	 * @param	{Object}		listener				Listers info.
 	 */
-	static __handle(e, sender, unit, listeners)
+	static #__handle(e, sender, unit, listeners)
 	{
 
 		let chain = Promise.resolve();
@@ -494,7 +503,7 @@ export default class EventPerk extends Perk
 				// Get the handler
 				let handler = listeners[i]["handler"];
 				handler = ( typeof handler === "string" ? unit[handler] : handler );
-				Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
+				Util.assert(typeof handler === "function", `EventPerk.#__handle(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
 
 				// Execute the handler
 				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : unit );
@@ -523,7 +532,7 @@ export default class EventPerk extends Perk
 	 * @param	{Object}		unit					Target unit.
 	 * @param	{Object}		listener				Listers info.
 	 */
-	static __handleSync(e, sender, unit, listeners)
+	static #__handleSync(e, sender, unit, listeners)
 	{
 
 		let stopPropagation = false;
@@ -539,7 +548,7 @@ export default class EventPerk extends Perk
 			// Get the handler
 			let handler = listeners[i]["handler"];
 			handler = ( typeof handler === "string" ? unit[handler] : handler );
-			Util.assert(typeof handler === "function", `EventPerk._addEventHandler(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
+			Util.assert(typeof handler === "function", `EventPerk.#__handleSync(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
 
 			// Execute handler
 			let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : unit );

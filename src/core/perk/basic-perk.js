@@ -22,16 +22,29 @@ export default class BasicPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	static #__unitInfo = {};
+	static #__indexes = {
+		"tagName": {},
+		"className": {},
+		"id": {},
+	};
+	static #__info = {
+		"privateId":	Util.getUUID(),
+		"section":		"basic",
+		"order":		0,
+	};
+
+	// -------------------------------------------------------------------------
 	//  Properties
 	// -------------------------------------------------------------------------
 
 	static get info()
 	{
 
-		return {
-			"section":		"basic",
-			"order":		0,
-		};
+		return BasicPerk.#__info;
 
 	}
 
@@ -41,14 +54,6 @@ export default class BasicPerk extends Perk
 
 	static globalInit()
 	{
-
-		// Init vars
-		BasicPerk._unitInfo = {};
-		BasicPerk._indexes = {
-			"tagName": {},
-			"className": {},
-			"id": {},
-		};
 
 		// Upgrade Unit
 		BITSMIST.v1.Unit.upgrade("asset", "callback", new ChainableStore());
@@ -60,25 +65,25 @@ export default class BasicPerk extends Perk
 		BITSMIST.v1.Unit.upgrade("property", "unitRoot", {
 			get() { return document.body; },
 		});
-		BITSMIST.v1.Unit.upgrade("callback", "connectedCallback", this._connectedHandler);
-		BITSMIST.v1.Unit.upgrade("callback", "disconnectedCallback", this._disconnectedHandler);
-		BITSMIST.v1.Unit.upgrade("callback", "adoptedCallback", this._connectedHandler);
-		BITSMIST.v1.Unit.upgrade("callback", "attributeChangedCallback", this._attributeChangedHandler);
-		BITSMIST.v1.Unit.upgrade("spell", "basic.start", function(...args) { return BasicPerk._start(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.stop", function(...args) { return BasicPerk._stop(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.transform", function(...args) { return BasicPerk._transform(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.setup", function(...args) { return BasicPerk._setup(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.refresh", function(...args) { return BasicPerk._refresh(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.fetch", function(...args) { return BasicPerk._fetch(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.fill", function(...args) { return BasicPerk._fill(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.clear", function(...args) { return BasicPerk._clear(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "basic.scan", function(...args) { return BasicPerk._scan(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "basic.scanAll", function(...args) { return BasicPerk._scanAll(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "basic.locate", function(...args) { return BasicPerk._locate(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "basic.locateAll", function(...args) { return BasicPerk._locateAll(...args); });
+		BITSMIST.v1.Unit.upgrade("callback", "connectedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
+		BITSMIST.v1.Unit.upgrade("callback", "disconnectedCallback", BasicPerk.#_disconnectedHandler.bind(BasicPerk));
+		BITSMIST.v1.Unit.upgrade("callback", "adoptedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
+		BITSMIST.v1.Unit.upgrade("callback", "attributeChangedCallback", BasicPerk.#_attributeChangedHandler.bind(BasicPerk));
+		BITSMIST.v1.Unit.upgrade("spell", "basic.start", function(...args) { return BasicPerk.#_start(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.stop", function(...args) { return BasicPerk.#_stop(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.transform", function(...args) { return BasicPerk.#_transform(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.setup", function(...args) { return BasicPerk.#_setup(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.refresh", function(...args) { return BasicPerk.#_refresh(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.fetch", function(...args) { return BasicPerk.#_fetch(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.fill", function(...args) { return BasicPerk.#_fill(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "basic.clear", function(...args) { return BasicPerk.#_clear(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "basic.scan", function(...args) { return BasicPerk.#_scan(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "basic.scanAll", function(...args) { return BasicPerk.#_scanAll(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "basic.locate", function(...args) { return BasicPerk.#_locate(...args); });
+		BITSMIST.v1.Unit.upgrade("skill", "basic.locateAll", function(...args) { return BasicPerk.#_locateAll(...args); });
 		Object.defineProperty(BITSMIST.v1.Unit.prototype, "unitRoot", {
-			get() { return this.get("vault", "unitroot"); },
-			set(value) { this.set("vault", "unitroot", value); },
+			get() { return this.get("inventory", "unitroot"); },
+			set(value) { this.set("inventory", "unitroot", value); },
 		});
 
 		// Create a promise that resolves when document is ready
@@ -98,26 +103,26 @@ export default class BasicPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	// 	Methods (unit)
+	//  Callbacks
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Connected callback handler.
 	 */
-	static _connectedHandler(unit)
+	static #_connectedHandler(unit)
 	{
 
 		if (!unit.__bm_initialized || unit.get("setting", "basic.options.autoRestart", false))
 		{
 			// Upgrade unit
 			unit.upgrade("asset", "state", new ChainableStore(), {"chain":true});
-			unit.upgrade("asset", "vault", new ChainableStore(), {"chain":true, "acl":"ro"});
+			unit.upgrade("asset", "vault", new ChainableStore(), {"chain":true});
 			unit.upgrade("asset", "inventory", new ChainableStore(), {"chain":true});
 			unit.upgrade("asset", "skill", new ChainableStore(), {"chain":true});
 			unit.upgrade("asset", "spell", new ChainableStore(), {"chain":true});
-			unit.upgrade("vault", "unitroot", unit);
+			unit.upgrade("inventory", "unitroot", unit);
 
-			BasicPerk._register(unit);
+			BasicPerk.#__register(unit);
 
 			// Attach default perks
 			let chain = Promise.resolve();
@@ -140,7 +145,7 @@ export default class BasicPerk extends Perk
 	/**
 	 * Disconnected callback handler.
 	 */
-	static _disconnectedHandler(unit)
+	static #_disconnectedHandler(unit)
 	{
 
 		return unit.use("spell", "basic.stop");
@@ -152,7 +157,7 @@ export default class BasicPerk extends Perk
 	/**
 	 * Adopted callback handler.
 	 */
-	static _adoptedHandler(unit)
+	static #_adoptedHandler(unit)
 	{
 
 		return unit.use("spell", "event.trigger", "afterAdopt");
@@ -164,7 +169,7 @@ export default class BasicPerk extends Perk
 	/**
 	 * Attribute changed callback handler.
 	 */
-	static _attributeChangedHandler(unit, name, oldValue, newValue)
+	static #_attributeChangedHandler(unit, name, oldValue, newValue)
 	{
 
 		return unit.use("spell", "event.trigger", "afterAttributeChange", {"name":name, "oldValue":oldValue, "newValue":newValue});
@@ -183,7 +188,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _start(unit, options)
+	static #_start(unit, options)
 	{
 
 		return Promise.resolve().then(() => {
@@ -230,7 +235,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _stop(unit, options)
+	static #_stop(unit, options)
 	{
 
 		options = options || {};
@@ -261,7 +266,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _transform(unit, options)
+	static #_transform(unit, options)
 	{
 
 		options = options || {};
@@ -295,7 +300,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _setup(unit, options)
+	static #_setup(unit, options)
 	{
 
 		options = options || {};
@@ -322,7 +327,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _refresh(unit, options)
+	static #_refresh(unit, options)
 	{
 
 		options = options || {};
@@ -365,7 +370,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _fetch(unit, options)
+	static #_fetch(unit, options)
 	{
 
 		options = options || {};
@@ -393,7 +398,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _fill(unit, options)
+	static #_fill(unit, options)
 	{
 
 		options = options || {};
@@ -420,7 +425,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _clear(unit, options)
+	static #_clear(unit, options)
 	{
 
 		options = options || {};
@@ -448,7 +453,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {NodeList}		Elements.
 	 */
-	static _scanAll(unit, query, options)
+	static #_scanAll(unit, query, options)
 	{
 
 		return Util.scopedSelectorAll(unit, query, options);
@@ -466,45 +471,12 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {HTMLElement}	Element.
 	 */
-	static _scan(unit, query, options)
+	static #_scan(unit, query, options)
 	{
 
 		let nodes = Util.scopedSelectorAll(unit, query, options);
 
 		return ( nodes ? nodes[0] : null );
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Register the unit.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {HTMLElement}	Element.
-	 */
-	static _register(unit, options)
-	{
-
-		let c = customElements.get(unit.tagName.toLowerCase());
-
-		BasicPerk._unitInfo[unit.uniqueId] = {
-			"object":		unit,
-			"class":		c,
-		};
-
-		// Indexes
-		BasicPerk._indexes["tagName"][unit.tagName] = BasicPerk._indexes["tagName"][unit.tagName] || [];
-		BasicPerk._indexes["tagName"][unit.tagName].push(unit)
-		BasicPerk._indexes["className"][c.name] = BasicPerk._indexes["className"][c.name] || [];
-		BasicPerk._indexes["className"][c.name].push(unit)
-		if (unit.id)
-		{
-			BasicPerk._indexes["id"][unit.id] = BasicPerk._indexes["id"][unit.id] || [];
-			BasicPerk._indexes["id"][unit.id].push(unit)
-		}
 
 	}
 
@@ -518,7 +490,7 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {HTMLElement}	Target element.
 	 */
-	static _locateAll(unit, target)
+	static #_locateAll(unit, target)
 	{
 
 		if (typeof(target) === "object")
@@ -534,11 +506,11 @@ export default class BasicPerk extends Perk
 			}
 			else if ("uniqueId" in target)
 			{
-				return [BasicPerk._unitInfo[target["uniqueId"]].object];
+				return [BasicPerk.#__unitInfo[target["uniqueId"]].object];
 			}
 			else if ("tagName" in target)
 			{
-				return BasicPerk._indexes["tagName"][target["tagName"].toUpperCase()];
+				return BasicPerk.#__indexes["tagName"][target["tagName"].toUpperCase()];
 			}
 			else if ("object" in target)
 			{
@@ -546,16 +518,16 @@ export default class BasicPerk extends Perk
 			}
 			else if ("id" in target)
 			{
-				return BasicPerk._indexes["id"][target["id"]];
+				return BasicPerk.#__indexes["id"][target["id"]];
 			}
 			else if ("className" in target)
 			{
-				return BasicPerk._indexes["className"][target["className"]];
+				return BasicPerk.#__indexes["className"][target["className"]];
 			}
 		}
 		else if (typeof(target) === "string")
 		{
-			return BasicPerk._indexes["tagName"][target.toUpperCase()];
+			return BasicPerk.#__indexes["tagName"][target.toUpperCase()];
 		}
 		else
 		{
@@ -574,14 +546,49 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {HTMLElement}	Target element.
 	 */
-	static _locate(unit, target)
+	static #_locate(unit, target)
 	{
 
-		let units = BasicPerk._locateAll(unit, target);
+		let units = BasicPerk.#_locateAll(unit, target);
 
 		if (units)
 		{
 			return units[0];
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Register the unit.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {HTMLElement}	Element.
+	 */
+	static #__register(unit, options)
+	{
+
+		let c = customElements.get(unit.tagName.toLowerCase());
+
+		BasicPerk.#__unitInfo[unit.uniqueId] = {
+			"object":		unit,
+			"class":		c,
+		};
+
+		// Indexes
+		BasicPerk.#__indexes["tagName"][unit.tagName] = BasicPerk.#__indexes["tagName"][unit.tagName] || [];
+		BasicPerk.#__indexes["tagName"][unit.tagName].push(unit)
+		BasicPerk.#__indexes["className"][c.name] = BasicPerk.#__indexes["className"][c.name] || [];
+		BasicPerk.#__indexes["className"][c.name].push(unit)
+		if (unit.id)
+		{
+			BasicPerk.#__indexes["id"][unit.id] = BasicPerk.#__indexes["id"][unit.id] || [];
+			BasicPerk.#__indexes["id"][unit.id].push(unit)
 		}
 
 	}

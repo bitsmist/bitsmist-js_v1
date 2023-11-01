@@ -24,16 +24,24 @@ export default class UnitPerk extends Perk
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	static #__classInfo = {};
+	static #__info = {
+		"privateId":	Util.getUUID(),
+		"section":		"unit",
+		"order":		400,
+	};
+
+	// -------------------------------------------------------------------------
 	//  Properties
 	// -------------------------------------------------------------------------
 
 	static get info()
 	{
 
-		return {
-			"section":		"unit",
-			"order":		400,
-		};
+		return UnitPerk.#__info;
 
 	}
 
@@ -44,19 +52,16 @@ export default class UnitPerk extends Perk
 	static globalInit()
 	{
 
-		// Init vars
-		UnitPerk._classInfo = {};
-
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("spell", "unit.materializeAll", function(...args) { return UnitPerk._loadTags(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "unit.materialize", function(...args) { return UnitPerk._loadUnit(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "unit.summon", function(...args) { return UnitPerk._loadClass(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "unit.materializeAll", function(...args) { return UnitPerk.#_loadTags(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "unit.materialize", function(...args) { return UnitPerk.#_loadUnit(...args); });
+		BITSMIST.v1.Unit.upgrade("spell", "unit.summon", function(...args) { return UnitPerk.#_loadClass(...args); });
 
 		// Load tags
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
 			if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
 			{
-				this._loadTags(null, document.body, {"waitForTags":false});
+				UnitPerk.#_loadTags(null, document.body, {"waitForTags":false});
 			}
 		});
 
@@ -69,9 +74,9 @@ export default class UnitPerk extends Perk
 
 		// Upgrade unit
 		unit.upgrade("inventory", "unit.units", {});
-		unit.upgrade("event", "doApplySettings", UnitPerk.UnitPerk_onDoApplySettings, {"order":this.info["order"]});
+		unit.upgrade("event", "doApplySettings", UnitPerk.#UnitPerk_onDoApplySettings, {"order":UnitPerk.info["order"]});
 
-		let settings = this.__loadAttrSettings(unit);
+		let settings = UnitPerk.#__loadAttrSettings(unit);
 		unit.use("skill", "setting.merge", settings);
 
 	}
@@ -80,7 +85,7 @@ export default class UnitPerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static UnitPerk_onDoApplySettings(sender, e, ex)
+	static #UnitPerk_onDoApplySettings(sender, e, ex)
 	{
 
 		let chain = Promise.resolve();
@@ -112,37 +117,36 @@ export default class UnitPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadClass(tagName, settings)
+	static #_loadClass(tagName, settings)
 	{
 
-		console.debug(`UnitPerk._loadClass(): Loading class. tagName=${tagName}`);
+		console.debug(`UnitPerk.#_loadClass(): Loading class. tagName=${tagName}`);
 
 		tagName = tagName.toLowerCase();
 		let className = Util.safeGet(settings, "unit.options.className", Util.getClassNameFromTagName(tagName));
 		let baseClassName = Util.safeGet(settings, "unit.options.autoMorph", className );
 		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Unit" : baseClassName );
-		//baseClassName = ( baseClassName === true ? "Unit" : baseClassName );
 
 		// Load the class if needed
 		let promise = Promise.resolve();
-		if (UnitPerk.__hasExternalClass(tagName, baseClassName, settings))
+		if (UnitPerk.#__hasExternalClass(tagName, baseClassName, settings))
 		{
-			if (UnitPerk._classInfo[baseClassName] && UnitPerk._classInfo[baseClassName]["status"] === "loading")
+			if (UnitPerk.#__classInfo[baseClassName] && UnitPerk.#__classInfo[baseClassName]["status"] === "loading")
 			{
 				// Already loading
-				console.debug(`UnitPerk._loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
-				promise = UnitPerk._classInfo[baseClassName].promise;
+				console.debug(`UnitPerk.#_loadClass(): Class Already loading. className=${className}, baseClassName=${baseClassName}`);
+				promise = UnitPerk.#__classInfo[baseClassName].promise;
 			}
 			else
 			{
 				// Need loading
-				console.debug(`ClassPerk._loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
-				UnitPerk._classInfo[baseClassName] = {"status":"loading"};
+				console.debug(`ClassPerk.#_loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
+				UnitPerk.#__classInfo[baseClassName] = {"status":"loading"};
 
-				promise = AjaxUtil.loadClass(UnitPerk.__getClassURL(tagName, settings)).then(() => {
-					UnitPerk._classInfo[baseClassName] = {"status":"loaded"};
+				promise = AjaxUtil.loadClass(UnitPerk.#__getClassURL(tagName, settings)).then(() => {
+					UnitPerk.#__classInfo[baseClassName] = {"status":"loaded"};
 				});
-				UnitPerk._classInfo[baseClassName].promise = promise;
+				UnitPerk.#__classInfo[baseClassName].promise = promise;
 			}
 		}
 
@@ -152,14 +156,14 @@ export default class UnitPerk extends Perk
 				// Morph
 				let superClass = ClassUtil.getClass(baseClassName);
 				let classDef = ClassUtil.newUnit(className, settings, superClass, tagName);
-				UnitPerk._classInfo[className] = {"status":"loaded"};
+				UnitPerk.#__classInfo[className] = {"status":"loaded"};
 			}
 
 			// Define the tag
 			if (!customElements.get(tagName))
 			{
 				let classDef = ClassUtil.getClass(className);
-				Util.assert(classDef, `UnitPerk._loadClass(): Class does not exist. tagName=${tagName}, className=${className}`);
+				Util.assert(classDef, `UnitPerk.#_loadClass(): Class does not exist. tagName=${tagName}, className=${className}`);
 
 				customElements.define(tagName, classDef);
 			}
@@ -179,15 +183,15 @@ export default class UnitPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadUnit(unit, tagName, settings, options)
+	static #_loadUnit(unit, tagName, settings, options)
 	{
 
-		console.debug(`UnitPerk._loadUnit(): Adding the unit. name=${unit.tagName}, tagName=${tagName}`);
+		console.debug(`UnitPerk.#_loadUnit(): Adding the unit. name=${unit.tagName}, tagName=${tagName}`);
 
 		// Already loaded
 		if (unit.get("inventory", `unit.units.${tagName}.object`))
 		{
-			console.debug(`UnitPerk._loadUnit(): Already loaded. name=${unit.tagName}, tagName=${tagName}`);
+			console.debug(`UnitPerk.#_loadUnit(): Already loaded. name=${unit.tagName}, tagName=${tagName}`);
 			return Promise.resolve(unit.get("inventory", `unit.units.${tagName}.object`));
 		}
 
@@ -199,9 +203,9 @@ export default class UnitPerk extends Perk
 		}
 
 		let addedUnit;
-		return UnitPerk._loadClass(tagName, settings).then(() => {
+		return UnitPerk.#_loadClass(tagName, settings).then(() => {
 			// Insert tag
-			addedUnit = UnitPerk.__insertTag(unit, tagName, settings);
+			addedUnit = UnitPerk.#__insertTag(unit, tagName, settings);
 			unit.set("inventory", `unit.units.${tagName}.object`, addedUnit);
 		}).then(() => {
 			// Wait for the added unit to be ready
@@ -230,10 +234,10 @@ export default class UnitPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static _loadTags(unit, rootNode, options)
+	static #_loadTags(unit, rootNode, options)
 	{
 
-		console.debug(`UnitPerk._loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
+		console.debug(`UnitPerk.#_loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
 
 		let promises = [];
 
@@ -241,7 +245,7 @@ export default class UnitPerk extends Perk
 		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
 		targets.forEach((element) => {
 			// Get settings from attributes
-			let settings = this.__loadAttrSettings(element);
+			let settings = UnitPerk.#__loadAttrSettings(element);
 
 			element.setAttribute("bm-autoloading", "");
 			element._injectSettings = function(curSettings){
@@ -249,7 +253,7 @@ export default class UnitPerk extends Perk
 			};
 
 			// Load the class
-			promises.push(UnitPerk._loadClass(element.tagName, settings).then(() => {
+			promises.push(UnitPerk.#_loadClass(element.tagName, settings).then(() => {
 				element.removeAttribute("bm-autoloading");
 			}));
 		});
@@ -258,7 +262,7 @@ export default class UnitPerk extends Perk
 			let waitFor = Util.safeGet(options, "waitForTags");
 			if (waitFor)
 			{
-				return UnitPerk.__waitForChildren(rootNode);
+				return UnitPerk.#__waitForChildren(rootNode);
 			}
 		});
 
@@ -273,7 +277,7 @@ export default class UnitPerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 */
-	static __loadAttrSettings(unit)
+	static #__loadAttrSettings(unit)
 	{
 
 		let settings = {
@@ -332,7 +336,7 @@ export default class UnitPerk extends Perk
 		}
 
 		//return settings;
-		return UnitPerk.__adjustSettings(unit, settings);
+		return UnitPerk.#__adjustSettings(unit, settings);
 
 	}
 
@@ -343,7 +347,7 @@ export default class UnitPerk extends Perk
 	 *
 	 * @param	{Unit}			unit				Unit.
 	 */
-	static __adjustSettings(unit, settings)
+	static #__adjustSettings(unit, settings)
 	{
 
 		let autoLoad = Util.safeGet(settings, "unit.options.autoLoad");
@@ -375,7 +379,7 @@ export default class UnitPerk extends Perk
 	 *
 	 * @return  {Boolean}		True if the unit has the external class file.
 	 */
-	static __hasExternalClass(tagName, className, settings)
+	static #__hasExternalClass(tagName, className, settings)
 	{
 
 		let ret = false;
@@ -391,7 +395,7 @@ export default class UnitPerk extends Perk
 			{
 				ret = false;
 			}
-			else if (UnitPerk._classInfo[className] && UnitPerk._classInfo[className]["status"] === "loaded")
+			else if (UnitPerk.#__classInfo[className] && UnitPerk.#__classInfo[className]["status"] === "loaded")
 			{
 				ret = false;
 			}
@@ -415,7 +419,7 @@ export default class UnitPerk extends Perk
 	 *
 	 * @return  {Unit}		Unit.
 	 */
-	static __insertTag(unit, tagName, settings)
+	static #__insertTag(unit, tagName, settings)
 	{
 
 		let addedUnit;
@@ -431,7 +435,7 @@ export default class UnitPerk extends Perk
 			root = unit.unitRoot;
 		}
 
-		Util.assert(root, `UnitPerk.__insertTag(): Root node does not exist. name=${unit.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
+		Util.assert(root, `UnitPerk.#__insertTag(): Root node does not exist. name=${unit.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
 
 		// Build tag
 		let tag = ( Util.safeGet(settings, "unit.options.tag") ? Util.safeGet(settings, "unit.options.tag") : `<${tagName}></${tagName}>` );
@@ -483,7 +487,7 @@ export default class UnitPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static __waitForChildren(rootNode)
+	static #__waitForChildren(rootNode)
 	{
 
 		let waitList = [];
@@ -510,7 +514,7 @@ export default class UnitPerk extends Perk
 	 *
 	 * @return  {String}		URL.
 	 */
-	static __getClassURL(tagName, settings)
+	static #__getClassURL(tagName, settings)
 	{
 
 		let path = Util.concatPath([
