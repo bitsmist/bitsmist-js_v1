@@ -22,6 +22,9 @@ export default class Perk
 	//  Private Variables
 	// -------------------------------------------------------------------------
 
+	static #__perks = {}
+	static #__sections = {};
+	static #__handlers = {"common": {}};
 	static #__info = {
 		"privateId":	Util.getUUID(),
 		"section":		"perk",
@@ -113,7 +116,7 @@ export default class Perk
 		info["depends"] = info["depends"] || [];
 		info["depends"] = ( Array.isArray(info["depends"]) ? info["depends"] : [info["depends"]] );
 
-		Perk._perks[perk.name] = {
+		Perk.#__perks[perk.name] = {
 			"name":			perk.name,
 			"object":		perk,
 			"section":		info["section"],
@@ -128,7 +131,7 @@ export default class Perk
 		}
 
 		// Create target word index
-		Perk._sections[info["section"]] = Perk._perks[perk.name];
+		Perk.#__sections[info["section"]] = Perk.#__perks[perk.name];
 
 	}
 
@@ -142,7 +145,7 @@ export default class Perk
 	static getPerk(perkName)
 	{
 
-		return Perk._perks[perkName].object;
+		return Perk.#__perks[perkName].object;
 
 	}
 
@@ -158,12 +161,12 @@ export default class Perk
 
 		perkName = perkName || "common";
 
-		if (!Perk._handlers[perkName])
+		if (!Perk.#__handlers[perkName])
 		{
-			Perk._handlers[perkName] = {};
+			Perk.#__handlers[perkName] = {};
 		}
 
-		Perk._handlers[perkName][handler.name] = handler;
+		Perk.#__handlers[perkName][handler.name] = handler;
 
 	}
 
@@ -179,7 +182,7 @@ export default class Perk
 	{
 
 		handlerName = handlerName.replace("BITSMIST.v1.", "");
-		let handler = (Perk._handlers[this.name] && this._handlers[this.name][handlerName]) || Perk._handlers["common"][handlerName];
+		let handler = (Perk.#__handlers[this.name] && Perk.#__handlers[this.name][handlerName]) || Perk.#__handlers["common"][handlerName];
 
 		Util.assert(handler, `Perk.createHandler(): Handler '${handlerName}' is not registered.`, ReferenceError);
 
@@ -206,7 +209,7 @@ export default class Perk
 
 		Perk.#__sortItems(targets).forEach((perkName) => {
 			chain = chain.then(() => {
-				return Perk.#_attach(unit, Perk._perks[perkName].object, options);
+				return Perk.#_attach(unit, Perk.#__perks[perkName].object, options);
 			});
 		});
 
@@ -231,10 +234,10 @@ export default class Perk
 		if (!unit.get("inventory", `perk.perks.${perk.name}`))
 		{
 			// Attach dependencies first
-			let deps = Perk._perks[perk.name]["depends"];
+			let deps = Perk.#__perks[perk.name]["depends"];
 			for (let i = 0; i < deps.length; i++)
 			{
-				Perk.#_attach(unit, Perk._perks[deps[i]].object, options);
+				Perk.#_attach(unit, Perk.#__perks[deps[i]].object, options);
 			}
 
 			unit.set("inventory", `perk.perks.${perk.name}`, {
@@ -269,17 +272,17 @@ export default class Perk
 			for (let i = 0; i < perks.length; i++)
 			{
 				let perkName = perks[i];
-				Util.assert(Perk._perks[perkName], `Perk.__listNewPerk(): Perk not found. name=${unit.tagName}, perkName=${perkName}`);
+				Util.assert(Perk.#__perks[perkName], `Perk.#__listNewPerk(): Perk not found. name=${unit.tagName}, perkName=${perkName}`);
 				if (!unit.get("inventory", `perk.perks.${perkName}`))
 				{
-					targets[perkName] = Perk._perks[perkName];
+					targets[perkName] = Perk.#__perks[perkName];
 				}
 			}
 		}
 
 		// List new perks from settings keyword
 		Object.keys(settings).forEach((key) => {
-			let perkInfo = Perk._sections[key];
+			let perkInfo = Perk.#__sections[key];
 
 			if (perkInfo && !unit.get("inventory", `perk.perks.${perkInfo.name}`))
 			{
@@ -310,8 +313,3 @@ export default class Perk
 	}
 
 }
-
-// Init
-Perk._perks = {}
-Perk._sections = {};
-Perk._handlers = {"common": {}};
