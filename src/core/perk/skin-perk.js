@@ -62,7 +62,7 @@ export default class SkinPerk extends Perk
 
 		// Upgrade unit
 		unit.upgrade("inventory", "skin.skins", {});
-		unit.upgrade("state", "skin.active.skinName", "");
+		unit.upgrade("inventory", "skin.active.skinName", "");
 		unit.upgrade("event", "beforeTransform", SkinPerk.#SkinPerk_onBeforeTransform, {"order":SkinPerk.info["order"]});
 		unit.upgrade("event", "doTransform", SkinPerk.#SkinPerk_onDoTransform, {"order":SkinPerk.info["order"]});
 
@@ -70,17 +70,20 @@ export default class SkinPerk extends Perk
 		SkinPerk.#__adjustSettings(unit);
 
 		// Shadow DOM
+		let shadowRoot;
 		switch (unit.get("setting", "skin.options.shadowDOM", unit.get("setting" ,"system.skin.options.shadowDOM")))
 		{
 		case "open":
-			unit.set("state", "skin.shadowRoot", unit.attachShadow({mode:"open"}));
+			shadowRoot = unit.attachShadow({mode:"open"});
+			unit.set("inventory", "skin.shadowRoot", shadowRoot);
+			unit.set("inventory", "basic.unitRoot", shadowRoot);
 			break;
 		case "closed":
-			unit.set("state", "skin.shadowRoot", unit.attachShadow({mode:"closed"}));
+			shadowRoot = unit.attachShadow({mode:"open"});
+			unit.set("inventory", "skin.shadowRoot", shadowRoot);
+			unit.set("inventory", "basic.unitRoot", shadowRoot);
 			break;
 		}
-
-		unit.unitRoot = unit.get("state", "skin.shadowRoot", unit);
 
 	}
 
@@ -94,8 +97,8 @@ export default class SkinPerk extends Perk
 		if (this.get("setting", "skin.options.hasSkin", true))
 		{
 			return SkinPerk.#_loadSkin(this, e.detail.skinName, e.detail.skinOptions).then((skinInfo) => {
-				this.unitRoot.textContent = "";
-				this.unitRoot = skinInfo["template"].content.cloneNode(true);
+				this.get("inventory", "basic.unitRoot").textContent = "";
+				this.set("inventory", "basic.unitRoot", skinInfo["template"].content.cloneNode(true));
 			});
 		}
 
@@ -108,7 +111,7 @@ export default class SkinPerk extends Perk
 
 		if (this.get("setting", "skin.options.hasSkin", true))
 		{
-			return SkinPerk.#_applySkin(this, e.detail.skinName, this.unitRoot);
+			return SkinPerk.#_applySkin(this, e.detail.skinName, this.get("inventory", "basic.unitRoot"));
 		}
 
 	}
@@ -200,13 +203,13 @@ export default class SkinPerk extends Perk
 		Util.assert(skinInfo,`SkinPerk.#_applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
 
 		// Append the clone to the unit
-		clone = clone || unit.unitRoot;
-		unit.unitRoot = unit.get("state", "skin.shadowRoot", unit);
-		unit.unitRoot.innerHTML = "";
-		unit.unitRoot.appendChild(clone);
+		clone = clone || this.get("inventory", "basic.unitRoot");
+		unit.set("inventory", "basic.unitRoot", unit.get("inventory", "skin.shadowRoot", unit));
+		unit.get("inventory", "basic.unitRoot").innerHTML = "";
+		unit.get("inventory", "basic.unitRoot").appendChild(clone);
 
 		// Change active skin
-		unit.set("state", "skin.active.skinName", skinName);
+		unit.set("inventory", "skin.active.skinName", skinName);
 
 		console.debug(`SkinPerk.#_applySkin(): Applied skin. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 

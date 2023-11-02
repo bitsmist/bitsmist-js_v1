@@ -71,8 +71,8 @@ export default class StatusPerk extends Perk
 	{
 
 		// Upgrade unit;
-		unit.upgrade("state", "status.status", "connected");
-		unit.upgrade("inventory", "status.suspends", {});
+		unit.upgrade("inventory", "status.status", "connected");
+		//unit.upgrade("inventory", "status.suspends", {});
 		unit.upgrade("event", "doApplySettings", StatusPerk.#StatusPerk_onDoApplySettings, {"order":StatusPerk.info["order"]});
 
 	}
@@ -148,9 +148,9 @@ export default class StatusPerk extends Perk
 	static #_changeStatus(unit, status)
 	{
 
-		Util.assert(StatusPerk.#__isTransitionable(unit.get("state", "status.status"), status), `StatusPerk.#_changeStatus(): Illegal transition. name=${unit.tagName}, fromStatus=${unit.get("state", "status.status")}, toStatus=${status}, id=${unit.id}`, Error);
+		Util.assert(StatusPerk.#__isTransitionable(unit.get("inventory", "status.status"), status), `StatusPerk.#_changeStatus(): Illegal transition. name=${unit.tagName}, fromStatus=${unit.get("inventory", "status.status")}, toStatus=${status}, id=${unit.id}`, Error);
 
-		unit.set("state", "status.status", status);
+		unit.set("inventory", "status.status", status);
 		StatusPerk.#__statusInfo[unit.uniqueId] = {"status":status};
 
 		StatusPerk.#__processWaitingList();

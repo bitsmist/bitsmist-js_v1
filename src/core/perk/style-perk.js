@@ -252,7 +252,7 @@ export default class StylePerk extends Perk
 		return Promise.resolve().then(() => {
 			return ss.replace(`${cssInfo["CSS"]}`);
 		}).then(() => {
-			let shadowRoot = unit.get("state", "skin.shadowRoot");
+			let shadowRoot = unit.get("inventory", "skin.shadowRoot");
 			if (shadowRoot)
 			{
 				// Shadow DOM
@@ -294,7 +294,7 @@ export default class StylePerk extends Perk
 	static #_clearCSS(unit)
 	{
 
-		let shadowRoot = unit.get("state", "skin.shadowRoot");
+		let shadowRoot = unit.get("inventory", "skin.shadowRoot");
 		if (shadowRoot)
 		{
 			// Shadow DOM
