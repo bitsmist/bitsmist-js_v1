@@ -57,14 +57,9 @@ export default class BasicPerk extends Perk
 
 		// Upgrade Unit
 		BITSMIST.v1.Unit.upgrade("asset", "callback", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("asset", "state", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("asset", "vault", new ChainableStore());
 		BITSMIST.v1.Unit.upgrade("asset", "inventory", new ChainableStore());
 		BITSMIST.v1.Unit.upgrade("asset", "skill", new ChainableStore());
 		BITSMIST.v1.Unit.upgrade("asset", "spell", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("property", "unitRoot", {
-			get() { return document.body; },
-		});
 		BITSMIST.v1.Unit.upgrade("callback", "connectedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
 		BITSMIST.v1.Unit.upgrade("callback", "disconnectedCallback", BasicPerk.#_disconnectedHandler.bind(BasicPerk));
 		BITSMIST.v1.Unit.upgrade("callback", "adoptedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
@@ -81,20 +76,18 @@ export default class BasicPerk extends Perk
 		BITSMIST.v1.Unit.upgrade("skill", "basic.scanAll", function(...args) { return BasicPerk.#_scanAll(...args); });
 		BITSMIST.v1.Unit.upgrade("skill", "basic.locate", function(...args) { return BasicPerk.#_locate(...args); });
 		BITSMIST.v1.Unit.upgrade("skill", "basic.locateAll", function(...args) { return BasicPerk.#_locateAll(...args); });
-		Object.defineProperty(BITSMIST.v1.Unit.prototype, "unitRoot", {
-			get() { return this.get("inventory", "unitroot"); },
-			set(value) { this.set("inventory", "unitroot", value); },
-		});
 
 		// Create a promise that resolves when document is ready
 		BITSMIST.v1.Unit.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
 			if ((document.readyState === "interactive" || document.readyState === "complete"))
 			{
+				BITSMIST.v1.Unit.set("inventory", "basic.unitRoot", document.body);
 				resolve();
 			}
 			else
 			{
 				document.addEventListener("DOMContentLoaded", () => {
+					BITSMIST.v1.Unit.set("inventory", "basic.unitRoot", document.body);
 					resolve();
 				});
 			}
@@ -115,12 +108,10 @@ export default class BasicPerk extends Perk
 		if (!unit.__bm_initialized || unit.get("setting", "basic.options.autoRestart", false))
 		{
 			// Upgrade unit
-			unit.upgrade("asset", "state", new ChainableStore(), {"chain":true});
-			unit.upgrade("asset", "vault", new ChainableStore(), {"chain":true});
 			unit.upgrade("asset", "inventory", new ChainableStore(), {"chain":true});
 			unit.upgrade("asset", "skill", new ChainableStore(), {"chain":true});
 			unit.upgrade("asset", "spell", new ChainableStore(), {"chain":true});
-			unit.upgrade("inventory", "unitroot", unit);
+			unit.upgrade("inventory", "basic.unitRoot", unit);
 
 			BasicPerk.#__register(unit);
 

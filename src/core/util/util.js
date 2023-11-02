@@ -486,7 +486,7 @@ export default class Util
     static scopedSelectorAll(rootNode, query, options)
     {
 
-		let targetNode = rootNode.unitRoot || rootNode;
+		let targetNode = ( rootNode === BITSMIST.v1.Unit || rootNode instanceof BITSMIST.v1.Unit ? rootNode.get("inventory", "basic.unitRoot") : rootNode );
         let newQuery = ( targetNode instanceof DocumentFragment ? query : ":scope " + query.replace(",", ",:scope "));
         let allElements = targetNode.querySelectorAll(newQuery);
 		let allSet = new Set(allElements);
