@@ -29,9 +29,12 @@ export default class StylePerk extends Perk
 	static #__applied = {};
 	static #__cssReady = {};
 	static #__info = {
-		"privateId":	Util.getUUID(),
-		"section":		"style",
-		"order":		200,
+		"sectionName":		"style",
+		"order":			200,
+	};
+	static #__spells = {
+		"summon":			StylePerk.#_loadCSS,
+		"apply":			StylePerk.#_applyCSS,
 	};
 
 	// -------------------------------------------------------------------------
@@ -42,6 +45,15 @@ export default class StylePerk extends Perk
 	{
 
 		return StylePerk.#__info;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static get spells()
+	{
+
+		return StylePerk.#__spells;
 
 	}
 
@@ -57,8 +69,6 @@ export default class StylePerk extends Perk
 
 		// Upgrade Unit
 		BITSMIST.v1.Unit.upgrade("inventory", "style.styles", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("spell", "style.summon", function(...args) { return StylePerk.#_loadCSS(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "style.apply", function(...args) { return StylePerk.#_applyCSS(...args); });
 
 		StylePerk.#__cssReady["promise"] = new Promise((resolve, reject) => {
 			StylePerk.#__cssReady["resolve"] = resolve;
@@ -101,8 +111,10 @@ export default class StylePerk extends Perk
 		unit.upgrade("inventory", "style.styles", new ChainableStore({
 			"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
 		}));
-		unit.upgrade("event", "beforeTransform", StylePerk.#StylePerk_onBeforeTransform, {"order":StylePerk.info["order"]});
-		unit.upgrade("event", "doTransform", StylePerk.#StylePerk_onDoTransform, {"order":StylePerk.info["order"]});
+
+		// Add event handlers
+		unit.use("event.add", "beforeTransform", {"handler":StylePerk.#StylePerk_onBeforeTransform, "order":StylePerk.info["order"]});
+		unit.use("event.add", "doTransform", {"handler":StylePerk.#StylePerk_onDoTransform, "order":StylePerk.info["order"]});
 
 		StylePerk.#__loadAttrSettings(unit);
 		StylePerk.#__adjustSettings(unit);

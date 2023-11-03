@@ -27,14 +27,29 @@ export default class BasicPerk extends Perk
 
 	static #__unitInfo = {};
 	static #__indexes = {
-		"tagName": {},
-		"className": {},
-		"id": {},
+		"tagName":			{},
+		"className":		{},
+		"id":				{},
 	};
 	static #__info = {
-		"privateId":	Util.getUUID(),
-		"section":		"basic",
-		"order":		0,
+		"sectionName":		"basic",
+		"order":			0,
+	};
+	static #__skills = {
+		"scan":				BasicPerk.#_scan,
+		"scanAll":			BasicPerk.#_scanAll,
+		"locate":			BasicPerk.#_locate,
+		"locateAll":		BasicPerk.#_locateAll,
+	};
+	static #__spells = {
+		"start":			BasicPerk.#_start,
+		"stop":				BasicPerk.#_stop,
+		"transform":		BasicPerk.#_transform,
+		"setup":			BasicPerk.#_setup,
+		"refresh":			BasicPerk.#_refresh,
+		"fetch":			BasicPerk.#_fetch,
+		"fill":				BasicPerk.#_fill,
+		"clear":			BasicPerk.#_clear,
 	};
 
 	// -------------------------------------------------------------------------
@@ -49,6 +64,24 @@ export default class BasicPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+
+	static get skills()
+	{
+
+		return BasicPerk.#__skills;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static get spells()
+	{
+
+		return BasicPerk.#__spells;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -56,26 +89,13 @@ export default class BasicPerk extends Perk
 	{
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("asset", "callback", new ChainableStore());
 		BITSMIST.v1.Unit.upgrade("asset", "inventory", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("asset", "skill", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("asset", "spell", new ChainableStore());
 		BITSMIST.v1.Unit.upgrade("callback", "connectedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
 		BITSMIST.v1.Unit.upgrade("callback", "disconnectedCallback", BasicPerk.#_disconnectedHandler.bind(BasicPerk));
 		BITSMIST.v1.Unit.upgrade("callback", "adoptedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
 		BITSMIST.v1.Unit.upgrade("callback", "attributeChangedCallback", BasicPerk.#_attributeChangedHandler.bind(BasicPerk));
-		BITSMIST.v1.Unit.upgrade("spell", "basic.start", function(...args) { return BasicPerk.#_start(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.stop", function(...args) { return BasicPerk.#_stop(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.transform", function(...args) { return BasicPerk.#_transform(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.setup", function(...args) { return BasicPerk.#_setup(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.refresh", function(...args) { return BasicPerk.#_refresh(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.fetch", function(...args) { return BasicPerk.#_fetch(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.fill", function(...args) { return BasicPerk.#_fill(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "basic.clear", function(...args) { return BasicPerk.#_clear(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "basic.scan", function(...args) { return BasicPerk.#_scan(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "basic.scanAll", function(...args) { return BasicPerk.#_scanAll(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "basic.locate", function(...args) { return BasicPerk.#_locate(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "basic.locateAll", function(...args) { return BasicPerk.#_locateAll(...args); });
+		BITSMIST.v1.Unit.upgrade("method", "use", BasicPerk.#_use);
+		BITSMIST.v1.Unit.upgrade("method", "cast", BasicPerk.#_cast);
 
 		// Create a promise that resolves when document is ready
 		BITSMIST.v1.Unit.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
@@ -108,10 +128,11 @@ export default class BasicPerk extends Perk
 		if (!unit.__bm_initialized || unit.get("setting", "basic.options.autoRestart", false))
 		{
 			// Upgrade unit
-			unit.upgrade("asset", "inventory", new ChainableStore(), {"chain":true});
-			unit.upgrade("asset", "skill", new ChainableStore(), {"chain":true});
-			unit.upgrade("asset", "spell", new ChainableStore(), {"chain":true});
+			unit.upgrade("asset", "perk", new Map());
+			unit.upgrade("asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.assets["inventory"]}));
 			unit.upgrade("inventory", "basic.unitRoot", unit);
+			unit.upgrade("method", "use", BasicPerk.#_use);
+			unit.upgrade("method", "cast", BasicPerk.#_cast);
 
 			BasicPerk.#__register(unit);
 
@@ -119,13 +140,13 @@ export default class BasicPerk extends Perk
 			let chain = Promise.resolve();
 			["BasicPerk","Perk","SettingPerk","UnitPerk","StatusPerk","EventPerk", "SkinPerk", "StylePerk"].forEach((perkName) => {
 				chain = chain.then(() => {
-					return unit.use("spell", "perk.attach", Perk.getPerk(perkName));
+					return unit.cast("perk.attach", Perk.getPerk(perkName));
 				});
 			});
 
 			// Start
 			return chain.then(() => {
-				return unit.use("spell", "basic.start");
+				return unit.cast("basic.start");
 			});
 		}
 
@@ -139,7 +160,7 @@ export default class BasicPerk extends Perk
 	static #_disconnectedHandler(unit)
 	{
 
-		return unit.use("spell", "basic.stop");
+		return unit.cast("basic.stop");
 
 	}
 
@@ -151,7 +172,7 @@ export default class BasicPerk extends Perk
 	static #_adoptedHandler(unit)
 	{
 
-		return unit.use("spell", "event.trigger", "afterAdopt");
+		return unit.cast("event.trigger", "afterAdopt");
 
 	}
 
@@ -163,12 +184,56 @@ export default class BasicPerk extends Perk
 	static #_attributeChangedHandler(unit, name, oldValue, newValue)
 	{
 
-		return unit.use("spell", "event.trigger", "afterAttributeChange", {"name":name, "oldValue":oldValue, "newValue":newValue});
+		return unit.cast("event.trigger", "afterAttributeChange", {"name":name, "oldValue":oldValue, "newValue":newValue});
 
 	}
 
 	// -------------------------------------------------------------------------
 	//  Skills
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Call the aynchronous function.
+	 *
+	 * @param	{String}		assetName			Asset name.
+	 * @param	{String}		key					Key.
+	 * @param	{*}				...args				Arguments.
+	 */
+	static #_cast(key, ...args)
+	{
+
+		let sectionName = key.split(".")[0];
+		let spellName = key.split(".")[1];
+
+		let func = Perk.getPerkFromSectionName(sectionName).spells[spellName];
+		Util.assert(typeof(func) === "function", () => `Spell is not available. spellName=${key}`);
+
+		return func.call(this, this, ...args);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Call the synchronous function.
+	 *
+	 * @param	{String}		assetName			Asset name.
+	 * @param	{String}		key					Key.
+	 * @param	{*}				...args				Arguments.
+	 */
+	static #_use(key, ...args)
+	{
+
+		let sectionName = key.split(".")[0];
+		let skillName = key.split(".")[1];
+
+		let func = Perk.getPerkFromSectionName(sectionName).skills[skillName];
+		Util.assert(typeof(func) === "function", () => `Skill is not available. skillName=${key}`);
+
+		return func.call(this, this, ...args);
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -185,33 +250,33 @@ export default class BasicPerk extends Perk
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
-			return unit.use("spell", "setting.apply", {"settings":unit.get("setting")});
+			return unit.cast("setting.apply", {"settings":unit.assets["setting"].items});
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "beforeStart");
+			return unit.cast("event.trigger", "beforeStart");
 		}).then(() => {
-			return unit.use("skill", "status.change", "starting");
+			return unit.use("status.change", "starting");
 		}).then(() => {
 			if (unit.get("setting", "basic.options.autoTransform", true))
 			{
-				return unit.use("spell", "basic.transform", {"skinName": "default", "styleName": "default"});
+				return unit.cast("basic.transform", {"skinName": "default", "styleName": "default"});
 			}
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doStart");
+			return unit.cast("event.trigger", "doStart");
 		}).then(() => {
 			if (unit.get("setting", "basic.options.autoRefresh", true))
 			{
-				return unit.use("spell", "basic.refresh");
+				return unit.cast("basic.refresh");
 			}
 		}).then(() => {
 			console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("skill", "status.change", "started");
+			return unit.use("status.change", "started");
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "afterStart");
+			return unit.cast("event.trigger", "afterStart");
 		}).then(() => {
 			console.debug(`BasicPerk._start(): Unit is ready. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("skill", "status.change", "ready");
+			return unit.use("status.change", "ready");
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "afterReady");
+			return unit.cast("event.trigger", "afterReady");
 		});
 
 	}
@@ -233,16 +298,16 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._stop(): Stopping unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("skill", "status.change", "stopping");
+			return unit.use("status.change", "stopping");
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "beforeStop", options);
+			return unit.cast("event.trigger", "beforeStop", options);
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doStop", options);
+			return unit.cast("event.trigger", "doStop", options);
 		}).then(() => {
 			console.debug(`BasicPerk._stop(): Stopped unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("skill", "status.change", "stopped");
+			return unit.use("status.change", "stopped");
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "afterStop", options);
+			return unit.cast("event.trigger", "afterStop", options);
 		});
 
 	}
@@ -264,19 +329,19 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._transform(): Transforming. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "beforeTransform", options);
+			return unit.cast("event.trigger", "beforeTransform", options);
 		}).then(() => {
 			if (unit.get("setting", "basic.options.autoSetup", true))
 			{
-				return unit.use("spell", "basic.setup", options);
+				return unit.cast("basic.setup", options);
 			}
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doTransform", options);
+			return unit.cast("event.trigger", "doTransform", options);
 		}).then(() => {
-			return unit.use("spell", "unit.materializeAll", unit);
+			return unit.cast("unit.materializeAll", unit);
 		}).then(() => {
 			console.debug(`BasicPerk._transform(): Transformed. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "afterTransform", options);
+			return unit.cast("event.trigger", "afterTransform", options);
 		});
 
 	}
@@ -298,12 +363,12 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._setup(): Setting up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "beforeSetup", options);
+			return unit.cast("event.trigger", "beforeSetup", options);
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doSetup", options);
+			return unit.cast("event.trigger", "doSetup", options);
 		}).then(() => {
 			console.debug(`BasicPerk._setup(): Set up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "afterSetup", options);
+			return unit.cast("event.trigger", "afterSetup", options);
 		});
 
 	}
@@ -325,28 +390,28 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._refresh(): Refreshing unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "beforeRefresh", options);
+			return unit.cast("event.trigger", "beforeRefresh", options);
 		}).then(() => {
 			let autoClear = Util.safeGet(options, "autoClear", unit.get("setting", "basic.options.autoClear", true));
 			if (autoClear)
 			{
-				return unit.use("spell", "basic.clear", options);
+				return unit.cast("basic.clear", options);
 			}
 		}).then(() => {
 			if (Util.safeGet(options, "autoFetch", unit.get("setting", "basic.options.autoFetch", true)))
 			{
-				return unit.use("spell", "basic.fetch", options);
+				return unit.cast("basic.fetch", options);
 			}
 		}).then(() => {
 			if (Util.safeGet(options, "autoFill", unit.get("setting", "basic.options.autoFill", true)))
 			{
-				return unit.use("spell", "basic.fill", options);
+				return unit.cast("basic.fill", options);
 			}
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doRefresh", options);
+			return unit.cast("event.trigger", "doRefresh", options);
 		}).then(() => {
 			console.debug(`BasicPerk._refresh(): Refreshed unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "afterRefresh", options);
+			return unit.cast("event.trigger", "afterRefresh", options);
 		});
 
 	}
@@ -368,11 +433,11 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._fetch(): Fetching data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "beforeFetch", options);
+			return unit.cast("event.trigger", "beforeFetch", options);
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doFetch", options);
+			return unit.cast("event.trigger", "doFetch", options);
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "afterFetch", options);
+			return unit.cast("event.trigger", "afterFetch", options);
 		}).then(() => {
 			console.debug(`BasicPerk._fetch(): Fetched data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
 		});
@@ -396,12 +461,12 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._fill(): Filling with data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "beforeFill", options);
+			return unit.cast("event.trigger", "beforeFill", options);
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doFill", options);
+			return unit.cast("event.trigger", "doFill", options);
 		}).then(() => {
 			console.debug(`BasicPerk._fill(): Filled with data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "afterFill", options);
+			return unit.cast("event.trigger", "afterFill", options);
 		});
 
 	}
@@ -423,12 +488,12 @@ export default class BasicPerk extends Perk
 
 		return Promise.resolve().then(() => {
 			console.debug(`BasicPerk._clear(): Clearing the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "beforeClear", options);
+			return unit.cast("event.trigger", "beforeClear", options);
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doClear", options);
+			return unit.cast("event.trigger", "doClear", options);
 		}).then(() => {
 			console.debug(`BasicPerk._clear(): Cleared the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.use("spell", "event.trigger", "afterClear", options);
+			return unit.cast("event.trigger", "afterClear", options);
 		});
 
 	}
@@ -492,8 +557,8 @@ export default class BasicPerk extends Perk
 			}
 			else if ("scan" in target)
 			{
-				let nodes = unit.use("skill", "basic.scan", target["scan"]);
-				return unit.use("skill", "basic.scanAll", target["scan"]);
+				let nodes = unit.use("basic.scan", target["scan"]);
+				return unit.use("basic.scanAll", target["scan"]);
 			}
 			else if ("uniqueId" in target)
 			{

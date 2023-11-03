@@ -24,9 +24,18 @@ export default class EventPerk extends Perk
 
 	static #__eventInfo = new WeakMap();
 	static #__info = {
-		"privateId":	Util.getUUID(),
-		"section":		"event",
-		"order":		210,
+		"sectionName":		"event",
+		"order":			210,
+	};
+	static #__skills = {
+		"add":				EventPerk.#_addEventHandler,
+		"remove":			EventPerk.#_removeEventHandler,
+		"init":				EventPerk.#_initEvents,
+		"reset":			EventPerk.#_removeEvents,
+		"triggerSync":		EventPerk.#_triggerSync,
+	};
+	static #__spells = {
+		"trigger":			EventPerk.#_trigger,
 	};
 
 	// -------------------------------------------------------------------------
@@ -41,30 +50,33 @@ export default class EventPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
 
-	static globalInit()
+	static get skills()
 	{
 
-		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("skill", "event.add", function(...args) { return EventPerk.#_addEventHandler(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "event.remove", function(...args) { return EventPerk.#_removeEventHandler(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "event.init", function(...args) { return EventPerk.#_initEvents(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "event.reset", function(...args) { return EventPerk.#_removeEvents(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "event.trigger", function(...args) { return EventPerk.#_trigger(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "event.triggerSync", function(...args) { return EventPerk.#_triggerSync(...args); });
+		return EventPerk.#__skills;
 
 	}
 
 	// -------------------------------------------------------------------------
 
+	static get spells()
+	{
+
+		return EventPerk.#__spells;
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
+
 	static init(unit, options)
 	{
 
-		// Upgrade unit
-		unit.upgrade("event", "doApplySettings", EventPerk.#EventPerk_onDoApplySettings, {"order":EventPerk.info["order"]});
-		unit.upgrade("event", "afterTransform", EventPerk.#EventPerk_onAfterTransform, {"order":EventPerk.info["order"]});
+		// Add event handlers
+		unit.use("event.add", "doApplySettings", {"handler":EventPerk.#EventPerk_onDoApplySettings, "order":Perk.info["order"]});
+		unit.use("event.add", "afterTransform", {"handler":EventPerk.#EventPerk_onAfterTransform, "order":Perk.info["order"]});
 
 	}
 

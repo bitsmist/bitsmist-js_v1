@@ -26,9 +26,14 @@ export default class SkinPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	static #__info = {
-		"privateId":	Util.getUUID(),
-		"section":		"skin",
-		"order":		210,
+		"sectionName":		"skin",
+		"order":			210,
+	};
+	static #__skills = {
+		"apply":			SkinPerk.#_applySkin,
+	};
+	static #__spells = {
+		"summon":			SkinPerk.#_loadSkin,
 	};
 
 	// -------------------------------------------------------------------------
@@ -43,18 +48,25 @@ export default class SkinPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Methods
-	// -------------------------------------------------------------------------
 
-	static globalInit()
+	static get skills()
 	{
 
-		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("skill", "skin.apply", function(...args) { return SkinPerk.#_applySkin(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "skin.summon", function(...args) { return SkinPerk.#_loadSkin(...args); });
+		return SkinPerk.#__skills;
 
 	}
 
+	// -------------------------------------------------------------------------
+
+	static get spells()
+	{
+
+		return SkinPerk.#__spells;
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Methods
 	// -------------------------------------------------------------------------
 
 	static init(unit, options)
@@ -63,8 +75,10 @@ export default class SkinPerk extends Perk
 		// Upgrade unit
 		unit.upgrade("inventory", "skin.skins", {});
 		unit.upgrade("inventory", "skin.active.skinName", "");
-		unit.upgrade("event", "beforeTransform", SkinPerk.#SkinPerk_onBeforeTransform, {"order":SkinPerk.info["order"]});
-		unit.upgrade("event", "doTransform", SkinPerk.#SkinPerk_onDoTransform, {"order":SkinPerk.info["order"]});
+
+		// Add event handlers
+		unit.use("event.add", "beforeTransform", {"handler":SkinPerk.#SkinPerk_onBeforeTransform, "order":SkinPerk.info["order"]});
+		unit.use("event.add", "doTransform", {"handler":SkinPerk.#SkinPerk_onDoTransform, "order":SkinPerk.info["order"]});
 
 		SkinPerk.#__loadAttrSettings(unit);
 		SkinPerk.#__adjustSettings(unit);
@@ -147,7 +161,7 @@ export default class SkinPerk extends Perk
 			skinInfo["HTML"] = skinSettings["HTML"];
 			break;
 		case "node":
-			let rootNode = unit.use("skill", "basic.scan", skinSettings["rootNode"] || "");
+			let rootNode = unit.use("basic.scan", skinSettings["rootNode"] || "");
 			Util.assert(rootNode, `SkinPerk.#_loadSkin(): Root node does not exist. name=${unit.tagName}, skinName=${skinName}, rootNode=${skinSettings["rootNode"]}`);
 			skinInfo["HTML"] = rootNode.innerHTML;
 			break;

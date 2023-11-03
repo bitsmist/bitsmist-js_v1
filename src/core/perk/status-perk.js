@@ -27,11 +27,15 @@ export default class StatusPerk extends Perk
 //	static #__suspends = {};
 	static #__waitingList = new Store();
 	static #__info = {
-		"privateId":	Util.getUUID(),
-		"section":		"status",
-		"order":		100,
+		"sectionName":		"status",
+		"order":			100,
 	};
-
+	static #__skills = {
+		"change":			StatusPerk.#_changeStatus,
+	};
+	static #__spells = {
+		"wait":				StatusPerk.#_waitFor,
+	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -45,6 +49,24 @@ export default class StatusPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+
+	static get skills()
+	{
+
+		return StatusPerk.#__skills;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static get spells()
+	{
+
+		return StatusPerk.#__spells;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -53,15 +75,6 @@ export default class StatusPerk extends Perk
 
 		// Init vars
 		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk.#_waitFor(BITSMIST.v1.Unit, waitlist, timeout); }
-
-		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("skill", "status.change", function(...args) { return StatusPerk.#_changeStatus(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "status.wait", function(...args) { return StatusPerk.#_waitFor(...args); });
-		/*
-		BITSMIST.v1.Unit.upgrade("spell", "status.suspend", function(...args) { return StatusPerk.#_suspend(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "status.resume", function(...args) { return StatusPerk.#_resume(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "status.pause", function(...args) { return StatusPerk.#_pause(...args); });
-		*/
 
 	}
 
@@ -73,7 +86,9 @@ export default class StatusPerk extends Perk
 		// Upgrade unit;
 		unit.upgrade("inventory", "status.status", "connected");
 		//unit.upgrade("inventory", "status.suspends", {});
-		unit.upgrade("event", "doApplySettings", StatusPerk.#StatusPerk_onDoApplySettings, {"order":StatusPerk.info["order"]});
+
+		// Add event handlers
+		unit.use("event.add", "doApplySettings", {"handler":StatusPerk.#StatusPerk_onDoApplySettings, "order":StatusPerk.info["order"]});
 
 	}
 
@@ -373,7 +388,7 @@ export default class StatusPerk extends Perk
 	{
 
 		let statusInfo;
-		let target = unit.use("skill", "basic.locate", waitlistItem);
+		let target = unit.use("basic.locate", waitlistItem);
 		if (target)
 		{
 			statusInfo = StatusPerk.#__statusInfo[target.uniqueId];

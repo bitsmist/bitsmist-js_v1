@@ -21,11 +21,26 @@ export default class Unit extends HTMLElement
 	//  Private Variables
 	// -------------------------------------------------------------------------
 
-	static #__global_assets = {};
+	static #__global_assets = {
+		"callback": new Map(),
+	};
 	#__assets = {};
 	#__initialized;
 	#__ready;
 	#__uniqueid = Util.getUUID();
+
+	static get assets()
+	{
+
+		return Unit.#__global_assets;
+
+
+	}
+
+	get assets()
+	{
+		return this.#__assets;
+	}
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -147,28 +162,15 @@ export default class Unit extends HTMLElement
 	static get(assetName, key, defaultValue, options)
 	{
 
-		if (key === undefined)
-		{
-			return Unit.#__global_assets[assetName].items;
-		}
-		else
-		{
-			return Unit.#__global_assets[assetName].get(key, defaultValue);
-		}
+		return Unit.#__global_assets[assetName].get(key, defaultValue);
 
 	}
 
 	get(assetName, key, defaultValue, options)
 	{
 
-		if (key === undefined)
-		{
-			return this.#__assets[assetName].items;
-		}
-		else
-		{
-			return this.#__assets[assetName].get(key, defaultValue);
-		}
+		return this.#__assets[assetName].get(key, defaultValue);
+
 
 	}
 
@@ -228,47 +230,23 @@ export default class Unit extends HTMLElement
 	 * @param	{String}		key					Key.
 	 * @param	{*}				...args				Arguments.
 	 */
-	static use(assetName, key, ...args)
+	static exec(assetName, key, ...args)
 	{
 
 		let func = Unit.#__global_assets[assetName].get(key);
-		Util.assert(typeof(func) === "function", `${assetName} is not available. ${assetName}Name=${key}`);
+		Util.assert(typeof(func) === "function", () => `${assetName} is not available. ${assetName}Name=${key}`);
 
 		return func.call(this, this, ...args);
 
 	}
 
-	use(assetName, key, ...args)
+	exec(assetName, key, ...args)
 	{
 
 		let func = this.#__assets[assetName].get(key);
 		Util.assert(typeof(func) === "function", `${assetName} is not available. ${assetName}Name=${key}`);
 
 		return func.call(this, this, ...args);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Merge assets.
-	 *
-	 * @param	{String}		assetName			Asset name.
-	 * @param	{String}		key					Key.
-	 * @param	{*}				value				Value.
-	 * @param	{Object}		options				Options.
-	 */
-	static merge(assetName, key, value, options)
-	{
-
-		return Unit.#__global_assets[assetName].merge(key, value);
-
-	}
-
-	merge(assetName, key, value, options)
-	{
-
-		return this.#__assets[assetName].merge(key, value);
 
 	}
 
@@ -296,12 +274,6 @@ export default class Unit extends HTMLElement
 			case "property":
 				Object.defineProperty(Unit, name, content);
 				break;
-			case "event":
-				Unit.use("skill", "event.add", name, {
-					"handler":	content,
-					"order":	options["order"],
-				});
-				break;
 			default:
 				Unit.#__global_assets[type].set(name, content);
 				break;
@@ -317,10 +289,6 @@ export default class Unit extends HTMLElement
 		switch (type)
 		{
 			case "asset":
-				if ((options && options["chain"]) && Unit.#__global_assets[name])
-				{
-					content.chain(Unit.#__global_assets[name]);
-				}
 				this.#__assets[name] = content;
 				break;
 			case "method":
@@ -328,12 +296,6 @@ export default class Unit extends HTMLElement
 				break;
 			case "property":
 				Object.defineProperty(unit, name, content);
-				break;
-			case "event":
-				this.use("skill", "event.add", name, {
-					"handler":	content,
-					"order":	options["order"],
-				});
 				break;
 			default:
 				this.#__assets[type].set(name, content);

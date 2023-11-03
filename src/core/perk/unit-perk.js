@@ -29,9 +29,13 @@ export default class UnitPerk extends Perk
 
 	static #__classInfo = {};
 	static #__info = {
-		"privateId":	Util.getUUID(),
-		"section":		"unit",
-		"order":		400,
+		"sectionName":		"unit",
+		"order":			400,
+	};
+	static #__spells = {
+		"materializeAll":	UnitPerk.#_loadTags,
+		"materialize":		UnitPerk.#_loadUnit,
+		"summon":			UnitPerk.#_loadClass,
 	};
 
 	// -------------------------------------------------------------------------
@@ -46,16 +50,20 @@ export default class UnitPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+
+	static get spells()
+	{
+
+		return UnitPerk.#__spells;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
 	static globalInit()
 	{
-
-		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("spell", "unit.materializeAll", function(...args) { return UnitPerk.#_loadTags(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "unit.materialize", function(...args) { return UnitPerk.#_loadUnit(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "unit.summon", function(...args) { return UnitPerk.#_loadClass(...args); });
 
 		// Load tags
 		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
@@ -74,10 +82,12 @@ export default class UnitPerk extends Perk
 
 		// Upgrade unit
 		unit.upgrade("inventory", "unit.units", {});
-		unit.upgrade("event", "doApplySettings", UnitPerk.#UnitPerk_onDoApplySettings, {"order":UnitPerk.info["order"]});
+
+		// Add event handlers
+		unit.use("event.add", "doApplySettings", {"handler":UnitPerk.#UnitPerk_onDoApplySettings, "order":UnitPerk.info["order"]});
 
 		let settings = UnitPerk.#__loadAttrSettings(unit);
-		unit.use("skill", "setting.merge", settings);
+		unit.use("setting.merge", settings);
 
 	}
 
@@ -95,8 +105,8 @@ export default class UnitPerk extends Perk
 				if (!this.get("inventory", `unit.units.${sectionName}.object`))
 				{
 					let parentUnit = Util.safeGet(sectionValue, "unit.options.parentUnit");
-					let targetUnit = ( parentUnit ? this.use("skill", "basic.locate", parentUnit) : this );
-					return targetUnit.use("spell", "unit.materialize", sectionName, sectionValue);
+					let targetUnit = ( parentUnit ? this.use("basic.locate", parentUnit) : this );
+					return targetUnit.cast("unit.materialize", sectionName, sectionValue);
 				}
 			});
 		});
@@ -212,7 +222,7 @@ export default class UnitPerk extends Perk
 			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "unit.options.syncOnAdd"));
 			if (sync)
 			{
-				return unit.use("spell", "status.wait", [{
+				return unit.cast("status.wait", [{
 					"uniqueId":	addedUnit.uniqueId,
 					"status":	(sync === true ? "ready" : sync)
 				}]);
@@ -428,7 +438,7 @@ export default class UnitPerk extends Perk
 		// Check root node
 		if (Util.safeGet(settings, "unit.options.parentNode"))
 		{
-			root = unit.use("skill", "basic.scan", Util.safeGet(settings, "unit.options.parentNode"));
+			root = unit.use("basic.scan", Util.safeGet(settings, "unit.options.parentNode"));
 		}
 		else
 		{
