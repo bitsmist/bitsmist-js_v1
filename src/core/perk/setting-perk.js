@@ -26,11 +26,18 @@ export default class SettingPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	static #__info = {
-		"privateId":	Util.getUUID(),
-		"section":		"setting",
-		"order":		10,
+		"sectionName":		"setting",
+		"order":			10,
 	};
-
+	static #__skills = {
+		"get":				SettingPerk.#_getSettings,
+		"set":				SettingPerk.#_setSettings,
+		"merge":			SettingPerk.#_mergeSettings,
+	};
+	static #__spells = {
+		"summon":			SettingPerk.#_loadSettings,
+		"apply":			SettingPerk.#_applySettings,
+	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -44,6 +51,24 @@ export default class SettingPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+
+	static get skills()
+	{
+
+		return SettingPerk.#__skills;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static get spells()
+	{
+
+		return SettingPerk.#__spells;
+
+	}
+
+	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -52,11 +77,6 @@ export default class SettingPerk extends Perk
 
 		// Upgrade Unit
 		BITSMIST.v1.Unit.upgrade("asset", "setting", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("skill", "setting.get", function(...args) { return SettingPerk.#_getSettings(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "setting.set", function(...args) { return SettingPerk.#_setSettings(...args); });
-		BITSMIST.v1.Unit.upgrade("skill", "setting.merge", function(...args) { return SettingPerk.#_mergeSettings(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "setting.summon", function(...args) { return SettingPerk.#_loadSettings(...args); });
-		BITSMIST.v1.Unit.upgrade("spell", "setting.apply", function(...args) { return SettingPerk.#_applySettings(...args); });
 
 	}
 
@@ -71,7 +91,7 @@ export default class SettingPerk extends Perk
 		settings = SettingPerk.#__mergeSettings(unit, settings);
 
 		// Upgrade unit
-		unit.upgrade("asset", "setting", new ChainableStore({"items":settings}), {"chain":true});
+		unit.upgrade("asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit.assets["setting"]}));
 
 		return Promise.resolve().then(() => {
 			SettingPerk.#__loadAttrSettings(unit);
@@ -100,13 +120,13 @@ export default class SettingPerk extends Perk
 	{
 
 		return Promise.resolve().then(() => {
-			return unit.use("spell", "event.trigger", "beforeApplySettings", options);
+			return unit.cast("event.trigger", "beforeApplySettings", options);
 		}).then(() => {
-			return unit.use("spell", "perk.attachPerks", options);
+			return unit.cast("perk.attachPerks", options);
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "doApplySettings", options);
+			return unit.cast("event.trigger", "doApplySettings", options);
 		}).then(() => {
-			return unit.use("spell", "event.trigger", "afterApplySettings", options);
+			return unit.cast("event.trigger", "afterApplySettings", options);
 		});
 
 	}
@@ -127,7 +147,7 @@ export default class SettingPerk extends Perk
 		return AjaxUtil.loadJSON(SettingPerk.#__getSettingsURL(unit), Object.assign({"bindTo":unit}, options)).then((settings) => {
 			if (settings)
 			{
-				unit.use("skill", "setting.merge", settings);
+				unit.use("setting.merge", settings);
 			}
 		});
 
@@ -177,7 +197,7 @@ export default class SettingPerk extends Perk
 	static #_mergeSettings(unit, key, value)
 	{
 
-		unit.merge("setting", key, value);
+		unit.assets["setting"].merge(key, value);
 
 	}
 
@@ -206,7 +226,7 @@ export default class SettingPerk extends Perk
 		if (unit.hasAttribute("bm-options"))
 		{
 			let options = {"options": JSON.parse(unit.getAttribute("bm-options"))};
-			unit.use("skill", "setting.merge", options);
+			unit.use("setting.merge", options);
 		}
 
 		// Path
