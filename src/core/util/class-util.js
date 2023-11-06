@@ -133,7 +133,7 @@ export default class ClassUtil
 	{
 
 		let result = /^[a-zA-Z0-9\-\._]+$/.test(className);
-		Util.assert(result, `ClassUtil.__validateClassName(): Class name '${className}' is not valid.`, TypeError);
+		Util.assert(result, () => `ClassUtil.__validateClassName(): Class name '${className}' is not valid.`, TypeError);
 
 		return className;
 

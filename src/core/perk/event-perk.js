@@ -144,7 +144,7 @@ export default class EventPerk extends Perk
 
 		// Get handler
 		let handler = EventPerk.#__getEventHandler(unit, handlerInfo);
-		Util.assert(handler, `EventPerk.#_addEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
+		Util.assert(handler, () => `EventPerk.#_addEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
 
 		// Init event info object for the element
 		if (!EventPerk.#__eventInfo.get(element))
@@ -191,7 +191,7 @@ export default class EventPerk extends Perk
 
 		// Get handler
 		let handler = EventPerk.#__getEventHandler(unit, handlerInfo);
-		Util.assert(handler, `EventPerk.#_removeEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
+		Util.assert(handler, () => `EventPerk.#_removeEventHandler(): handler not found. name=${unit.tagName}, eventName=${eventName}`);
 
 		let listeners = Util.safeGet(EventPerk.#__eventInfo.get(element), `.listeners.${eventName}`);
 		if (listeners)
@@ -515,7 +515,7 @@ export default class EventPerk extends Perk
 				// Get the handler
 				let handler = listeners[i]["handler"];
 				handler = ( typeof handler === "string" ? unit[handler] : handler );
-				Util.assert(typeof handler === "function", `EventPerk.#__handle(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
+				Util.assert(typeof handler === "function", () => `EventPerk.#__handle(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
 
 				// Execute the handler
 				let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : unit );
@@ -560,7 +560,7 @@ export default class EventPerk extends Perk
 			// Get the handler
 			let handler = listeners[i]["handler"];
 			handler = ( typeof handler === "string" ? unit[handler] : handler );
-			Util.assert(typeof handler === "function", `EventPerk.#__handleSync(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
+			Util.assert(typeof handler === "function", () => `EventPerk.#__handleSync(): Event handler is not a function. name=${unit.tagName}, eventName=${e.type}`, TypeError);
 
 			// Execute handler
 			let bindTo = ( listeners[i]["bindTo"] ? listeners[i]["bindTo"] : unit );

@@ -226,7 +226,7 @@ export default class StylePerk extends Perk
 			else
 			{
 				let url = styleSettings["URL"] || StylePerk.#__getDefaultURL(unit, styleName, styleSettings);
-				Util.assert(url, `StylePerk.#_loadCSS(): CSS URL is not speicified. name=${unit.tagName}, styleName=${styleName}`);
+				Util.assert(url, () => `StylePerk.#_loadCSS(): CSS URL is not speicified. name=${unit.tagName}, styleName=${styleName}`);
 				promise = AjaxUtil.loadCSS(url).then((css) => {
 					styleInfo["CSS"] = css;
 				});
@@ -259,7 +259,7 @@ export default class StylePerk extends Perk
 		let cssInfo = unit.get("inventory", "style.styles").get(styleName);
 		let ss = new CSSStyleSheet();
 
-		Util.assert(cssInfo,`StylePerk.#_applyCSS(): CSS not loaded. name=${unit.tagName || "Global"}, styleName=${styleName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
+		Util.assert(cssInfo,() => `StylePerk.#_applyCSS(): CSS not loaded. name=${unit.tagName || "Global"}, styleName=${styleName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
 
 		return Promise.resolve().then(() => {
 			return ss.replace(`${cssInfo["CSS"]}`);

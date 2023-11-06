@@ -162,13 +162,13 @@ export default class SkinPerk extends Perk
 			break;
 		case "node":
 			let rootNode = unit.use("basic.scan", skinSettings["rootNode"] || "");
-			Util.assert(rootNode, `SkinPerk.#_loadSkin(): Root node does not exist. name=${unit.tagName}, skinName=${skinName}, rootNode=${skinSettings["rootNode"]}`);
+			Util.assert(rootNode, () => `SkinPerk.#_loadSkin(): Root node does not exist. name=${unit.tagName}, skinName=${skinName}, rootNode=${skinSettings["rootNode"]}`);
 			skinInfo["HTML"] = rootNode.innerHTML;
 			break;
 		case "URL":
 		default:
 			let url = skinSettings["URL"] || SkinPerk.#__getDefaultURL(unit, skinName, skinSettings);
-			Util.assert(url, `SkinPerk.#_loadSkin(): Skin URL is not speicified. name=${unit.tagName}, skinName=${skinName}`);
+			Util.assert(url, () => `SkinPerk.#_loadSkin(): Skin URL is not speicified. name=${unit.tagName}, skinName=${skinName}`);
 			promise = AjaxUtil.loadHTML(url).then((skin) => {
 				skinInfo["HTML"] = skin;
 			});
@@ -214,7 +214,7 @@ export default class SkinPerk extends Perk
 
 		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
 
-		Util.assert(skinInfo,`SkinPerk.#_applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
+		Util.assert(skinInfo,() => `SkinPerk.#_applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
 
 		// Append the clone to the unit
 		clone = clone || this.get("inventory", "basic.unitRoot");

@@ -205,7 +205,7 @@ export default class Perk
 		handlerName = handlerName.replace("BITSMIST.v1.", "");
 		let handler = (Perk.#__handlers[this.name] && Perk.#__handlers[this.name][handlerName]) || Perk.#__handlers["common"][handlerName];
 
-		Util.assert(handler, `Perk.createHandler(): Handler '${handlerName}' is not registered.`, ReferenceError);
+		Util.assert(handler, () => `Perk.createHandler(): Handler '${handlerName}' is not registered.`, ReferenceError);
 
 		return new handler(...args);
 

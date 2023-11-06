@@ -163,7 +163,7 @@ export default class StatusPerk extends Perk
 	static #_changeStatus(unit, status)
 	{
 
-		Util.assert(StatusPerk.#__isTransitionable(unit.get("inventory", "status.status"), status), `StatusPerk.#_changeStatus(): Illegal transition. name=${unit.tagName}, fromStatus=${unit.get("inventory", "status.status")}, toStatus=${status}, id=${unit.id}`, Error);
+		Util.assert(StatusPerk.#__isTransitionable(unit.get("inventory", "status.status"), status), () => `StatusPerk.#_changeStatus(): Illegal transition. name=${unit.tagName}, fromStatus=${unit.get("inventory", "status.status")}, toStatus=${status}, id=${unit.id}`, Error);
 
 		unit.set("inventory", "status.status", status);
 		StatusPerk.#__statusInfo[unit.uniqueId] = {"status":status};
@@ -336,7 +336,7 @@ export default class StatusPerk extends Perk
 			{
 				let element = document.querySelector(waitInfo["waitlist"][i].rootNode);
 
-				Util.assert(element && element.uniqueId, `StatusPerk.#__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
+				Util.assert(element && element.uniqueId, () => `StatusPerk.#__addToWaitingList(): Root node does not exist. waiter=${waitInfo["waiter"]}, rootNode=${waitInfo["waitlist"][i].rootNode}`, ReferenceError);
 			}
 		}
 		*/

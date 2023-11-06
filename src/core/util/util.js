@@ -70,7 +70,7 @@ export default class Util
 		let current = Util.__createIntermediateObject(store, keys);
 
 		Util.assert(current !== null && typeof current === "object",
-			`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
+			() => `Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
 
 		current[keys[keys.length - 1]] = value;
 
@@ -133,7 +133,7 @@ export default class Util
 		let current = Util.__createIntermediateObject(store, keys);
 
 		Util.assert(current && typeof current === "object",
-			`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
+			() => `Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
 
 		let lastKey = keys[keys.length - 1];
 		current[lastKey] = Util.deepMerge(current[lastKey], value);
@@ -398,7 +398,7 @@ export default class Util
 	 * Assert conditions. Throws an error when assertion failed.
 	 *
 	 * @param	{Boolean}		conditions			Conditions.
-	 * @param	{String}		Message				Error message.
+	 * @param	{String/Function}	Message			Error message or Function that return the message.
 	 * @param	{Error}			error				Error to throw.
 	 * @param	{Options}		options				Options.
 	 *
@@ -410,6 +410,7 @@ export default class Util
 		if (!conditions)
 		{
 			error = error || Error;
+			msg = (typeof(msg) === "function" ? msg() : msg);
 			let e = new error(msg);
 
 			// Remove last stack (assert() itself)
@@ -428,7 +429,7 @@ export default class Util
 	 * Warns when condition failed.
 	 *
 	 * @param	{Boolean}		conditions			Conditions.
-	 * @param	{String}		Message				Error message.
+	 * @param	{String/Function}	Message			Error message or Function that return the message.
 	 * @param	{String}		level				Warn level.
 	 * @param	{Options}		options				Options.
 	 *
@@ -438,6 +439,7 @@ export default class Util
 	{
 
 		let ret = true;
+		msg = (typeof(msg) === "function" ? msg() : msg);
 
 		if (!conditions)
 		{
@@ -614,7 +616,7 @@ export default class Util
 		for (let i = 0; i < keys.length - 1; i++)
 		{
 			Util.assert(current !== null && typeof current === "object",
-				`Util.safeSet(): Can't create an intermediate object. Non-object value already exists. existingKey=${( i > 0 ? keys[i-1] : "" )}, existingValue=${current}`, TypeError);
+				() => `Util.safeSet(): Can't create an intermediate object. Non-object value already exists. existingKey=${( i > 0 ? keys[i-1] : "" )}, existingValue=${current}`, TypeError);
 
 			if (!(keys[i] in current))
 			{

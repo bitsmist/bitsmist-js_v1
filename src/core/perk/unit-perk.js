@@ -173,7 +173,7 @@ export default class UnitPerk extends Perk
 			if (!customElements.get(tagName))
 			{
 				let classDef = ClassUtil.getClass(className);
-				Util.assert(classDef, `UnitPerk.#_loadClass(): Class does not exist. tagName=${tagName}, className=${className}`);
+				Util.assert(classDef, () => `UnitPerk.#_loadClass(): Class does not exist. tagName=${tagName}, className=${className}`);
 
 				customElements.define(tagName, classDef);
 			}
@@ -445,7 +445,7 @@ export default class UnitPerk extends Perk
 			root = this.get("inventory", "basic.unitRoot");
 		}
 
-		Util.assert(root, `UnitPerk.#__insertTag(): Root node does not exist. name=${unit.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
+		Util.assert(root, () => `UnitPerk.#__insertTag(): Root node does not exist. name=${unit.tagName}, tagName=${tagName}, parentNode=${Util.safeGet(settings, "unit.options.parentNode")}`, ReferenceError);
 
 		// Build tag
 		let tag = ( Util.safeGet(settings, "unit.options.tag") ? Util.safeGet(settings, "unit.options.tag") : `<${tagName}></${tagName}>` );
