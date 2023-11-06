@@ -75,8 +75,8 @@ export default class EventPerk extends Perk
 	{
 
 		// Add event handlers
-		unit.use("event.add", "doApplySettings", {"handler":EventPerk.#EventPerk_onDoApplySettings, "order":Perk.info["order"]});
-		unit.use("event.add", "afterTransform", {"handler":EventPerk.#EventPerk_onAfterTransform, "order":Perk.info["order"]});
+		unit.use("event.add", "doApplySettings", {"handler":EventPerk.#EventPerk_onDoApplySettings, "order":EventPerk.info["order"]});
+		unit.use("event.add", "afterTransform", {"handler":EventPerk.#EventPerk_onAfterTransform, "order":EventPerk.info["order"]});
 
 	}
 
