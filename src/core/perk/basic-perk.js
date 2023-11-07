@@ -128,7 +128,7 @@ export default class BasicPerk extends Perk
 		if (!unit.__bm_initialized || unit.get("setting", "basic.options.autoRestart", false))
 		{
 			// Upgrade unit
-			unit.upgrade("asset", "perk", new Map());
+			unit.upgrade("asset", "perk", {});
 			unit.upgrade("asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.assets["inventory"]}));
 			unit.upgrade("inventory", "basic.unitRoot", unit);
 			unit.upgrade("method", "use", BasicPerk.#_use);
@@ -202,8 +202,9 @@ export default class BasicPerk extends Perk
 	static #_cast(key, ...args)
 	{
 
-		let sectionName = key.split(".")[0];
-		let spellName = key.split(".")[1];
+		let pos = key.indexOf(".");
+		let sectionName = key.slice(0, pos);
+		let spellName = key.slice(pos + 1);
 
 		let func = Perk.getPerkFromSectionName(sectionName).spells[spellName];
 		Util.assert(typeof(func) === "function", () => `Spell is not available. spellName=${key}`);
@@ -224,8 +225,9 @@ export default class BasicPerk extends Perk
 	static #_use(key, ...args)
 	{
 
-		let sectionName = key.split(".")[0];
-		let skillName = key.split(".")[1];
+		let pos = key.indexOf(".");
+		let sectionName = key.slice(0, pos);
+		let skillName = key.slice(pos + 1);
 
 		let func = Perk.getPerkFromSectionName(sectionName).skills[skillName];
 		Util.assert(typeof(func) === "function", () => `Skill is not available. skillName=${key}`);
