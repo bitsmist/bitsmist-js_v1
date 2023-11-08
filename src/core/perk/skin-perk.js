@@ -102,7 +102,7 @@ export default class SkinPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
+	//  Event Handlers (Unit)
 	// -------------------------------------------------------------------------
 
 	static async #SkinPerk_onBeforeTransform(sender, e, ex)
@@ -130,7 +130,38 @@ export default class SkinPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Skills
+	//  Skills (Unit)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Apply skin.
+	 *
+	 * @param	{Unit}			unit				Parent unit.
+	 * @param	{String}		skinName			Skin name.
+	 * @param	{Node}			clone				Template node.
+	 */
+	static #_applySkin(unit, skinName, clone)
+	{
+
+		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
+
+		Util.assert(skinInfo,() => `SkinPerk.#_applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
+
+		// Append the clone to the unit
+		clone = clone || this.get("inventory", "basic.unitRoot");
+		unit.set("inventory", "basic.unitRoot", unit.get("inventory", "skin.shadowRoot", unit));
+		unit.get("inventory", "basic.unitRoot").innerHTML = "";
+		unit.get("inventory", "basic.unitRoot").appendChild(clone);
+
+		// Change active skin
+		unit.set("inventory", "skin.active.skinName", skinName);
+
+		console.debug(`SkinPerk.#_applySkin(): Applied skin. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Spells (Unit)
 	// -------------------------------------------------------------------------
 
 	/**
@@ -200,38 +231,9 @@ export default class SkinPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Apply skin.
-	 *
-	 * @param	{Unit}			unit				Parent unit.
-	 * @param	{String}		skinName			Skin name.
-	 * @param	{Node}			clone				Template node.
-	 */
-	static #_applySkin(unit, skinName, clone)
-	{
-
-		let skinInfo = unit.get("inventory", `skin.skins.${skinName}`);
-
-		Util.assert(skinInfo,() => `SkinPerk.#_applySkin(): Skin not loaded. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
-
-		// Append the clone to the unit
-		clone = clone || this.get("inventory", "basic.unitRoot");
-		unit.set("inventory", "basic.unitRoot", unit.get("inventory", "skin.shadowRoot", unit));
-		unit.get("inventory", "basic.unitRoot").innerHTML = "";
-		unit.get("inventory", "basic.unitRoot").appendChild(clone);
-
-		// Change active skin
-		unit.set("inventory", "skin.active.skinName", skinName);
-
-		console.debug(`SkinPerk.#_applySkin(): Applied skin. name=${unit.tagName}, skinName=${skinName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Privates
 	// -------------------------------------------------------------------------
-	//
+
 	/**
 	 * Get settings from element's attribute.
 	 *

@@ -103,46 +103,7 @@ export default class SettingPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Skills
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Apply settings.
-	 *
-     * @param	{Unit}			unit				Unit.
-	 * @param	{Object}		options				Options.
-	 */
-	static async #_applySettings(unit, options)
-	{
-
-		await unit.cast("event.trigger", "beforeApplySettings", options);
-		await unit.cast("perk.attachPerks", options);
-		await unit.cast("event.trigger", "doApplySettings", options);
-		await unit.cast("event.trigger", "afterApplySettings", options);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Load the settings file and merge to unit's settings.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 * @param	{Object}		options				Load options.
-	 *
-	 * @return 	{Promise}		Promise.
-	 */
-	static async #_loadSettings(unit, options)
-	{
-
-		let settings = await AjaxUtil.loadJSON(SettingPerk.#__getSettingsURL(unit), Object.assign({"bindTo":unit}, options));
-		if (settings)
-		{
-			unit.use("setting.merge", settings);
-		}
-
-	}
-
+	//  Skills (Unit)
 	// -------------------------------------------------------------------------
 
 	/**
@@ -188,6 +149,47 @@ export default class SettingPerk extends Perk
 	{
 
 		unit.assets["setting"].merge(key, value);
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Spells (Unit)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Apply settings.
+	 *
+     * @param	{Unit}			unit				Unit.
+	 * @param	{Object}		options				Options.
+	 */
+	static async #_applySettings(unit, options)
+	{
+
+		await unit.cast("event.trigger", "beforeApplySettings", options);
+		await unit.cast("perk.attachPerks", options);
+		await unit.cast("event.trigger", "doApplySettings", options);
+		await unit.cast("event.trigger", "afterApplySettings", options);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Load the settings file and merge to unit's settings.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Object}		options				Load options.
+	 *
+	 * @return 	{Promise}		Promise.
+	 */
+	static async #_loadSettings(unit, options)
+	{
+
+		let settings = await AjaxUtil.loadJSON(SettingPerk.#__getSettingsURL(unit), Object.assign({"bindTo":unit}, options));
+		if (settings)
+		{
+			unit.use("setting.merge", settings);
+		}
 
 	}
 

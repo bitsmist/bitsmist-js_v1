@@ -116,7 +116,7 @@ export default class BasicPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Callbacks
+	//  Callbacks (Unit)
 	// -------------------------------------------------------------------------
 
 	/**
@@ -189,7 +189,7 @@ export default class BasicPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Skills
+	//  Methods (Unit)
 	// -------------------------------------------------------------------------
 
 	/**
@@ -236,6 +236,126 @@ export default class BasicPerk extends Perk
 
 	}
 
+	// -------------------------------------------------------------------------
+	//  Skills (Unit)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get elements inside the unit speicified by the query.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{String}		query				Query.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {NodeList}		Elements.
+	 */
+	static #_scanAll(unit, query, options)
+	{
+
+		return Util.scopedSelectorAll(unit, query, options);
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Get the first element inside the unit speicified by the query.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{String}		query				Query.
+	 * @param	{Object}		options				Options.
+	 *
+	 * @return  {HTMLElement}	Element.
+	 */
+	static #_scan(unit, query, options)
+	{
+
+		let nodes = Util.scopedSelectorAll(unit, query, options);
+
+		return ( nodes ? nodes[0] : null );
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Locate all the unit.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Object/String/Unit}	target		Target to locate.
+	 *
+	 * @return  {HTMLElement}	Target element.
+	 */
+	static #_locateAll(unit, target)
+	{
+
+		if (typeof(target) === "object")
+		{
+			if ("selector" in target)
+			{
+				return document.querySelectorAll(target["selector"]);
+			}
+			else if ("scan" in target)
+			{
+				let nodes = unit.use("basic.scan", target["scan"]);
+				return unit.use("basic.scanAll", target["scan"]);
+			}
+			else if ("uniqueId" in target)
+			{
+				return [BasicPerk.#__unitInfo[target["uniqueId"]].object];
+			}
+			else if ("tagName" in target)
+			{
+				return BasicPerk.#__indexes["tagName"][target["tagName"].toUpperCase()];
+			}
+			else if ("object" in target)
+			{
+				return [target["object"]];
+			}
+			else if ("id" in target)
+			{
+				return BasicPerk.#__indexes["id"][target["id"]];
+			}
+			else if ("className" in target)
+			{
+				return BasicPerk.#__indexes["className"][target["className"]];
+			}
+		}
+		else if (typeof(target) === "string")
+		{
+			return BasicPerk.#__indexes["tagName"][target.toUpperCase()];
+		}
+		else
+		{
+			return [target];
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Locate the unit.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Object/String/Unit}	target		Target to locate.
+	 *
+	 * @return  {HTMLElement}	Target element.
+	 */
+	static #_locate(unit, target)
+	{
+
+		let units = BasicPerk.#_locateAll(unit, target);
+
+		if (units)
+		{
+			return units[0];
+		}
+
+	}
+
+	// -------------------------------------------------------------------------
+	//  Spells (Unit)
 	// -------------------------------------------------------------------------
 
 	/**
@@ -450,122 +570,6 @@ export default class BasicPerk extends Perk
 		await unit.cast("event.trigger", "doClear", options);
 		console.debug(`BasicPerk._clear(): Cleared the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
 		await unit.cast("event.trigger", "afterClear", options);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get elements inside the unit speicified by the query.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 * @param	{String}		query				Query.
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {NodeList}		Elements.
-	 */
-	static #_scanAll(unit, query, options)
-	{
-
-		return Util.scopedSelectorAll(unit, query, options);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Get the first element inside the unit speicified by the query.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 * @param	{String}		query				Query.
-	 * @param	{Object}		options				Options.
-	 *
-	 * @return  {HTMLElement}	Element.
-	 */
-	static #_scan(unit, query, options)
-	{
-
-		let nodes = Util.scopedSelectorAll(unit, query, options);
-
-		return ( nodes ? nodes[0] : null );
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Locate all the unit.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 * @param	{Object/String/Unit}	target		Target to locate.
-	 *
-	 * @return  {HTMLElement}	Target element.
-	 */
-	static #_locateAll(unit, target)
-	{
-
-		if (typeof(target) === "object")
-		{
-			if ("selector" in target)
-			{
-				return document.querySelectorAll(target["selector"]);
-			}
-			else if ("scan" in target)
-			{
-				let nodes = unit.use("basic.scan", target["scan"]);
-				return unit.use("basic.scanAll", target["scan"]);
-			}
-			else if ("uniqueId" in target)
-			{
-				return [BasicPerk.#__unitInfo[target["uniqueId"]].object];
-			}
-			else if ("tagName" in target)
-			{
-				return BasicPerk.#__indexes["tagName"][target["tagName"].toUpperCase()];
-			}
-			else if ("object" in target)
-			{
-				return [target["object"]];
-			}
-			else if ("id" in target)
-			{
-				return BasicPerk.#__indexes["id"][target["id"]];
-			}
-			else if ("className" in target)
-			{
-				return BasicPerk.#__indexes["className"][target["className"]];
-			}
-		}
-		else if (typeof(target) === "string")
-		{
-			return BasicPerk.#__indexes["tagName"][target.toUpperCase()];
-		}
-		else
-		{
-			return [target];
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Locate the unit.
-	 *
-	 * @param	{Unit}			unit				Unit.
-	 * @param	{Object/String/Unit}	target		Target to locate.
-	 *
-	 * @return  {HTMLElement}	Target element.
-	 */
-	static #_locate(unit, target)
-	{
-
-		let units = BasicPerk.#_locateAll(unit, target);
-
-		if (units)
-		{
-			return units[0];
-		}
 
 	}
 

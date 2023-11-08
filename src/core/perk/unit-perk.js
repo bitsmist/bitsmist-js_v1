@@ -91,7 +91,7 @@ export default class UnitPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
+	//  Event Handlers (Unit)
 	// -------------------------------------------------------------------------
 
 	static #UnitPerk_onDoApplySettings(sender, e, ex)
@@ -115,7 +115,7 @@ export default class UnitPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Skills
+	//  Spells (Unit)
 	// -------------------------------------------------------------------------
 
 	/**

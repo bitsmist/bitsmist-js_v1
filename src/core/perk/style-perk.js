@@ -122,7 +122,7 @@ export default class StylePerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Event Handlers
+	//  Event Handlers (Unit)
 	// -------------------------------------------------------------------------
 
 	static #StylePerk_onBeforeTransform(sender, e, ex)
@@ -188,7 +188,7 @@ export default class StylePerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-	//  Skills
+	//  Spells (Unit)
 	// -------------------------------------------------------------------------
 
 	/**
