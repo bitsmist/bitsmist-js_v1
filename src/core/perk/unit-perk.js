@@ -27,7 +27,7 @@ export default class UnitPerk extends Perk
 	//  Private Variables
 	// -------------------------------------------------------------------------
 
-	static #__classInfo = {};
+	static #__classInfo = {"Unit": {"status":"loaded"}};
 	static #__info = {
 		"sectionName":		"unit",
 		"order":			400,
@@ -62,16 +62,15 @@ export default class UnitPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	static globalInit()
+	static async globalInit()
 	{
 
 		// Load tags
-		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
-			if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
-			{
-				UnitPerk.#_loadTags(null, document.body, {"waitForTags":false});
-			}
-		});
+		await BITSMIST.v1.Unit.get("inventory", "promise.documentReady");
+		if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
+		{
+			UnitPerk.#_loadTags(null, document.body, {"waitForTags":false});
+		}
 
 	}
 
@@ -193,7 +192,7 @@ export default class UnitPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_loadUnit(unit, tagName, settings, options)
+	static async #_loadUnit(unit, tagName, settings, options)
 	{
 
 		console.debug(`UnitPerk.#_loadUnit(): Adding the unit. name=${unit.tagName}, tagName=${tagName}`);
@@ -212,24 +211,24 @@ export default class UnitPerk extends Perk
 			tagName = tag.match(/([\w-]+)\s+\w+.*?>/)[1];
 		}
 
-		let addedUnit;
-		return UnitPerk.#_loadClass(tagName, settings).then(() => {
-			// Insert tag
-			addedUnit = UnitPerk.#__insertTag(unit, tagName, settings);
-			unit.set("inventory", `unit.units.${tagName}.object`, addedUnit);
-		}).then(() => {
-			// Wait for the added unit to be ready
-			let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "unit.options.syncOnAdd"));
-			if (sync)
-			{
-				return unit.cast("status.wait", [{
-					"uniqueId":	addedUnit.uniqueId,
-					"status":	(sync === true ? "ready" : sync)
-				}]);
-			}
-		}).then(() => {
-			return addedUnit;
-		});
+		// Load class
+		await UnitPerk.#_loadClass(tagName, settings);
+
+		// Insert tag
+		let addedUnit = await UnitPerk.#__insertTag(unit, tagName, settings);
+		unit.set("inventory", `unit.units.${tagName}.object`, addedUnit);
+
+		// Wait for the added unit to be ready
+		let sync = Util.safeGet(options, "syncOnAdd", Util.safeGet(settings, "unit.options.syncOnAdd"));
+		if (sync)
+		{
+			await unit.cast("status.wait", [{
+				"uniqueId":	addedUnit.uniqueId,
+				"status":	(sync === true ? "ready" : sync)
+			}]);
+		}
+
+		return addedUnit;
 
 	}
 

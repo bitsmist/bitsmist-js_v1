@@ -105,15 +105,14 @@ export default class SkinPerk extends Perk
 	//  Event Handlers
 	// -------------------------------------------------------------------------
 
-	static #SkinPerk_onBeforeTransform(sender, e, ex)
+	static async #SkinPerk_onBeforeTransform(sender, e, ex)
 	{
 
 		if (this.get("setting", "skin.options.hasSkin", true))
 		{
-			return SkinPerk.#_loadSkin(this, e.detail.skinName, e.detail.skinOptions).then((skinInfo) => {
-				this.get("inventory", "basic.unitRoot").textContent = "";
-				this.set("inventory", "basic.unitRoot", skinInfo["template"].content.cloneNode(true));
-			});
+			let skinInfo = await SkinPerk.#_loadSkin(this, e.detail.skinName, e.detail.skinOptions);
+			this.get("inventory", "basic.unitRoot").textContent = "";
+			this.set("inventory", "basic.unitRoot", skinInfo["template"].content.cloneNode(true));
 		}
 
 	}

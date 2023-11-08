@@ -82,7 +82,7 @@ export default class SettingPerk extends Perk
 
 	// -------------------------------------------------------------------------
 
-	static init(unit, options)
+	static async init(unit, options)
 	{
 
 		// Get settings
@@ -93,16 +93,12 @@ export default class SettingPerk extends Perk
 		// Upgrade unit
 		unit.upgrade("asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit.assets["setting"]}));
 
-		return Promise.resolve().then(() => {
-			SettingPerk.#__loadAttrSettings(unit);
-		}).then(() => {
-			if (SettingPerk.#__hasExternalSettings(unit))
-			{
-				return SettingPerk.#_loadSettings(unit);
-			}
-		}).then(() => {
-			SettingPerk.#__loadAttrSettings(unit); // Do it again to overwrite since attribute settings have higher priority
-		});
+		SettingPerk.#__loadAttrSettings(unit);
+		if (SettingPerk.#__hasExternalSettings(unit))
+		{
+			await SettingPerk.#_loadSettings(unit);
+		}
+		SettingPerk.#__loadAttrSettings(unit); // Do it again to overwrite since attribute settings have higher priority
 
 	}
 
@@ -116,18 +112,13 @@ export default class SettingPerk extends Perk
      * @param	{Unit}			unit				Unit.
 	 * @param	{Object}		options				Options.
 	 */
-	static #_applySettings(unit, options)
+	static async #_applySettings(unit, options)
 	{
 
-		return Promise.resolve().then(() => {
-			return unit.cast("event.trigger", "beforeApplySettings", options);
-		}).then(() => {
-			return unit.cast("perk.attachPerks", options);
-		}).then(() => {
-			return unit.cast("event.trigger", "doApplySettings", options);
-		}).then(() => {
-			return unit.cast("event.trigger", "afterApplySettings", options);
-		});
+		await unit.cast("event.trigger", "beforeApplySettings", options);
+		await unit.cast("perk.attachPerks", options);
+		await unit.cast("event.trigger", "doApplySettings", options);
+		await unit.cast("event.trigger", "afterApplySettings", options);
 
 	}
 
@@ -141,15 +132,14 @@ export default class SettingPerk extends Perk
 	 *
 	 * @return 	{Promise}		Promise.
 	 */
-	static #_loadSettings(unit, options)
+	static async #_loadSettings(unit, options)
 	{
 
-		return AjaxUtil.loadJSON(SettingPerk.#__getSettingsURL(unit), Object.assign({"bindTo":unit}, options)).then((settings) => {
-			if (settings)
-			{
-				unit.use("setting.merge", settings);
-			}
-		});
+		let settings = await AjaxUtil.loadJSON(SettingPerk.#__getSettingsURL(unit), Object.assign({"bindTo":unit}, options));
+		if (settings)
+		{
+			unit.use("setting.merge", settings);
+		}
 
 	}
 

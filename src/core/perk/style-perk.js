@@ -253,46 +253,43 @@ export default class StylePerk extends Perk
 	 * @param	{Unit}			unit				Parent unit.
 	 * @param	{String}		styleName			Style name.
 	 */
-	static #_applyCSS(unit, styleName)
+	static async #_applyCSS(unit, styleName)
 	{
 
 		let cssInfo = unit.get("inventory", "style.styles").get(styleName);
+		Util.assert(cssInfo, () => `StylePerk.#_applyCSS(): CSS not loaded. name=${unit.tagName || "Global"}, styleName=${styleName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
+
 		let ss = new CSSStyleSheet();
+		await ss.replace(`${cssInfo["CSS"]}`);
 
-		Util.assert(cssInfo,() => `StylePerk.#_applyCSS(): CSS not loaded. name=${unit.tagName || "Global"}, styleName=${styleName}, id=${unit.id}, uniqueId=${unit.uniqueId}`, ReferenceError);
-
-		return Promise.resolve().then(() => {
-			return ss.replace(`${cssInfo["CSS"]}`);
-		}).then(() => {
-			let shadowRoot = unit.get("inventory", "skin.shadowRoot");
-			if (shadowRoot)
+		let shadowRoot = unit.get("inventory", "skin.shadowRoot");
+		if (shadowRoot)
+		{
+			// Shadow DOM
+			shadowRoot.adoptedStyleSheets = [...shadowRoot.adoptedStyleSheets, ss];
+		}
+		else
+		{
+			// Light DOM
+			styleName = (cssInfo["shared"] ? styleName : `${unit.tagName}.${styleName}`);
+			if (!(styleName in StylePerk.#__applied) || StylePerk.#__applied[styleName]["count"] <= 0)
 			{
-				// Shadow DOM
-				shadowRoot.adoptedStyleSheets = [...shadowRoot.adoptedStyleSheets, ss];
+				// Apply styles
+				StylePerk.#__applied[styleName] = StylePerk.#__applied[styleName] || {};
+				document.adoptedStyleSheets = [...document.adoptedStyleSheets, ss];
+				StylePerk.#__applied[styleName]["object"] = ss;
+				StylePerk.#__applied[styleName]["count"] = 1;
 			}
 			else
 			{
-				// Light DOM
-				styleName = (cssInfo["shared"] ? styleName : `${unit.tagName}.${styleName}`);
-				if (!(styleName in StylePerk.#__applied) || StylePerk.#__applied[styleName]["count"] <= 0)
-				{
-					// Apply styles
-					StylePerk.#__applied[styleName] = StylePerk.#__applied[styleName] || {};
-					document.adoptedStyleSheets = [...document.adoptedStyleSheets, ss];
-					StylePerk.#__applied[styleName]["object"] = ss;
-					StylePerk.#__applied[styleName]["count"] = 1;
-				}
-				else
-				{
-					// Already applied
-					StylePerk.#__applied[styleName]["count"]++;
-				}
-
-				StylePerk.#__vault.get(unit)["applied"].push(styleName);
+				// Already applied
+				StylePerk.#__applied[styleName]["count"]++;
 			}
 
-			console.debug(`StylePerk.#_applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-		});
+			StylePerk.#__vault.get(unit)["applied"].push(styleName);
+		}
+
+		console.debug(`StylePerk.#_applyCSS(): Applied CSS. name=${unit.tagName}, styleName=${cssInfo["name"]}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
 	}
 

@@ -130,9 +130,9 @@ export default class BasicPerk extends Perk
 			// Upgrade unit
 			unit.upgrade("asset", "perk", {});
 			unit.upgrade("asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.assets["inventory"]}));
-			unit.upgrade("inventory", "basic.unitRoot", unit);
 			unit.upgrade("method", "use", BasicPerk.#_use);
 			unit.upgrade("method", "cast", BasicPerk.#_cast);
+			unit.upgrade("inventory", "basic.unitRoot", unit);
 
 			BasicPerk.#__register(unit);
 
@@ -246,40 +246,29 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_start(unit, options)
+	static async #_start(unit, options)
 	{
 
-		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 
-			return unit.cast("setting.apply", {"settings":unit.assets["setting"].items});
-		}).then(() => {
-			return unit.cast("event.trigger", "beforeStart");
-		}).then(() => {
-			return unit.use("status.change", "starting");
-		}).then(() => {
-			if (unit.get("setting", "basic.options.autoTransform", true))
-			{
-				return unit.cast("basic.transform", {"skinName": "default", "styleName": "default"});
-			}
-		}).then(() => {
-			return unit.cast("event.trigger", "doStart");
-		}).then(() => {
-			if (unit.get("setting", "basic.options.autoRefresh", true))
-			{
-				return unit.cast("basic.refresh");
-			}
-		}).then(() => {
-			console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("status.change", "started");
-		}).then(() => {
-			return unit.cast("event.trigger", "afterStart");
-		}).then(() => {
-			console.debug(`BasicPerk._start(): Unit is ready. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("status.change", "ready");
-		}).then(() => {
-			return unit.cast("event.trigger", "afterReady");
-		});
+		await unit.cast("setting.apply", {"settings":unit.assets["setting"].items});
+		await unit.cast("event.trigger", "beforeStart");
+		unit.use("status.change", "starting");
+		if (unit.get("setting", "basic.options.autoTransform", true))
+		{
+			await unit.cast("basic.transform", {"skinName": "default", "styleName": "default"});
+		}
+		await unit.cast("event.trigger", "doStart");
+		if (unit.get("setting", "basic.options.autoRefresh", true))
+		{
+			await unit.cast("basic.refresh");
+		}
+		console.debug(`BasicPerk._start(): Started unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		unit.use("status.change", "started");
+		await unit.cast("event.trigger", "afterStart");
+		console.debug(`BasicPerk._start(): Unit is ready. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		unit.use("status.change", "ready");
+		await unit.cast("event.trigger", "afterReady");
 
 	}
 
@@ -293,24 +282,18 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_stop(unit, options)
+	static async #_stop(unit, options)
 	{
 
 		options = options || {};
 
-		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._stop(): Stopping unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("status.change", "stopping");
-		}).then(() => {
-			return unit.cast("event.trigger", "beforeStop", options);
-		}).then(() => {
-			return unit.cast("event.trigger", "doStop", options);
-		}).then(() => {
-			console.debug(`BasicPerk._stop(): Stopped unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.use("status.change", "stopped");
-		}).then(() => {
-			return unit.cast("event.trigger", "afterStop", options);
-		});
+		console.debug(`BasicPerk._stop(): Stopping unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		unit.use("status.change", "stopping");
+		await unit.cast("event.trigger", "beforeStop", options);
+		await unit.cast("event.trigger", "doStop", options);
+		console.debug(`BasicPerk._stop(): Stopped unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		unit.use("status.change", "stopped");
+		await unit.cast("event.trigger", "afterStop", options);
 
 	}
 
@@ -324,27 +307,21 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_transform(unit, options)
+	static async #_transform(unit, options)
 	{
 
 		options = options || {};
 
-		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._transform(): Transforming. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "beforeTransform", options);
-		}).then(() => {
-			if (unit.get("setting", "basic.options.autoSetup", true))
-			{
-				return unit.cast("basic.setup", options);
-			}
-		}).then(() => {
-			return unit.cast("event.trigger", "doTransform", options);
-		}).then(() => {
-			return unit.cast("unit.materializeAll", unit);
-		}).then(() => {
-			console.debug(`BasicPerk._transform(): Transformed. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "afterTransform", options);
-		});
+		console.debug(`BasicPerk._transform(): Transforming. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "beforeTransform", options);
+		if (unit.get("setting", "basic.options.autoSetup", true))
+		{
+			await unit.cast("basic.setup", options);
+		}
+		await unit.cast("event.trigger", "doTransform", options);
+		await unit.cast("unit.materializeAll", unit);
+		console.debug(`BasicPerk._transform(): Transformed. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "afterTransform", options);
 
 	}
 
@@ -358,20 +335,16 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_setup(unit, options)
+	static async #_setup(unit, options)
 	{
 
 		options = options || {};
 
-		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._setup(): Setting up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "beforeSetup", options);
-		}).then(() => {
-			return unit.cast("event.trigger", "doSetup", options);
-		}).then(() => {
-			console.debug(`BasicPerk._setup(): Set up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "afterSetup", options);
-		});
+		console.debug(`BasicPerk._setup(): Setting up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "beforeSetup", options);
+		await unit.cast("event.trigger", "doSetup", options);
+		console.debug(`BasicPerk._setup(): Set up unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "afterSetup", options);
 
 	}
 
@@ -385,36 +358,29 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_refresh(unit, options)
+	static async #_refresh(unit, options)
 	{
 
 		options = options || {};
 
-		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._refresh(): Refreshing unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "beforeRefresh", options);
-		}).then(() => {
-			let autoClear = Util.safeGet(options, "autoClear", unit.get("setting", "basic.options.autoClear", true));
-			if (autoClear)
-			{
-				return unit.cast("basic.clear", options);
-			}
-		}).then(() => {
-			if (Util.safeGet(options, "autoFetch", unit.get("setting", "basic.options.autoFetch", true)))
-			{
-				return unit.cast("basic.fetch", options);
-			}
-		}).then(() => {
-			if (Util.safeGet(options, "autoFill", unit.get("setting", "basic.options.autoFill", true)))
-			{
-				return unit.cast("basic.fill", options);
-			}
-		}).then(() => {
-			return unit.cast("event.trigger", "doRefresh", options);
-		}).then(() => {
-			console.debug(`BasicPerk._refresh(): Refreshed unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "afterRefresh", options);
-		});
+		console.debug(`BasicPerk._refresh(): Refreshing unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "beforeRefresh", options);
+		let autoClear = Util.safeGet(options, "autoClear", unit.get("setting", "basic.options.autoClear", true));
+		if (autoClear)
+		{
+			await unit.cast("basic.clear", options);
+		}
+		if (Util.safeGet(options, "autoFetch", unit.get("setting", "basic.options.autoFetch", true)))
+		{
+			await unit.cast("basic.fetch", options);
+		}
+		if (Util.safeGet(options, "autoFill", unit.get("setting", "basic.options.autoFill", true)))
+		{
+			await unit.cast("basic.fill", options);
+		}
+		await unit.cast("event.trigger", "doRefresh", options);
+		console.debug(`BasicPerk._refresh(): Refreshed unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "afterRefresh", options);
 
 	}
 
@@ -428,21 +394,16 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_fetch(unit, options)
+	static async #_fetch(unit, options)
 	{
 
 		options = options || {};
 
-		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._fetch(): Fetching data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "beforeFetch", options);
-		}).then(() => {
-			return unit.cast("event.trigger", "doFetch", options);
-		}).then(() => {
-			return unit.cast("event.trigger", "afterFetch", options);
-		}).then(() => {
-			console.debug(`BasicPerk._fetch(): Fetched data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-		});
+		console.debug(`BasicPerk._fetch(): Fetching data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "beforeFetch", options);
+		await unit.cast("event.trigger", "doFetch", options);
+		await unit.cast("event.trigger", "afterFetch", options);
+		console.debug(`BasicPerk._fetch(): Fetched data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
 
 	}
 
@@ -456,20 +417,16 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_fill(unit, options)
+	static async #_fill(unit, options)
 	{
 
 		options = options || {};
 
-		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._fill(): Filling with data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "beforeFill", options);
-		}).then(() => {
-			return unit.cast("event.trigger", "doFill", options);
-		}).then(() => {
-			console.debug(`BasicPerk._fill(): Filled with data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "afterFill", options);
-		});
+		console.debug(`BasicPerk._fill(): Filling with data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "beforeFill", options);
+		await unit.cast("event.trigger", "doFill", options);
+		console.debug(`BasicPerk._fill(): Filled with data. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "afterFill", options);
 
 	}
 
@@ -483,20 +440,16 @@ export default class BasicPerk extends Perk
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static #_clear(unit, options)
+	static async #_clear(unit, options)
 	{
 
 		options = options || {};
 
-		return Promise.resolve().then(() => {
-			console.debug(`BasicPerk._clear(): Clearing the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "beforeClear", options);
-		}).then(() => {
-			return unit.cast("event.trigger", "doClear", options);
-		}).then(() => {
-			console.debug(`BasicPerk._clear(): Cleared the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
-			return unit.cast("event.trigger", "afterClear", options);
-		});
+		console.debug(`BasicPerk._clear(): Clearing the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "beforeClear", options);
+		await unit.cast("event.trigger", "doClear", options);
+		console.debug(`BasicPerk._clear(): Cleared the unit. name=${unit.tagName}, uniqueId=${unit.uniqueId}`);
+		await unit.cast("event.trigger", "afterClear", options);
 
 	}
 
