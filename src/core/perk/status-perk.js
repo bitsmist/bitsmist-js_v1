@@ -519,7 +519,7 @@ export default class StatusPerk extends Perk
 			}
 			else
 			{
-				let uniqueId = (waitlist[i].id ? `uniqueId:${waitlist[i].uniqueId}, ` : "");
+				let uniqueId = `uniqueId:${waitlist[i].uniqueId}, `;
 				let id = (waitlist[i].id ? `id:${waitlist[i].id}, ` : "");
 				let tagName = (waitlist[i].tagName ? `tagName:${waitlist[i].tagName}, ` : "");
 				let object = (waitlist[i].object ? `object:${waitlist[i].object.tagName}, ` : "");
