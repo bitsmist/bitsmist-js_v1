@@ -353,7 +353,7 @@ export default class EventPerk extends Perk
 
 		let ret = false;
 
-		if (elementName === "this" || eventInfo && eventInfo["rootNode"] === "this")
+		if (elementName === "this" || eventInfo && eventInfo["selector"] === "this")
 		{
 			ret = true;
 		}
@@ -385,10 +385,10 @@ export default class EventPerk extends Perk
 			// Target is "this"
 			elements = [rootNode];
 		}
-		else if (eventInfo && eventInfo["rootNode"])
+		else if (eventInfo && eventInfo["selector"])
 		{
-			// If eventInfo["rootNode"] is specified, target is eventInfo["rootNode"]
-			elements = Util.scopedSelectorAll(rootNode, eventInfo["rootNode"]);
+			// If eventInfo["selector"] is specified, target is eventInfo["selector"]
+			elements = Util.scopedSelectorAll(rootNode, eventInfo["selector"]);
 		}
 		else
 		{

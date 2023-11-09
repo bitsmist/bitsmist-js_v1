@@ -191,8 +191,8 @@ export default class SkinPerk extends Perk
 			skinInfo["HTML"] = skinSettings["HTML"];
 			break;
 		case "node":
-			let rootNode = unit.use("basic.scan", skinSettings["rootNode"] || "");
-			Util.assert(rootNode, () => `SkinPerk.#_loadSkin(): Root node does not exist. name=${unit.tagName}, skinName=${skinName}, rootNode=${skinSettings["rootNode"]}`);
+			let rootNode = unit.use("basic.scan", skinSettings["selector"] || "");
+			Util.assert(rootNode, () => `SkinPerk.#_loadSkin(): Node does not exist. name=${unit.tagName}, skinName=${skinName}, selector=${skinSettings["selector"]}`);
 			skinInfo["HTML"] = rootNode.innerHTML;
 			break;
 		case "URL":
