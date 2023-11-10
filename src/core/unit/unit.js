@@ -29,17 +29,12 @@ export default class Unit extends HTMLElement
 	#__ready;
 	#__uniqueid = Util.getUUID();
 
-	static get assets()
-	{
-
-		return Unit.#__global_assets;
-
-
-	}
-
-	get assets()
-	{
-		return this.#__assets;
+	static {
+		// Upgrade Unit
+		Unit.#_upgrade(Unit, "method", "upgrade", (...args) => {Unit.#_upgrade(Unit, ...args)});
+		Unit.upgrade("method", "get", Unit.#_get);
+		Unit.upgrade("method", "set", Unit.#_set);
+		Unit.upgrade("method", "has", Unit.#_has);
 	}
 
 	// -------------------------------------------------------------------------
@@ -72,6 +67,22 @@ export default class Unit extends HTMLElement
 	}
 
 	// -------------------------------------------------------------------------
+
+	static get assets()
+	{
+
+		return Unit.#__global_assets;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	get assets()
+	{
+		return this.#__assets;
+	}
+
+	// -------------------------------------------------------------------------
 	//  Callbacks
 	// -------------------------------------------------------------------------
 
@@ -85,6 +96,13 @@ export default class Unit extends HTMLElement
 		{
 			this.#__initialized = false;
 			this.#__ready = Promise.resolve(); // A promise to prevent from starting/stopping while stopping/starting
+
+			// Upgrade unit
+			Unit.#_upgrade(this, "method", "upgrade", (...args) => {Unit.#_upgrade(this, ...args)});
+			this.upgrade("method", "get", Unit.#_get);
+			this.upgrade("method", "set", Unit.#_set);
+			this.upgrade("method", "has", Unit.#_has);
+
 			this.setAttribute("bm-powered", "");
 		}
 
@@ -155,22 +173,13 @@ export default class Unit extends HTMLElement
 	 * @param	{String}		assetName			Asset name.
 	 * @param	{String}		key					Key.
 	 * @param	{Object}		defaultValue		Value returned when key is not found.
-	 * @param	{Object}		options				Options.
 	 *
 	 * @return  {*}				Value.
 	 */
-	static get(assetName, key, defaultValue, options)
+	static #_get(assetName, key, defaultValue)
 	{
 
-		return Unit.#__global_assets[assetName].get(key, defaultValue);
-
-	}
-
-	get(assetName, key, defaultValue, options)
-	{
-
-		return this.#__assets[assetName].get(key, defaultValue);
-
+		return this.assets[assetName].get(key, defaultValue);
 
 	}
 
@@ -182,19 +191,11 @@ export default class Unit extends HTMLElement
 	 * @param	{String}		assetName			Asset name.
 	 * @param	{String}		key					Key.
 	 * @param	{*}				value				Value.
-	 * @param	{Object}		options				Options.
 	 */
-	static set(assetName, key, value, options)
+	static #_set(assetName, key, value)
 	{
 
-		Unit.#__global_assets[assetName].set(key, value);
-
-	}
-
-	set(assetName, key, value, options)
-	{
-
-		this.#__assets[assetName].set(key, value);
+		this.assets[assetName].set(key, value);
 
 	}
 
@@ -205,48 +206,11 @@ export default class Unit extends HTMLElement
 	 *
 	 * @param	{String}		assetName			Asset name.
 	 * @param	{String}		key					Key.
-	 * @param	{Object}		options				Options.
 	 */
-	static has(assetName, key, options)
+	static #_has(assetName, key)
 	{
 
-		Unit.#__global_assets[assetName].has(key);
-
-	}
-
-	has(assetName, key, options)
-	{
-
-		this.#__assets[assetName].has(key);
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Call the function in the asset.
-	 *
-	 * @param	{String}		assetName			Asset name.
-	 * @param	{String}		key					Key.
-	 * @param	{*}				...args				Arguments.
-	 */
-	static exec(assetName, key, ...args)
-	{
-
-		let func = Unit.#__global_assets[assetName].get(key);
-		Util.assert(typeof(func) === "function", () => `${assetName} is not available. ${assetName}Name=${key}`);
-
-		return func.call(this, this, ...args);
-
-	}
-
-	exec(assetName, key, ...args)
-	{
-
-		let func = this.#__assets[assetName].get(key);
-		Util.assert(typeof(func) === "function", `${assetName} is not available. ${assetName}Name=${key}`);
-
-		return func.call(this, this, ...args);
+		this.assets[assetName].has(key);
 
 	}
 
@@ -255,50 +219,27 @@ export default class Unit extends HTMLElement
 	/**
 	 * Upgrade the unit.
 	 *
+	 * @param	{Unit}			unit				Target unit.
 	 * @param	{String}		type				Upgrade type.
 	 * @param	{String}		name				Section name.
 	 * @param	{Function}		content				Upgrade content.
-	 * @param	{Object}		options				Options.
 	 */
-	static upgrade(type, name, content, options)
+	static #_upgrade(unit, type, name, content)
 	{
 
 		switch (type)
 		{
 			case "asset":
-				Unit.#__global_assets[name] = content;
+				unit.assets[name] = content;
 				break;
 			case "method":
-				Unit[name] = content;
-				break;
-			case "property":
-				Object.defineProperty(Unit, name, content);
-				break;
-			default:
-				Unit.#__global_assets[type].set(name, content);
-				break;
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	upgrade(type, name, content, options)
-	{
-
-		switch (type)
-		{
-			case "asset":
-				this.#__assets[name] = content;
-				break;
-			case "method":
-				this[name] = content;
+				unit[name] = content;
 				break;
 			case "property":
 				Object.defineProperty(unit, name, content);
 				break;
 			default:
-				this.#__assets[type].set(name, content);
+				unit.assets[type].set(name, content);
 				break;
 		}
 
