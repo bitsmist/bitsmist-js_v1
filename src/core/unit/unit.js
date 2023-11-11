@@ -83,6 +83,13 @@ export default class Unit extends HTMLElement
 	}
 
 	// -------------------------------------------------------------------------
+
+	get ready()
+	{
+		return this.#__ready;
+	}
+
+	// -------------------------------------------------------------------------
 	//  Callbacks
 	// -------------------------------------------------------------------------
 
@@ -94,15 +101,16 @@ export default class Unit extends HTMLElement
 
 		if (!this.#__initialized)
 		{
-			this.#__initialized = false;
-			this.#__ready = Promise.resolve(); // A promise to prevent from starting/stopping while stopping/starting
-
 			// Upgrade unit
 			Unit.#_upgrade(this, "method", "upgrade", (...args) => {Unit.#_upgrade(this, ...args)});
 			this.upgrade("method", "get", Unit.#_get);
 			this.upgrade("method", "set", Unit.#_set);
 			this.upgrade("method", "has", Unit.#_has);
 
+			// Initialize unit
+			this.#__ready = Unit.get("callback", "initializeCallback")(this);
+
+			this.#__initialized = true;
 			this.setAttribute("bm-powered", "");
 		}
 
@@ -110,8 +118,6 @@ export default class Unit extends HTMLElement
 			console.debug(`connectedCallback(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 
 			return Unit.get("callback", "connectedCallback")(this);
-		}).then(() => {
-			this.#__initialized = true;
 		});
 
 	}
@@ -125,9 +131,9 @@ export default class Unit extends HTMLElement
 	{
 
 		this.#__ready = this.#__ready.then(() => {
-			return Unit.get("callback", "disconnectedCallback")(this);
-		}).then(() => {
 			console.debug(`disconnectedCallback(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+
+			return Unit.get("callback", "disconnectedCallback")(this);
 		});
 
 	}
@@ -141,9 +147,9 @@ export default class Unit extends HTMLElement
 	{
 
 		this.#__ready = this.#__ready.then(() => {
-			return Unit.get("callback", "adoptedCallback")(this);
-		}).then(() => {
 			console.debug(`adoptedCallback(): Unit is adopted. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+
+			return Unit.get("callback", "adoptedCallback")(this);
 		});
 
 	}
