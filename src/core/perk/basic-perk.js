@@ -25,7 +25,6 @@ export default class BasicPerk extends Perk
 	//  Private Variables
 	// -------------------------------------------------------------------------
 
-	static #__unitInfo = {};
 	static #__indexes = {
 		"tagName":			{},
 		"className":		{},
@@ -90,6 +89,7 @@ export default class BasicPerk extends Perk
 
 		// Upgrade Unit
 		BITSMIST.v1.Unit.upgrade("asset", "inventory", new ChainableStore());
+		BITSMIST.v1.Unit.upgrade("callback", "initializeCallback", BasicPerk.#_initializeHandler.bind(BasicPerk));
 		BITSMIST.v1.Unit.upgrade("callback", "connectedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
 		BITSMIST.v1.Unit.upgrade("callback", "disconnectedCallback", BasicPerk.#_disconnectedHandler.bind(BasicPerk));
 		BITSMIST.v1.Unit.upgrade("callback", "adoptedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
@@ -120,36 +120,42 @@ export default class BasicPerk extends Perk
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Initialize callback handler.
+	 */
+	static #_initializeHandler(unit)
+	{
+
+		// Register unit
+		BasicPerk.#__register(unit);
+
+		// Upgrade unit
+		unit.upgrade("asset", "perk", {});
+		unit.upgrade("asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.assets["inventory"]}));
+		unit.upgrade("method", "use", BasicPerk.#_use);
+		unit.upgrade("method", "cast", BasicPerk.#_cast);
+		unit.upgrade("inventory", "basic.unitRoot", unit);
+
+		// Attach default perks
+		let chain = Promise.resolve();
+		["BasicPerk","Perk","SettingPerk","UnitPerk","StatusPerk","EventPerk", "SkinPerk", "StylePerk"].forEach((perkName) => {
+			chain = chain.then(() => {
+				return unit.cast("perk.attach", Perk.getPerk(perkName));
+			});
+		});
+
+		return chain.then(() => {
+			return unit.cast("basic.start");
+		});
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
 	 * Connected callback handler.
 	 */
 	static #_connectedHandler(unit)
 	{
-
-		if (!unit.__bm_initialized || unit.get("setting", "basic.options.autoRestart", false))
-		{
-			// Upgrade unit
-			unit.upgrade("asset", "perk", {});
-			unit.upgrade("asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.assets["inventory"]}));
-			unit.upgrade("method", "use", BasicPerk.#_use);
-			unit.upgrade("method", "cast", BasicPerk.#_cast);
-			unit.upgrade("inventory", "basic.unitRoot", unit);
-
-			BasicPerk.#__register(unit);
-
-			// Attach default perks
-			let chain = Promise.resolve();
-			["BasicPerk","Perk","SettingPerk","UnitPerk","StatusPerk","EventPerk", "SkinPerk", "StylePerk"].forEach((perkName) => {
-				chain = chain.then(() => {
-					return unit.cast("perk.attach", Perk.getPerk(perkName));
-				});
-			});
-
-			// Start
-			return chain.then(() => {
-				return unit.cast("basic.start");
-			});
-		}
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -226,10 +232,8 @@ export default class BasicPerk extends Perk
 	{
 
 		let pos = key.indexOf(".");
-		let sectionName = key.slice(0, pos);
-		let skillName = key.slice(pos + 1);
+		let func = Perk.getPerkFromSectionName(key.slice(0, pos)).skills[key.slice(pos + 1)];
 
-		let func = Perk.getPerkFromSectionName(sectionName).skills[skillName];
 		Util.assert(typeof(func) === "function", () => `Skill is not available. skillName=${key}`);
 
 		return func.call(this, this, ...args);
