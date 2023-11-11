@@ -95,9 +95,9 @@ export default class ClassUtil
 
 		if (!ret)
 		{
-			if (window[className])
+			if (globalThis[className])
 			{
-				ret = window[className];
+				ret = globalThis[className];
 			}
 		}
 
