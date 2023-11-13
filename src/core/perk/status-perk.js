@@ -12,6 +12,7 @@ import Perk from "./perk.js";
 import Store from "../store/store.js";
 import Unit from "../unit/unit.js";
 import Util from "../util/util.js";
+import {v4 as uuidv4} from "uuid";
 
 // =============================================================================
 //	Status Perk Class
@@ -329,7 +330,7 @@ export default class StatusPerk extends Perk
 	static #__addToWaitingList(waitInfo)
 	{
 
-		let id = Util.getUUID();
+		let id = uuidv4();
 
 		/*
 		for (let i = 0; i < waitInfo["waitlist"].length; i++)

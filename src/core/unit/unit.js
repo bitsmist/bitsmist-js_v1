@@ -8,7 +8,7 @@
  */
 // =============================================================================
 
-import Util from "../util/util.js";
+import {v4 as uuidv4} from "uuid";
 
 // =============================================================================
 //	Unit Class
@@ -27,7 +27,7 @@ export default class Unit extends HTMLElement
 	#__assets = {};
 	#__initialized;
 	#__ready;
-	#__uniqueid = Util.getUUID();
+	#__uniqueid = uuidv4();
 
 	static {
 		// Upgrade Unit
