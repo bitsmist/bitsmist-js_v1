@@ -69,7 +69,7 @@ export default class Util
 	{
 
 		let keys = key.split(".");
-		let current = Util.__createIntermediateObject(store, keys);
+		let current = Util.#__createIntermediateObject(store, keys);
 
 		Util.assert(current !== null && typeof current === "object",
 			() => `Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
@@ -132,7 +132,7 @@ export default class Util
 	{
 
 		let keys = key.split(".");
-		let current = Util.__createIntermediateObject(store, keys);
+		let current = Util.#__createIntermediateObject(store, keys);
 
 		Util.assert(current && typeof current === "object",
 			() => `Util.safeSet(): Can't create an intermediate object. Non-object value already exists. key=${key}, existingKey=${( keys.length > 1 ? keys[keys.length-2] : "" )}, existingValue=${current}`, TypeError);
@@ -278,7 +278,7 @@ export default class Util
 			if (Array.isArray(obj2))
 			{
 				// if obj2 is an array, concat them
-				Array.prototype.push.apply(result, Util.__cloneArr(obj2));
+				Array.prototype.push.apply(result, Util.#__cloneArr(obj2));
 			}
 			else
 			{
@@ -286,7 +286,7 @@ export default class Util
 				result.push(Util.deepClone(obj2));
 			}
 		}
-		else if (Util.__isObject(obj1) && Util.__isMergeable(obj2))
+		else if (Util.#__isObject(obj1) && Util.#__isMergeable(obj2))
 		{
 			// obj1 is an Object and obj2 is an Object/Array
 			Object.keys(obj2).forEach((key) => {
@@ -319,11 +319,11 @@ export default class Util
 
 		if (Array.isArray(target))
 		{
-			return Util.__cloneArr(target);
+			return Util.#__cloneArr(target);
 		}
-		else if (Util.__isObject(target))
+		else if (Util.#__isObject(target))
 		{
-			return Util.__cloneObj(target);
+			return Util.#__cloneObj(target);
 		}
 		else
 		{
@@ -379,7 +379,7 @@ export default class Util
 
 		for (pos = 1; pos < cName.length; pos++)
 		{
-			if ( Util.__isUpper(cName.substring(pos, pos + 1)) )
+			if ( Util.#__isUpper(cName.substring(pos, pos + 1)) )
 			{
 				break;
 			}
@@ -532,7 +532,7 @@ export default class Util
 
 		let ret;
 
-		if (Util.__isObject(target))
+		if (Util.#__isObject(target))
 		{
 			ret = target;
 		}
@@ -566,7 +566,7 @@ export default class Util
 	 *
 	 * @return 	{Boolean}		True if it is upper case.
 	 */
-	static __isUpper(c)
+	static #__isUpper(c)
 	{
 
 		return c === c.toUpperCase() && c !== c.toLowerCase();
@@ -583,7 +583,7 @@ export default class Util
 	 *
 	 * @return	{Object}		Object.
 	 */
-	static __createIntermediateObject(store, keys)
+	static #__createIntermediateObject(store, keys)
 	{
 
 		let current = store;
@@ -614,7 +614,7 @@ export default class Util
 	 *
 	 * @return  {Object}		Cloned object.
 	 */
-	static __cloneObj(target)
+	static #__cloneObj(target)
 	{
 
 		let result = {};
@@ -636,7 +636,7 @@ export default class Util
 	 *
 	 * @return  {Object}		Cloned array.
 	 */
-	static __cloneArr(target)
+	static #__cloneArr(target)
 	{
 
 		let result = [];
@@ -659,7 +659,7 @@ export default class Util
 	 *
 	 * @return  {Boolean}		True if object.
 	 */
-	static __isObject(target)
+	static #__isObject(target)
 	{
 
 		let type = typeof target;
@@ -678,10 +678,10 @@ export default class Util
 	 *
 	 * @return  {Boolean}		True if mergeable.
 	 */
-	static __isMergeable(target)
+	static #__isMergeable(target)
 	{
 
-		return Util.__isObject(target) || Array.isArray(target);
+		return Util.#__isObject(target) || Array.isArray(target);
 
 	}
 

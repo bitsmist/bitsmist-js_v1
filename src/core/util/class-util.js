@@ -37,7 +37,7 @@ export default class ClassUtil
 
 		// Define class
 		let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
-		let classDef = Function("superClass", `return function ${ClassUtil.__validateClassName(className)}()${funcDef}`)(superClass);
+		let classDef = Function("superClass", `return function ${ClassUtil.#__validateClassName(className)}()${funcDef}`)(superClass);
 		ClassUtil.inherit(classDef, superClass);
 
 		// Class settings
@@ -105,7 +105,7 @@ export default class ClassUtil
 		{
 			try
 			{
-				ret = Function(`return (${ClassUtil.__validateClassName(className)})`)();
+				ret = Function(`return (${ClassUtil.#__validateClassName(className)})`)();
 			}
 			catch(e)
 			{
@@ -121,6 +121,8 @@ export default class ClassUtil
 	}
 
 	// -------------------------------------------------------------------------
+	//  Privates
+	// -------------------------------------------------------------------------
 
 	/**
 	 * Validate class name.
@@ -129,11 +131,11 @@ export default class ClassUtil
 	 *
 	 * @return  {String}		Class name when valid. Throws an exception when not valid.
 	 */
-	static __validateClassName(className)
+	static #__validateClassName(className)
 	{
 
 		let result = /^[a-zA-Z0-9\-\._]+$/.test(className);
-		Util.assert(result, () => `ClassUtil.__validateClassName(): Class name '${className}' is not valid.`, TypeError);
+		Util.assert(result, () => `ClassUtil.#__validateClassName(): Class name '${className}' is not valid.`, TypeError);
 
 		return className;
 
