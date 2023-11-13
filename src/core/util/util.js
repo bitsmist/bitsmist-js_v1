@@ -8,6 +8,8 @@
  */
 // =============================================================================
 
+import Unit from "../unit/unit.js";
+
 // =============================================================================
 //	Util class
 // =============================================================================
@@ -488,7 +490,7 @@ export default class Util
     static scopedSelectorAll(rootNode, query, options)
     {
 
-		let targetNode = ( rootNode === BITSMIST.v1.Unit || rootNode instanceof BITSMIST.v1.Unit ? rootNode.get("inventory", "basic.unitRoot") : rootNode );
+		let targetNode = ( rootNode === Unit || rootNode instanceof Unit ? rootNode.get("inventory", "basic.unitRoot") : rootNode );
         let newQuery = ( targetNode instanceof DocumentFragment ? query : ":scope " + query.replace(",", ",:scope "));
         let allElements = targetNode.querySelectorAll(newQuery);
 		let allSet = new Set(allElements);
@@ -514,33 +516,6 @@ export default class Util
         return Array.from(allSet);
 
     }
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Create UUID.
-	 *
-	 * @return  {String}		UUID.
-	 */
-	static getUUID()
-	{
-
-		let uuid = "";
-
-		for (let i = 0; i < 32; i++)
-		{
-			let random = Math.random() * 16 | 0;
-
-			if (i == 8 || i == 12 || i == 16 || i == 20)
-			{
-				uuid += "-"
-			}
-			uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
-		}
-
-		return uuid;
-
-	}
 
 	// -------------------------------------------------------------------------
 
