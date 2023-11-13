@@ -8,6 +8,7 @@
  */
 // =============================================================================
 
+import Unit from "../unit/unit.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -32,7 +33,7 @@ export default class ClassUtil
 	static newUnit(className, settings, superClass, tagName)
 	{
 
-		superClass = ( superClass ? superClass : BITSMIST.v1.Unit );
+		superClass = ( superClass ? superClass : Unit );
 
 		// Define class
 		let funcDef = "{ return Reflect.construct(superClass, [], this.constructor); }";
@@ -85,7 +86,6 @@ export default class ClassUtil
 	static getClass(className)
 	{
 
-		className = className.replace("BITSMIST.v1.", "");
 		let ret;
 
 		if (BITSMIST.v1[className])

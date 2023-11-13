@@ -13,6 +13,7 @@ import ClassUtil from "../util/class-util.js";
 import Perk from "./perk.js";
 import StatusPerk from "./status-perk.js";
 import Store from "../store/store.js";
+import Unit from "../unit/unit.js";
 import URLUtil from "../util/url-util.js";
 import Util from "../util/util.js";
 
@@ -66,8 +67,8 @@ export default class UnitPerk extends Perk
 	{
 
 		// Load tags
-		await BITSMIST.v1.Unit.get("inventory", "promise.documentReady");
-		if (BITSMIST.v1.Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
+		await Unit.get("inventory", "promise.documentReady");
+		if (Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
 		{
 			UnitPerk.#_loadTags(null, document.body, {"waitForTags":false});
 		}
@@ -134,7 +135,7 @@ export default class UnitPerk extends Perk
 		tagName = tagName.toLowerCase();
 		let className = Util.safeGet(settings, "unit.options.className", Util.getClassNameFromTagName(tagName));
 		let baseClassName = Util.safeGet(settings, "unit.options.autoMorph", className );
-		baseClassName = ( baseClassName === true ? "BITSMIST.v1.Unit" : baseClassName );
+		baseClassName = ( baseClassName === true ? "Unit" : baseClassName );
 
 		// Load the class if needed
 		let promise = Promise.resolve();
@@ -400,11 +401,11 @@ export default class UnitPerk extends Perk
 		{
 			ret = true;
 
-			if (customElements.get(tagName))
+			if (UnitPerk.#__classInfo[className] && UnitPerk.#__classInfo[className]["status"] === "loaded")
 			{
 				ret = false;
 			}
-			else if (UnitPerk.#__classInfo[className] && UnitPerk.#__classInfo[className]["status"] === "loaded")
+			else if (customElements.get(tagName))
 			{
 				ret = false;
 			}
@@ -527,7 +528,7 @@ export default class UnitPerk extends Perk
 	{
 
 		let path = Util.concatPath([
-			Util.safeGet(settings, "system.unit.options.path", BITSMIST.v1.Unit.get("setting", "system.unit.options.path", "")),
+			Util.safeGet(settings, "system.unit.options.path", Unit.get("setting", "system.unit.options.path", "")),
 			Util.safeGet(settings, "unit.options.path", ""),
 		]);
 		let fileName = Util.safeGet(settings, "unit.options.fileName", tagName);

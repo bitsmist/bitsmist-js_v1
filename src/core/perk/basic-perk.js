@@ -11,6 +11,7 @@
 import ChainableStore from "../store/chainable-store.js";
 import Perk from "./perk.js";
 import Store from "../store/store.js";
+import Unit from "../unit/unit.js";
 import URLUtil from "../util/url-util.js";
 import Util from "../util/util.js";
 
@@ -89,26 +90,26 @@ export default class BasicPerk extends Perk
 	{
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("asset", "inventory", new ChainableStore());
-		BITSMIST.v1.Unit.upgrade("callback", "initializeCallback", BasicPerk.#_initializeHandler.bind(BasicPerk));
-		BITSMIST.v1.Unit.upgrade("callback", "connectedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
-		BITSMIST.v1.Unit.upgrade("callback", "disconnectedCallback", BasicPerk.#_disconnectedHandler.bind(BasicPerk));
-		BITSMIST.v1.Unit.upgrade("callback", "adoptedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
-		BITSMIST.v1.Unit.upgrade("callback", "attributeChangedCallback", BasicPerk.#_attributeChangedHandler.bind(BasicPerk));
-		BITSMIST.v1.Unit.upgrade("method", "use", BasicPerk.#_use);
-		BITSMIST.v1.Unit.upgrade("method", "cast", BasicPerk.#_cast);
+		Unit.upgrade("asset", "inventory", new ChainableStore());
+		Unit.upgrade("callback", "initializeCallback", BasicPerk.#_initializeHandler.bind(BasicPerk));
+		Unit.upgrade("callback", "connectedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
+		Unit.upgrade("callback", "disconnectedCallback", BasicPerk.#_disconnectedHandler.bind(BasicPerk));
+		Unit.upgrade("callback", "adoptedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
+		Unit.upgrade("callback", "attributeChangedCallback", BasicPerk.#_attributeChangedHandler.bind(BasicPerk));
+		Unit.upgrade("method", "use", BasicPerk.#_use);
+		Unit.upgrade("method", "cast", BasicPerk.#_cast);
 
 		// Create a promise that resolves when document is ready
-		BITSMIST.v1.Unit.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
+		Unit.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
 			if ((document.readyState === "interactive" || document.readyState === "complete"))
 			{
-				BITSMIST.v1.Unit.set("inventory", "basic.unitRoot", document.body);
+				Unit.set("inventory", "basic.unitRoot", document.body);
 				resolve();
 			}
 			else
 			{
 				document.addEventListener("DOMContentLoaded", () => {
-					BITSMIST.v1.Unit.set("inventory", "basic.unitRoot", document.body);
+					Unit.set("inventory", "basic.unitRoot", document.body);
 					resolve();
 				});
 			}
@@ -131,7 +132,7 @@ export default class BasicPerk extends Perk
 
 		// Upgrade unit
 		unit.upgrade("asset", "perk", {});
-		unit.upgrade("asset", "inventory", new ChainableStore({"chain":BITSMIST.v1.Unit.assets["inventory"]}));
+		unit.upgrade("asset", "inventory", new ChainableStore({"chain":Unit.assets["inventory"]}));
 		unit.upgrade("method", "use", BasicPerk.#_use);
 		unit.upgrade("method", "cast", BasicPerk.#_cast);
 		unit.upgrade("inventory", "basic.unitRoot", unit);

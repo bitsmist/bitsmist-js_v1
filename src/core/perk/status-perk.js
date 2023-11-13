@@ -10,6 +10,7 @@
 
 import Perk from "./perk.js";
 import Store from "../store/store.js";
+import Unit from "../unit/unit.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -74,7 +75,7 @@ export default class StatusPerk extends Perk
 	{
 
 		// Init vars
-		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk.#_waitFor(BITSMIST.v1.Unit, waitlist, timeout); }
+		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk.#_waitFor(Unit, waitlist, timeout); }
 
 	}
 

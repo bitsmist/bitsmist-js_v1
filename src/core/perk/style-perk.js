@@ -11,6 +11,7 @@
 import AjaxUtil from "../util/ajax-util.js";
 import ChainableStore from "../store/chainable-store.js";
 import Perk from "./perk.js";
+import Unit from "../unit/unit.js";
 import URLUtil from "../util/url-util.js";
 import Util from "../util/util.js";
 
@@ -65,10 +66,10 @@ export default class StylePerk extends Perk
 	{
 
 		// Init Vars
-		StylePerk.#__vault.set(BITSMIST.v1.Unit, {"applied": []});
+		StylePerk.#__vault.set(Unit, {"applied": []});
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("inventory", "style.styles", new ChainableStore());
+		Unit.upgrade("inventory", "style.styles", new ChainableStore());
 
 		StylePerk.#__cssReady["promise"] = new Promise((resolve, reject) => {
 			StylePerk.#__cssReady["resolve"] = resolve;
@@ -77,19 +78,19 @@ export default class StylePerk extends Perk
 
 		// Load and apply common CSS
 		let chain = Promise.resolve();
-		BITSMIST.v1.Unit.get("inventory", "promise.documentReady").then(() => {
+		Unit.get("inventory", "promise.documentReady").then(() => {
 			let promises = [];
-			Object.entries(BITSMIST.v1.Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
-				promises.push(StylePerk.#_loadCSS(BITSMIST.v1.Unit, sectionName, sectionValue, true));
+			Object.entries(Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
+				promises.push(StylePerk.#_loadCSS(Unit, sectionName, sectionValue, true));
 			});
 
 			return Promise.all(promises).then(() => {
 				let chain = Promise.resolve();
-				let styles = BITSMIST.v1.Unit.get("setting", "system.style.options.apply", []);
+				let styles = Unit.get("setting", "system.style.options.apply", []);
 				for (let i = 0; i < styles.length; i++)
 				{
 					chain = chain.then(() => {
-						return StylePerk.#_applyCSS(BITSMIST.v1.Unit, styles[i]);
+						return StylePerk.#_applyCSS(Unit, styles[i]);
 					});
 				}
 
@@ -109,7 +110,7 @@ export default class StylePerk extends Perk
 		// Upgrade unit
 		StylePerk.#__vault.set(unit, {"applied": []});
 		unit.upgrade("inventory", "style.styles", new ChainableStore({
-			"chain":	BITSMIST.v1.Unit.get("inventory", "style.styles"),
+			"chain":	Unit.get("inventory", "style.styles"),
 		}));
 
 		// Add event handlers

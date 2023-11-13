@@ -12,6 +12,7 @@ import AjaxUtil from "../util/ajax-util.js";
 import ChainableStore from "../store/chainable-store.js";
 import Perk from "./perk.js";
 import URLUtil from "../util/url-util.js";
+import Unit from "../unit/unit.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -76,7 +77,7 @@ export default class SettingPerk extends Perk
 	{
 
 		// Upgrade Unit
-		BITSMIST.v1.Unit.upgrade("asset", "setting", new ChainableStore());
+		Unit.upgrade("asset", "setting", new ChainableStore());
 
 	}
 
@@ -91,7 +92,7 @@ export default class SettingPerk extends Perk
 		settings = SettingPerk.#__mergeSettings(unit, settings);
 
 		// Upgrade unit
-		unit.upgrade("asset", "setting", new ChainableStore({"items":settings, "chain":BITSMIST.v1.Unit.assets["setting"]}));
+		unit.upgrade("asset", "setting", new ChainableStore({"items":settings, "chain":Unit.assets["setting"]}));
 
 		SettingPerk.#__loadAttrSettings(unit);
 		if (SettingPerk.#__hasExternalSettings(unit))
