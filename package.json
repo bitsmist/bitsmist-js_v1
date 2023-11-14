@@ -1,33 +1,38 @@
 {
-  "name": "bitsmist-js_v1",
-  "version": "0.9.11",
-  "description": "BitsmistJS v1",
-  "private": true,
+  "name": "@bitsmist-js_v1/core",
+  "version": "0.11.2",
+  "description": "Web Components based Javascript Framework",
+  "main": "src/core/index.js",
   "type": "module",
+  "dependencies": {
+    "uuid": "^9.0.1"
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-terser": "^0.4.0",
-    "jest": "^29.4.3",
-    "jest-environment-jsdom": "^29.4.3",
-    "msw": "^1.0.1",
-    "rollup": "^3.16.0",
-    "uuid": "^9.0.1",
-    "xmlhttprequest": "^1.8.0"
+    "rollup": "^3.16.0"
   },
   "scripts": {
     "watch": "npx rollup -c -w",
-    "build": "npx rollup -c",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "build": "npx rollup -c"
   },
-  "jest": {
-    "setupFilesAfterEnv": [
-      "./test/core/_setup.js"
-    ],
-    "testEnvironment": "jsdom",
-    "testEnvironmentOptions": {
-      "resources": "usable",
-      "runScripts": "dangerously"
-    }
-  }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitsmist/bitsmist-js_v1.git"
+  },
+  "keywords": [
+    "Javascript",
+    "Framework",
+    "Web Components"
+  ],
+  "files": [
+    "dist"
+  ],
+  "author": "Masaki Yasutake <my17560@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bitsmist/bitsmist-js_v1/issues"
+  },
+  "homepage": "https://bitsmist.com"
 }
