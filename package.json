@@ -2,16 +2,16 @@
   "name": "@bitsmist-js_v1/core",
   "version": "0.11.2",
   "description": "Web Components based Javascript Framework",
-  "main": "src/core/index.js",
+  "main": "dist/bitsmist-js_v1.esm.min.js",
   "type": "module",
   "dependencies": {
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^24.0.1",
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "@rollup/plugin-terser": "^0.4.0",
-    "rollup": "^3.16.0"
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.4.1"
   },
   "scripts": {
     "watch": "npx rollup -c -w",

@@ -1,6 +1,8 @@
-this.BITSMIST = this.BITSMIST || {};
-this.BITSMIST.v1 = (function (exports) {
-  'use strict';
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory((global.BITSMIST = global.BITSMIST || {}, global.BITSMIST.v1 = {})));
+})(this, (function (exports) { 'use strict';
 
   // Unique ID creation requires a high quality random # generator. In the browser we therefore
   // require the crypto API and do not support built-in fallback to lower quality random number
@@ -5852,7 +5854,5 @@ this.BITSMIST.v1 = (function (exports) {
   exports.Unit = Unit;
   exports.Util = Util;
 
-  return exports;
-
-})({});
+}));
 //# sourceMappingURL=bitsmist-js_v1.js.map

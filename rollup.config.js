@@ -9,7 +9,7 @@ export default [
 			{
 				file: 'dist/bitsmist-js_v1.min.js',
 				name: "BITSMIST.v1",
-				format: 'iife',
+				format: 'umd',
 				sourcemap: false,
 				plugins: [
 					terser({
@@ -22,7 +22,24 @@ export default [
 			{
 				file: 'dist/bitsmist-js_v1.js',
 				name: "BITSMIST.v1",
-				format: 'iife',
+				format: 'umd',
+				sourcemap: true
+			},
+			{
+				file: 'dist/bitsmist-js_v1.esm.min.js',
+				format: 'es',
+				sourcemap: false,
+				plugins: [
+					terser({
+						format:				{comments:false},
+						compress:			{drop_console:true},
+						keep_classnames:	true,
+					})
+				],
+			},
+			{
+				file: 'dist/bitsmist-js_v1.esm.js',
+				format: 'es',
 				sourcemap: true
 			}
 		],
