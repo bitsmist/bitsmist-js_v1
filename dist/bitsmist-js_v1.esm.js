@@ -1094,9 +1094,9 @@ class ClassUtil
 
 		let ret;
 
-		if (BITSMIST.v1[className])
+		if (BITSMIST.V1[className])
 		{
-			ret = BITSMIST.v1[className];
+			ret = BITSMIST.V1[className];
 		}
 
 		if (!ret)
@@ -5540,8 +5540,6 @@ class UnitPerk extends Perk
 
 			// Load the class
 			promises.push(UnitPerk.#_loadClass(element.tagName, settings).then(() => {
-			//let tagName = ( element.hasAttribute("is") ? element.getAttribute("is") : element.tagName );
-			//promises.push(UnitPerk.#_loadClass(tagName, settings).then(() => {
 				element.removeAttribute("bm-autoloading");
 			}));
 		});
@@ -5687,12 +5685,10 @@ class UnitPerk extends Perk
 			{
 				ret = false;
 			}
-			/*
 			else if (ClassUtil.getClass(className))
 			{
 				ret = false;
 			}
-			*/
 		}
 
 		return ret;
@@ -5838,6 +5834,9 @@ Perk.registerPerk(SkinPerk);
 Perk.registerPerk(StylePerk);
 Perk.registerPerk(EventPerk);
 Perk.registerPerk(UnitPerk);
+
+// Shortcut
+BITSMIST.V1.Unit = Unit;
 
 export { AjaxUtil, ChainableStore, ClassUtil, Perk, Store, URLUtil, Unit, Util };
 //# sourceMappingURL=bitsmist-js_v1.esm.js.map

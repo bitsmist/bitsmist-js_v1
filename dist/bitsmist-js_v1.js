@@ -1,7 +1,7 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory((global.BITSMIST = global.BITSMIST || {}, global.BITSMIST.v1 = {})));
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory((global.BITSMIST = global.BITSMIST || {}, global.BITSMIST.V1 = global.BITSMIST.V1 || {}, global.BITSMIST.V1.$CORE = {})));
 })(this, (function (exports) { 'use strict';
 
   // Unique ID creation requires a high quality random # generator. In the browser we therefore
@@ -1100,9 +1100,9 @@
 
   		let ret;
 
-  		if (BITSMIST.v1[className])
+  		if (BITSMIST.V1[className])
   		{
-  			ret = BITSMIST.v1[className];
+  			ret = BITSMIST.V1[className];
   		}
 
   		if (!ret)
@@ -5546,8 +5546,6 @@
 
   			// Load the class
   			promises.push(UnitPerk.#_loadClass(element.tagName, settings).then(() => {
-  			//let tagName = ( element.hasAttribute("is") ? element.getAttribute("is") : element.tagName );
-  			//promises.push(UnitPerk.#_loadClass(tagName, settings).then(() => {
   				element.removeAttribute("bm-autoloading");
   			}));
   		});
@@ -5693,12 +5691,10 @@
   			{
   				ret = false;
   			}
-  			/*
   			else if (ClassUtil.getClass(className))
   			{
   				ret = false;
   			}
-  			*/
   		}
 
   		return ret;
@@ -5844,6 +5840,9 @@
   Perk.registerPerk(StylePerk);
   Perk.registerPerk(EventPerk);
   Perk.registerPerk(UnitPerk);
+
+  // Shortcut
+  BITSMIST.V1.Unit = Unit;
 
   exports.AjaxUtil = AjaxUtil;
   exports.ChainableStore = ChainableStore;
