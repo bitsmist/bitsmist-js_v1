@@ -8,7 +8,7 @@ export default [
 		output: [
 			{
 				file: 'dist/bitsmist-js_v1.min.js',
-				name: "BITSMIST.v1",
+				name: "BITSMIST.V1.$CORE",
 				format: 'umd',
 				sourcemap: false,
 				plugins: [
@@ -21,7 +21,7 @@ export default [
 			},
 			{
 				file: 'dist/bitsmist-js_v1.js',
-				name: "BITSMIST.v1",
+				name: "BITSMIST.V1.$CORE",
 				format: 'umd',
 				sourcemap: true
 			},
