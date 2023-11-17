@@ -88,9 +88,9 @@ export default class ClassUtil
 
 		let ret;
 
-		if (BITSMIST.v1[className])
+		if (BITSMIST.V1[className])
 		{
-			ret = BITSMIST.v1[className];
+			ret = BITSMIST.V1[className];
 		}
 
 		if (!ret)
