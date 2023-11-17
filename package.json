@@ -1,6 +1,6 @@
 {
   "name": "@bitsmist-js_v1/core",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Web Components based Javascript Framework",
   "main": "dist/bitsmist-js_v1.esm.min.js",
   "type": "module",
