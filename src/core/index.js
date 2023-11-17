@@ -39,6 +39,9 @@ Perk.registerPerk(EventPerk);
 import UnitPerk from "./perk/unit-perk.js";
 Perk.registerPerk(UnitPerk);
 
+// Shortcut
+BITSMIST.V1.Unit = Unit;
+
 // Export
 export {
 	Util,
