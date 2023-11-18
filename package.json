@@ -1,11 +1,11 @@
 {
   "name": "@bitsmist-js_v1/core",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "Web Components based Javascript Framework",
   "main": "dist/bitsmist-js_v1.esm.min.js",
   "exports": {
-	  ".": "./dist/bitsmist-js_v1.esm.min.js",
-	  "./debug": "./dist/bitsmist-js_v1.esm.js"
+    ".": "./dist/bitsmist-js_v1.esm.min.js",
+    "./debug": "./dist/bitsmist-js_v1.esm.js"
   },
   "type": "module",
   "dependencies": {
