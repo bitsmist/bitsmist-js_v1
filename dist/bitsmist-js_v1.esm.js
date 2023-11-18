@@ -5836,7 +5836,10 @@ Perk.registerPerk(EventPerk);
 Perk.registerPerk(UnitPerk);
 
 // Shortcut
-BITSMIST.V1.Unit = Unit;
+if (globalThis.BITSMIST)
+{
+	globalThis.BITSMIST.V1.Unit = Unit;
+}
 
 export { AjaxUtil, ChainableStore, ClassUtil, Perk, Store, URLUtil, Unit, Util };
 //# sourceMappingURL=bitsmist-js_v1.esm.js.map

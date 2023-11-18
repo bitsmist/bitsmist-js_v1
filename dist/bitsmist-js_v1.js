@@ -5842,7 +5842,10 @@
   Perk.registerPerk(UnitPerk);
 
   // Shortcut
-  BITSMIST.V1.Unit = Unit;
+  if (globalThis.BITSMIST)
+  {
+  	globalThis.BITSMIST.V1.Unit = Unit;
+  }
 
   exports.AjaxUtil = AjaxUtil;
   exports.ChainableStore = ChainableStore;
