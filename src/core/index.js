@@ -40,7 +40,10 @@ import UnitPerk from "./perk/unit-perk.js";
 Perk.registerPerk(UnitPerk);
 
 // Shortcut
-BITSMIST.V1.Unit = Unit;
+if (globalThis.BITSMIST)
+{
+	globalThis.BITSMIST.V1.Unit = Unit;
+}
 
 // Export
 export {
