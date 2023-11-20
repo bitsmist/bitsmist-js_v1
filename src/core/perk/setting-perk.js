@@ -283,35 +283,32 @@ export default class SettingPerk extends Perk
 	static #__getSettingsURL(unit)
 	{
 
-		let path;
-		let fileName;
-		let query;
-
+		let url;
 		let settingsRef = unit.get("setting", "setting.options.settingsRef");
+
 		if (settingsRef && settingsRef !== true)
 		{
 			// If URL is specified in ref, use it
-			let url = URLUtil.parseURL(settingsRef);
-			path = url.path;
-			fileName = url.filename;
-			query = url.query;
+			url = settingsRef;
 		}
 		else
 		{
 			// Use default path and filename
-			path = Util.concatPath([
+			let path = Util.concatPath([
 					unit.get("setting", "system.setting.options.path", unit.get("setting", "system.unit.options.path", "")),
 					unit.get("setting", "setting.options.path", unit.get("setting", "unit.options.path", "")),
 				]);
 			let ext = unit.get("setting", "setting.options.settingFormat",
 						unit.get("setting", "system.setting.options.settingFormat", "json"));
-			fileName = unit.get("setting", "setting.options.fileName",
+			let fileName = unit.get("setting", "setting.options.fileName",
 							unit.get("setting", "unit.options.fileName",
 								unit.tagName.toLowerCase())) + ".settings." + ext;
-			query = unit.get("setting", "unit.options.query");
+			let query = unit.get("setting", "unit.options.query");
+
+			url = Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
 		}
 
-		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+		return url;
 
 	}
 

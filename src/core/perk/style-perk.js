@@ -425,34 +425,31 @@ export default class StylePerk extends Perk
 	static #__getDefaultURL(unit, styleName, options)
 	{
 
-		let path;
-		let fileName;
-		let query;
+		let url;
 
 		let cssRef = unit.get("setting", "style.options.styleRef");
 		if (cssRef && cssRef !== true)
 		{
 			// If URL is specified in ref, use it
-			let url = URLUtil.parseURL(cssRef);
-			path = url.path;
-			fileName = url.filename;
-			query = url.query;
+			url = cssRef;
 		}
 		else
 		{
 			// Use default path and filename
-			path = Util.concatPath([
+			let path = Util.concatPath([
 					unit.get("setting", "system.style.options.path",
 						unit.get("setting", "system.unit.options.path", "")),
 					Util.safeGet(options, "path",
 						unit.get("setting", "style.options.path",
 							unit.get("setting", "unit.options.path", ""))),
 				]);
-			fileName =  StylePerk.#__getDefaultFilename(unit, styleName, options) + ".css";
-			query = unit.get("setting", "unit.options.query");
+			let fileName =  StylePerk.#__getDefaultFilename(unit, styleName, options) + ".css";
+			let query = unit.get("setting", "unit.options.query");
+
+			url = Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
 		}
 
-		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+		return url;
 
 	}
 

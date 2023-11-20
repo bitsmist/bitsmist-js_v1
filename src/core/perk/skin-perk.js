@@ -320,35 +320,31 @@ export default class SkinPerk extends Perk
 	static #__getDefaultURL(unit, skinName, options)
 	{
 
-		let path;
-		let fileName;
-		let query;
-
-
+		let url;
 		let skinRef = unit.get("setting", "skin.options.skinRef");
+
 		if (skinRef && skinRef !== true)
 		{
 			// If URL is specified in ref, use it
-			let url = URLUtil.parseURL(skinRef);
-			path = url.path;
-			fileName = url.filename;
-			query = url.query;
+			url = skinRef;
 		}
 		else
 		{
 			// Use default path and filename
-			path = Util.concatPath([
+			let path = Util.concatPath([
 					unit.get("setting", "system.skin.options.path",
 						unit.get("setting", "system.unit.options.path", "")),
 					Util.safeGet(options, "path",
 						unit.get("setting", "skin.options.path",
 							unit.get("setting", "unit.options.path", ""))),
 				]);
-			fileName = SkinPerk.#__getDefaultFilename(unit, skinName, options) + ".html";
-			query = unit.get("setting", "unit.options.query");
+			let fileName = SkinPerk.#__getDefaultFilename(unit, skinName, options) + ".html";
+			let query = unit.get("setting", "unit.options.query");
+
+			url = Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
 		}
 
-		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+		return url;
 
 	}
 
