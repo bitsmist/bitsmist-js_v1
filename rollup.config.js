@@ -1,4 +1,3 @@
-import commonjs from '@rollup/plugin-commonjs'
 import nodeResolve from '@rollup/plugin-node-resolve';
 import terser from "@rollup/plugin-terser";
 
@@ -13,9 +12,9 @@ export default [
 				sourcemap: false,
 				plugins: [
 					terser({
-						format:				{comments:false},
-						compress:			{drop_console:true},
-						keep_classnames:	true,
+						format: {comments:false},
+						compress: {drop_console:true},
+						keep_classnames: true,
 					})
 				],
 			},
@@ -31,9 +30,9 @@ export default [
 				sourcemap: false,
 				plugins: [
 					terser({
-						format:				{comments:false},
-						compress:			{drop_console:true},
-						keep_classnames:	true,
+						format: {comments:false},
+						compress: {drop_console:true},
+						keep_classnames: true,
 					})
 				],
 			},
@@ -45,7 +44,6 @@ export default [
 		],
 		plugins: [
 			nodeResolve(),
-			commonjs()
 		]
 	},
 ]
