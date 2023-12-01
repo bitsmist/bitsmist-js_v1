@@ -93,7 +93,7 @@ export default class SkinPerk extends Perk
 			unit.set("inventory", "basic.unitRoot", shadowRoot);
 			break;
 		case "closed":
-			shadowRoot = unit.attachShadow({mode:"open"});
+			shadowRoot = unit.attachShadow({mode:"closed"});
 			unit.set("inventory", "skin.shadowRoot", shadowRoot);
 			unit.set("inventory", "basic.unitRoot", shadowRoot);
 			break;
