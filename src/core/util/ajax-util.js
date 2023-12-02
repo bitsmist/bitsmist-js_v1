@@ -90,12 +90,17 @@ export default class AjaxUtil
 	 *
 	 * @return  {Promise}		Promise.
 	 */
-	static loadScript(url) {
+	static loadScript(url, options)
+	{
 
 		return new Promise((resolve, reject) => {
 			let script = document.createElement('script');
 			script.src = url;
 			script.async = true;
+			if (options && options["type"])
+			{
+				script.type = options["type"];
+			}
 
 			script.onload = () => {
 				resolve();
@@ -105,8 +110,7 @@ export default class AjaxUtil
 				reject(e);
 			};
 
-			let head = document.getElementsByTagName('head')[0];
-			head.appendChild(script);
+			let head = document.head.appendChild(script);
 		});
 
 	}
@@ -224,14 +228,14 @@ export default class AjaxUtil
 		console.debug(`AjaxUtil.loadClass(): Loading the first file. URL1=${url1}`);
 
 		return Promise.resolve().then(() => {
-			return AjaxUtil.loadScript(url1);
+			return AjaxUtil.loadScript(url1, options);
 			/*
 		}).then(() => {
 			if (options["splitClass"])
 			{
 				let url2 = url + ".settings.js";
 				console.debug(`AjaxUtil.loadClass(): Loading the second file. URL2=${url2}`);
-				return AjaxUtil.loadScript(url2);
+				return AjaxUtil.loadScript(url2, options);
 			}
 			*/
 		}).then(() => {
