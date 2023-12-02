@@ -77,8 +77,7 @@ export default class StylePerk extends Perk
 		});
 
 		// Load and apply common CSS
-		let chain = Promise.resolve();
-		Unit.get("inventory", "promise.documentReady").then(() => {
+		return Unit.get("inventory", "promise.documentReady").then(() => {
 			let promises = [];
 			Object.entries(Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
 				promises.push(StylePerk.#_loadCSS(Unit, sectionName, sectionValue, true));
