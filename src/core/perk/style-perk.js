@@ -77,26 +77,15 @@ export default class StylePerk extends Perk
 		});
 
 		// Load and apply common CSS
-		return Unit.get("inventory", "promise.documentReady").then(() => {
-			let promises = [];
-			Object.entries(Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
-				promises.push(StylePerk.#_loadCSS(Unit, sectionName, sectionValue, true));
-			});
+		let promises = [];
+		Object.entries(Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
+			promises.push(StylePerk.#_loadCSS(Unit, sectionName, sectionValue, true));
+		});
 
-			return Promise.all(promises).then(() => {
-				let chain = Promise.resolve();
-				let styles = Unit.get("setting", "system.style.options.apply", []);
-				for (let i = 0; i < styles.length; i++)
-				{
-					chain = chain.then(() => {
-						return StylePerk.#_applyCSS(Unit, styles[i]);
-					});
-				}
-
-				return chain.then(() => {
-					StylePerk.#__cssReady["resolve"]();
-				});
-			});
+		return Promise.all(promises).then(async () => {
+			let styles = Unit.get("setting", "system.style.options.apply", []);
+			await StylePerk.#__applyAllCSS(Unit, styles);
+			StylePerk.#__cssReady["resolve"]();
 		});
 
 	}
@@ -128,62 +117,45 @@ export default class StylePerk extends Perk
 	static #StylePerk_onBeforeTransform(sender, e, ex)
 	{
 
-		return StylePerk.#__cssReady.promise.then(() => {
-			let promises = [];
-
-			// List common CSS
-			let css = this.get("setting", "style.options.apply", []);
-
-			if (this.get("setting", "style.options.hasStyle", true))
-			{
-				// List style-specific common CSS
-				css = css.concat(this.get("setting", `style.styles.${e.detail.styleName}.apply`, []));
-
-				// Load unit-specific CSS
-				promises.push(StylePerk.#_loadCSS(this, e.detail.styleName, e.detail.styleOptions));
-			}
+		return StylePerk.#__cssReady.promise.then(async () => {
+			// Clear CSS
+			StylePerk.#_clearCSS(this);
 
 			// Load common CSS
+			let promises = [];
+			let css = this.get("setting", "style.options.apply", []);
 			for (let i = 0; i < css.length; i++)
 			{
 				promises.push(StylePerk.#_loadCSS(this, css[i]));
 			}
 
-			return Promise.all(promises);
+			// Apply common CSS
+			await Promise.all(promises);
+			await StylePerk.#__applyAllCSS(this,css);
 		});
 
 	}
 
 	// -------------------------------------------------------------------------
 
-	static #StylePerk_onDoTransform(sender, e, ex)
+	static async #StylePerk_onDoTransform(sender, e, ex)
 	{
-
-		// List common CSS
-		let css = this.get("setting", "style.options.apply", []);
 
 		if (this.get("setting", "style.options.hasStyle", true))
 		{
-			// List style-specific common CSS
-			css = css.concat(this.get("setting", `style.styles.${e.detail.styleName}.apply`, []));
-
-			// List unit-specific CSS
+			// Load unit-specific CSS
+			let promises = [];
+			let css = this.get("setting", `style.styles.${e.detail.styleName}.apply`, []);
 			css.push(e.detail.styleName);
+			for (let i = 0; i < css.length; i++)
+			{
+				promises.push(StylePerk.#_loadCSS(this, css[i]));
+			}
+
+			// Apply unit-specific CSS
+			await Promise.all(promises);
+			await StylePerk.#__applyAllCSS(this, css);
 		}
-
-		// Clear CSS
-		StylePerk.#_clearCSS(this);
-
-		// Apply All CSS
-		let chain = Promise.resolve();
-		for (let i = 0; i < css.length; i++)
-		{
-			chain = chain.then(() => {
-				return StylePerk.#_applyCSS(this, css[i]);
-			});
-		}
-
-		return chain;
 
 	}
 
@@ -337,7 +309,31 @@ export default class StylePerk extends Perk
 	// -------------------------------------------------------------------------
 	//  Privates
 	// -------------------------------------------------------------------------
-	//
+
+	/**
+	 * Apply all CSS.
+	 *
+	 * @param	{Unit}			unit				Unit.
+	 * @param	{Array}			css					Array of CSS names to apply.
+	 */
+	static #__applyAllCSS(unit, css)
+	{
+
+		let chain = Promise.resolve();
+
+		for (let i = 0; i < css.length; i++)
+		{
+			chain = chain.then(() => {
+				return StylePerk.#_applyCSS(unit, css[i]);
+			});
+		}
+
+		return chain;
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	/**
 	 * Get settings from element's attribute.
 	 *
