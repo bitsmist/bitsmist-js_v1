@@ -131,14 +131,14 @@ export default class Perk
 			"depends":		info["depends"],
 		};
 
+		// Create target word index
+		Perk.#__sections[info["sectionName"]] = Perk.#__perks[perk.name];
+
 		// Global init
 		if (Object.hasOwn(perk, "globalInit"))
 		{
-			perk.globalInit();
+			return perk.globalInit(settings);
 		}
-
-		// Create target word index
-		Perk.#__sections[info["sectionName"]] = Perk.#__perks[perk.name];
 
 	}
 
@@ -151,6 +151,8 @@ export default class Perk
 	 */
 	static getPerk(perkName)
 	{
+
+		Util.assert(perkName in Perk.#__perks, () => `${perkName} doesn't exist.`);
 
 		return Perk.#__perks[perkName].object;
 
