@@ -153,7 +153,9 @@ export default class UnitPerk extends Perk
 				console.debug(`ClassPerk.#_loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
 				UnitPerk.#__classInfo[baseClassName] = {"status":"loading"};
 
-				promise = AjaxUtil.loadClass(UnitPerk.#__getClassURL(tagName, settings)).then(() => {
+				let options = {};
+				options["type"] = Unit.get("setting", "system.unit.options.type", "text/javascript");
+				promise = AjaxUtil.loadClass(UnitPerk.#__getClassURL(tagName, settings), options).then(() => {
 					UnitPerk.#__classInfo[baseClassName] = {"status":"loaded"};
 				});
 				UnitPerk.#__classInfo[baseClassName].promise = promise;
