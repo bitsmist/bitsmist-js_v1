@@ -2,7 +2,7 @@
   "name": "@bitsmist-js_v1/core",
   "version": "0.12.2",
   "description": "Web Components based Javascript Framework",
-  "main": "./export.js",
+  "main": "./src/core/export.js",
   "type": "module",
   "dependencies": {
     "uuid": "^9.0.1"
