@@ -114,25 +114,26 @@ export default class StylePerk extends Perk
 	//  Event Handlers (Unit)
 	// -------------------------------------------------------------------------
 
-	static #StylePerk_onBeforeTransform(sender, e, ex)
+	static async #StylePerk_onBeforeTransform(sender, e, ex)
 	{
 
-		return StylePerk.#__cssReady.promise.then(async () => {
-			// Clear CSS
-			StylePerk.#_clearCSS(this);
+		// Wait global CSS to be applied
+		await StylePerk.#__cssReady.promise;
 
-			// Load common CSS
-			let promises = [];
-			let css = this.get("setting", "style.options.apply", []);
-			for (let i = 0; i < css.length; i++)
-			{
-				promises.push(StylePerk.#_loadCSS(this, css[i]));
-			}
+		// Clear CSS
+		StylePerk.#_clearCSS(this);
 
-			// Apply common CSS
-			await Promise.all(promises);
-			await StylePerk.#__applyAllCSS(this,css);
-		});
+		// Load common CSS
+		let promises = [];
+		let css = this.get("setting", "style.options.apply", []);
+		for (let i = 0; i < css.length; i++)
+		{
+			promises.push(StylePerk.#_loadCSS(this, css[i]));
+		}
+
+		// Apply common CSS
+		await Promise.all(promises);
+		await StylePerk.#__applyAllCSS(this,css);
 
 	}
 
