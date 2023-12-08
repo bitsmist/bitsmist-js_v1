@@ -52,6 +52,25 @@ export default class Perk
 
 	// -------------------------------------------------------------------------
 
+	/**
+	 * Promise that is resolved when Perk is ready.
+	 *
+	 * @type	{Object}
+	 */
+	static get ready()
+	{
+
+		return Promise.resolve();
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Perk spells.
+	 *
+	 * @type	{Object}
+	 */
 	static get spells()
 	{
 
@@ -87,10 +106,6 @@ export default class Perk
 	 */
 	static init(unit, options)
 	{
-
-		// Upgrade unit
-//		unit.upgrade("asset", "perk", new Map());
-
 	}
 
 	// -------------------------------------------------------------------------
@@ -135,10 +150,7 @@ export default class Perk
 		Perk.#__sections[info["sectionName"]] = Perk.#__perks[perk.name];
 
 		// Global init
-		if (Object.hasOwn(perk, "globalInit"))
-		{
-			return perk.globalInit(settings);
-		}
+		return perk.globalInit();
 
 	}
 

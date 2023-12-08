@@ -23,27 +23,50 @@ import Unit from "./unit/unit.js";
 
 // Perk
 import Perk from "./perk/perk.js";
-Perk.registerPerk(Perk);
 import BasicPerk from "./perk/basic-perk.js";
-Perk.registerPerk(BasicPerk);
 import SettingPerk from "./perk/setting-perk.js";
-Perk.registerPerk(SettingPerk);
 import StatusPerk from "./perk/status-perk.js";
-Perk.registerPerk(StatusPerk);
 import SkinPerk from "./perk/skin-perk.js";
-Perk.registerPerk(SkinPerk);
 import StylePerk from "./perk/style-perk.js";
-Perk.registerPerk(StylePerk);
 import EventPerk from "./perk/event-perk.js";
-Perk.registerPerk(EventPerk);
 import UnitPerk from "./perk/unit-perk.js";
-Perk.registerPerk(UnitPerk);
+
+// Export to global BITSMIST.V1
+if (!globalThis.BITSMIST)
+{
+	globalThis.BITSMIST = {};
+	globalThis.BITSMIST.V1 = {};
+	globalThis.BITSMIST.V1.$CORE = {};
+	globalThis.BITSMIST.V1.$CORE.Util = Util;
+	globalThis.BITSMIST.V1.$CORE.ClassUtil = ClassUtil;
+	globalThis.BITSMIST.V1.$CORE.AjaxUtil = AjaxUtil;
+	globalThis.BITSMIST.V1.$CORE.URLUtil = URLUtil;
+	globalThis.BITSMIST.V1.$CORE.Store = Store;
+	globalThis.BITSMIST.V1.$CORE.ChainableStore = ChainableStore;
+	globalThis.BITSMIST.V1.$CORE.Perk = Perk;
+	globalThis.BITSMIST.V1.$CORE.Unit = Unit;
+}
 
 // Shortcut
-if (globalThis.BITSMIST)
-{
-	globalThis.BITSMIST.V1.Unit = Unit;
-}
+globalThis.BITSMIST.V1.Unit = Unit;
+
+// Register Perks
+Perk.registerPerk(Perk);
+Perk.registerPerk(BasicPerk);
+Perk.registerPerk(SettingPerk);
+Perk.registerPerk(StatusPerk);
+Perk.registerPerk(SkinPerk);
+Perk.registerPerk(StylePerk);
+Perk.registerPerk(EventPerk);
+Perk.registerPerk(UnitPerk);
+
+// Load Tags
+BasicPerk.ready.then(async () => {
+	if (Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
+	{
+		Unit.cast("unit.materializeAll", document.body, {"waitForTags":false});
+	}
+});
 
 // Export
 export {

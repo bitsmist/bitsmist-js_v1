@@ -26,9 +26,10 @@ export default class StylePerk extends Perk
 	//  Private Variables
 	// -------------------------------------------------------------------------
 
+	static #__ready;
+	static #__ready_resolve;
 	static #__vault = new WeakMap();
 	static #__applied = {};
-	static #__cssReady = {};
 	static #__info = {
 		"sectionName":		"style",
 		"order":			200,
@@ -51,6 +52,15 @@ export default class StylePerk extends Perk
 
 	// -------------------------------------------------------------------------
 
+	static get ready()
+	{
+
+		return StylePerk.#__ready;
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	static get spells()
 	{
 
@@ -62,19 +72,19 @@ export default class StylePerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	static globalInit()
+	static async globalInit()
 	{
 
 		// Init Vars
+		StylePerk.#__ready = new Promise((resolve, reject) => {
+			StylePerk.#__ready_resolve = resolve;
+		});
 		StylePerk.#__vault.set(Unit, {"applied": []});
 
 		// Upgrade Unit
 		Unit.upgrade("inventory", "style.styles", new ChainableStore());
 
-		StylePerk.#__cssReady["promise"] = new Promise((resolve, reject) => {
-			StylePerk.#__cssReady["resolve"] = resolve;
-			StylePerk.#__cssReady["reject"] = reject;
-		});
+		await Perk.getPerk("SettingPerk").ready;
 
 		// Load and apply common CSS
 		let promises = [];
@@ -82,11 +92,13 @@ export default class StylePerk extends Perk
 			promises.push(StylePerk.#_loadCSS(Unit, sectionName, sectionValue, true));
 		});
 
-		return Promise.all(promises).then(async () => {
-			let styles = Unit.get("setting", "system.style.options.apply", []);
-			await StylePerk.#__applyAllCSS(Unit, styles);
-			StylePerk.#__cssReady["resolve"]();
-		});
+		await Promise.all(promises);
+		await Perk.getPerk("BasicPerk").ready; // === documentReady
+		await StylePerk.#__applyAllCSS(Unit, Unit.get("setting", "system.style.options.apply", []));
+
+		// Ready
+		StylePerk.#__ready_resolve();
+		StylePerk.#__ready_resolve = null;
 
 	}
 
@@ -118,7 +130,7 @@ export default class StylePerk extends Perk
 	{
 
 		// Wait global CSS to be applied
-		await StylePerk.#__cssReady.promise;
+		await StylePerk.ready;
 
 		// Clear CSS
 		StylePerk.#_clearCSS(this);
@@ -185,6 +197,8 @@ export default class StylePerk extends Perk
 			console.debug(`StylePerk.#_loadCSS(): Style already loaded. name=${unit.tagName}, styleName=${styleName}`);
 			return Promise.resolve(styleInfo);
 		}
+
+		Util.assert(styleName === "default" || Object.keys(styleSettings).length > 0, ()=>`Style settings not found. name=${unit.tagName}, styleName=${styleName}`);
 
 		switch (styleSettings["type"]) {
 		case "CSS":

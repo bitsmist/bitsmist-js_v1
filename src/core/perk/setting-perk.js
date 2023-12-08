@@ -26,6 +26,8 @@ export default class SettingPerk extends Perk
 	//  Private Variables
 	// -------------------------------------------------------------------------
 
+	static #__ready;
+	static #__ready_resolve;
 	static #__info = {
 		"sectionName":		"setting",
 		"order":			10,
@@ -48,6 +50,15 @@ export default class SettingPerk extends Perk
 	{
 
 		return SettingPerk.#__info;
+
+	}
+
+	// -------------------------------------------------------------------------
+
+	static get ready()
+	{
+
+		return SettingPerk.#__ready;
 
 	}
 
@@ -76,8 +87,21 @@ export default class SettingPerk extends Perk
 	static globalInit()
 	{
 
+		// Init Vars
+		SettingPerk.#__ready = new Promise((resolve, reject) => {
+			SettingPerk.#__ready_resolve = resolve;
+		});
+
 		// Upgrade Unit
 		Unit.upgrade("asset", "setting", new ChainableStore());
+
+		Perk.getPerk("BasicPerk").ready.then(() => {
+			if (SettingPerk.#__ready_resolve)
+			{
+				SettingPerk.#__ready_resolve();
+				SettingPerk.#__ready_resolve = null;
+			}
+		});
 
 	}
 

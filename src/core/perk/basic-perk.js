@@ -26,6 +26,8 @@ export default class BasicPerk extends Perk
 	//  Private Variables
 	// -------------------------------------------------------------------------
 
+	static #__ready;
+	static #__ready_resolve;
 	static #__unitInfo = {};
 	static #__indexes = {
 		"tagName":			{},
@@ -66,6 +68,15 @@ export default class BasicPerk extends Perk
 
 	// -------------------------------------------------------------------------
 
+	static get ready()
+	{
+
+		return BasicPerk.#__ready;
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	static get skills()
 	{
 
@@ -89,6 +100,11 @@ export default class BasicPerk extends Perk
 	static globalInit()
 	{
 
+		// Init Vars
+		BasicPerk.#__ready = new Promise((resolve, reject) => {
+			BasicPerk.#__ready_resolve = resolve;
+		});
+
 		// Upgrade Unit
 		Unit.upgrade("asset", "inventory", new ChainableStore());
 		Unit.upgrade("callback", "initializeCallback", BasicPerk.#_initializeHandler.bind(BasicPerk));
@@ -99,21 +115,21 @@ export default class BasicPerk extends Perk
 		Unit.upgrade("method", "use", BasicPerk.#_use);
 		Unit.upgrade("method", "cast", BasicPerk.#_cast);
 
-		// Create a promise that resolves when document is ready
-		Unit.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
-			if ((document.readyState === "interactive" || document.readyState === "complete"))
-			{
+		// Set Unit's unitRoot to document.body when document is ready
+		if ((document.readyState === "interactive" || document.readyState === "complete"))
+		{
+			Unit.set("inventory", "basic.unitRoot", document.body);
+			BasicPerk.#__ready_resolve();
+			BasicPerk.#__ready_resolve = null;
+		}
+		else
+		{
+			document.addEventListener("DOMContentLoaded", () => {
 				Unit.set("inventory", "basic.unitRoot", document.body);
-				resolve();
-			}
-			else
-			{
-				document.addEventListener("DOMContentLoaded", () => {
-					Unit.set("inventory", "basic.unitRoot", document.body);
-					resolve();
-				});
-			}
-		}));
+				BasicPerk.#__ready_resolve();
+				BasicPerk.#__ready_resolve = null;
+			});
+		}
 
 	}
 

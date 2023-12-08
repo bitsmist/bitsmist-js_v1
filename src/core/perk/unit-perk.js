@@ -63,20 +63,6 @@ export default class UnitPerk extends Perk
 	//  Methods
 	// -------------------------------------------------------------------------
 
-	static async globalInit()
-	{
-
-		// Load tags
-		await Unit.get("inventory", "promise.documentReady");
-		if (Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
-		{
-			UnitPerk.#_loadTags(null, document.body, {"waitForTags":false});
-		}
-
-	}
-
-	// -------------------------------------------------------------------------
-
 	static init(unit, options)
 	{
 
