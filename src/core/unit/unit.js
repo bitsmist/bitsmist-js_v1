@@ -99,6 +99,8 @@ export default class Unit extends HTMLElement
 	connectedCallback()
 	{
 
+		console.debug(`connectedCallback(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+
 		if (!this.#__initialized)
 		{
 			// Upgrade unit
@@ -115,8 +117,6 @@ export default class Unit extends HTMLElement
 		}
 
 		this.#__ready = this.#__ready.then(() => {
-			console.debug(`connectedCallback(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
-
 			return Unit.get("callback", "connectedCallback")(this);
 		});
 
@@ -130,9 +130,9 @@ export default class Unit extends HTMLElement
 	disconnectedCallback()
 	{
 
-		this.#__ready = this.#__ready.then(() => {
-			console.debug(`disconnectedCallback(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+		console.debug(`disconnectedCallback(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 
+		this.#__ready = this.#__ready.then(() => {
 			return Unit.get("callback", "disconnectedCallback")(this);
 		});
 
@@ -146,9 +146,9 @@ export default class Unit extends HTMLElement
 	adoptedCallback()
 	{
 
-		this.#__ready = this.#__ready.then(() => {
-			console.debug(`adoptedCallback(): Unit is adopted. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+		console.debug(`adoptedCallback(): Unit is adopted. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 
+		this.#__ready = this.#__ready.then(() => {
 			return Unit.get("callback", "adoptedCallback")(this);
 		});
 
@@ -161,6 +161,8 @@ export default class Unit extends HTMLElement
 	 */
 	attributeChangedCallback(name, oldValue, newValue)
 	{
+
+		console.debug(`attributeChangedCallback(): Attribute is changed. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}, name=${name}, oldValue=${oldValue}, newValue=${newValue}`);
 
 		if (this.#__initialized)
 		{
