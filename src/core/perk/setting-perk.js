@@ -95,7 +95,7 @@ export default class SettingPerk extends Perk
 		// Upgrade Unit
 		Unit.upgrade("asset", "setting", new ChainableStore());
 
-		Perk.getPerk("BasicPerk").ready.then(() => {
+		return Perk.getPerk("BasicPerk").ready.then(() => {
 			if (SettingPerk.#__ready_resolve)
 			{
 				SettingPerk.#__ready_resolve();
@@ -114,6 +114,8 @@ export default class SettingPerk extends Perk
 		let settings = (options && options["settings"]) || {};
 		settings = SettingPerk.#__injectSettings(unit, settings);
 		settings = SettingPerk.#__mergeSettings(unit, settings);
+
+		await SettingPerk.ready;
 
 		// Upgrade unit
 		unit.upgrade("asset", "setting", new ChainableStore({"items":settings, "chain":Unit.assets["setting"]}));
