@@ -88,19 +88,6 @@ export default class ClassUtil
 
 		let ret;
 
-		if (BITSMIST.V1[className])
-		{
-			ret = BITSMIST.V1[className];
-		}
-
-		if (!ret)
-		{
-			if (globalThis[className])
-			{
-				ret = globalThis[className];
-			}
-		}
-
 		if (!ret)
 		{
 			try
