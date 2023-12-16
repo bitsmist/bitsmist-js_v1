@@ -164,7 +164,7 @@ export default class Perk
 	static getPerk(perkName)
 	{
 
-		Util.assert(perkName in Perk.#__perks, () => `${perkName} doesn't exist.`);
+		Util.assert(perkName in Perk.#__perks, () => `Perk "${perkName}" doesn't exist.`);
 
 		return Perk.#__perks[perkName].object;
 
@@ -179,6 +179,8 @@ export default class Perk
 	 */
 	static getPerkFromSectionName(sectionName)
 	{
+
+		Util.assert(sectionName in Perk.#__sections, () => `Perk for section "${sectionName}" doesn't exist.`);
 
 		return Perk.#__sections[sectionName].object;
 
