@@ -34,10 +34,6 @@ export default class StylePerk extends Perk
 		"sectionName":		"style",
 		"order":			200,
 	};
-	static #__spells = {
-		"summon":			StylePerk.#_loadCSS,
-		"apply":			StylePerk.#_applyCSS,
-	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -60,15 +56,6 @@ export default class StylePerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	static get spells()
-	{
-
-		return StylePerk.#__spells;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -83,6 +70,8 @@ export default class StylePerk extends Perk
 
 		// Upgrade Unit
 		Unit.upgrade("inventory", "style.styles", new ChainableStore());
+		Unit.upgrade("spell", "style.summon", StylePerk.#_loadCSS);
+		Unit.upgrade("spell", "style.apply", StylePerk.#_applyCSS);
 
 		await Perk.getPerk("SettingPerk").ready;
 

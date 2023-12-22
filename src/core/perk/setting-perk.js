@@ -32,15 +32,6 @@ export default class SettingPerk extends Perk
 		"sectionName":		"setting",
 		"order":			10,
 	};
-	static #__skills = {
-		"get":				SettingPerk.#_getSettings,
-		"set":				SettingPerk.#_setSettings,
-		"merge":			SettingPerk.#_mergeSettings,
-	};
-	static #__spells = {
-		"summon":			SettingPerk.#_loadSettings,
-		"apply":			SettingPerk.#_applySettings,
-	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -63,24 +54,6 @@ export default class SettingPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	static get skills()
-	{
-
-		return SettingPerk.#__skills;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static get spells()
-	{
-
-		return SettingPerk.#__spells;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -94,6 +67,11 @@ export default class SettingPerk extends Perk
 
 		// Upgrade Unit
 		Unit.upgrade("asset", "setting", new ChainableStore());
+		Unit.upgrade("skill", "setting.get", SettingPerk.#_getSettings);
+		Unit.upgrade("skill", "setting.set", SettingPerk.#_setSettings);
+		Unit.upgrade("skill", "setting.merge", SettingPerk.#_mergeSettings);
+		Unit.upgrade("spell", "setting.summon", SettingPerk.#_loadSettings);
+		Unit.upgrade("spell", "setting.apply", SettingPerk.#_applySettings);
 
 		return Perk.getPerk("BasicPerk").ready.then(() => {
 			if (SettingPerk.#__ready_resolve)

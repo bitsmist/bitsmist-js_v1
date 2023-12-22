@@ -50,9 +50,9 @@ if (!globalThis.BITSMIST)
 // Shortcut
 globalThis.BITSMIST.V1.Unit = Unit;
 
-// Register Perks
-Perk.registerPerk(Perk);
+// Register Perks (Order matters)
 Perk.registerPerk(BasicPerk);
+Perk.registerPerk(Perk);
 Perk.registerPerk(SettingPerk);
 Perk.registerPerk(StatusPerk);
 Perk.registerPerk(SkinPerk);

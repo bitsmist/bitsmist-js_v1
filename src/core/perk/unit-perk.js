@@ -33,11 +33,6 @@ export default class UnitPerk extends Perk
 		"sectionName":		"unit",
 		"order":			400,
 	};
-	static #__spells = {
-		"materializeAll":	UnitPerk.#_loadTags,
-		"materialize":		UnitPerk.#_loadUnit,
-		"summon":			UnitPerk.#_loadClass,
-	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -51,16 +46,19 @@ export default class UnitPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
+	//  Methods
+	// -------------------------------------------------------------------------
 
-	static get spells()
+	static async globalInit()
 	{
 
-		return UnitPerk.#__spells;
+		// Upgrade Unit
+		Unit.upgrade("spell", "unit.materializeAll", UnitPerk.#_loadTags);
+		Unit.upgrade("spell", "unit.materialize", UnitPerk.#_loadUnit);
+		Unit.upgrade("spell", "unit.summon", UnitPerk.#_loadClass);
 
 	}
 
-	// -------------------------------------------------------------------------
-	//  Methods
 	// -------------------------------------------------------------------------
 
 	static init(unit, options)

@@ -32,12 +32,6 @@ export default class StatusPerk extends Perk
 		"sectionName":		"status",
 		"order":			100,
 	};
-	static #__skills = {
-		"change":			StatusPerk.#_changeStatus,
-	};
-	static #__spells = {
-		"wait":				StatusPerk.#_waitFor,
-	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -51,24 +45,6 @@ export default class StatusPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	static get skills()
-	{
-
-		return StatusPerk.#__skills;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static get spells()
-	{
-
-		return StatusPerk.#__spells;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -77,6 +53,10 @@ export default class StatusPerk extends Perk
 
 		// Init vars
 		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk.#_waitFor(Unit, waitlist, timeout); }
+
+		// Upgrade Unit
+		Unit.upgrade("skill", "status.change", StatusPerk.#_changeStatus);
+		Unit.upgrade("spell", "status.wait", StatusPerk.#_waitFor);
 
 	}
 

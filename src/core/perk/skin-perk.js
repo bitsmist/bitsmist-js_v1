@@ -12,6 +12,7 @@ import AjaxUtil from "../util/ajax-util.js";
 import ChainableStore from "../store/chainable-store.js";
 import Perk from "./perk.js";
 import URLUtil from "../util/url-util.js";
+import Unit from "../unit/unit.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -29,12 +30,6 @@ export default class SkinPerk extends Perk
 		"sectionName":		"skin",
 		"order":			210,
 	};
-	static #__skills = {
-		"apply":			SkinPerk.#_applySkin,
-	};
-	static #__spells = {
-		"summon":			SkinPerk.#_loadSkin,
-	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -48,25 +43,17 @@ export default class SkinPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	static get skills()
-	{
-
-		return SkinPerk.#__skills;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static get spells()
-	{
-
-		return SkinPerk.#__spells;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
+	// -------------------------------------------------------------------------
+
+	static globalInit()
+	{
+
+		Unit.upgrade("skill", "skin.apply", SkinPerk.#_applySkin);
+		Unit.upgrade("spell", "skin.summon", SkinPerk.#_loadSkin);
+
+	}
+
 	// -------------------------------------------------------------------------
 
 	static init(unit, options)

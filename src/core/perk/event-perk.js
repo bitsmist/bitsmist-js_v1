@@ -9,6 +9,7 @@
 // =============================================================================
 
 import Perk from "./perk.js";
+import Unit from "../unit/unit.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -27,16 +28,6 @@ export default class EventPerk extends Perk
 		"sectionName":		"event",
 		"order":			210,
 	};
-	static #__skills = {
-		"add":				EventPerk.#_addEventHandler,
-		"remove":			EventPerk.#_removeEventHandler,
-		"init":				EventPerk.#_initEvents,
-		"reset":			EventPerk.#_removeEvents,
-		"triggerSync":		EventPerk.#_triggerSync,
-	};
-	static #__spells = {
-		"trigger":			EventPerk.#_trigger,
-	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -50,26 +41,20 @@ export default class EventPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	static get skills()
-	{
-
-		return EventPerk.#__skills;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static get spells()
-	{
-
-		return EventPerk.#__spells;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
+
+	static globalInit(unit, options)
+	{
+
+		Unit.upgrade("skill", "event.add", EventPerk.#_addEventHandler);
+		Unit.upgrade("skill", "event.remove", EventPerk.#_removeEventHandler);
+		Unit.upgrade("skill", "event.init", EventPerk.#_initEvents);
+		Unit.upgrade("skill", "event.reset", EventPerk.#_removeEvents);
+		Unit.upgrade("skill", "event.triggerSync", EventPerk.#_triggerSync);
+		Unit.upgrade("spell", "event.trigger", EventPerk.#_trigger);
+
+	}
 
 	static init(unit, options)
 	{

@@ -38,22 +38,6 @@ export default class BasicPerk extends Perk
 		"sectionName":		"basic",
 		"order":			0,
 	};
-	static #__skills = {
-		"scan":				BasicPerk.#_scan,
-		"scanAll":			BasicPerk.#_scanAll,
-		"locate":			BasicPerk.#_locate,
-		"locateAll":		BasicPerk.#_locateAll,
-	};
-	static #__spells = {
-		"start":			BasicPerk.#_start,
-		"stop":				BasicPerk.#_stop,
-		"transform":		BasicPerk.#_transform,
-		"setup":			BasicPerk.#_setup,
-		"refresh":			BasicPerk.#_refresh,
-		"fetch":			BasicPerk.#_fetch,
-		"fill":				BasicPerk.#_fill,
-		"clear":			BasicPerk.#_clear,
-	};
 
 	// -------------------------------------------------------------------------
 	//  Properties
@@ -76,24 +60,6 @@ export default class BasicPerk extends Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	static get skills()
-	{
-
-		return BasicPerk.#__skills;
-
-	}
-
-	// -------------------------------------------------------------------------
-
-	static get spells()
-	{
-
-		return BasicPerk.#__spells;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -107,6 +73,8 @@ export default class BasicPerk extends Perk
 
 		// Upgrade Unit
 		Unit.upgrade("asset", "inventory", new ChainableStore());
+		Unit.upgrade("asset", "skill", new ChainableStore());
+		Unit.upgrade("asset", "spell", new ChainableStore());
 		Unit.upgrade("callback", "initializeCallback", BasicPerk.#_initializeHandler.bind(BasicPerk));
 		Unit.upgrade("callback", "connectedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
 		Unit.upgrade("callback", "disconnectedCallback", BasicPerk.#_disconnectedHandler.bind(BasicPerk));
@@ -114,6 +82,18 @@ export default class BasicPerk extends Perk
 		Unit.upgrade("callback", "attributeChangedCallback", BasicPerk.#_attributeChangedHandler.bind(BasicPerk));
 		Unit.upgrade("method", "use", BasicPerk.#_use);
 		Unit.upgrade("method", "cast", BasicPerk.#_cast);
+		Unit.upgrade("skill", "basic.scan", BasicPerk.#_scan);
+		Unit.upgrade("skill", "basic.scanAll", BasicPerk.#_scanAll);
+		Unit.upgrade("skill", "basic.locate", BasicPerk.#_locate);
+		Unit.upgrade("skill", "basic.locateAll", BasicPerk.#_locateAll);
+		Unit.upgrade("spell", "basic.start", BasicPerk.#_start);
+		Unit.upgrade("spell", "basic.stop", BasicPerk.#_stop);
+		Unit.upgrade("spell", "basic.transform", BasicPerk.#_transform);
+		Unit.upgrade("spell", "basic.setup", BasicPerk.#_setup);
+		Unit.upgrade("spell", "basic.refresh", BasicPerk.#_refresh);
+		Unit.upgrade("spell", "basic.fetch", BasicPerk.#_fetch);
+		Unit.upgrade("spell", "basic.fill", BasicPerk.#_fill);
+		Unit.upgrade("spell", "basic.clear", BasicPerk.#_clear);
 
 		// Set Unit's unitRoot to document.body when document is ready
 		if ((document.readyState === "interactive" || document.readyState === "complete"))
@@ -149,13 +129,15 @@ export default class BasicPerk extends Perk
 		// Upgrade unit
 		unit.upgrade("asset", "perk", {});
 		unit.upgrade("asset", "inventory", new ChainableStore({"chain":Unit.assets["inventory"]}));
+		unit.upgrade("asset", "skill", new ChainableStore({"chain":Unit.assets["skill"]}));
+		unit.upgrade("asset", "spell", new ChainableStore({"chain":Unit.assets["spell"]}));
 		unit.upgrade("method", "use", BasicPerk.#_use);
 		unit.upgrade("method", "cast", BasicPerk.#_cast);
 		unit.upgrade("inventory", "basic.unitRoot", unit);
 
 		// Attach default perks
 		let chain = Promise.resolve();
-		["BasicPerk","Perk","SettingPerk","UnitPerk","StatusPerk","EventPerk", "SkinPerk", "StylePerk"].forEach((perkName) => {
+		["BasicPerk", "SettingPerk","UnitPerk","StatusPerk","EventPerk", "SkinPerk", "StylePerk"].forEach((perkName) => {
 			chain = chain.then(() => {
 				return unit.cast("perk.attach", Perk.getPerk(perkName));
 			});
@@ -226,11 +208,7 @@ export default class BasicPerk extends Perk
 	static #_cast(key, ...args)
 	{
 
-		let pos = key.indexOf(".");
-		let sectionName = key.slice(0, pos);
-		let spellName = key.slice(pos + 1);
-
-		let func = Perk.getPerkFromSectionName(sectionName).spells[spellName];
+		let func = this.assets["spell"].get(key);
 		Util.assert(typeof(func) === "function", () => `Spell is not available. spellName=${key}`);
 
 		return func.call(this, this, ...args);
@@ -249,9 +227,7 @@ export default class BasicPerk extends Perk
 	static #_use(key, ...args)
 	{
 
-		let pos = key.indexOf(".");
-		let func = Perk.getPerkFromSectionName(key.slice(0, pos)).skills[key.slice(pos + 1)];
-
+		let func = this.assets["skill"].get(key);
 		Util.assert(typeof(func) === "function", () => `Skill is not available. skillName=${key}`);
 
 		return func.call(this, this, ...args);

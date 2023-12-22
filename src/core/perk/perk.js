@@ -9,6 +9,7 @@
 // =============================================================================
 
 import ChainableStore from "../store/chainable-store.js";
+import Unit from "../unit/unit.js";
 import Util from "../util/util.js";
 
 // =============================================================================
@@ -28,10 +29,6 @@ export default class Perk
 	static #__info = {
 		"sectionName":		"perk",
 		"order":			0,
-	};
-	static #__spells = {
-		"attachPerks":		Perk.#_attachPerks,
-		"attach":			Perk.#_attach,
 	};
 
 	// -------------------------------------------------------------------------
@@ -65,20 +62,6 @@ export default class Perk
 	}
 
 	// -------------------------------------------------------------------------
-
-	/**
-	 * Perk spells.
-	 *
-	 * @type	{Object}
-	 */
-	static get spells()
-	{
-
-		return Perk.#__spells;
-
-	}
-
-	// -------------------------------------------------------------------------
 	//  Methods
 	// -------------------------------------------------------------------------
 
@@ -92,6 +75,13 @@ export default class Perk
 	 */
 	static globalInit()
 	{
+
+		if (this === Perk)
+		{
+			Unit.upgrade("spell", "perk.attachPerks", Perk.#_attachPerks);
+			Unit.upgrade("spell", "perk.attach", Perk.#_attach);
+		}
+
 	}
 
 	// -------------------------------------------------------------------------
