@@ -187,7 +187,7 @@ export default class StylePerk extends Perk
 			return Promise.resolve(styleInfo);
 		}
 
-		Util.assert(styleName === "default" || Object.keys(styleSettings).length > 0, ()=>`Style settings not found. name=${unit.tagName}, styleName=${styleName}`);
+		Util.warn(styleName === "default" || Object.keys(styleSettings).length > 0, ()=>`Style settings not found. name=${unit.tagName}, styleName=${styleName}`);
 
 		switch (styleSettings["type"]) {
 		case "CSS":
