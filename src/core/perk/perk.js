@@ -186,7 +186,7 @@ export default class Perk
 	static registerHandler(handler, perkName)
 	{
 
-		perkName = perkName || "common";
+		perkName = perkName || this.name;
 
 		if (!Perk.#__handlers[perkName])
 		{
