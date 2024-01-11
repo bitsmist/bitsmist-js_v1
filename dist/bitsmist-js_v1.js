@@ -169,6 +169,8 @@
   	connectedCallback()
   	{
 
+  		console.debug(`connectedCallback(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+
   		if (!this.#__initialized)
   		{
   			// Upgrade unit
@@ -185,8 +187,6 @@
   		}
 
   		this.#__ready = this.#__ready.then(() => {
-  			console.debug(`connectedCallback(): Unit is connected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
-
   			return Unit.get("callback", "connectedCallback")(this);
   		});
 
@@ -200,9 +200,9 @@
   	disconnectedCallback()
   	{
 
-  		this.#__ready = this.#__ready.then(() => {
-  			console.debug(`disconnectedCallback(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+  		console.debug(`disconnectedCallback(): Unit is disconnected. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 
+  		this.#__ready = this.#__ready.then(() => {
   			return Unit.get("callback", "disconnectedCallback")(this);
   		});
 
@@ -216,9 +216,9 @@
   	adoptedCallback()
   	{
 
-  		this.#__ready = this.#__ready.then(() => {
-  			console.debug(`adoptedCallback(): Unit is adopted. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
+  		console.debug(`adoptedCallback(): Unit is adopted. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}`);
 
+  		this.#__ready = this.#__ready.then(() => {
   			return Unit.get("callback", "adoptedCallback")(this);
   		});
 
@@ -231,6 +231,8 @@
   	 */
   	attributeChangedCallback(name, oldValue, newValue)
   	{
+
+  		console.debug(`attributeChangedCallback(): Attribute is changed. name=${this.tagName}, id=${this.id}, uniqueId=${this.uniqueId}, name=${name}, oldValue=${oldValue}, newValue=${newValue}`);
 
   		if (this.#__initialized)
   		{
@@ -1100,19 +1102,6 @@
 
   		let ret;
 
-  		if (BITSMIST.V1[className])
-  		{
-  			ret = BITSMIST.V1[className];
-  		}
-
-  		if (!ret)
-  		{
-  			if (globalThis[className])
-  			{
-  				ret = globalThis[className];
-  			}
-  		}
-
   		if (!ret)
   		{
   			try
@@ -1246,12 +1235,17 @@
   	 *
   	 * @return  {Promise}		Promise.
   	 */
-  	static loadScript(url) {
+  	static loadScript(url, options)
+  	{
 
   		return new Promise((resolve, reject) => {
   			let script = document.createElement('script');
   			script.src = url;
   			script.async = true;
+  			if (options && options["type"])
+  			{
+  				script.type = options["type"];
+  			}
 
   			script.onload = () => {
   				resolve();
@@ -1261,8 +1255,7 @@
   				reject(e);
   			};
 
-  			let head = document.getElementsByTagName('head')[0];
-  			head.appendChild(script);
+  			document.head.appendChild(script);
   		});
 
   	}
@@ -1380,14 +1373,14 @@
   		console.debug(`AjaxUtil.loadClass(): Loading the first file. URL1=${url1}`);
 
   		return Promise.resolve().then(() => {
-  			return AjaxUtil.loadScript(url1);
+  			return AjaxUtil.loadScript(url1, options);
   			/*
   		}).then(() => {
   			if (options["splitClass"])
   			{
   				let url2 = url + ".settings.js";
   				console.debug(`AjaxUtil.loadClass(): Loading the second file. URL2=${url2}`);
-  				return AjaxUtil.loadScript(url2);
+  				return AjaxUtil.loadScript(url2, options);
   			}
   			*/
   		}).then(() => {
@@ -2013,10 +2006,6 @@
   		"sectionName":		"perk",
   		"order":			0,
   	};
-  	static #__spells = {
-  		"attachPerks":		Perk.#_attachPerks,
-  		"attach":			Perk.#_attach,
-  	};
 
   	// -------------------------------------------------------------------------
   	//  Properties
@@ -2036,10 +2025,15 @@
 
   	// -------------------------------------------------------------------------
 
-  	static get spells()
+  	/**
+  	 * Promise that is resolved when Perk is ready.
+  	 *
+  	 * @type	{Object}
+  	 */
+  	static get ready()
   	{
 
-  		return Perk.#__spells;
+  		return Promise.resolve();
 
   	}
 
@@ -2057,6 +2051,13 @@
   	 */
   	static globalInit()
   	{
+
+  		if (this === Perk)
+  		{
+  			Unit.upgrade("spell", "perk.attachPerks", Perk.#_attachPerks);
+  			Unit.upgrade("spell", "perk.attach", Perk.#_attach);
+  		}
+
   	}
 
   	// -------------------------------------------------------------------------
@@ -2071,10 +2072,6 @@
   	 */
   	static init(unit, options)
   	{
-
-  		// Upgrade unit
-  //		unit.upgrade("asset", "perk", new Map());
-
   	}
 
   	// -------------------------------------------------------------------------
@@ -2115,14 +2112,11 @@
   			"depends":		info["depends"],
   		};
 
-  		// Global init
-  		if (Object.hasOwn(perk, "globalInit"))
-  		{
-  			perk.globalInit();
-  		}
-
   		// Create target word index
   		Perk.#__sections[info["sectionName"]] = Perk.#__perks[perk.name];
+
+  		// Global init
+  		return perk.globalInit();
 
   	}
 
@@ -2135,6 +2129,8 @@
   	 */
   	static getPerk(perkName)
   	{
+
+  		Util.assert(perkName in Perk.#__perks, () => `Perk "${perkName}" doesn't exist.`);
 
   		return Perk.#__perks[perkName].object;
 
@@ -2150,6 +2146,8 @@
   	static getPerkFromSectionName(sectionName)
   	{
 
+  		Util.assert(sectionName in Perk.#__sections, () => `Perk for section "${sectionName}" doesn't exist.`);
+
   		return Perk.#__sections[sectionName].object;
 
   	}
@@ -2164,7 +2162,7 @@
   	static registerHandler(handler, perkName)
   	{
 
-  		perkName = perkName || "common";
+  		perkName = perkName || this.name;
 
   		if (!Perk.#__handlers[perkName])
   		{
@@ -2337,6 +2335,8 @@
   	//  Private Variables
   	// -------------------------------------------------------------------------
 
+  	static #__ready;
+  	static #__ready_resolve;
   	static #__unitInfo = {};
   	static #__indexes = {
   		"tagName":			{},
@@ -2346,22 +2346,6 @@
   	static #__info = {
   		"sectionName":		"basic",
   		"order":			0,
-  	};
-  	static #__skills = {
-  		"scan":				BasicPerk.#_scan,
-  		"scanAll":			BasicPerk.#_scanAll,
-  		"locate":			BasicPerk.#_locate,
-  		"locateAll":		BasicPerk.#_locateAll,
-  	};
-  	static #__spells = {
-  		"start":			BasicPerk.#_start,
-  		"stop":				BasicPerk.#_stop,
-  		"transform":		BasicPerk.#_transform,
-  		"setup":			BasicPerk.#_setup,
-  		"refresh":			BasicPerk.#_refresh,
-  		"fetch":			BasicPerk.#_fetch,
-  		"fill":				BasicPerk.#_fill,
-  		"clear":			BasicPerk.#_clear,
   	};
 
   	// -------------------------------------------------------------------------
@@ -2377,19 +2361,10 @@
 
   	// -------------------------------------------------------------------------
 
-  	static get skills()
+  	static get ready()
   	{
 
-  		return BasicPerk.#__skills;
-
-  	}
-
-  	// -------------------------------------------------------------------------
-
-  	static get spells()
-  	{
-
-  		return BasicPerk.#__spells;
+  		return BasicPerk.#__ready;
 
   	}
 
@@ -2400,8 +2375,15 @@
   	static globalInit()
   	{
 
+  		// Init Vars
+  		BasicPerk.#__ready = new Promise((resolve, reject) => {
+  			BasicPerk.#__ready_resolve = resolve;
+  		});
+
   		// Upgrade Unit
   		Unit.upgrade("asset", "inventory", new ChainableStore());
+  		Unit.upgrade("asset", "skill", new ChainableStore());
+  		Unit.upgrade("asset", "spell", new ChainableStore());
   		Unit.upgrade("callback", "initializeCallback", BasicPerk.#_initializeHandler.bind(BasicPerk));
   		Unit.upgrade("callback", "connectedCallback", BasicPerk.#_connectedHandler.bind(BasicPerk));
   		Unit.upgrade("callback", "disconnectedCallback", BasicPerk.#_disconnectedHandler.bind(BasicPerk));
@@ -2409,22 +2391,34 @@
   		Unit.upgrade("callback", "attributeChangedCallback", BasicPerk.#_attributeChangedHandler.bind(BasicPerk));
   		Unit.upgrade("method", "use", BasicPerk.#_use);
   		Unit.upgrade("method", "cast", BasicPerk.#_cast);
+  		Unit.upgrade("skill", "basic.scan", BasicPerk.#_scan);
+  		Unit.upgrade("skill", "basic.scanAll", BasicPerk.#_scanAll);
+  		Unit.upgrade("skill", "basic.locate", BasicPerk.#_locate);
+  		Unit.upgrade("skill", "basic.locateAll", BasicPerk.#_locateAll);
+  		Unit.upgrade("spell", "basic.start", BasicPerk.#_start);
+  		Unit.upgrade("spell", "basic.stop", BasicPerk.#_stop);
+  		Unit.upgrade("spell", "basic.transform", BasicPerk.#_transform);
+  		Unit.upgrade("spell", "basic.setup", BasicPerk.#_setup);
+  		Unit.upgrade("spell", "basic.refresh", BasicPerk.#_refresh);
+  		Unit.upgrade("spell", "basic.fetch", BasicPerk.#_fetch);
+  		Unit.upgrade("spell", "basic.fill", BasicPerk.#_fill);
+  		Unit.upgrade("spell", "basic.clear", BasicPerk.#_clear);
 
-  		// Create a promise that resolves when document is ready
-  		Unit.set("inventory", "promise.documentReady", new Promise((resolve, reject) => {
-  			if ((document.readyState === "interactive" || document.readyState === "complete"))
-  			{
+  		// Set Unit's unitRoot to document.body when document is ready
+  		if ((document.readyState === "interactive" || document.readyState === "complete"))
+  		{
+  			Unit.set("inventory", "basic.unitRoot", document.body);
+  			BasicPerk.#__ready_resolve();
+  			BasicPerk.#__ready_resolve = null;
+  		}
+  		else
+  		{
+  			document.addEventListener("DOMContentLoaded", () => {
   				Unit.set("inventory", "basic.unitRoot", document.body);
-  				resolve();
-  			}
-  			else
-  			{
-  				document.addEventListener("DOMContentLoaded", () => {
-  					Unit.set("inventory", "basic.unitRoot", document.body);
-  					resolve();
-  				});
-  			}
-  		}));
+  				BasicPerk.#__ready_resolve();
+  				BasicPerk.#__ready_resolve = null;
+  			});
+  		}
 
   	}
 
@@ -2444,13 +2438,15 @@
   		// Upgrade unit
   		unit.upgrade("asset", "perk", {});
   		unit.upgrade("asset", "inventory", new ChainableStore({"chain":Unit.assets["inventory"]}));
+  		unit.upgrade("asset", "skill", new ChainableStore({"chain":Unit.assets["skill"]}));
+  		unit.upgrade("asset", "spell", new ChainableStore({"chain":Unit.assets["spell"]}));
   		unit.upgrade("method", "use", BasicPerk.#_use);
   		unit.upgrade("method", "cast", BasicPerk.#_cast);
   		unit.upgrade("inventory", "basic.unitRoot", unit);
 
   		// Attach default perks
   		let chain = Promise.resolve();
-  		["BasicPerk","Perk","SettingPerk","UnitPerk","StatusPerk","EventPerk", "SkinPerk", "StylePerk"].forEach((perkName) => {
+  		["BasicPerk", "SettingPerk","UnitPerk","StatusPerk","EventPerk", "SkinPerk", "StylePerk"].forEach((perkName) => {
   			chain = chain.then(() => {
   				return unit.cast("perk.attach", Perk.getPerk(perkName));
   			});
@@ -2521,11 +2517,7 @@
   	static #_cast(key, ...args)
   	{
 
-  		let pos = key.indexOf(".");
-  		let sectionName = key.slice(0, pos);
-  		let spellName = key.slice(pos + 1);
-
-  		let func = Perk.getPerkFromSectionName(sectionName).spells[spellName];
+  		let func = this.assets["spell"].get(key);
   		Util.assert(typeof(func) === "function", () => `Spell is not available. spellName=${key}`);
 
   		return func.call(this, this, ...args);
@@ -2544,9 +2536,7 @@
   	static #_use(key, ...args)
   	{
 
-  		let pos = key.indexOf(".");
-  		let func = Perk.getPerkFromSectionName(key.slice(0, pos)).skills[key.slice(pos + 1)];
-
+  		let func = this.assets["skill"].get(key);
   		Util.assert(typeof(func) === "function", () => `Skill is not available. skillName=${key}`);
 
   		return func.call(this, this, ...args);
@@ -2948,18 +2938,11 @@
   	//  Private Variables
   	// -------------------------------------------------------------------------
 
+  	static #__ready;
+  	static #__ready_resolve;
   	static #__info = {
   		"sectionName":		"setting",
   		"order":			10,
-  	};
-  	static #__skills = {
-  		"get":				SettingPerk.#_getSettings,
-  		"set":				SettingPerk.#_setSettings,
-  		"merge":			SettingPerk.#_mergeSettings,
-  	};
-  	static #__spells = {
-  		"summon":			SettingPerk.#_loadSettings,
-  		"apply":			SettingPerk.#_applySettings,
   	};
 
   	// -------------------------------------------------------------------------
@@ -2975,19 +2958,10 @@
 
   	// -------------------------------------------------------------------------
 
-  	static get skills()
+  	static get ready()
   	{
 
-  		return SettingPerk.#__skills;
-
-  	}
-
-  	// -------------------------------------------------------------------------
-
-  	static get spells()
-  	{
-
-  		return SettingPerk.#__spells;
+  		return SettingPerk.#__ready;
 
   	}
 
@@ -2998,8 +2972,26 @@
   	static globalInit()
   	{
 
+  		// Init Vars
+  		SettingPerk.#__ready = new Promise((resolve, reject) => {
+  			SettingPerk.#__ready_resolve = resolve;
+  		});
+
   		// Upgrade Unit
   		Unit.upgrade("asset", "setting", new ChainableStore());
+  		Unit.upgrade("skill", "setting.get", SettingPerk.#_getSettings);
+  		Unit.upgrade("skill", "setting.set", SettingPerk.#_setSettings);
+  		Unit.upgrade("skill", "setting.merge", SettingPerk.#_mergeSettings);
+  		Unit.upgrade("spell", "setting.summon", SettingPerk.#_loadSettings);
+  		Unit.upgrade("spell", "setting.apply", SettingPerk.#_applySettings);
+
+  		return Perk.getPerk("BasicPerk").ready.then(() => {
+  			if (SettingPerk.#__ready_resolve)
+  			{
+  				SettingPerk.#__ready_resolve();
+  				SettingPerk.#__ready_resolve = null;
+  			}
+  		});
 
   	}
 
@@ -3012,6 +3004,8 @@
   		let settings = (options && options["settings"]) || {};
   		settings = SettingPerk.#__injectSettings(unit, settings);
   		settings = SettingPerk.#__mergeSettings(unit, settings);
+
+  		await SettingPerk.ready;
 
   		// Upgrade unit
   		unit.upgrade("asset", "setting", new ChainableStore({"items":settings, "chain":Unit.assets["setting"]}));
@@ -3205,35 +3199,32 @@
   	static #__getSettingsURL(unit)
   	{
 
-  		let path;
-  		let fileName;
-  		let query;
-
+  		let url;
   		let settingsRef = unit.get("setting", "setting.options.settingsRef");
+
   		if (settingsRef && settingsRef !== true)
   		{
   			// If URL is specified in ref, use it
-  			let url = URLUtil.parseURL(settingsRef);
-  			path = url.path;
-  			fileName = url.filename;
-  			query = url.query;
+  			url = settingsRef;
   		}
   		else
   		{
   			// Use default path and filename
-  			path = Util.concatPath([
+  			let path = Util.concatPath([
   					unit.get("setting", "system.setting.options.path", unit.get("setting", "system.unit.options.path", "")),
   					unit.get("setting", "setting.options.path", unit.get("setting", "unit.options.path", "")),
   				]);
   			let ext = unit.get("setting", "setting.options.settingFormat",
   						unit.get("setting", "system.setting.options.settingFormat", "json"));
-  			fileName = unit.get("setting", "setting.options.fileName",
+  			let fileName = unit.get("setting", "setting.options.fileName",
   							unit.get("setting", "unit.options.fileName",
   								unit.tagName.toLowerCase())) + ".settings." + ext;
-  			query = unit.get("setting", "unit.options.query");
+  			let query = unit.get("setting", "unit.options.query");
+
+  			url = Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
   		}
 
-  		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+  		return url;
 
   	}
 
@@ -3331,12 +3322,6 @@
   		"sectionName":		"status",
   		"order":			100,
   	};
-  	static #__skills = {
-  		"change":			StatusPerk.#_changeStatus,
-  	};
-  	static #__spells = {
-  		"wait":				StatusPerk.#_waitFor,
-  	};
 
   	// -------------------------------------------------------------------------
   	//  Properties
@@ -3350,24 +3335,6 @@
   	}
 
   	// -------------------------------------------------------------------------
-
-  	static get skills()
-  	{
-
-  		return StatusPerk.#__skills;
-
-  	}
-
-  	// -------------------------------------------------------------------------
-
-  	static get spells()
-  	{
-
-  		return StatusPerk.#__spells;
-
-  	}
-
-  	// -------------------------------------------------------------------------
   	//  Methods
   	// -------------------------------------------------------------------------
 
@@ -3376,6 +3343,10 @@
 
   		// Init vars
   		StatusPerk.waitFor = function(waitlist, timeout) { return StatusPerk.#_waitFor(Unit, waitlist, timeout); };
+
+  		// Upgrade Unit
+  		Unit.upgrade("skill", "status.change", StatusPerk.#_changeStatus);
+  		Unit.upgrade("spell", "status.wait", StatusPerk.#_waitFor);
 
   	}
 
@@ -3885,12 +3856,6 @@
   		"sectionName":		"skin",
   		"order":			210,
   	};
-  	static #__skills = {
-  		"apply":			SkinPerk.#_applySkin,
-  	};
-  	static #__spells = {
-  		"summon":			SkinPerk.#_loadSkin,
-  	};
 
   	// -------------------------------------------------------------------------
   	//  Properties
@@ -3904,25 +3869,17 @@
   	}
 
   	// -------------------------------------------------------------------------
-
-  	static get skills()
-  	{
-
-  		return SkinPerk.#__skills;
-
-  	}
-
-  	// -------------------------------------------------------------------------
-
-  	static get spells()
-  	{
-
-  		return SkinPerk.#__spells;
-
-  	}
-
-  	// -------------------------------------------------------------------------
   	//  Methods
+  	// -------------------------------------------------------------------------
+
+  	static globalInit()
+  	{
+
+  		Unit.upgrade("skill", "skin.apply", SkinPerk.#_applySkin);
+  		Unit.upgrade("spell", "skin.summon", SkinPerk.#_loadSkin);
+
+  	}
+
   	// -------------------------------------------------------------------------
 
   	static init(unit, options)
@@ -3949,7 +3906,7 @@
   			unit.set("inventory", "basic.unitRoot", shadowRoot);
   			break;
   		case "closed":
-  			shadowRoot = unit.attachShadow({mode:"open"});
+  			shadowRoot = unit.attachShadow({mode:"closed"});
   			unit.set("inventory", "skin.shadowRoot", shadowRoot);
   			unit.set("inventory", "basic.unitRoot", shadowRoot);
   			break;
@@ -4176,35 +4133,31 @@
   	static #__getDefaultURL(unit, skinName, options)
   	{
 
-  		let path;
-  		let fileName;
-  		let query;
-
-
+  		let url;
   		let skinRef = unit.get("setting", "skin.options.skinRef");
+
   		if (skinRef && skinRef !== true)
   		{
   			// If URL is specified in ref, use it
-  			let url = URLUtil.parseURL(skinRef);
-  			path = url.path;
-  			fileName = url.filename;
-  			query = url.query;
+  			url = skinRef;
   		}
   		else
   		{
   			// Use default path and filename
-  			path = Util.concatPath([
+  			let path = Util.concatPath([
   					unit.get("setting", "system.skin.options.path",
   						unit.get("setting", "system.unit.options.path", "")),
   					Util.safeGet(options, "path",
   						unit.get("setting", "skin.options.path",
   							unit.get("setting", "unit.options.path", ""))),
   				]);
-  			fileName = SkinPerk.#__getDefaultFilename(unit, skinName, options) + ".html";
-  			query = unit.get("setting", "unit.options.query");
+  			let fileName = SkinPerk.#__getDefaultFilename(unit, skinName, options) + ".html";
+  			let query = unit.get("setting", "unit.options.query");
+
+  			url = Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
   		}
 
-  		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+  		return url;
 
   	}
 
@@ -4253,16 +4206,13 @@
   	//  Private Variables
   	// -------------------------------------------------------------------------
 
+  	static #__ready;
+  	static #__ready_resolve;
   	static #__vault = new WeakMap();
   	static #__applied = {};
-  	static #__cssReady = {};
   	static #__info = {
   		"sectionName":		"style",
   		"order":			200,
-  	};
-  	static #__spells = {
-  		"summon":			StylePerk.#_loadCSS,
-  		"apply":			StylePerk.#_applyCSS,
   	};
 
   	// -------------------------------------------------------------------------
@@ -4278,10 +4228,10 @@
 
   	// -------------------------------------------------------------------------
 
-  	static get spells()
+  	static get ready()
   	{
 
-  		return StylePerk.#__spells;
+  		return StylePerk.#__ready;
 
   	}
 
@@ -4289,43 +4239,35 @@
   	//  Methods
   	// -------------------------------------------------------------------------
 
-  	static globalInit()
+  	static async globalInit()
   	{
 
   		// Init Vars
+  		StylePerk.#__ready = new Promise((resolve, reject) => {
+  			StylePerk.#__ready_resolve = resolve;
+  		});
   		StylePerk.#__vault.set(Unit, {"applied": []});
 
   		// Upgrade Unit
   		Unit.upgrade("inventory", "style.styles", new ChainableStore());
+  		Unit.upgrade("spell", "style.summon", StylePerk.#_loadCSS);
+  		Unit.upgrade("spell", "style.apply", StylePerk.#_applyCSS);
 
-  		StylePerk.#__cssReady["promise"] = new Promise((resolve, reject) => {
-  			StylePerk.#__cssReady["resolve"] = resolve;
-  			StylePerk.#__cssReady["reject"] = reject;
-  		});
+  		await Perk.getPerk("SettingPerk").ready;
 
   		// Load and apply common CSS
-  		Promise.resolve();
-  		Unit.get("inventory", "promise.documentReady").then(() => {
-  			let promises = [];
-  			Object.entries(Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
-  				promises.push(StylePerk.#_loadCSS(Unit, sectionName, sectionValue, true));
-  			});
-
-  			return Promise.all(promises).then(() => {
-  				let chain = Promise.resolve();
-  				let styles = Unit.get("setting", "system.style.options.apply", []);
-  				for (let i = 0; i < styles.length; i++)
-  				{
-  					chain = chain.then(() => {
-  						return StylePerk.#_applyCSS(Unit, styles[i]);
-  					});
-  				}
-
-  				return chain.then(() => {
-  					StylePerk.#__cssReady["resolve"]();
-  				});
-  			});
+  		let promises = [];
+  		Object.entries(Unit.get("setting", "system.style.styles", {})).forEach(([sectionName, sectionValue]) => {
+  			promises.push(StylePerk.#_loadCSS(Unit, sectionName, sectionValue, true));
   		});
+
+  		await Promise.all(promises);
+  		await Perk.getPerk("BasicPerk").ready; // === documentReady
+  		await StylePerk.#__applyAllCSS(Unit, Unit.get("setting", "system.style.options.apply", []));
+
+  		// Ready
+  		StylePerk.#__ready_resolve();
+  		StylePerk.#__ready_resolve = null;
 
   	}
 
@@ -4353,65 +4295,49 @@
   	//  Event Handlers (Unit)
   	// -------------------------------------------------------------------------
 
-  	static #StylePerk_onBeforeTransform(sender, e, ex)
+  	static async #StylePerk_onBeforeTransform(sender, e, ex)
   	{
 
-  		return StylePerk.#__cssReady.promise.then(() => {
-  			let promises = [];
+  		// Wait global CSS to be applied
+  		await StylePerk.ready;
 
-  			// List common CSS
-  			let css = this.get("setting", "style.options.apply", []);
+  		// Clear CSS
+  		StylePerk.#_clearCSS(this);
 
-  			if (this.get("setting", "style.options.hasStyle", true))
-  			{
-  				// List style-specific common CSS
-  				css = css.concat(this.get("setting", `style.styles.${e.detail.styleName}.apply`, []));
+  		// Load common CSS
+  		let promises = [];
+  		let css = this.get("setting", "style.options.apply", []);
+  		for (let i = 0; i < css.length; i++)
+  		{
+  			promises.push(StylePerk.#_loadCSS(this, css[i]));
+  		}
 
-  				// Load unit-specific CSS
-  				promises.push(StylePerk.#_loadCSS(this, e.detail.styleName, e.detail.styleOptions));
-  			}
-
-  			// Load common CSS
-  			for (let i = 0; i < css.length; i++)
-  			{
-  				promises.push(StylePerk.#_loadCSS(this, css[i]));
-  			}
-
-  			return Promise.all(promises);
-  		});
+  		// Apply common CSS
+  		await Promise.all(promises);
+  		await StylePerk.#__applyAllCSS(this,css);
 
   	}
 
   	// -------------------------------------------------------------------------
 
-  	static #StylePerk_onDoTransform(sender, e, ex)
+  	static async #StylePerk_onDoTransform(sender, e, ex)
   	{
-
-  		// List common CSS
-  		let css = this.get("setting", "style.options.apply", []);
 
   		if (this.get("setting", "style.options.hasStyle", true))
   		{
-  			// List style-specific common CSS
-  			css = css.concat(this.get("setting", `style.styles.${e.detail.styleName}.apply`, []));
-
-  			// List unit-specific CSS
+  			// Load unit-specific CSS
+  			let promises = [];
+  			let css = this.get("setting", `style.styles.${e.detail.styleName}.apply`, []);
   			css.push(e.detail.styleName);
+  			for (let i = 0; i < css.length; i++)
+  			{
+  				promises.push(StylePerk.#_loadCSS(this, css[i]));
+  			}
+
+  			// Apply unit-specific CSS
+  			await Promise.all(promises);
+  			await StylePerk.#__applyAllCSS(this, css);
   		}
-
-  		// Clear CSS
-  		StylePerk.#_clearCSS(this);
-
-  		// Apply All CSS
-  		let chain = Promise.resolve();
-  		for (let i = 0; i < css.length; i++)
-  		{
-  			chain = chain.then(() => {
-  				return StylePerk.#_applyCSS(this, css[i]);
-  			});
-  		}
-
-  		return chain;
 
   	}
 
@@ -4440,6 +4366,8 @@
   			console.debug(`StylePerk.#_loadCSS(): Style already loaded. name=${unit.tagName}, styleName=${styleName}`);
   			return Promise.resolve(styleInfo);
   		}
+
+  		Util.warn(styleName === "default" || Object.keys(styleSettings).length > 0, ()=>`Style settings not found. name=${unit.tagName}, styleName=${styleName}`);
 
   		switch (styleSettings["type"]) {
   		case "CSS":
@@ -4565,7 +4493,31 @@
   	// -------------------------------------------------------------------------
   	//  Privates
   	// -------------------------------------------------------------------------
-  	//
+
+  	/**
+  	 * Apply all CSS.
+  	 *
+  	 * @param	{Unit}			unit				Unit.
+  	 * @param	{Array}			css					Array of CSS names to apply.
+  	 */
+  	static #__applyAllCSS(unit, css)
+  	{
+
+  		let chain = Promise.resolve();
+
+  		for (let i = 0; i < css.length; i++)
+  		{
+  			chain = chain.then(() => {
+  				return StylePerk.#_applyCSS(unit, css[i]);
+  			});
+  		}
+
+  		return chain;
+
+  	}
+
+  	// -------------------------------------------------------------------------
+
   	/**
   	 * Get settings from element's attribute.
   	 *
@@ -4652,34 +4604,31 @@
   	static #__getDefaultURL(unit, styleName, options)
   	{
 
-  		let path;
-  		let fileName;
-  		let query;
+  		let url;
 
   		let cssRef = unit.get("setting", "style.options.styleRef");
   		if (cssRef && cssRef !== true)
   		{
   			// If URL is specified in ref, use it
-  			let url = URLUtil.parseURL(cssRef);
-  			path = url.path;
-  			fileName = url.filename;
-  			query = url.query;
+  			url = cssRef;
   		}
   		else
   		{
   			// Use default path and filename
-  			path = Util.concatPath([
+  			let path = Util.concatPath([
   					unit.get("setting", "system.style.options.path",
   						unit.get("setting", "system.unit.options.path", "")),
   					Util.safeGet(options, "path",
   						unit.get("setting", "style.options.path",
   							unit.get("setting", "unit.options.path", ""))),
   				]);
-  			fileName =  StylePerk.#__getDefaultFilename(unit, styleName, options) + ".css";
-  			query = unit.get("setting", "unit.options.query");
+  			let fileName =  StylePerk.#__getDefaultFilename(unit, styleName, options) + ".css";
+  			let query = unit.get("setting", "unit.options.query");
+
+  			url = Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
   		}
 
-  		return Util.concatPath([path, fileName]) + (query ? `?${query}` : "");
+  		return url;
 
   	}
 
@@ -4733,16 +4682,6 @@
   		"sectionName":		"event",
   		"order":			210,
   	};
-  	static #__skills = {
-  		"add":				EventPerk.#_addEventHandler,
-  		"remove":			EventPerk.#_removeEventHandler,
-  		"init":				EventPerk.#_initEvents,
-  		"reset":			EventPerk.#_removeEvents,
-  		"triggerSync":		EventPerk.#_triggerSync,
-  	};
-  	static #__spells = {
-  		"trigger":			EventPerk.#_trigger,
-  	};
 
   	// -------------------------------------------------------------------------
   	//  Properties
@@ -4756,26 +4695,20 @@
   	}
 
   	// -------------------------------------------------------------------------
-
-  	static get skills()
-  	{
-
-  		return EventPerk.#__skills;
-
-  	}
-
-  	// -------------------------------------------------------------------------
-
-  	static get spells()
-  	{
-
-  		return EventPerk.#__spells;
-
-  	}
-
-  	// -------------------------------------------------------------------------
   	//  Methods
   	// -------------------------------------------------------------------------
+
+  	static globalInit(unit, options)
+  	{
+
+  		Unit.upgrade("skill", "event.add", EventPerk.#_addEventHandler);
+  		Unit.upgrade("skill", "event.remove", EventPerk.#_removeEventHandler);
+  		Unit.upgrade("skill", "event.init", EventPerk.#_initEvents);
+  		Unit.upgrade("skill", "event.reset", EventPerk.#_removeEvents);
+  		Unit.upgrade("skill", "event.triggerSync", EventPerk.#_triggerSync);
+  		Unit.upgrade("spell", "event.trigger", EventPerk.#_trigger);
+
+  	}
 
   	static init(unit, options)
   	{
@@ -5315,11 +5248,6 @@
   		"sectionName":		"unit",
   		"order":			400,
   	};
-  	static #__spells = {
-  		"materializeAll":	UnitPerk.#_loadTags,
-  		"materialize":		UnitPerk.#_loadUnit,
-  		"summon":			UnitPerk.#_loadClass,
-  	};
 
   	// -------------------------------------------------------------------------
   	//  Properties
@@ -5333,27 +5261,16 @@
   	}
 
   	// -------------------------------------------------------------------------
-
-  	static get spells()
-  	{
-
-  		return UnitPerk.#__spells;
-
-  	}
-
-  	// -------------------------------------------------------------------------
   	//  Methods
   	// -------------------------------------------------------------------------
 
   	static async globalInit()
   	{
 
-  		// Load tags
-  		await Unit.get("inventory", "promise.documentReady");
-  		if (Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
-  		{
-  			UnitPerk.#_loadTags(null, document.body, {"waitForTags":false});
-  		}
+  		// Upgrade Unit
+  		Unit.upgrade("spell", "unit.materializeAll", UnitPerk.#_loadTags);
+  		Unit.upgrade("spell", "unit.materialize", UnitPerk.#_loadUnit);
+  		Unit.upgrade("spell", "unit.summon", UnitPerk.#_loadClass);
 
   	}
 
@@ -5435,7 +5352,9 @@
   				console.debug(`ClassPerk.#_loadClass(): Loading class. className=${className}, baseClassName=${baseClassName}`);
   				UnitPerk.#__classInfo[baseClassName] = {"status":"loading"};
 
-  				promise = AjaxUtil.loadClass(UnitPerk.#__getClassURL(tagName, settings)).then(() => {
+  				let options = {};
+  				options["type"] = Unit.get("setting", "system.unit.options.type", "text/javascript");
+  				promise = AjaxUtil.loadClass(UnitPerk.#__getClassURL(tagName, settings), options).then(() => {
   					UnitPerk.#__classInfo[baseClassName] = {"status":"loaded"};
   				});
   				UnitPerk.#__classInfo[baseClassName].promise = promise;
@@ -5832,8 +5751,29 @@
    */
   // =============================================================================
 
-  Perk.registerPerk(Perk);
+
+  // Export to global BITSMIST.V1
+  if (!globalThis.BITSMIST)
+  {
+  	globalThis.BITSMIST = {};
+  	globalThis.BITSMIST.V1 = {};
+  	globalThis.BITSMIST.V1.$CORE = {};
+  	globalThis.BITSMIST.V1.$CORE.Util = Util;
+  	globalThis.BITSMIST.V1.$CORE.ClassUtil = ClassUtil;
+  	globalThis.BITSMIST.V1.$CORE.AjaxUtil = AjaxUtil;
+  	globalThis.BITSMIST.V1.$CORE.URLUtil = URLUtil;
+  	globalThis.BITSMIST.V1.$CORE.Store = Store;
+  	globalThis.BITSMIST.V1.$CORE.ChainableStore = ChainableStore;
+  	globalThis.BITSMIST.V1.$CORE.Perk = Perk;
+  	globalThis.BITSMIST.V1.$CORE.Unit = Unit;
+  }
+
+  // Shortcut
+  globalThis.BITSMIST.V1.Unit = Unit;
+
+  // Register Perks (Order matters)
   Perk.registerPerk(BasicPerk);
+  Perk.registerPerk(Perk);
   Perk.registerPerk(SettingPerk);
   Perk.registerPerk(StatusPerk);
   Perk.registerPerk(SkinPerk);
@@ -5841,11 +5781,13 @@
   Perk.registerPerk(EventPerk);
   Perk.registerPerk(UnitPerk);
 
-  // Shortcut
-  if (globalThis.BITSMIST)
-  {
-  	globalThis.BITSMIST.V1.Unit = Unit;
-  }
+  // Load Tags
+  BasicPerk.ready.then(async () => {
+  	if (Unit.get("setting", "system.unit.options.autoLoadOnStartup", true))
+  	{
+  		Unit.cast("unit.materializeAll", document.body, {"waitForTags":false});
+  	}
+  });
 
   exports.AjaxUtil = AjaxUtil;
   exports.ChainableStore = ChainableStore;
