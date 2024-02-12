@@ -64,25 +64,33 @@ export default class URLUtil
 	static buildURL(routeInfo, options)
 	{
 
-		let newURLInfo = Object.assign({}, URLUtil.parseURL(), routeInfo);
-		let url = (routeInfo["URL"] ? routeInfo["URL"] : Util.concatPath([newURLInfo["protocol"] + "//", newURLInfo["host"], newURLInfo["pathname"]]));
+		let url= new URL(routeInfo["href"] || routeInfo["pathname"] || window.location.href, document.baseURI);
 
-		if (newURLInfo["queryParameters"])
+		url.protocol = routeInfo["protocol"] || url.protocol;
+		url.username = routeInfo["username"] || url.username;
+		url.password = routeInfo["password"] || url.password;
+		url.host = routeInfo["host"] || url.host;
+		url.hostname = routeInfo["hostname"] || url.hostname;
+		url.port = routeInfo["port"] || url.port;
+		if (routeInfo["href"])
+		{
+			url.pathname = routeInfo["pathname"] || url.pathname;
+		}
+		url.search = routeInfo["search"] || url.search;
+		url.hash = routeInfo["hash"] || url.hash;
+
+		if (routeInfo["queryParameters"])
 		{
 			let params = {};
 			if (options && options["mergeParameters"])
 			{
-				params = Object.assign(params, URLUtil.loadParameters());
+				params = URLUtil.loadParameters();
 			}
-			params = Object.assign(params, newURLInfo["queryParameters"]);
-			url += URLUtil.buildQuery(params);
-		}
-		else
-		{
-			url += newURLInfo["query"];
+			params = Object.assign(params, routeInfo["queryParameters"]);
+			url.search = URLUtil.buildQuery(params);
 		}
 
-		return ( url ? url : "/" );
+		return url.href;
 
 	}
 
@@ -133,7 +141,7 @@ export default class URLUtil
 	{
 
 		url = url || window.location.href;
-		let parsed = new URL(url, window.location.href);
+		let parsed = new URL(url, document.baseURI);
 		let ret = {
 			"protocol": parsed.protocol,
 			"username":	parsed.username,
@@ -142,15 +150,15 @@ export default class URLUtil
 			"hostname": parsed.hostname,
 			"port":		parsed.port,
 			"pathname":	parsed.pathname,
-			"path":		parsed.pathname.substring(0, parsed.pathname.lastIndexOf("/") + 1),
 			"search": 	parsed.search,
-			"query": 	parsed.search,
+			"searchParams":	parsed.searchParams,
 			"hash": 	parsed.hash,
 			"filename":	parsed.pathname.split("/").pop(),
-			"queryParameters": URLUtil.loadParameters(url),
 		};
+		ret["path"] = parsed.pathname.substring(0, parsed.pathname.lastIndexOf("/") + 1);
 		ret["filenameWithoutExtension"] = ret["filename"].split(".")[0];
 		ret["extension"] = ret["filename"].split(".").pop();
+		ret["queryParameters"] = URLUtil.loadParameters(url);
 
 		return ret;
 
