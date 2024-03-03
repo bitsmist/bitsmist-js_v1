@@ -368,7 +368,8 @@ export default class BasicPerk extends Perk
 	{
 
 		console.debug(`BasicPerk._start(): Starting unit. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
-		await unit.cast("setting.apply", {"settings":unit.assets["setting"].items});
+		await unit.cast("setting.apply", {"settings":Util.deepClone(unit.assets["setting"].items}));
+		//await unit.cast("setting.apply", {"settings":unit.assets["setting"].items});
 		await unit.cast("event.trigger", "beforeStart");
 		unit.use("status.change", "starting");
 		if (unit.get("setting", "basic.options.autoTransform", true))
