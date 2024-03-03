@@ -19,6 +19,12 @@ export default class ChainableStore extends Store
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	#__chain;
+
+	// -------------------------------------------------------------------------
 	//  Constructor
 	// -------------------------------------------------------------------------
 
@@ -33,11 +39,8 @@ export default class ChainableStore extends Store
 
 		super(options);
 
-		// Init vars
-		this._chain;
-
 		// Chain
-		let chain = Util.safeGet(this._options, "chain");
+		let chain = Util.safeGet(this.options, "chain");
 		if (chain)
 		{
 			this.chain(chain);
@@ -54,12 +57,15 @@ export default class ChainableStore extends Store
 	 *
 	 * @type	{Object}
 	 */
+	/*
 	get localItems()
 	{
 
-		return Store.prototype.clone.call(this);
+		//return super.clone();
+		return this.items;
 
 	}
+	*/
 
 	// -------------------------------------------------------------------------
 	//  Method
@@ -73,13 +79,14 @@ export default class ChainableStore extends Store
 	clone()
 	{
 
-		if (this._chain)
+		if (this.#__chain)
 		{
-			return Util.deepMerge(this._chain.clone(), this._items);
+			//return Util.deepMerge(this.#__chain.clone(), this._items);
+			return Util.deepMerge(this.#__chain.clone(), this.items);
 		}
 		else
 		{
-			return Store.prototype.clone.call(this);
+			return super.clone();
 		}
 
 	}
@@ -94,7 +101,7 @@ export default class ChainableStore extends Store
 	chain(store)
 	{
 
-		this._chain = store;
+		this.#__chain = store;
 
 	}
 
@@ -116,20 +123,25 @@ export default class ChainableStore extends Store
 
 		let result = defaultValue;
 
-		if (Store.prototype.has.call(this, key) && this._chain && Store.prototype.has.call(this._chain, key))
+		/*
+		if (super.has(key) && this.#__chain && super.has.call(this.#__chain, key))
 		{
 			// Both has key then deep merge
-			result = Util.deepMerge(Store.prototype.get.call(this._chain, key), Store.prototype.get.call(this, key));
+			//result = Util.deepMerge(super.get.call(this.#__chain, key), super.get(key));
+			result = Util.deepMerge(Util.deepClone(super.get.call(this.#__chain, key)), super.get(key));
 		}
-		else if (Store.prototype.has.call(this, key))
+		else
+		*/
+		if (super.has(key))
 		{
-			// Only this has key
-			result = Store.prototype.get.call(this, key, defaultValue);
+			//// Only this has key
+			// this has the key
+			result = super.get(key, defaultValue);
 		}
-		else if (this._chain)
+		else if (this.#__chain)
 		{
-			// Only chain has key
-			result = this._chain.get(key, defaultValue);
+			// Try the chain
+			result = this.#__chain.get(key, defaultValue);
 		}
 
 		return result;
@@ -148,13 +160,13 @@ export default class ChainableStore extends Store
 	merge(newItems, merger, options)
 	{
 
-		if (Util.safeGet(options, "writeThrough", this._options["writeThrough"]))
+		if (Util.safeGet(options, "writeThrough", this.options["writeThrough"]))
 		{
-			this._chain.merge(newItems, merger);
+			this.#__chain.merge(newItems, merger);
 		}
 		else
 		{
-			Store.prototype.merge.call(this, newItems, merger);
+			super.merge(newItems, merger);
 		}
 
 	}
@@ -171,13 +183,13 @@ export default class ChainableStore extends Store
 	set(key, value, options)
 	{
 
-		if (Util.safeGet(options, "writeThrough", this._options["writeThrough"]))
+		if (Util.safeGet(options, "writeThrough", this.options["writeThrough"]))
 		{
-			this._chain.set(key, value, options);
+			this.#__chain.set(key, value, options);
 		}
 		else
 		{
-			Store.prototype.set.call(this, key, value, options);
+			super.set(key, value, options);
 		}
 
 	}
@@ -194,11 +206,12 @@ export default class ChainableStore extends Store
 	has(key)
 	{
 
-		let result = Util.safeHas(this._items, key);
+		//let result = Util.safeHas(this._items, key);
+		let result = Util.safeHas(this.items, key);
 
-		if (result === false && this._chain)
+		if (result === false && this.#__chain)
 		{
-			result = this._chain.has(key);
+			result = this.#__chain.has(key);
 		}
 
 		return result;
