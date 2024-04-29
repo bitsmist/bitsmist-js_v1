@@ -148,12 +148,12 @@ export default class Store
 	 * Merge items.
 	 *
 	 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
-	 * @param	{Function}		merger				Merge function.
+	 * @param	{Object}		options				Optoins.
 	 */
-	merge(newItems, merger)
+	merge(newItems, options)
 	{
 
-		merger = merger || this.#__merger;
+		let merger =  Util.safeGet(options, "merger", this.#__merger);
 		let items = (Array.isArray(newItems) ? newItems: [newItems]);
 
 		for (let i = 0; i < items.length; i++)
