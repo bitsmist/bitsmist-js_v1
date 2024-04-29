@@ -18,6 +18,19 @@ export default class Store
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	#__options;
+	#__merger;
+
+	// -------------------------------------------------------------------------
+	//  Protected Variables
+	// -------------------------------------------------------------------------
+
+	_items;
+
+	// -------------------------------------------------------------------------
 	//  Constructor
 	// -------------------------------------------------------------------------
 
@@ -30,7 +43,7 @@ export default class Store
 	{
 
 		// Init
-		this._options = options || {};
+		this.#__options = options || {};
 		this._items = Util.safeGet(options, "items", {});
 		this.merger = Util.safeGet(options, "merger", Util.deepMerge);
 
@@ -48,14 +61,14 @@ export default class Store
 	get options()
 	{
 
-		return this._options;
+		return this.#__options;
 
 	}
 
 	set options(value)
 	{
 
-		this._options = value;
+		this.#__options = value;
 
 	}
 
@@ -90,7 +103,7 @@ export default class Store
 	get merger()
 	{
 
-		this._merger;
+		return this.#__merger;
 
 	}
 
@@ -99,7 +112,7 @@ export default class Store
 
 		Util.assert(typeof value === "function", `Store.merger(setter): Merger is not a function. merger=${value}`, TypeError);
 
-		this._merger = value;
+		this.#__merger = value;
 
 	}
 
@@ -145,7 +158,7 @@ export default class Store
 	merge(newItems, merger)
 	{
 
-		merger = merger || this._merger;
+		merger = merger || this.#__merger;
 		let items = (Array.isArray(newItems) ? newItems: [newItems]);
 
 		for (let i = 0; i < items.length; i++)
