@@ -78,7 +78,7 @@ export default class ChainableStore extends Store
 
 		if (this.#__chain)
 		{
-			return Util.deepMerge(this.#__chain.clone(), this._items);
+			return Util.deepMerge(this.#__chain.clone(), super.clone());
 		}
 		else
 		{

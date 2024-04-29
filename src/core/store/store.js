@@ -23,12 +23,7 @@ export default class Store
 
 	#__options;
 	#__merger;
-
-	// -------------------------------------------------------------------------
-	//  Protected Variables
-	// -------------------------------------------------------------------------
-
-	_items;
+	#__items;
 
 	// -------------------------------------------------------------------------
 	//  Constructor
@@ -44,7 +39,7 @@ export default class Store
 
 		// Init
 		this.#__options = options || {};
-		this._items = Util.safeGet(options, "items", {});
+		this.#__items = Util.safeGet(options, "items", {});
 		this.merger = Util.safeGet(options, "merger", Util.deepMerge);
 
 	}
@@ -82,14 +77,14 @@ export default class Store
 	get items()
 	{
 
-		return this.clone();
+		return this.#__items;
 
 	}
 
 	set items(value)
 	{
 
-		this._items = value;
+		this.#__items = value;
 
 	}
 
@@ -129,7 +124,7 @@ export default class Store
 	clear()
 	{
 
-		this._items = {};
+		this.#__items = {};
 
 	}
 
@@ -143,7 +138,7 @@ export default class Store
 	clone()
 	{
 
-		return Util.deepMerge({}, this._items);
+		return Util.deepMerge({}, this.#__items);
 
 	}
 
@@ -163,7 +158,7 @@ export default class Store
 
 		for (let i = 0; i < items.length; i++)
 		{
-			this._items = merger(this._items, items[i]);
+			this.#__items = merger(this.#__items, items[i]);
 		}
 
 	}
@@ -181,7 +176,7 @@ export default class Store
 	get(key, defaultValue)
 	{
 
-		return Util.deepClone(Util.safeGet(this._items, key, defaultValue));
+		return Util.safeGet(this.#__items, key, defaultValue);
 
 	}
 
@@ -196,7 +191,7 @@ export default class Store
 	set(key, value, options)
 	{
 
-		Util.safeSet(this._items, key, value);
+		Util.safeSet(this.#__items, key, value);
 
 	}
 
@@ -210,7 +205,7 @@ export default class Store
 	remove(key)
 	{
 
-		Util.safeRemove(this._items, key);
+		Util.safeRemove(this.#__items, key);
 
 	}
 
@@ -226,7 +221,7 @@ export default class Store
 	has(key)
 	{
 
-		return Util.safeHas(this._items, key);
+		return Util.safeHas(this.#__items, key);
 
 	}
 
