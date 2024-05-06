@@ -77,14 +77,7 @@ export default class Store
 	get items()
 	{
 
-		return this.#__items;
-
-	}
-
-	set items(value)
-	{
-
-		this.#__items = value;
+		return this.clone();
 
 	}
 
@@ -128,6 +121,20 @@ export default class Store
 
 	}
 
+	// -----------------------------------------------------------------------------
+
+    /**
+     * Replace all values in the store.
+     *
+     * @param   {Object}        newItem				New item.
+     */
+    replace(newItem)
+    {
+
+        this.#__items = newItem;
+
+    }
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -138,7 +145,7 @@ export default class Store
 	clone()
 	{
 
-		return Util.deepMerge({}, this.#__items);
+		return Util.deepClone(this.#__items);
 
 	}
 
@@ -176,7 +183,7 @@ export default class Store
 	get(key, defaultValue)
 	{
 
-		return Util.safeGet(this.#__items, key, defaultValue);
+		return Util.deepClone(Util.safeGet(this.#__items, key, defaultValue));
 
 	}
 
