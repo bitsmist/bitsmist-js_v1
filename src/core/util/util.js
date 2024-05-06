@@ -662,10 +662,7 @@ export default class Util
 	static #__isObject(target)
 	{
 
-		let type = typeof target;
-		let conName = (target && target.constructor && target.constructor.name);
-
-		return (target !== null && conName === "Object" && type !== "function");
+		return (target !== null && typeof target === "object" && (target.constructor === undefined || target.constructor.name === "Object"));
 
 	}
 
