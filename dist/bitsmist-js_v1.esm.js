@@ -50,16 +50,6 @@ function v4(options, buf, offset) {
   rnds[6] = rnds[6] & 0x0f | 0x40;
   rnds[8] = rnds[8] & 0x3f | 0x80; // Copy bytes to buffer, if provided
 
-  if (buf) {
-    offset = offset || 0;
-
-    for (let i = 0; i < 16; ++i) {
-      buf[offset + i] = rnds[i];
-    }
-
-    return buf;
-  }
-
   return unsafeStringify(rnds);
 }
 
@@ -983,10 +973,7 @@ class Util
 	static #__isObject(target)
 	{
 
-		let type = typeof target;
-		let conName = (target && target.constructor && target.constructor.name);
-
-		return (target !== null && conName === "Object" && type !== "function");
+		return (target !== null && typeof target === "object" && (target.constructor === undefined || target.constructor.name === "Object"));
 
 	}
 
@@ -1450,25 +1437,33 @@ class URLUtil
 	static buildURL(routeInfo, options)
 	{
 
-		let newURLInfo = Object.assign({}, URLUtil.parseURL(), routeInfo);
-		let url = (routeInfo["URL"] ? routeInfo["URL"] : Util.concatPath([newURLInfo["protocol"] + "//", newURLInfo["host"], newURLInfo["pathname"]]));
+		let url= new URL(routeInfo["href"] || routeInfo["pathname"] || window.location.href, document.baseURI);
 
-		if (newURLInfo["queryParameters"])
+		url.protocol = routeInfo["protocol"] || url.protocol;
+		url.username = routeInfo["username"] || url.username;
+		url.password = routeInfo["password"] || url.password;
+		url.host = routeInfo["host"] || url.host;
+		url.hostname = routeInfo["hostname"] || url.hostname;
+		url.port = routeInfo["port"] || url.port;
+		if (routeInfo["href"])
+		{
+			url.pathname = routeInfo["pathname"] || url.pathname;
+		}
+		url.search = routeInfo["search"] || url.search;
+		url.hash = routeInfo["hash"] || url.hash;
+
+		if (routeInfo["queryParameters"])
 		{
 			let params = {};
 			if (options && options["mergeParameters"])
 			{
-				params = Object.assign(params, URLUtil.loadParameters());
+				params = URLUtil.loadParameters();
 			}
-			params = Object.assign(params, newURLInfo["queryParameters"]);
-			url += URLUtil.buildQuery(params);
-		}
-		else
-		{
-			url += newURLInfo["query"];
+			params = Object.assign(params, routeInfo["queryParameters"]);
+			url.search = URLUtil.buildQuery(params);
 		}
 
-		return ( url ? url : "/" );
+		return url.href;
 
 	}
 
@@ -1519,7 +1514,7 @@ class URLUtil
 	{
 
 		url = url || window.location.href;
-		let parsed = new URL(url, window.location.href);
+		let parsed = new URL(url, document.baseURI);
 		let ret = {
 			"protocol": parsed.protocol,
 			"username":	parsed.username,
@@ -1528,15 +1523,15 @@ class URLUtil
 			"hostname": parsed.hostname,
 			"port":		parsed.port,
 			"pathname":	parsed.pathname,
-			"path":		parsed.pathname.substring(0, parsed.pathname.lastIndexOf("/") + 1),
 			"search": 	parsed.search,
-			"query": 	parsed.search,
+			"searchParams":	parsed.searchParams,
 			"hash": 	parsed.hash,
 			"filename":	parsed.pathname.split("/").pop(),
-			"queryParameters": URLUtil.loadParameters(url),
 		};
+		ret["path"] = parsed.pathname.substring(0, parsed.pathname.lastIndexOf("/") + 1);
 		ret["filenameWithoutExtension"] = ret["filename"].split(".")[0];
 		ret["extension"] = ret["filename"].split(".").pop();
+		ret["queryParameters"] = URLUtil.loadParameters(url);
 
 		return ret;
 
@@ -1563,6 +1558,14 @@ class Store
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	#__options;
+	#__merger;
+	#__items;
+
+	// -------------------------------------------------------------------------
 	//  Constructor
 	// -------------------------------------------------------------------------
 
@@ -1575,8 +1578,8 @@ class Store
 	{
 
 		// Init
-		this._options = options || {};
-		this._items = Util.safeGet(options, "items", {});
+		this.#__options = options || {};
+		this.#__items = Util.safeGet(options, "items", {});
 		this.merger = Util.safeGet(options, "merger", Util.deepMerge);
 
 	}
@@ -1593,14 +1596,14 @@ class Store
 	get options()
 	{
 
-		return this._options;
+		return this.#__options;
 
 	}
 
 	set options(value)
 	{
 
-		this._options = value;
+		this.#__options = value;
 
 	}
 
@@ -1618,13 +1621,6 @@ class Store
 
 	}
 
-	set items(value)
-	{
-
-		this._items = value;
-
-	}
-
 	// -------------------------------------------------------------------------
 
 	/**
@@ -1635,7 +1631,7 @@ class Store
 	get merger()
 	{
 
-		this._merger;
+		return this.#__merger;
 
 	}
 
@@ -1644,7 +1640,7 @@ class Store
 
 		Util.assert(typeof value === "function", `Store.merger(setter): Merger is not a function. merger=${value}`, TypeError);
 
-		this._merger = value;
+		this.#__merger = value;
 
 	}
 
@@ -1661,9 +1657,23 @@ class Store
 	clear()
 	{
 
-		this._items = {};
+		this.#__items = {};
 
 	}
+
+	// -----------------------------------------------------------------------------
+
+    /**
+     * Replace all values in the store.
+     *
+     * @param   {Object}        newItem				New item.
+     */
+    replace(newItem)
+    {
+
+        this.#__items = newItem;
+
+    }
 
 	// -------------------------------------------------------------------------
 
@@ -1675,7 +1685,7 @@ class Store
 	clone()
 	{
 
-		return Util.deepMerge({}, this._items);
+		return Util.deepClone(this.#__items);
 
 	}
 
@@ -1685,17 +1695,17 @@ class Store
 	 * Merge items.
 	 *
 	 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
-	 * @param	{Function}		merger				Merge function.
+	 * @param	{Object}		options				Optoins.
 	 */
-	merge(newItems, merger)
+	merge(newItems, options)
 	{
 
-		merger = merger || this._merger;
+		let merger =  Util.safeGet(options, "merger", this.#__merger);
 		let items = (Array.isArray(newItems) ? newItems: [newItems]);
 
 		for (let i = 0; i < items.length; i++)
 		{
-			this._items = merger(this._items, items[i]);
+			this.#__items = merger(this.#__items, items[i]);
 		}
 
 	}
@@ -1713,7 +1723,7 @@ class Store
 	get(key, defaultValue)
 	{
 
-		return Util.deepClone(Util.safeGet(this._items, key, defaultValue));
+		return Util.deepClone(Util.safeGet(this.#__items, key, defaultValue));
 
 	}
 
@@ -1728,7 +1738,7 @@ class Store
 	set(key, value, options)
 	{
 
-		Util.safeSet(this._items, key, value);
+		Util.safeSet(this.#__items, key, value);
 
 	}
 
@@ -1742,7 +1752,7 @@ class Store
 	remove(key)
 	{
 
-		Util.safeRemove(this._items, key);
+		Util.safeRemove(this.#__items, key);
 
 	}
 
@@ -1758,7 +1768,7 @@ class Store
 	has(key)
 	{
 
-		return Util.safeHas(this._items, key);
+		return Util.safeHas(this.#__items, key);
 
 	}
 
@@ -1783,6 +1793,12 @@ class ChainableStore extends Store
 {
 
 	// -------------------------------------------------------------------------
+	//  Private Variables
+	// -------------------------------------------------------------------------
+
+	#__chain;
+
+	// -------------------------------------------------------------------------
 	//  Constructor
 	// -------------------------------------------------------------------------
 
@@ -1797,11 +1813,8 @@ class ChainableStore extends Store
 
 		super(options);
 
-		// Init vars
-		this._chain;
-
 		// Chain
-		let chain = Util.safeGet(this._options, "chain");
+		let chain = Util.safeGet(this.options, "chain");
 		if (chain)
 		{
 			this.chain(chain);
@@ -1821,7 +1834,7 @@ class ChainableStore extends Store
 	get localItems()
 	{
 
-		return Store.prototype.clone.call(this);
+		return super.clone();
 
 	}
 
@@ -1837,13 +1850,13 @@ class ChainableStore extends Store
 	clone()
 	{
 
-		if (this._chain)
+		if (this.#__chain)
 		{
-			return Util.deepMerge(this._chain.clone(), this._items);
+			return Util.deepMerge(this.#__chain.clone(), super.clone());
 		}
 		else
 		{
-			return Store.prototype.clone.call(this);
+			return super.clone();
 		}
 
 	}
@@ -1858,7 +1871,7 @@ class ChainableStore extends Store
 	chain(store)
 	{
 
-		this._chain = store;
+		this.#__chain = store;
 
 	}
 
@@ -1880,20 +1893,20 @@ class ChainableStore extends Store
 
 		let result = defaultValue;
 
-		if (Store.prototype.has.call(this, key) && this._chain && Store.prototype.has.call(this._chain, key))
+		if (super.has(key) && this.#__chain && super.has.call(this.#__chain, key))
 		{
 			// Both has key then deep merge
-			result = Util.deepMerge(Store.prototype.get.call(this._chain, key), Store.prototype.get.call(this, key));
+			result = Util.deepMerge(super.get.call(this.#__chain, key), super.get(key));
 		}
-		else if (Store.prototype.has.call(this, key))
+		else if (super.has(key))
 		{
 			// Only this has key
-			result = Store.prototype.get.call(this, key, defaultValue);
+			result = super.get(key, defaultValue);
 		}
-		else if (this._chain)
+		else if (this.#__chain)
 		{
-			// Only chain has key
-			result = this._chain.get(key, defaultValue);
+			// Try chain
+			result = this.#__chain.get(key, defaultValue);
 		}
 
 		return result;
@@ -1906,19 +1919,18 @@ class ChainableStore extends Store
 	 * Merge items.
 	 *
 	 * @param	{Array/Object}	newItems			Array/Object of Items to merge.
-	 * @param	{Function}		merger				Merge function.
 	 * @param	{Object}		options				Options.
 	 */
-	merge(newItems, merger, options)
+	merge(newItems, options)
 	{
 
-		if (Util.safeGet(options, "writeThrough", this._options["writeThrough"]))
+		if (Util.safeGet(options, "writeThrough", this.options["writeThrough"]))
 		{
-			this._chain.merge(newItems, merger);
+			this.#__chain.merge(newItems, options);
 		}
 		else
 		{
-			Store.prototype.merge.call(this, newItems, merger);
+			super.merge(newItems, options);
 		}
 
 	}
@@ -1935,13 +1947,13 @@ class ChainableStore extends Store
 	set(key, value, options)
 	{
 
-		if (Util.safeGet(options, "writeThrough", this._options["writeThrough"]))
+		if (Util.safeGet(options, "writeThrough", this.options["writeThrough"]))
 		{
-			this._chain.set(key, value, options);
+			this.#__chain.set(key, value, options);
 		}
 		else
 		{
-			Store.prototype.set.call(this, key, value, options);
+			super.set(key, value, options);
 		}
 
 	}
@@ -1958,11 +1970,11 @@ class ChainableStore extends Store
 	has(key)
 	{
 
-		let result = Util.safeHas(this._items, key);
+		let result = super.has(key);
 
-		if (result === false && this._chain)
+		if (result === false && this.#__chain)
 		{
-			result = this._chain.has(key);
+			result = this.#__chain.has(key);
 		}
 
 		return result;
