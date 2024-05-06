@@ -1,6 +1,6 @@
 {
   "name": "@bitsmist-js_v1/core",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "description": "Web Components based Javascript Framework",
   "main": "./src/core/export.js",
   "type": "module",
