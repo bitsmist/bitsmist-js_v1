@@ -10,11 +10,16 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "rollup": "^4.4.1"
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "msw": "^2.3.0",
+    "rollup": "^4.4.1",
+    "undici": "^6.18.1"
   },
   "scripts": {
     "watch": "npx rollup -c -w",
-    "build": "npx rollup -c"
+    "build": "npx rollup -c",
+    "test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 jest"
   },
   "repository": {
     "type": "git",

@@ -1,8 +1,12 @@
 import {jest} from '@jest/globals'
 
-import {XMLHttpRequest} from 'xmlhttprequest';
-global.XMLHttpRequest = XMLHttpRequest;
+/* CSS */
+document.adoptedStyleSheets = [];
+global.CSSStyleSheet.prototype.replace = function() {
+};
 
+/* Console */
+import console from 'console';
 global.console  = {
 	...console,
 	debug: jest.fn(),
