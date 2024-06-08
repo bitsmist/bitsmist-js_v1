@@ -47,20 +47,9 @@ afterAll(() => server.close());
 export class BarMain extends Unit
 {
 
-	/*
 	_getSettings()
-	{
-		return this.__getSettings();
-	}
-	*/
-
-	_getSettings()
-//	__getSettings()
 	{
 		return {
-			"basic": {
-				"options": {},
-			},
 			"event": {
 				"events": {
 					"this": {
@@ -91,42 +80,16 @@ export class BarMain extends Unit
 							"afterStop": [this.onEvent],
 						}
 					}
-				},
+				}
 			}
 		};
 	}
 
 	init(sender, e, ex)
 	{
-
 		this.testVars = {
 			"eventOrder": [],
 			"eventCalled": {},
-			/*
-			"eventCalled": {
-				"beforeStart": false,
-				"doStart": false,
-				"afterStart": false,
-				"afterReady": false,
-				"beforeStop": false,
-				"doStop": false,
-				"afterStop": false,
-				"beforeSetup": false,
-				"doSetup": false,
-				"afterSetup": false,
-				"afterAppend": false,
-				"beforeRefresh": false,
-				"doRefresh": false,
-				"afterRefresh": false,
-				"doTarget": false,
-				"beforeFetch": false,
-				"doFetch": false,
-				"afterFetch": false,
-				"beforeFill": false,
-				"doFill": false,
-				"afterFill": false,
-			}
-			*/
 		};
 	}
 
@@ -137,5 +100,4 @@ export class BarMain extends Unit
 	}
 
 }
-
 customElements.define("bar-main", BarMain);
