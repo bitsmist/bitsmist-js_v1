@@ -1,137 +1,136 @@
-import './_common.js';
+import {Util, Unit} from '../../../src/core/index'
 
 // =============================================================================
-// 	safeSet()
+// 	Methods
 // =============================================================================
 
-test('safeSet() Test - Should add a value - single level', () => {
+// safeGet()
+
+// safeSet()
+
+test('safeSet() Test: Set a value in an object at the top Level.', () => {
 	let store = {};
 
-	BITSMIST.v1.Util.safeSet(store, "key1", "value1");
+	Util.safeSet(store, "key1", "value1");
 
 	expect(Object.keys(store).length).toBe(1);
 	expect(store["key1"]).toBe("value1");
 });
 
-// -----------------------------------------------------------------------------
-
-test('safeSet() Test - Should add a value - multi level', () => {
+test('safeSet() Test: Set a value in an object at the second level', () => {
 	let store = {};
 
-	BITSMIST.v1.Util.safeSet(store, "key1.key1-1", "value1-1");
+	Util.safeSet(store, "key1.key1-1", "value1-1");
 
 	expect(Object.keys(store).length).toBe(1);
 	expect(store["key1"]["key1-1"]).toBe("value1-1");
 });
 
-test('safeSet() Test - Should be an error when an intermediate value is not an object', () => {
+test('safeSet() Test: Set a value in an object where a non-object value already exists at the second level.', () => {
 	let store = {
 		"key1": {
 			"key1-1": "value1-1"
 		}
 	};
 
-	expect(() => {BITSMIST.v1.Util.safeSet(store, "key1.key1-1.key1-1-1", "value1-1-1")}).toThrow(TypeError);
+	expect(() => {Util.safeSet(store, "key1.key1-1.key1-1-1", "value1-1-1")}).toThrow(TypeError);
 });
 
-// -----------------------------------------------------------------------------
+// safeRemove()
 
-test('safeSet() Test - Should be an error when an intermediate value is not an object', () => {
+test('safeRemove() Test: Remove an item from an object at the top level.', () => {
 	let store = {
-		"key1": {
-			"key1-1": "value1-1"
-		}
+		"key1": "value1",
+		"key2": "value2"
 	};
 
-	expect(() => {BITSMIST.v1.Util.safeSet(store, "key1.key1-1.key1-1-1.key1-1-1-1", "value1-1-1-1")}).toThrow(TypeError);
-});
-
-// =============================================================================
-// 	safeMerge()
-// =============================================================================
-
-// =============================================================================
-// 	safeRemove()
-// =============================================================================
-
-test('safeRemove() Test - specified key should removed from the store - single level"', () => {
-	let store = {
-		"test1": "test1",
-		"test2": "test2"
-	};
-
-	BITSMIST.v1.Util.safeRemove(store, "test1");
+	Util.safeRemove(store, "key1");
 
 	expect(Object.keys(store).length).toBe(1);
-	expect(store["test1"]).toBe(undefined);
-	expect(store["test2"]).toBe("test2");
+	expect(store["key1"]).toBe(undefined);
+	expect(store["key2"]).toBe("value2");
 });
 
-// -----------------------------------------------------------------------------
-
-test('safeRemove() Test - specified key should removed from the store - multi level"', () => {
+test('safeRemove() Test: Remove an item from an object at the second level.', () => {
 	let store = {
-		"test1": {
-			"test1-1": {
-				"test1-1-1": "test1-1-1",
-				"test1-1-2": "test1-1-2",
-			},
-			"test1-2": "test1-2"
+		"key1": {
+			"key1-1": "value1-1",
+			"key1-2": "value1-2"
 		},
-		"test2": "test2"
 	};
 
-	BITSMIST.v1.Util.safeRemove(store, "test1.test1-1.test1-1-1");
+	Util.safeRemove(store, "key1.key1-1");
 
-	expect(store["test1"]["test1-1"]["test1-1-1"]).toBe(undefined);
-	expect(store["test1"]["test1-1"]["test1-1-2"]).toBe("test1-1-2");
-	expect(store["test1"]["test1-2"]).toBe("test1-2");
-	expect(store["test2"]).toBe("test2");
+	expect(Object.keys(store["key1"]).length).toBe(1);
+	expect(store["key1"]["key1-1"]).toBe(undefined);
+	expect(store["key1"]["key1-2"]).toBe("value1-2");
 });
 
-// -----------------------------------------------------------------------------
-
-test('safeRemove() Test (Non Existent Key) - Should remove nothing - single level"', () => {
+test('safeRemove() Test: Remove an item from an object where the item does not exist at the top level.', () => {
 	let store = {
-		"test1": "test1",
-		"test2": "test2"
+		"key1": "value1",
+		"key2": "value2"
 	};
 
-	BITSMIST.v1.Util.safeRemove(store, "test3");
+	Util.safeRemove(store, "key3");
 
 	expect(Object.keys(store).length).toBe(2);
-	expect(store["test1"]).toBe("test1");
-	expect(store["test2"]).toBe("test2");
+	expect(store["key1"]).toBe("value1");
+	expect(store["key2"]).toBe("value2");
 });
 
-// -----------------------------------------------------------------------------
-
-test('safeRemove() Test (Non Existent Key) - Should remove nothing - multi level"', () => {
+test('safeRemove() Test: Remove an item from an object where the item does not exist at the second level.', () => {
 	let store = {
-		"test1": {
-			"test1-1": {
-				"test1-1-1": "test1-1-1",
-				"test1-1-2": "test1-1-2",
-			},
-			"test1-2": "test1-2"
+		"key1": {
+			"key1-1": "value1-1",
+			"key1-2": "value1-2"
 		},
-		"test2": "test2"
 	};
 
-	BITSMIST.v1.Util.safeRemove(store, "test1.test1-1.test1-1-3");
-	BITSMIST.v1.Util.safeRemove(store, "test1.test1-3");
+	Util.safeRemove(store, "key1.key1-3");
 
-	expect(store["test1"]["test1-1"]["test1-1-1"]).toBe("test1-1-1");
-	expect(store["test1"]["test1-1"]["test1-1-2"]).toBe("test1-1-2");
-	expect(store["test1"]["test1-2"]).toBe("test1-2");
-	expect(store["test2"]).toBe("test2");
+	expect(Object.keys(store["key1"]).length).toBe(2);
+	expect(store["key1"]["key1-1"]).toBe("value1-1");
+	expect(store["key1"]["key1-2"]).toBe("value1-2");
 });
 
-// =============================================================================
-// 	deepMerge()
-// =============================================================================
+// safeMerge()
 
-test('deepMerge() Test (Primitive <--- Primitive) - Should overwrite a primitive value with primitive value', () => {
+test('safeMerge() Test: Merge a value to an object where a non-object value already exists at the second level.', () => {
+	let store = {
+		"key1": {
+			"key1-1": "value1-1"
+		}
+	};
+
+	expect(() => {Util.safeMerge(store, "key1.key1-1.key1-1-1.key1-1-1-1", "value1-1-1-1")}).toThrow(TypeError);
+});
+
+// safeHas()
+
+test('safeHas() Test: Test if an item exists in an object at the first level.', () => {
+	let store = {
+		"key1": "value1"
+	};
+
+	expect(Util.safeHas(store, "key1")).toBe(true);
+	expect(Util.safeHas(store, "key2")).toBe(false);
+});
+
+test('safeHas() Test: Test if an item exists in an object at the second level', () => {
+	let store = {
+		"key1": {
+			"key1-1": "value1-1"
+		},
+	};
+
+	expect(Util.safeHas(store, "key1.key1-1")).toBe(true);
+	expect(Util.safeHas(store, "key1.key1-2")).toBe(false);
+});
+
+// deepMerge()
+
+test('deepMerge() Test: Merge a primitive value into a primitive value at the top level.', () => {
 	let store1 = {
 		"key1": "value1"
 	};
@@ -140,15 +139,13 @@ test('deepMerge() Test (Primitive <--- Primitive) - Should overwrite a primitive
 		"key1": "value2"
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(result["key1"]).toBe("value2");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Primitive <--- Object) - Should overwrite a primitive value with object', () => {
+test('deepMerge() Test: Merge an object into a primitive value at the top level.', () => {
 	let store1 = {
 		"key1": "value1",
 	};
@@ -157,16 +154,14 @@ test('deepMerge() Test (Primitive <--- Object) - Should overwrite a primitive va
 		"key1": {"a": "value1a"}
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(typeof result["key1"]).toBe("object");
 	expect(result["key1"]["a"]).toBe("value1a");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Primitive <--- Array) - Should overwrite a primitive value with array - multi level', () => {
+test('deepMerge() Test: Merge an array into a primitive value. at the top level.', () => {
 	let store1 = {
 		"key1": "value1",
 	};
@@ -175,7 +170,7 @@ test('deepMerge() Test (Primitive <--- Array) - Should overwrite a primitive val
 		"key1": ["a", "b", "c"],
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(Array.isArray(result["key1"])).toBe(true);
@@ -185,9 +180,7 @@ test('deepMerge() Test (Primitive <--- Array) - Should overwrite a primitive val
 	expect(result["key1"][2]).toBe("c");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Object <--- Primitive) - Should overwrite an object with a primitive value', () => {
+test('deepMerge() Test: Merge a primitive value into an object at the top level.', () => {
 	let store1 = {
 		"key1": {"a":"value1a"},
 	};
@@ -196,15 +189,13 @@ test('deepMerge() Test (Object <--- Primitive) - Should overwrite an object with
 		"key1": "value1b",
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(result["key1"]).toBe("value1b");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Object <--- Object) - Should merge an object into an object - single level', () => {
+test('deepMerge() Test: Merge an object into an object at the top level.', () => {
 	let store1 = {
 		"a":"valueA",
 	};
@@ -213,16 +204,14 @@ test('deepMerge() Test (Object <--- Object) - Should merge an object into an obj
 		"b":"valueB",
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(2);
 	expect(result["a"]).toBe("valueA");
 	expect(result["b"]).toBe("valueB");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Object <--- Object) - Should merge an object into an object - multi level', () => {
+test('deepMerge() Test: Merge an object into an object at the second level.', () => {
 	let store1 = {
 		"key1": {"a":"value1a"},
 	};
@@ -231,7 +220,7 @@ test('deepMerge() Test (Object <--- Object) - Should merge an object into an obj
 		"key1": {"b":"value1b"},
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(Object.keys(result["key1"]).length).toBe(2);
@@ -239,16 +228,14 @@ test('deepMerge() Test (Object <--- Object) - Should merge an object into an obj
 	expect(result["key1"]["b"]).toBe("value1b");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Object <--- Array) - Should merge an array into an object - single level', () => {
+test('deepMerge() Test: Merge an array into an object at the top level.', () => {
 	let store1 = {
 		"a":"value1a",
 	};
 
 	let store2 = ["a", "b", "c"];
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(4);
 	expect(result["0"]).toBe("a");
@@ -257,9 +244,7 @@ test('deepMerge() Test (Object <--- Array) - Should merge an array into an objec
 	expect(result["a"]).toBe("value1a");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Object <--- Array) - Should merge an array into an object - multi level', () => {
+test('deepMerge() Test: Merge an array into an object at the second level.', () => {
 	let store1 = {
 		"key1": {"a":"value1a"},
 	};
@@ -268,7 +253,7 @@ test('deepMerge() Test (Object <--- Array) - Should merge an array into an objec
 		"key1": ["a", "b", "c"]
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(Object.keys(result["key1"]).length).toBe(4);
@@ -278,13 +263,11 @@ test('deepMerge() Test (Object <--- Array) - Should merge an array into an objec
 	expect(result["key1"]["a"]).toBe("value1a");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Array <--- Primitive) - Should concat a primitive value to an array - single level', () => {
+test('deepMerge() Test: Merge a primitive value into an array at the top level.', () => {
 	let store1 = ["a","b","c"];
 	let store2 = "value1";
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(4);
 	expect(result[0]).toBe("a");
@@ -293,9 +276,7 @@ test('deepMerge() Test (Array <--- Primitive) - Should concat a primitive value 
 	expect(result[3]).toBe("value1");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Array <--- Primitive) - Should concat a primitive value to an array - multi level', () => {
+test('deepMerge() Test: Merge a primitive value into an array at the second level.', () => {
 	let store1 = {
 		"key1": ["a","b","c"],
 	};
@@ -304,7 +285,7 @@ test('deepMerge() Test (Array <--- Primitive) - Should concat a primitive value 
 		"key1": "value1",
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(result["key1"][0]).toBe("a");
@@ -313,15 +294,13 @@ test('deepMerge() Test (Array <--- Primitive) - Should concat a primitive value 
 	expect(result["key1"][3]).toBe("value1");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Array <--- Object) - Should concat an object to an array - single level', () => {
+test('deepMerge() Test: Merge an object into an array at the top level.', () => {
 	let store1 = ["a","b","c"];
 	let store2 = {
 		"d": "valueD",
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(4);
 	expect(result[0]).toBe("a");
@@ -331,9 +310,7 @@ test('deepMerge() Test (Array <--- Object) - Should concat an object to an array
 	expect(result[3]["d"]).toBe("valueD");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Array <--- Object) - Should concat an object to an array - multi level', () => {
+test('deepMerge() Test: Merge an object into an array at the second level.', () => {
 	let store1 = {
 		"key1": ["a","b","c"],
 	};
@@ -342,7 +319,7 @@ test('deepMerge() Test (Array <--- Object) - Should concat an object to an array
 		"key1": {"d": "valueD"},
 	};
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(Object.keys(result["key1"]).length).toBe(4);
@@ -353,11 +330,11 @@ test('deepMerge() Test (Array <--- Object) - Should concat an object to an array
 	expect(result["key1"][3]["d"]).toBe("valueD");
 });
 
-test('deepMerge() Test (Array <--- Array) - Should concat an array to an array - single level', () => {
+test('deepMerge() Test: Merge an array into an array at the top level.', () => {
 	let store1 = ["a","b","c"];
 	let store2 = ["d", "e", "f"];
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(6);
 	expect(result[0]).toBe("a");
@@ -368,9 +345,7 @@ test('deepMerge() Test (Array <--- Array) - Should concat an array to an array -
 	expect(result[5]).toBe("f");
 });
 
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Test (Array <--- Array) - Should concat an array to an array - multi level', () => {
+test('deepMerge() Test: Merge an array into an array at the second level.', () => {
 	let store1 = {
 		"key1": ["a","b","c"],
 	};
@@ -379,7 +354,7 @@ test('deepMerge() Test (Array <--- Array) - Should concat an array to an array -
 		"key1": ["d", "e", "f"],
 	}
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(Object.keys(result).length).toBe(1);
 	expect(Array.isArray(result["key1"])).toBe(true);
@@ -392,26 +367,7 @@ test('deepMerge() Test (Array <--- Array) - Should concat an array to an array -
 	expect(result["key1"][5]).toBe("f");
 });
 
-test('deepMerge() Immutability Test - The store1 should be mutated and the store2 should be deep cloned', () => {
-	let store1 = {};
-	let store2 = {
-		"key1": "value2",
-		"ErrorOrganizer": BITSMIST.v1.Component,
-		"Promise": new Promise(() => {}),
-	};
-
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
-
-	expect(Object.keys(result).length).toBe(3);
-	expect(result["key1"]).toBe("value2");
-	expect(store1 === result).toBe(true);
-	expect(store2["ErrorOrganizer"] === result["ErrorOrganizer"]).toBe(true);
-	expect(store2["Promise"] === result["Promise"]).toBe(true);
-});
-
-// -----------------------------------------------------------------------------
-
-test('deepMerge() Immutability Test - The store1 should be mutated and the store2 should be deep cloned', () => {
+test('deepMerge() Test: Test if the first object is mutated and the second object is deep cloned.', () => {
 	const store1 = {
 		foo: { bar: 3 },
 		array: [{
@@ -431,7 +387,7 @@ test('deepMerge() Immutability Test - The store1 should be mutated and the store
 		}]
 	}
 
-	let result = BITSMIST.v1.Util.deepMerge(store1, store2);
+	let result = Util.deepMerge(store1, store2);
 
 	expect(store1 === result).toBe(true);
 	expect(store1["foo"] === result["foo"]).toBe(true);
@@ -441,3 +397,49 @@ test('deepMerge() Immutability Test - The store1 should be mutated and the store
 	expect(store2["array"] === result["array"]).toBe(false);
 	expect(store2["array"][0]["too"] === result["array"][1]["too"]).toBe(false);
 });
+
+test('deepMerge() Test: Test if the first object is mutated and the second object is deep cloned except complicated objects.', () => {
+	let store1 = {};
+	let store2 = {
+		"key1": "value1",
+		"Unit1": Unit,
+		"Promise": new Promise(() => {}),
+	};
+
+	let result = Util.deepMerge(store1, store2);
+
+	expect(Object.keys(result).length).toBe(3);
+	expect(result["key1"]).toBe("value1");
+	expect(store1 === result).toBe(true);
+	expect(store2["Unit1"] === result["Unit1"]).toBe(true);
+	expect(store2["Promise"] === result["Promise"]).toBe(true);
+});
+
+// #__isObject()
+
+/*
+test('#__isObject() Test: Test if the given values are objects.', () => {
+	expect(Util.__isObject({})).toBe(true);
+	expect(Util.__isObject(Object.create(null))).toBe(true);
+	expect(Util.__isObject([])).toBe(false);
+	expect(Util.__isObject(function(){return})).toBe(false);
+	expect(Util.__isObject(null)).toBe(false);
+	expect(Util.__isObject(undefined)).toBe(false);
+});
+*/
+
+// #__isMergeable()
+
+/*
+test('#__isMergeable() Test: Test if the given values are mergeable.', () => {
+	expect(Util.__isMergeable({})).toBe(true);
+	expect(Util.__isMergeable(Object.create(null))).toBe(true);
+	expect(Util.__isMergeable([])).toBe(true);
+	expect(Util.__isMergeable(function(){return})).toBe(false);
+	expect(Util.__isMergeable(null)).toBe(false);
+	expect(Util.__isMergeable(undefined)).toBe(false);
+	expect(Util.__isMergeable(1)).toBe(false);
+	expect(Util.__isMergeable("string")).toBe(false);
+	expect(Util.__isMergeable(false)).toBe(false);
+});
+*/
