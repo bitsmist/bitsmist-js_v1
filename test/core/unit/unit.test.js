@@ -6,7 +6,7 @@ import {Unit} from '../../../src/core/index';
 import {BarMain} from './unit.env.js';
 
 // =============================================================================
-// 	Setters/Getters
+// 	Setters/Getters Test
 // =============================================================================
 
 // uniqueId static/instance
@@ -15,7 +15,7 @@ import {BarMain} from './unit.env.js';
 // ready
 
 // =============================================================================
-// 	Methods
+// 	Methods Test
 // =============================================================================
 
 // get() static/instance
