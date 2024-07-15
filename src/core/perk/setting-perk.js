@@ -351,28 +351,28 @@ export default class SettingPerk extends Perk
 	static #__mergeSettings(unit, settings)
 	{
 
-		let curUnit = Object.getPrototypeOf(unit);
-		let curSettings = {};
-		let parentSettings;
-
-		// Merge superclass settings
-		while (typeof(Object.getPrototypeOf(curUnit)._getSettings) === "function")
+		// Get ascendants of the unit
+		let ascendants = [];
+		let curUnit = Object.getPrototypeOf(Object.getPrototypeOf(unit));
+		while (curUnit instanceof Unit)
 		{
-			parentSettings = Object.getPrototypeOf(curUnit)._getSettings.call(unit);
-			if (Object.keys(parentSettings).length > 0)
-			{
-				Util.deepMerge(parentSettings, curSettings);
-				curSettings = parentSettings;
-			}
-
+			ascendants.push(curUnit);
 			curUnit= Object.getPrototypeOf(curUnit);
 		}
-		Util.deepMerge(settings, curSettings);
+
+		// Merge superclass settings
+		for (let i = ascendants.length - 1; i >= 0; i--)
+		{
+			if (ascendants[i].hasOwnProperty("_getSettings") && typeof(ascendants[i]._getSettings) === "function")
+			{
+				Util.deepMerge(settings, ascendants[i]._getSettings());
+			}
+		}
 
 		// Merge unit settings
-		if (typeof(unit._getSettings) === "function")
+		if (unit.constructor.prototype.hasOwnProperty("_getSettings") && typeof(unit.constructor.prototype._getSettings) === "function")
 		{
-			Util.deepMerge(settings, unit._getSettings.call(unit));
+			Util.deepMerge(settings, unit.constructor.prototype._getSettings.call(unit));
 		}
 
 		return settings;
