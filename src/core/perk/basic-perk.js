@@ -209,7 +209,7 @@ export default class BasicPerk extends Perk
 	{
 
 		let func = this.assets["spell"].get(key);
-		Util.assert(typeof(func) === "function", () => `Spell is not available. spellName=${key}`);
+		Util.assert(typeof(func) === "function", () => `Spell is not available. name=${this.tagName}, spellName=${key}`);
 
 		return func.call(this, this, ...args);
 
@@ -228,7 +228,7 @@ export default class BasicPerk extends Perk
 	{
 
 		let func = this.assets["skill"].get(key);
-		Util.assert(typeof(func) === "function", () => `Skill is not available. skillName=${key}`);
+		Util.assert(typeof(func) === "function", () => `Skill is not available. name=${this.tagName}, skillName=${key}`);
 
 		return func.call(this, this, ...args);
 
