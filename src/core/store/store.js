@@ -72,7 +72,7 @@ export default class Store
 	/**
 	 * Items.
 	 *
-	 * @type	{String}
+	 * @type	{Object}
 	 */
 	get items()
 	{
