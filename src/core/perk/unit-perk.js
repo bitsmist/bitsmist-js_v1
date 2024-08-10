@@ -233,9 +233,10 @@ export default class UnitPerk extends Perk
 	static #_loadTags(unit, rootNode, options)
 	{
 
-		console.debug(`UnitPerk.#_loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
-
+		rootNode = rootNode || unit;
 		let promises = [];
+
+		console.debug(`UnitPerk.#_loadTags(): Loading tags. rootNode=${rootNode.tagName}`);
 
 		// Load tags that has bm-autoload/bm-classref/bm-automorph attribute
 		let targets = Util.scopedSelectorAll(rootNode, "[bm-autoload]:not([bm-autoloading]):not([bm-powered]),[bm-automorph]:not([bm-autoloading]):not([bm-powered]),[bm-classref]:not([bm-autoloading]):not([bm-powered]),[bm-htmlref]:not([bm-autoloading]):not([bm-powered])");
