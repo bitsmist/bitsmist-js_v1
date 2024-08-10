@@ -436,7 +436,6 @@ export default class BasicPerk extends Perk
 			await unit.cast("basic.setup", options);
 		}
 		await unit.cast("event.trigger", "doTransform", options);
-		await unit.cast("unit.materializeAll", unit);
 		console.debug(`BasicPerk._transform(): Transformed. name=${unit.tagName}, id=${unit.id}, uniqueId=${unit.uniqueId}`);
 		await unit.cast("event.trigger", "afterTransform", options);
 

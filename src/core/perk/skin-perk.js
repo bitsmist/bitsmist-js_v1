@@ -106,12 +106,13 @@ export default class SkinPerk extends Perk
 
 	// -------------------------------------------------------------------------
 
-	static #SkinPerk_onDoTransform(sender, e, ex)
+	static async #SkinPerk_onDoTransform(sender, e, ex)
 	{
 
 		if (this.get("setting", "skin.options.hasSkin", true))
 		{
-			return SkinPerk.#_applySkin(this, e.detail.skinName, this.get("inventory", "basic.unitRoot"));
+			await SkinPerk.#_applySkin(this, e.detail.skinName, this.get("inventory", "basic.unitRoot"));
+			await this.cast("unit.materializeAll");
 		}
 
 	}
